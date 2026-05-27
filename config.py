@@ -4,7 +4,7 @@
 MAX_FETCH = 500         # safety ceiling for ArXiv API
 SAMPLE_SIZE = 35        # papers to randomly sample for scoring per day
 LOOKBACK_HOURS = 24     # how far back to fetch papers
-WORD_CUTOFF = 8000
+WORD_CUTOFF = 2000
 
 # Paper scoring
 MAX_SCORE = 28

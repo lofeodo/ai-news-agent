@@ -1,17 +1,19 @@
  # agents/agent1_fetch.py
 
+import anthropic
 import arxiv
-import random
-import json
-import requests
-import pypdf
 import io
-from datetime import datetime, timedelta, timezone
-import sys
+import json
 import os
+import pypdf
+import random
+import requests
+import sys
+from scoring_tool import SCORING_TOOL
+from datetime import datetime, timedelta, timezone
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import MAX_FETCH, SAMPLE_SIZE, LOOKBACK_HOURS, DATA_DIR
+from config import MAX_FETCH, SAMPLE_SIZE, LOOKBACK_HOURS, DATA_DIR, SCORING_MODEL, MAX_TOKENS, WORD_CUTOFF
 
 
 def fetch_papers():
@@ -76,6 +78,38 @@ def download_and_extract(pdf_url: str, paper_id: str) -> str:
     return full_text
 
 
+def score_paper(paper: dict, full_text: str) -> dict:
+    """Score a paper using Claude on a 24-point rubric."""
+    print(f"Scoring: {paper['title']}")
+
+    # Load prompt template (no longer needs JSON structure, just instructions)
+    with open("prompts/scoring_rubric.txt", "r", encoding="utf-8") as f:
+        prompt_template = f.read()
+
+    truncated_text = " ".join(full_text.split()[:WORD_CUTOFF])
+
+    prompt = prompt_template.format(
+        title=paper["title"],
+        abstract=paper["abstract"],
+        full_text=truncated_text
+    )
+
+    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
+
+    response = client.messages.create(
+        model=SCORING_MODEL,
+        max_tokens=MAX_TOKENS,
+        tools=[SCORING_TOOL],
+        tool_choice={"type": "tool", "name": "score_paper"},
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    # Extract the tool call input directly — guaranteed to match schema
+    scores = response.content[0].input
+    print(f"Score: {scores.get('total', '?')}/28 — {scores.get('reasoning', '')[:80]}")
+    return scores
+
+
 if __name__ == "__main__":
     papers = fetch_papers()
     sampled = sample_papers(papers)
@@ -95,9 +129,11 @@ if __name__ == "__main__":
 
     print(f"Saved to {out_path}")
 
-    # Test PDF extraction on first paper
+    # Test on first paper only
     paper = sampled[0]
-    print(f"\nTesting PDF extraction on: {paper['title']}")
-    text = download_and_extract(paper["pdf_url"], paper["id"])
-    print("\n--- Extracted text preview ---")
-    print(text[:500])
+    print(f"\nTesting on: {paper['title']}")
+    full_text = download_and_extract(paper["pdf_url"], paper["id"])
+    scores = score_paper(paper, full_text)
+
+    print("\n--- Scores ---")
+    print(json.dumps(scores, indent=2))

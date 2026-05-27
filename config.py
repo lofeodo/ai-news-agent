@@ -2,11 +2,15 @@
 
 # ArXiv fetching
 MAX_FETCH = 500         # safety ceiling for ArXiv API
-SAMPLE_SIZE = 50        # papers to randomly sample for scoring per day
+SAMPLE_SIZE = 35        # papers to randomly sample for scoring per day
 LOOKBACK_HOURS = 24     # how far back to fetch papers
+WORD_CUTOFF = 8000
+
+# Paper scoring
+MAX_SCORE = 28
 
 # Claude
-SCORING_MODEL = "claude-haiku-4-5-2025-1001"
+SCORING_MODEL = "claude-haiku-4-5-20251001"
 MAX_TOKENS = 1000
 
 # Paths

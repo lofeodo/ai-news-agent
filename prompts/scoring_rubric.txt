@@ -8,9 +8,9 @@ Scoring guide:
 - practical_applicability (1-5): Can a solo dev with limited budget build with this? (5 = easily buildable, 1 = requires massive compute)
 - significance (1-4): Does it address an important problem? (4 = critical, 1 = niche)
 - disruption_potential (1-5): Could this change how things are done? (5 = major shift, 1 = minor refinement)
-- reasoning: 2-3 sentences max explaining the key strengths and weaknesses
 
 Total is the sum of all 7 scores, out of 28.
+- reasoning: exactly 2 sentences. First sentence: the paper's core contribution and biggest strength. Second sentence: its biggest weakness or limitation.
 
 Paper to evaluate:
 Title: {title}

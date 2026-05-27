@@ -1,4 +1,4 @@
- # agents/agent1_fetch.py
+# agents/agent1_fetch.py
 
 import anthropic
 import arxiv
@@ -9,11 +9,18 @@ import pypdf
 import random
 import requests
 import sys
-from scoring_tool import SCORING_TOOL
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
+from scoring_tool import SCORING_TOOL
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import MAX_FETCH, SAMPLE_SIZE, LOOKBACK_HOURS, DATA_DIR, SCORING_MODEL, MAX_TOKENS, WORD_CUTOFF
+
+# --- Rate limiting ---
+MAX_CONCURRENT_CLAUDE_CALLS = 5
+_semaphore = threading.Semaphore(MAX_CONCURRENT_CLAUDE_CALLS)
 
 
 def fetch_papers():
@@ -58,7 +65,7 @@ def sample_papers(papers):
 
 def download_and_extract(pdf_url: str, paper_id: str) -> str:
     """Download a PDF from ArXiv and extract its text."""
-    print(f"Downloading PDF: {paper_id}")
+    print(f"  [download] {paper_id}")
 
     headers = {"User-Agent": "ai-news-agent/1.0 (research project)"}
     response = requests.get(pdf_url, headers=headers, timeout=30)
@@ -74,15 +81,11 @@ def download_and_extract(pdf_url: str, paper_id: str) -> str:
             pages.append(text)
 
     full_text = "\n".join(pages)
-    print(f"Extracted {len(full_text)} characters from {len(reader.pages)} pages")
     return full_text
 
 
 def score_paper(paper: dict, full_text: str) -> dict:
-    """Score a paper using Claude on a 24-point rubric."""
-    print(f"Scoring: {paper['title']}")
-
-    # Load prompt template (no longer needs JSON structure, just instructions)
+    """Score a paper using Claude on a 28-point rubric."""
     with open("prompts/scoring_rubric.txt", "r", encoding="utf-8") as f:
         prompt_template = f.read()
 
@@ -104,36 +107,90 @@ def score_paper(paper: dict, full_text: str) -> dict:
         messages=[{"role": "user", "content": prompt}]
     )
 
-    # Extract the tool call input directly — guaranteed to match schema
-    scores = response.content[0].input
-    print(f"Score: {scores.get('total', '?')}/28 — {scores.get('reasoning', '')[:80]}")
-    return scores
+    return response.content[0].input
+
+
+def score_with_retry(paper: dict, full_text: str, max_retries: int = 3) -> dict:
+    """Score with exponential backoff on rate limit errors."""
+    for attempt in range(max_retries):
+        try:
+            return score_paper(paper, full_text)
+        except anthropic.RateLimitError:
+            if attempt == max_retries - 1:
+                raise
+            wait = 2 ** attempt * 10  # 10s, 20s, 40s
+            print(f"  [retry]    rate limited, waiting {wait}s...")
+            time.sleep(wait)
+
+
+def process_paper(paper: dict) -> dict:
+    """Download, extract, and score a single paper. Returns merged result."""
+    paper_id = paper["id"].split("/")[-1]
+    try:
+        full_text = download_and_extract(paper["pdf_url"], paper_id)
+
+        with _semaphore:
+            print(f"  [scoring]  {paper['title'][:60]}...")
+            scores = score_with_retry(paper, full_text)
+
+        print(f"  [done]     {paper['title'][:50]} → {scores.get('total', '?')}/28")
+        return {**paper, "scores": scores, "error": None}
+
+    except Exception as e:
+        print(f"  [error]    {paper_id}: {e}")
+        return {**paper, "scores": None, "error": str(e)}
+
+
+def score_all_papers(papers: list) -> list:
+    """Score all papers concurrently. Returns list sorted by score descending."""
+    print(f"\nScoring {len(papers)} papers with up to {MAX_CONCURRENT_CLAUDE_CALLS} concurrent Claude calls...\n")
+    results = []
+
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_paper = {executor.submit(process_paper, p): p for p in papers}
+
+        for future in as_completed(future_to_paper):
+            result = future.result()
+            results.append(result)
+
+    results.sort(key=lambda r: r["scores"]["total"] if r["scores"] else -1, reverse=True)
+    return results
 
 
 if __name__ == "__main__":
+    start_time = datetime.now()
+
     papers = fetch_papers()
     sampled = sample_papers(papers)
 
-    output = {
-        "fetched_at": datetime.now().isoformat(),
-        "total_fetched": len(papers),
-        "total_sampled": len(sampled),
-        "papers": sampled
-    }
+    scored = score_all_papers(sampled)
+
+    successful = [r for r in scored if r["scores"] is not None]
+    failed = [r for r in scored if r["scores"] is None]
+    top_5 = successful[:5]
+
+    elapsed = (datetime.now() - start_time).total_seconds()
+    print(f"\n--- Done in {elapsed:.1f}s ---")
+    print(f"Scored: {len(successful)}/{len(sampled)} papers successfully")
+    if failed:
+        print(f"Failed: {len(failed)} papers")
+
+    print("\n=== TOP 5 PAPERS ===")
+    for i, paper in enumerate(top_5, 1):
+        print(f"{i}. [{paper['scores']['total']}/28] {paper['title']}")
+        print(f"   {paper['scores']['reasoning']}\n")
 
     os.makedirs(DATA_DIR, exist_ok=True)
-    out_path = os.path.join(DATA_DIR, "papers.json")
-
+    out_path = os.path.join(DATA_DIR, "scored_papers.json")
     with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(output, f, indent=2, ensure_ascii=False)
+        json.dump({
+            "run_at": start_time.isoformat(),
+            "elapsed_seconds": elapsed,
+            "total_sampled": len(sampled),
+            "total_scored": len(successful),
+            "total_failed": len(failed),
+            "top_5": top_5,
+            "all_scored": scored
+        }, f, indent=2, ensure_ascii=False)
 
-    print(f"Saved to {out_path}")
-
-    # Test on first paper only
-    paper = sampled[0]
-    print(f"\nTesting on: {paper['title']}")
-    full_text = download_and_extract(paper["pdf_url"], paper["id"])
-    scores = score_paper(paper, full_text)
-
-    print("\n--- Scores ---")
-    print(json.dumps(scores, indent=2))
+    print(f"Saved full results to {out_path}")

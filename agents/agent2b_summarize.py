@@ -12,43 +12,21 @@ from datetime import datetime
 from newspaper import Article
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import DATA_DIR, SCORING_MODEL, NEWS_SUMMARY_MAX_TOKENS
+from config import DATA_DIR, SCORING_MODEL, NEWS_SUMMARY_MAX_TOKENS, ARTICLE_WORD_LIMIT
 
 # --- Rate limiting ---
-MAX_CONCURRENT_CLAUDE_CALLS = 5
+MAX_CONCURRENT_CLAUDE_CALLS = 3
 MAX_FETCH_WORKERS = 20
 _semaphore = threading.Semaphore(MAX_CONCURRENT_CLAUDE_CALLS)
 
-ARTICLE_WORD_LIMIT = 1500
 FETCH_TIMEOUT = 10
+MIN_ARTICLE_WORDS = 100  # below this, assume we got a signup wall or redirect — fall back to description
 
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
     "AppleWebKit/537.36 (KHTML, like Gecko) "
     "Chrome/124.0.0.0 Safari/537.36"
 )
-
-NEWS_SUMMARY_PROMPT = """\
-Write a 2-3 sentence summary of the following news article for an AI newsletter. \
-Be factual and specific. The first sentence states what happened. \
-The second (and optional third) sentence adds the most important context or implication. \
-Do not editorialize beyond what the article supports.
-
-Article title: {title}
-
-Article text:
-{text}
-"""
-
-NEWS_SUMMARY_FALLBACK_PROMPT = """\
-Write a 2-3 sentence summary for an AI newsletter based on this article title \
-and short description. Be factual and specific. If the description is thin, \
-keep the summary tight rather than padding it out.
-
-Article title: {title}
-
-Description: {description}
-"""
 
 
 # ---------------------------------------------------------------------------
@@ -59,6 +37,7 @@ def fetch_article_text(url: str) -> str | None:
     """
     Fetch full article body text using newspaper3k.
     Returns text truncated to ARTICLE_WORD_LIMIT words, or None on failure.
+    Returns None if fetched content is under MIN_ARTICLE_WORDS (signup walls, redirects).
     """
     try:
         article = Article(url, request_timeout=FETCH_TIMEOUT)
@@ -69,6 +48,8 @@ def fetch_article_text(url: str) -> str | None:
         if not text:
             return None
         words = text.split()
+        if len(words) < MIN_ARTICLE_WORDS:
+            return None
         if len(words) > ARTICLE_WORD_LIMIT:
             words = words[:ARTICLE_WORD_LIMIT]
         return " ".join(words)
@@ -93,19 +74,19 @@ def claude_call_with_retry(client: anthropic.Anthropic, max_retries: int = 4, **
             time.sleep(wait)
 
 
-def summarize_article(article: dict, text: str | None, client: anthropic.Anthropic) -> dict:
+def summarize_article(article: dict, text: str | None, prompt_template: str, fallback_template: str, client: anthropic.Anthropic) -> dict:
     """
     Summarize one article. Uses full text if available, description if not.
     Returns the article dict with summary fields added.
     """
-    title       = article.get("title", "")
-    description = article.get("description", "") or ""
+    title         = article.get("title", "")
+    description   = article.get("description", "") or ""
     used_fallback = text is None
 
     if used_fallback:
-        prompt = NEWS_SUMMARY_FALLBACK_PROMPT.format(title=title, description=description)
+        prompt = fallback_template.format(title=title, description=description)
     else:
-        prompt = NEWS_SUMMARY_PROMPT.format(title=title, text=text)
+        prompt = prompt_template.format(title=title, text=text)
 
     try:
         with _semaphore:
@@ -123,10 +104,10 @@ def summarize_article(article: dict, text: str | None, client: anthropic.Anthrop
 
 def process_article(args: tuple) -> dict:
     """Worker: fetch article text then summarize. One thread per article."""
-    client, article = args
+    client, article, prompt_template, fallback_template = args
     url  = article.get("url", "")
     text = fetch_article_text(url) if url else None
-    return summarize_article(article, text, client)
+    return summarize_article(article, text, prompt_template, fallback_template, client)
 
 
 # ---------------------------------------------------------------------------
@@ -135,6 +116,12 @@ def process_article(args: tuple) -> dict:
 
 if __name__ == "__main__":
     start_time = datetime.now()
+
+    with open("prompts/news_summary_prompt.txt", "r", encoding="utf-8") as f:
+        prompt_template = f.read()
+
+    with open("prompts/news_summary_fallback_prompt.txt", "r", encoding="utf-8") as f:
+        fallback_template = f.read()
 
     in_path = os.path.join(DATA_DIR, "news_filtered.json")
     with open(in_path, "r", encoding="utf-8") as f:
@@ -146,7 +133,7 @@ if __name__ == "__main__":
     print(f"Summarizing {len(all_articles)} articles across {len(by_category)} categories...\n")
 
     client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
-    tasks  = [(client, article) for article in all_articles]
+    tasks  = [(client, article, prompt_template, fallback_template) for article in all_articles]
 
     # url → summarized article dict
     results_by_url: dict[str, dict] = {}
@@ -177,7 +164,7 @@ if __name__ == "__main__":
             for a in articles
         ]
 
-    all_summarized  = list(results_by_url.values())
+    all_summarized   = list(results_by_url.values())
     total_summarized = sum(1 for a in all_summarized if a.get("summary"))
     total_fallback   = sum(1 for a in all_summarized if a.get("used_fallback"))
     total_failed     = sum(1 for a in all_summarized if not a.get("summary"))
@@ -192,14 +179,14 @@ if __name__ == "__main__":
     out_path = os.path.join(DATA_DIR, "news_summaries.json")
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump({
-            "run_at":             start_time.isoformat(),
-            "elapsed_seconds":    elapsed,
-            "total_articles":     len(all_articles),
-            "total_summarized":   total_summarized,
+            "run_at":              start_time.isoformat(),
+            "elapsed_seconds":     elapsed,
+            "total_articles":      len(all_articles),
+            "total_summarized":    total_summarized,
             "total_used_fallback": total_fallback,
-            "total_failed":       total_failed,
-            "by_category":        summarized_by_category,
-            "articles":           all_summarized,
+            "total_failed":        total_failed,
+            "by_category":         summarized_by_category,
+            "articles":            all_summarized,
         }, f, indent=2, ensure_ascii=False)
 
     print(f"Saved to {out_path}")

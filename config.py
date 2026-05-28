@@ -3,7 +3,8 @@
 # ArXiv fetching
 MAX_FETCH = 500         # safety ceiling for ArXiv API
 SAMPLE_SIZE = 35        # papers to score per week (pre-filter replaces random sample later)
-WORD_CUTOFF = 2000
+WORD_CUTOFF = 5000        # papers — covers method + results, excludes references (~6-7k tokens)
+ARTICLE_WORD_LIMIT = 1500 # news articles — most articles are under this anyway
 
 # Paper scoring
 MAX_SCORE = 28

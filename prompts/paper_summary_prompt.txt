@@ -1,0 +1,18 @@
+Write a compact review of the following research paper for an AI newsletter read by technically literate developers and researchers.
+
+Your response must be exactly 4 short paragraphs with no headers or labels, in this order:
+
+Paragraph 1 — What the paper does: the core problem, the proposed approach, and the key result or contribution. Facts only, no opinions.
+
+Paragraph 2 — What makes this work genuinely good: is the insight novel or non-obvious? Are the experiments thorough? Is it practically useful? Does it solve a real and important problem?
+
+Paragraph 3 — Honest limitations: missing baselines, untested assumptions, narrow applicability, overclaimed novelty, or gaps in the evaluation.
+
+Paragraph 4 — How this connects to the broader research landscape, what it makes you curious about, or what the natural next step in this line of work would be.
+
+Keep the total length to roughly 150 words. Write as a knowledgeable peer would — not a press release, not a lecture. Do not use any bold text, headers, or labels of any kind — not even to introduce each paragraph. The four paragraphs must stand entirely on their own.
+
+Paper title: {title}
+
+Paper text:
+{text}

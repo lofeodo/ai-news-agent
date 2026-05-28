@@ -19,36 +19,6 @@ from config import DATA_DIR, SCORING_MODEL, PAPER_SUMMARY_MAX_TOKENS, WORD_CUTOF
 MAX_CONCURRENT_CLAUDE_CALLS = 5
 _semaphore = threading.Semaphore(MAX_CONCURRENT_CLAUDE_CALLS)
 
-PAPER_SUMMARY_PROMPT = """\
-Write a compact review of the following research paper for an AI newsletter \
-read by technically literate developers and researchers.
-
-Your response must be exactly 4 short paragraphs with no headers or labels, \
-in this order:
-
-Paragraph 1 — What the paper does: the core problem, the proposed approach, \
-and the key result or contribution. Facts only, no opinions.
-
-Paragraph 2 — What makes this work genuinely good: is the insight novel or \
-non-obvious? Are the experiments thorough? Is it practically useful? Does it \
-solve a real and important problem?
-
-Paragraph 3 — Honest limitations: missing baselines, untested assumptions, \
-narrow applicability, overclaimed novelty, or gaps in the evaluation.
-
-Paragraph 4 — How this connects to the broader research landscape, what it \
-makes you curious about, or what the natural next step in this line of work \
-would be.
-
-Keep the total length to roughly 150 words. Write as a knowledgeable peer \
-would — not a press release, not a lecture. No bold, no bullet points.
-
-Paper title: {title}
-
-Paper text:
-{text}
-"""
-
 
 # ---------------------------------------------------------------------------
 # PDF helpers
@@ -105,9 +75,9 @@ def claude_call_with_retry(client: anthropic.Anthropic, max_retries: int = 4, **
             time.sleep(wait)
 
 
-def summarize_paper(paper: dict, text: str, client: anthropic.Anthropic) -> str:
+def summarize_paper(paper: dict, text: str, prompt_template: str, client: anthropic.Anthropic) -> str:
     """Ask Claude for a 4-paragraph review of one paper."""
-    prompt = PAPER_SUMMARY_PROMPT.format(title=paper["title"], text=text)
+    prompt = prompt_template.format(title=paper["title"], text=text)
 
     with _semaphore:
         response = claude_call_with_retry(
@@ -136,6 +106,9 @@ def validate_summary(summary: str, paper_id: str) -> bool:
 if __name__ == "__main__":
     start_time = datetime.now()
 
+    with open("prompts/paper_summary_prompt.txt", "r", encoding="utf-8") as f:
+        prompt_template = f.read()
+
     in_path = os.path.join(DATA_DIR, "scored_papers.json")
     with open(in_path, "r", encoding="utf-8") as f:
         scored = json.load(f)
@@ -159,7 +132,7 @@ if __name__ == "__main__":
 
         # 2. Summarize
         try:
-            summary = summarize_paper(paper, text, client)
+            summary = summarize_paper(paper, text, prompt_template, client)
         except Exception as e:
             print(f"  [error]    {paper_id}: {e}")
             results.append({**paper, "summary": None, "used_fallback": used_fallback, "summary_error": str(e)})

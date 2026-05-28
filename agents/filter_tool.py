@@ -1,3 +1,19 @@
+LANGUAGE_FILTER_TOOL = {
+    "name": "filter_by_language",
+    "description": "Identify which articles are written in English or French based on a short text sample",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "keep_indices": {
+                "type": "array",
+                "items": {"type": "integer"},
+                "description": "0-based indices of articles that are written in English or French"
+            }
+        },
+        "required": ["keep_indices"]
+    }
+}
+
 FILTER_TOOL = {
     "name": "filter_articles",
     "description": "Filter a list of news articles for AI relevance and assign each a category",

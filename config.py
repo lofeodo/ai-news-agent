@@ -10,7 +10,8 @@ MAX_SCORE = 28
 
 # Claude
 SCORING_MODEL = "claude-haiku-4-5-20251001"
-MAX_TOKENS = 1000
+MAX_TOKENS = 1000           # used for scoring
+FILTER_MAX_TOKENS = 4000    # used for news filtering — up to 100 index+category pairs per batch
 
 # Shared timing
 LOOKBACK_HOURS = 168    # 7 days — applies to both ArXiv and news fetching
@@ -45,9 +46,23 @@ PAYWALLED_DOMAINS = [
     "washingtonpost.com",
     "wired.com",
     "telegraph.co.uk",
+    "consent.yahoo.com",    # Yahoo consent redirect — no article content
+    "pypi.org",             # Python package index — version bumps, not news
 ]
 
 ALLOWED_LANGUAGES = {"en", "fr"}
+
+# Unicode ranges for non-Latin scripts — titles containing these are dropped
+NON_LATIN_RANGES = [
+    (0x0400, 0x04FF),   # Cyrillic
+    (0x0600, 0x06FF),   # Arabic
+    (0x0900, 0x097F),   # Devanagari
+    (0x4E00, 0x9FFF),   # CJK Unified Ideographs (Chinese/Japanese)
+    (0x3040, 0x30FF),   # Hiragana + Katakana
+    (0xAC00, 0xD7AF),   # Korean Hangul
+    (0x0E00, 0x0E7F),   # Thai
+    (0x0590, 0x05FF),   # Hebrew
+]
 
 # Paths
 DATA_DIR = "data"

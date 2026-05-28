@@ -8,14 +8,14 @@ import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
-from filter_tool import FILTER_TOOL
+from filter_tool import FILTER_TOOL, LANGUAGE_FILTER_TOOL
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import (
-    DATA_DIR, SCORING_MODEL, MAX_TOKENS,
+    DATA_DIR, SCORING_MODEL, MAX_TOKENS, FILTER_MAX_TOKENS,
     NEWS_FETCH_SIZE, NEWSAPI_QUERIES,
     PAYWALLED_DOMAINS, ALLOWED_LANGUAGES,
-    LOOKBACK_HOURS
+    NON_LATIN_RANGES, LOOKBACK_HOURS
 )
 
 # --- Constants ---
@@ -155,23 +155,31 @@ def is_paywalled(url: str) -> bool:
     return False
 
 
+def is_non_latin(text: str) -> bool:
+    """Return True if the text contains characters from a non-Latin script."""
+    for char in text:
+        cp = ord(char)
+        for start, end in NON_LATIN_RANGES:
+            if start <= cp <= end:
+                return True
+    return False
+
+
 def prefilter(articles: list) -> list:
     """
     Drop articles that are:
-    - Missing URL, title, or description
-    - From a paywalled domain
-    - In a language other than ALLOWED_LANGUAGES
+    - Missing URL or title
+    - From a paywalled or low-signal domain
+    - Containing non-Latin script characters in the title
     - Exact URL duplicates
     """
     seen_urls = set()
     filtered  = []
-    stats     = {"no_url": 0, "no_title": 0, "paywalled": 0, "language": 0, "duplicate": 0}
+    stats     = {"no_url": 0, "no_title": 0, "paywalled": 0, "non_latin": 0, "duplicate": 0}
 
     for article in articles:
-        url  = article.get("url", "").strip()
+        url   = article.get("url", "").strip()
         title = article.get("title", "").strip()
-        desc  = article.get("description", "").strip()
-        lang  = article.get("language", "en").lower()[:2]   # e.g. "en-US" → "en"
 
         if not url:
             stats["no_url"] += 1
@@ -182,8 +190,8 @@ def prefilter(articles: list) -> list:
         if is_paywalled(url):
             stats["paywalled"] += 1
             continue
-        if lang not in ALLOWED_LANGUAGES:
-            stats["language"] += 1
+        if is_non_latin(title):
+            stats["non_latin"] += 1
             continue
         if url in seen_urls:
             stats["duplicate"] += 1
@@ -198,8 +206,98 @@ def prefilter(articles: list) -> list:
 
 
 # ---------------------------------------------------------------------------
-# Claude filtering + categorization
+# Language filtering (Claude-based, title + description snippet)
 # ---------------------------------------------------------------------------
+
+LANG_BATCH_SIZE    = 200    # titles+snippets are tiny — large batches are fine
+LANG_SNIPPET_WORDS = 30     # words to take from description for language detection
+LANG_FILTER_PROMPT = """\
+You are a language detector. Below is a numbered list of short text samples from news articles.
+
+Your task: identify which articles are written in English or French.
+Return ONLY the indices of articles that are clearly English or French.
+Exclude articles in any other language (Spanish, Italian, Portuguese, German, Romanian, Dutch, Polish, Turkish, etc.).
+When in doubt, exclude.
+
+Use the filter_by_language tool to return your answer.
+
+Samples:
+{samples}"""
+
+
+def format_samples_for_lang_prompt(articles: list) -> str:
+    """Format title + first 30 words of description as numbered samples."""
+    lines = []
+    for i, article in enumerate(articles):
+        title   = article.get("title", "") or ""
+        desc    = article.get("description", "") or ""
+        snippet = " ".join(desc.split()[:LANG_SNIPPET_WORDS])
+        sample  = f"{title} — {snippet}" if snippet else title
+        lines.append(f"[{i}] {sample}")
+    return "\n".join(lines)
+
+
+def language_filter_batch(batch: list, batch_index: int, client: anthropic.Anthropic) -> list:
+    """Run language detection on a single batch. Returns articles that are EN or FR."""
+    samples = format_samples_for_lang_prompt(batch)
+    prompt  = LANG_FILTER_PROMPT.format(samples=samples)
+
+    with _semaphore:
+        response = client.messages.create(
+            model=SCORING_MODEL,
+            max_tokens=FILTER_MAX_TOKENS,
+            tools=[LANGUAGE_FILTER_TOOL],
+            tool_choice={"type": "tool", "name": "filter_by_language"},
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+    tool_input   = response.content[0].input
+    keep_indices = tool_input.get("keep_indices", [])
+
+    if response.stop_reason == "max_tokens":
+        print(f"  [lang] Batch {batch_index}: max_tokens hit — treating as empty")
+        return []
+
+    print(f"  [lang] Batch {batch_index}: keeping {len(keep_indices)}/{len(batch)} articles")
+
+    results = []
+    for idx in keep_indices:
+        if 0 <= idx < len(batch):
+            results.append(batch[idx])
+        else:
+            print(f"  [lang] Batch {batch_index}: out-of-range index {idx}, skipping")
+    return results
+
+
+def language_filter(articles: list) -> list:
+    """
+    Filter articles to English and French only using Claude.
+    Runs in parallel batches of LANG_BATCH_SIZE.
+    """
+    n_batches = (len(articles) + LANG_BATCH_SIZE - 1) // LANG_BATCH_SIZE
+    print(f"\nLanguage filtering {len(articles)} articles in {n_batches} batch(es)...")
+
+    client  = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
+    batches = [articles[i:i + LANG_BATCH_SIZE] for i in range(0, len(articles), LANG_BATCH_SIZE)]
+
+    all_results = []
+    with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_CLAUDE_CALLS) as executor:
+        future_to_batch = {
+            executor.submit(language_filter_batch, batch, i + 1, client): i
+            for i, batch in enumerate(batches)
+        }
+        for future in as_completed(future_to_batch):
+            try:
+                all_results.extend(future.result())
+            except Exception as e:
+                print(f"  [lang] batch failed: {e}")
+
+    dropped = len(articles) - len(all_results)
+    print(f"  Language filter dropped {dropped} articles — {len(all_results)} remaining")
+    return all_results
+
+
+
 
 FILTER_BATCH_SIZE = 100
 
@@ -226,7 +324,7 @@ def filter_batch(batch: list, batch_index: int, prompt_template: str, client: an
     with _semaphore:
         response = client.messages.create(
             model=SCORING_MODEL,
-            max_tokens=MAX_TOKENS,
+            max_tokens=FILTER_MAX_TOKENS,
             tools=[FILTER_TOOL],
             tool_choice={"type": "tool", "name": "filter_articles"},
             messages=[{"role": "user", "content": prompt}]
@@ -234,7 +332,12 @@ def filter_batch(batch: list, batch_index: int, prompt_template: str, client: an
 
     tool_input = response.content[0].input
     selected   = tool_input.get("articles", [])
-    print(f"  Batch {batch_index}: {len(selected)} articles selected")
+
+    if len(selected) == 0:
+        print(f"  Batch {batch_index}: 0 articles selected — DEBUG tool_input: {tool_input}")
+        print(f"  Batch {batch_index}: stop_reason={response.stop_reason}, content blocks={len(response.content)}")
+    else:
+        print(f"  Batch {batch_index}: {len(selected)} articles selected")
 
     results = []
     for item in selected:
@@ -297,6 +400,9 @@ if __name__ == "__main__":
     # Pre-filter (code-level)
     print("Pre-filtering...")
     all_articles = prefilter(all_articles)
+
+    # Language filter (Claude-based, EN/FR only)
+    all_articles = language_filter(all_articles)
 
     # Claude filter + categorize
     filtered = filter_and_categorize(all_articles)

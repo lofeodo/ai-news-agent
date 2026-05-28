@@ -6,6 +6,7 @@ import os
 import requests
 import sys
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 from filter_tool import FILTER_TOOL, LANGUAGE_FILTER_TOOL
@@ -206,8 +207,26 @@ def prefilter(articles: list) -> list:
 
 
 # ---------------------------------------------------------------------------
-# Language filtering (Claude-based, title + description snippet)
+# Shared Claude call with exponential backoff retry on 429
 # ---------------------------------------------------------------------------
+
+def claude_call_with_retry(client: anthropic.Anthropic, max_retries: int = 4, **kwargs) -> object:
+    """
+    Call client.messages.create with exponential backoff on rate limit errors.
+    Retries up to max_retries times: waits 10s, 20s, 40s, 80s.
+    """
+    for attempt in range(max_retries):
+        try:
+            return client.messages.create(**kwargs)
+        except anthropic.RateLimitError:
+            if attempt == max_retries - 1:
+                raise
+            wait = 10 * (2 ** attempt)   # 10s, 20s, 40s, 80s
+            print(f"  [retry] rate limited, waiting {wait}s...")
+            time.sleep(wait)
+
+
+
 
 LANG_BATCH_SIZE    = 200    # titles+snippets are tiny — large batches are fine
 LANG_SNIPPET_WORDS = 30     # words to take from description for language detection
@@ -243,7 +262,8 @@ def language_filter_batch(batch: list, batch_index: int, client: anthropic.Anthr
     prompt  = LANG_FILTER_PROMPT.format(samples=samples)
 
     with _semaphore:
-        response = client.messages.create(
+        response = claude_call_with_retry(
+            client,
             model=SCORING_MODEL,
             max_tokens=FILTER_MAX_TOKENS,
             tools=[LANGUAGE_FILTER_TOOL],
@@ -322,7 +342,8 @@ def filter_batch(batch: list, batch_index: int, prompt_template: str, client: an
     prompt    = prompt_template.format(articles=formatted)
 
     with _semaphore:
-        response = client.messages.create(
+        response = claude_call_with_retry(
+            client,
             model=SCORING_MODEL,
             max_tokens=FILTER_MAX_TOKENS,
             tools=[FILTER_TOOL],

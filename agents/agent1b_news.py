@@ -11,19 +11,27 @@ from datetime import datetime, timedelta, timezone
 from filter_tool import FILTER_TOOL
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import DATA_DIR, SCORING_MODEL, MAX_TOKENS, NEWS_FETCH_SIZE, LOOKBACK_HOURS
+from config import (
+    DATA_DIR, SCORING_MODEL, MAX_TOKENS,
+    NEWS_FETCH_SIZE, NEWSAPI_QUERIES,
+    PAYWALLED_DOMAINS, ALLOWED_LANGUAGES,
+    LOOKBACK_HOURS
+)
 
 # --- Constants ---
 HN_TOP_STORIES_URL = "https://hacker-news.firebaseio.com/v0/topstories.json"
 HN_ITEM_URL        = "https://hacker-news.firebaseio.com/v0/item/{}.json"
 NEWSAPI_URL        = "https://newsapi.org/v2/everything"
-NEWSAPI_QUERY      = "artificial intelligence OR machine learning OR LLM OR deep learning"
 HN_MAX_WORKERS     = 20
 
 # --- Rate limiting (Claude calls) ---
 MAX_CONCURRENT_CLAUDE_CALLS = 5
 _semaphore = threading.Semaphore(MAX_CONCURRENT_CLAUDE_CALLS)
 
+
+# ---------------------------------------------------------------------------
+# Fetching
+# ---------------------------------------------------------------------------
 
 def fetch_hn_story(story_id: int, cutoff_timestamp: float) -> dict | None:
     """Fetch a single HN story by ID. Returns None if not a valid article or too old."""
@@ -43,9 +51,10 @@ def fetch_hn_story(story_id: int, cutoff_timestamp: float) -> dict | None:
         return {
             "source":      "hackernews",
             "title":       item.get("title", ""),
-            "description": "",           # HN has no description field
+            "description": "",
             "url":         item.get("url", ""),
-            "score":       item.get("score", 0)
+            "language":    "en",            # HN is English only
+            "hn_score":    item.get("score", 0)
         }
     except Exception as e:
         print(f"  [hn error] story {story_id}: {e}")
@@ -53,21 +62,21 @@ def fetch_hn_story(story_id: int, cutoff_timestamp: float) -> dict | None:
 
 
 def fetch_hn_articles() -> list:
-    """Fetch top HN stories from the last LOOKBACK_HOURS, return up to NEWS_FETCH_SIZE."""
-    print(f"Fetching Hacker News top stories (last {LOOKBACK_HOURS} hours)...")
+    """Fetch top HN stories from the last LOOKBACK_HOURS."""
+    print(f"Fetching Hacker News stories (last {LOOKBACK_HOURS}h)...")
 
     cutoff_timestamp = (datetime.now(timezone.utc) - timedelta(hours=LOOKBACK_HOURS)).timestamp()
 
     response = requests.get(HN_TOP_STORIES_URL, timeout=10)
     response.raise_for_status()
-    story_ids = response.json()[:NEWS_FETCH_SIZE * 3]   # fetch 3x and trim — many will be non-articles or too old
+    # Fetch 3x target — many stories will be non-articles or outside the time window
+    story_ids = response.json()[:NEWS_FETCH_SIZE * 3]
 
     print(f"  Fetching {len(story_ids)} story IDs in parallel...")
     articles = []
 
     with ThreadPoolExecutor(max_workers=HN_MAX_WORKERS) as executor:
         future_to_id = {executor.submit(fetch_hn_story, sid, cutoff_timestamp): sid for sid in story_ids}
-
         for future in as_completed(future_to_id):
             result = future.result()
             if result:
@@ -79,9 +88,40 @@ def fetch_hn_articles() -> list:
     return articles[:NEWS_FETCH_SIZE]
 
 
+def fetch_newsapi_query(query: str, from_time: str, api_key: str) -> list:
+    """Run a single NewsAPI query. Returns up to NEWS_FETCH_SIZE articles."""
+    params = {
+        "q":        query,
+        "sortBy":   "publishedAt",
+        "pageSize": NEWS_FETCH_SIZE,
+        "apiKey":   api_key
+    }
+
+    response = requests.get(NEWSAPI_URL, params=params, timeout=10)
+    response.raise_for_status()
+    data = response.json()
+
+    if data.get("status") != "ok":
+        print(f"  [newsapi warning] query returned status: {data.get('status')}")
+        return []
+
+    articles = []
+    for item in data.get("articles", []):
+        articles.append({
+            "source":      "newsapi",
+            "title":       item.get("title", "") or "",
+            "description": item.get("description", "") or "",
+            "url":         item.get("url", "") or "",
+            "language":    item.get("language", "en") or "en",
+            "hn_score":    None
+        })
+
+    return articles
+
+
 def fetch_newsapi_articles() -> list:
-    """Fetch AI articles from NewsAPI.org from the last LOOKBACK_HOURS."""
-    print(f"Fetching NewsAPI articles (last {LOOKBACK_HOURS} hours)...")
+    """Run all NEWSAPI_QUERIES and merge results."""
+    print(f"Fetching NewsAPI articles ({len(NEWSAPI_QUERIES)} queries)...")
 
     api_key = os.environ.get("NEWS_API_KEY")
     if not api_key:
@@ -89,50 +129,79 @@ def fetch_newsapi_articles() -> list:
 
     from_time = (datetime.now(timezone.utc) - timedelta(hours=LOOKBACK_HOURS)).strftime("%Y-%m-%dT%H:%M:%S")
 
-    params = {
-        "q":        NEWSAPI_QUERY,
-        "language": "en",
-        "sortBy":   "publishedAt",
-        "pageSize": NEWS_FETCH_SIZE,
-        "from":     from_time,
-        "apiKey":   api_key
-    }
+    all_articles = []
+    for i, query in enumerate(NEWSAPI_QUERIES, 1):
+        print(f"  Query {i}/{len(NEWSAPI_QUERIES)}: {query[:60]}...")
+        try:
+            results = fetch_newsapi_query(query, from_time, api_key)
+            print(f"    → {len(results)} articles")
+            all_articles.extend(results)
+        except Exception as e:
+            print(f"    [error] {e}")
 
-    response = requests.get(NEWSAPI_URL, params=params, timeout=10)
-    response.raise_for_status()
-    data = response.json()
-    print(f"  NewsAPI status: {data.get('status')}")
-    print(f"  NewsAPI totalResults: {data.get('totalResults')}")
-    print(f"  from_time used: {from_time}")
-
-    articles = []
-    for item in data.get("articles", []):
-        articles.append({
-            "source":      "newsapi",
-            "title":       item.get("title", ""),
-            "description": item.get("description", "") or "",
-            "url":         item.get("url", ""),
-            "score":       None
-        })
-
-    print(f"  Got {len(articles)} NewsAPI articles")
-    return articles
+    print(f"  Got {len(all_articles)} NewsAPI articles (before dedup)")
+    return all_articles
 
 
-def deduplicate(articles: list) -> list:
-    """Remove duplicate articles by exact URL match."""
+# ---------------------------------------------------------------------------
+# Pre-filtering (code-level, no Claude)
+# ---------------------------------------------------------------------------
+
+def is_paywalled(url: str) -> bool:
+    """Return True if the URL belongs to a known paywalled domain."""
+    for domain in PAYWALLED_DOMAINS:
+        if domain in url:
+            return True
+    return False
+
+
+def prefilter(articles: list) -> list:
+    """
+    Drop articles that are:
+    - Missing URL, title, or description
+    - From a paywalled domain
+    - In a language other than ALLOWED_LANGUAGES
+    - Exact URL duplicates
+    """
     seen_urls = set()
-    deduped = []
-    for article in articles:
-        url = article["url"]
-        if url and url not in seen_urls:
-            seen_urls.add(url)
-            deduped.append(article)
+    filtered  = []
+    stats     = {"no_url": 0, "no_title": 0, "paywalled": 0, "language": 0, "duplicate": 0}
 
-    removed = len(articles) - len(deduped)
-    if removed:
-        print(f"  Removed {removed} duplicate(s) by URL")
-    return deduped
+    for article in articles:
+        url  = article.get("url", "").strip()
+        title = article.get("title", "").strip()
+        desc  = article.get("description", "").strip()
+        lang  = article.get("language", "en").lower()[:2]   # e.g. "en-US" → "en"
+
+        if not url:
+            stats["no_url"] += 1
+            continue
+        if not title:
+            stats["no_title"] += 1
+            continue
+        if is_paywalled(url):
+            stats["paywalled"] += 1
+            continue
+        if lang not in ALLOWED_LANGUAGES:
+            stats["language"] += 1
+            continue
+        if url in seen_urls:
+            stats["duplicate"] += 1
+            continue
+
+        seen_urls.add(url)
+        filtered.append(article)
+
+    print(f"  Pre-filter removed: {stats}")
+    print(f"  Remaining: {len(filtered)} articles")
+    return filtered
+
+
+# ---------------------------------------------------------------------------
+# Claude filtering + categorization
+# ---------------------------------------------------------------------------
+
+FILTER_BATCH_SIZE = 100
 
 
 def format_articles_for_prompt(articles: list) -> str:
@@ -145,17 +214,14 @@ def format_articles_for_prompt(articles: list) -> str:
     return "\n\n".join(lines)
 
 
-def filter_articles_with_claude(articles: list) -> list:
-    """Use Claude to select the most AI-relevant articles. Returns filtered list."""
-    print(f"\nFiltering {len(articles)} articles with Claude...")
-
-    with open("prompts/news_filter_prompt.txt", "r", encoding="utf-8") as f:
-        prompt_template = f.read()
-
-    formatted = format_articles_for_prompt(articles)
-    prompt = prompt_template.format(articles=formatted)
-
-    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
+def filter_batch(batch: list, batch_index: int, prompt_template: str, client: anthropic.Anthropic) -> list:
+    """
+    Filter and categorize a single batch of articles.
+    Returns list of (global_index_offset, local_index, category) tuples resolved to articles.
+    batch_index is used only for logging.
+    """
+    formatted = format_articles_for_prompt(batch)
+    prompt    = prompt_template.format(articles=formatted)
 
     with _semaphore:
         response = client.messages.create(
@@ -166,45 +232,94 @@ def filter_articles_with_claude(articles: list) -> list:
             messages=[{"role": "user", "content": prompt}]
         )
 
-    selected_indices = response.content[0].input["selected_indices"]
-    print(f"  Claude selected {len(selected_indices)} articles: indices {selected_indices}")
+    tool_input = response.content[0].input
+    selected   = tool_input.get("articles", [])
+    print(f"  Batch {batch_index}: {len(selected)} articles selected")
 
-    filtered = []
-    for i in selected_indices:
-        if 0 <= i < len(articles):
-            filtered.append(articles[i])
+    results = []
+    for item in selected:
+        idx      = item["index"]
+        category = item["category"]
+        if 0 <= idx < len(batch):
+            results.append({**batch[idx], "category": category})
         else:
-            print(f"  [warning] Claude returned out-of-range index {i}, skipping")
+            print(f"  [warning] batch {batch_index}: out-of-range index {idx}, skipping")
 
-    return filtered
+    return results
 
+
+def filter_and_categorize(articles: list) -> list:
+    """
+    Split articles into batches of FILTER_BATCH_SIZE, filter and categorize
+    each batch in parallel with Claude, then merge results.
+    """
+    n_batches = (len(articles) + FILTER_BATCH_SIZE - 1) // FILTER_BATCH_SIZE
+    print(f"\nFiltering and categorizing {len(articles)} articles in {n_batches} batches...")
+
+    with open("prompts/news_filter_prompt.txt", "r", encoding="utf-8") as f:
+        prompt_template = f.read()
+
+    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
+
+    batches = [articles[i:i + FILTER_BATCH_SIZE] for i in range(0, len(articles), FILTER_BATCH_SIZE)]
+
+    all_results = []
+    with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_CLAUDE_CALLS) as executor:
+        future_to_batch = {
+            executor.submit(filter_batch, batch, i + 1, prompt_template, client): i
+            for i, batch in enumerate(batches)
+        }
+        for future in as_completed(future_to_batch):
+            try:
+                all_results.extend(future.result())
+            except Exception as e:
+                print(f"  [error] batch failed: {e}")
+
+    print(f"  Total selected across all batches: {len(all_results)}")
+    return all_results
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
     start_time = datetime.now()
 
-    # Fetch from both sources
+    # Fetch
     hn_articles   = fetch_hn_articles()
     news_articles = fetch_newsapi_articles()
 
-    # Merge and deduplicate
+    # Merge
     all_articles = hn_articles + news_articles
     print(f"\nMerged: {len(all_articles)} articles total")
-    all_articles = deduplicate(all_articles)
-    print(f"After dedup: {len(all_articles)} articles")
 
-    # Filter with Claude
-    filtered = filter_articles_with_claude(all_articles)
+    # Pre-filter (code-level)
+    print("Pre-filtering...")
+    all_articles = prefilter(all_articles)
 
+    # Claude filter + categorize
+    filtered = filter_and_categorize(all_articles)
+
+    # Summary
     elapsed = (datetime.now() - start_time).total_seconds()
     print(f"\n--- Done in {elapsed:.1f}s ---")
-    print(f"Selected {len(filtered)} articles")
+    print(f"Selected {len(filtered)} articles across categories\n")
 
-    print("\n=== FILTERED ARTICLES ===")
-    for i, article in enumerate(filtered, 1):
-        print(f"{i}. [{article['source']}] {article['title']}")
-        print(f"   {article['url']}\n")
+    # Group by category for display
+    by_category = {}
+    for article in filtered:
+        cat = article["category"]
+        by_category.setdefault(cat, []).append(article)
 
-    # Save results
+    print("=== FILTERED ARTICLES BY CATEGORY ===")
+    for category, articles in sorted(by_category.items()):
+        print(f"\n{category} ({len(articles)})")
+        for article in articles:
+            print(f"  [{article['source']}] {article['title']}")
+            print(f"  {article['url']}")
+
+    # Save
     os.makedirs(DATA_DIR, exist_ok=True)
     out_path = os.path.join(DATA_DIR, "news_filtered.json")
     with open(out_path, "w", encoding="utf-8") as f:
@@ -213,7 +328,8 @@ if __name__ == "__main__":
             "elapsed_seconds": elapsed,
             "total_fetched":   len(all_articles),
             "total_selected":  len(filtered),
+            "by_category":     {cat: articles for cat, articles in by_category.items()},
             "articles":        filtered
         }, f, indent=2, ensure_ascii=False)
 
-    print(f"Saved results to {out_path}")
+    print(f"\nSaved results to {out_path}")

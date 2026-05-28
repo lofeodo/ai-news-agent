@@ -1,15 +1,37 @@
 FILTER_TOOL = {
     "name": "filter_articles",
-    "description": "Select the most AI-relevant articles from a list by their indices",
+    "description": "Filter a list of news articles for AI relevance and assign each a category",
     "input_schema": {
         "type": "object",
         "properties": {
-            "selected_indices": {
+            "articles": {
                 "type": "array",
-                "items": {"type": "integer"},
-                "description": "0-based indices of the selected AI-relevant articles"
+                "description": "List of selected articles with their index and assigned category",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "index": {
+                            "type": "integer",
+                            "description": "0-based index of the article from the input list"
+                        },
+                        "category": {
+                            "type": "string",
+                            "enum": [
+                                "Model & Product Releases",
+                                "Industry & Business",
+                                "Policy, Law & Regulation",
+                                "Open Source & Tools",
+                                "Safety & Alignment",
+                                "Society & Culture",
+                                "Canada & Montreal"
+                            ],
+                            "description": "The most appropriate category for this article"
+                        }
+                    },
+                    "required": ["index", "category"]
+                }
             }
         },
-        "required": ["selected_indices"]
+        "required": ["articles"]
     }
 }

@@ -2,19 +2,52 @@
 
 # ArXiv fetching
 MAX_FETCH = 500         # safety ceiling for ArXiv API
-SAMPLE_SIZE = 35        # papers to randomly sample for scoring per day
-LOOKBACK_HOURS = 24     # how far back to fetch papers
+SAMPLE_SIZE = 35        # papers to score per week (pre-filter replaces random sample later)
 WORD_CUTOFF = 2000
 
 # Paper scoring
 MAX_SCORE = 28
 
-# News fetching
-NEWS_FETCH_SIZE = 10    # articles per source
-
 # Claude
 SCORING_MODEL = "claude-haiku-4-5-20251001"
 MAX_TOKENS = 1000
+
+# Shared timing
+LOOKBACK_HOURS = 168    # 7 days — applies to both ArXiv and news fetching
+
+# News fetching
+NEWS_FETCH_SIZE = 100   # articles per NewsAPI query
+
+NEWSAPI_QUERIES = [
+    # English global
+    '"artificial intelligence" OR "machine learning" OR "deep learning"',
+    '"LLM" OR "large language model" OR "generative AI" OR "foundation model"',
+    '"OpenAI" OR "Anthropic" OR "Google DeepMind" OR "Mistral" OR "xAI" OR "Meta AI" OR "Apple Intelligence" OR "Amazon Bedrock" OR "Cohere" OR "Stability AI" OR "Midjourney" OR "Perplexity"',
+    '"AI regulation" OR "AI safety" OR "AI policy" OR "AI law" OR "AI ethics" OR "AI governance" OR "AI alignment"',
+    '"open source AI" OR "AI tools" OR "AI agent" OR "AI assistant" OR "agentic AI"',
+    '"AI chip" OR "GPU" OR "NVIDIA" OR "semiconductor" OR "AI infrastructure" OR "AI hardware"',
+    '"AI research" OR "neural network" OR "transformer model" OR "diffusion model" OR "reinforcement learning"',
+    # French global
+    '"intelligence artificielle" OR "apprentissage automatique" OR "apprentissage profond" OR "IA générative" OR "grand modèle de langage"',
+    # Canada / Montreal (English + French)
+    '("AI" OR "artificial intelligence" OR "intelligence artificielle" OR "IA") AND ("Canada" OR "Montreal" OR "Montréal" OR "Quebec" OR "Québec" OR "Toronto" OR "Ottawa")',
+]
+
+PAYWALLED_DOMAINS = [
+    "theglobeandmail.com",
+    "nytimes.com",
+    "ft.com",
+    "wsj.com",
+    "bloomberg.com",
+    "theathletic.com",
+    "thetimes.co.uk",
+    "economist.com",
+    "washingtonpost.com",
+    "wired.com",
+    "telegraph.co.uk",
+]
+
+ALLOWED_LANGUAGES = {"en", "fr"}
 
 # Paths
 DATA_DIR = "data"

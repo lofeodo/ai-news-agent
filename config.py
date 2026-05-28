@@ -3,7 +3,8 @@
 # ArXiv fetching
 MAX_FETCH = 500         # safety ceiling for ArXiv API
 SAMPLE_SIZE = 35        # papers to score per week (pre-filter replaces random sample later)
-WORD_CUTOFF = 2000
+WORD_CUTOFF = 5000        # papers — covers method + results, excludes references (~6-7k tokens)
+ARTICLE_WORD_LIMIT = 1500 # news articles — most articles are under this anyway
 
 # Paper scoring
 MAX_SCORE = 28
@@ -12,12 +13,14 @@ MAX_SCORE = 28
 SCORING_MODEL = "claude-haiku-4-5-20251001"
 MAX_TOKENS = 1000           # used for scoring
 FILTER_MAX_TOKENS = 4000    # used for news filtering — up to 100 index+category pairs per batch
+PAPER_SUMMARY_MAX_TOKENS = 600   # ~150 words with breathing room for 4 paragraphs
+NEWS_SUMMARY_MAX_TOKENS  = 200   # 2-3 sentences
 
 # Shared timing
 LOOKBACK_HOURS = 168    # 7 days — applies to both ArXiv and news fetching
 
 # News fetching
-NEWS_FETCH_SIZE = 100   # articles per NewsAPI query
+NEWS_FETCH_SIZE = 10   # articles per NewsAPI query
 
 NEWSAPI_QUERIES = [
     # English global

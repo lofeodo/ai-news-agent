@@ -1,0 +1,6 @@
+Write a 2-3 sentence summary of the following news article for an AI newsletter. Be factual and specific. The first sentence states what happened. The second (and optional third) sentence adds the most important context or implication. Do not editorialize beyond what the article supports. Do not use any headers, titles, or markdown formatting of any kind.
+
+Article title: {title}
+
+Article text:
+{text}

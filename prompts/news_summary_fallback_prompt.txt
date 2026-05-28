@@ -1,0 +1,5 @@
+Write a 2-3 sentence summary for an AI newsletter based on this article title and short description. Be factual and specific. If the description is thin, keep the summary tight rather than padding it out. Do not use any headers, titles, or markdown formatting of any kind.
+
+Article title: {title}
+
+Description: {description}

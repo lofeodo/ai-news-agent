@@ -1,4 +1,10 @@
-Write a 2-3 sentence summary of the following news article for an AI newsletter. Be factual and specific. The first sentence states what happened. The second (and optional third) sentence adds the most important context or implication. Do not editorialize beyond what the article supports. Do not use any headers, titles, or markdown formatting of any kind.
+Write a 1-2 sentence summary of the following news article for an AI newsletter. State what happened and the single most important implication. Be specific and cut anything that isn't essential.
+
+Style rules:
+- No em dashes (—) or en dashes (–). Use commas or short sentences instead.
+- No filler words like "importantly", "notably", "crucially", or "interestingly".
+- No headers, titles, or markdown of any kind.
+- Short sentences are better than long ones.
 
 Article title: {title}
 

@@ -23,9 +23,9 @@ from config import DATA_DIR, SCORING_MODEL
 # Constants
 # ---------------------------------------------------------------------------
 
-NEWSLETTER_NAME = "Latent Spacemail"
+NEWSLETTER_NAME = "Latent SpaceMail"
 RECIPIENT_EMAIL = os.environ.get("NEWSLETTER_RECIPIENT_EMAIL", "")
-SENDER_EMAIL    = "latentspacemail@gmail.com"
+SENDER_EMAIL = "Latent SpaceMail <latentspacemail@gmail.com>"
 
 GMAIL_SCOPES        = ["https://www.googleapis.com/auth/gmail.send"]
 CREDENTIALS_PATH    = "credentials.json"
@@ -286,9 +286,10 @@ def compose_html(
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{NEWSLETTER_NAME}</title>
+  <link >
   <style>
     body {{
-      font-family: Georgia, 'Times New Roman', serif;
+      font-family: 'Menlo', 'Cascadia Code', 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
       background: #f4f4f4;
       color: #1a1a1a;
       margin: 0;
@@ -305,21 +306,32 @@ def compose_html(
       padding: 32px 40px 24px;
     }}
     .header h1 {{
-      margin: 0 0 4px 0;
+      margin: 0 0 6px 0;
       font-size: 28px;
       letter-spacing: 0.5px;
+      font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
+      font-weight: 700;
+    }}
+    .header .subtitle {{
+      font-size: 12px;
+      color: #888888;
+      font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin: 0 0 10px 0;
     }}
     .header .week-label {{
       font-size: 13px;
       color: #aaaaaa;
-      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
     }}
     .intro {{
       padding: 28px 40px;
-      font-size: 16px;
+      font-size: 14px;
       line-height: 1.7;
       border-bottom: 1px solid #eeeeee;
       color: #333333;
+      font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
     }}
     .section {{
       padding: 28px 40px;
@@ -346,7 +358,7 @@ def compose_html(
       right: 0;
       background: #0f0f0f;
       color: #ffffff;
-      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
       font-size: 11px;
       font-weight: 700;
       padding: 3px 7px;
@@ -354,9 +366,11 @@ def compose_html(
     }}
     .paper-title {{
       margin: 0 0 4px 0;
-      font-size: 16px;
+      font-size: 15px;
       line-height: 1.4;
       padding-right: 56px;
+      font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
+      font-weight: 600;
     }}
     .paper-title a {{
       color: #1a1a1a;
@@ -366,16 +380,17 @@ def compose_html(
       text-decoration: underline;
     }}
     .paper-meta {{
-      font-family: 'Helvetica Neue', Arial, sans-serif;
-      font-size: 12px;
+      font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
+      font-size: 11px;
       color: #999999;
       margin-bottom: 10px;
     }}
     .paper-card p {{
       margin: 0 0 10px 0;
-      font-size: 14px;
-      line-height: 1.65;
+      font-size: 13px;
+      line-height: 1.7;
       color: #444444;
+      font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
     }}
     .article-card {{
       margin-bottom: 20px;
@@ -389,8 +404,8 @@ def compose_html(
     }}
     .article-title {{
       margin: 0 0 6px 0;
-      font-size: 15px;
-      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 14px;
+      font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
       font-weight: 600;
     }}
     .article-title a {{
@@ -408,20 +423,22 @@ def compose_html(
     }}
     .article-summary {{
       margin: 0;
-      font-size: 14px;
-      line-height: 1.6;
+      font-size: 13px;
+      line-height: 1.65;
       color: #555555;
+      font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
     }}
     .no-articles {{
-      font-size: 14px;
+      font-size: 13px;
       color: #aaaaaa;
       font-style: italic;
       margin: 0;
+      font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
     }}
     .footer {{
       padding: 24px 40px;
-      font-family: 'Helvetica Neue', Arial, sans-serif;
-      font-size: 12px;
+      font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
+      font-size: 11px;
       color: #aaaaaa;
       text-align: center;
       background: #f9f9f9;
@@ -432,13 +449,14 @@ def compose_html(
   <div class="wrapper">
     <div class="header">
       <h1>{NEWSLETTER_NAME}</h1>
+      <div class="subtitle">Your Weekly AI Briefing</div>
       <div class="week-label">Week of {week_of}</div>
     </div>
     <div class="intro">
       {intro}
     </div>
-    {research_section}
     {news_sections}
+    {research_section}
     <div class="footer">
       You're receiving this because you set it up. Unsubscribe by turning off the Cloud Scheduler. ✌️
     </div>

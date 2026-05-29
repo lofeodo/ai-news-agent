@@ -309,13 +309,13 @@ def compose_html(
       margin: 0 0 6px 0;
       font-size: 28px;
       letter-spacing: 0.5px;
-      font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
+      font-family: 'Menlo', 'Cascadia Code', 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
       font-weight: 700;
     }}
     .header .subtitle {{
       font-size: 12px;
       color: #888888;
-      font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
+      font-family: 'Menlo', 'Cascadia Code', 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
       letter-spacing: 1px;
       text-transform: uppercase;
       margin: 0 0 10px 0;
@@ -323,7 +323,7 @@ def compose_html(
     .header .week-label {{
       font-size: 13px;
       color: #aaaaaa;
-      font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
+      font-family: 'Menlo', 'Cascadia Code', 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
     }}
     .intro {{
       padding: 28px 40px;
@@ -331,7 +331,7 @@ def compose_html(
       line-height: 1.7;
       border-bottom: 1px solid #eeeeee;
       color: #333333;
-      font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
+      font-family: 'Menlo', 'Cascadia Code', 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
     }}
     .section {{
       padding: 28px 40px;
@@ -358,7 +358,7 @@ def compose_html(
       right: 0;
       background: #0f0f0f;
       color: #ffffff;
-      font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
+      font-family: 'Menlo', 'Cascadia Code', 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
       font-size: 11px;
       font-weight: 700;
       padding: 3px 7px;
@@ -369,7 +369,7 @@ def compose_html(
       font-size: 15px;
       line-height: 1.4;
       padding-right: 56px;
-      font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
+      font-family: 'Menlo', 'Cascadia Code', 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
       font-weight: 600;
     }}
     .paper-title a {{
@@ -380,7 +380,7 @@ def compose_html(
       text-decoration: underline;
     }}
     .paper-meta {{
-      font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
+      font-family: 'Menlo', 'Cascadia Code', 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
       font-size: 11px;
       color: #999999;
       margin-bottom: 10px;
@@ -390,7 +390,7 @@ def compose_html(
       font-size: 13px;
       line-height: 1.7;
       color: #444444;
-      font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
+      font-family: 'Menlo', 'Cascadia Code', 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
     }}
     .article-card {{
       margin-bottom: 20px;
@@ -405,7 +405,7 @@ def compose_html(
     .article-title {{
       margin: 0 0 6px 0;
       font-size: 14px;
-      font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
+      font-family: 'Menlo', 'Cascadia Code', 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
       font-weight: 600;
     }}
     .article-title a {{
@@ -426,18 +426,18 @@ def compose_html(
       font-size: 13px;
       line-height: 1.65;
       color: #555555;
-      font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
+      font-family: 'Menlo', 'Cascadia Code', 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
     }}
     .no-articles {{
       font-size: 13px;
       color: #aaaaaa;
       font-style: italic;
       margin: 0;
-      font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
+      font-family: 'Menlo', 'Cascadia Code', 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
     }}
     .footer {{
       padding: 24px 40px;
-      font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
+      font-family: 'Menlo', 'Cascadia Code', 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
       font-size: 11px;
       color: #aaaaaa;
       text-align: center;

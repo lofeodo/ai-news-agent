@@ -38,12 +38,12 @@ AGENT_REGISTRY = {
 def _run_agent(module_name: str) -> None:
     """Import the agent module and call its run() function."""
     try:
+        print(f"[main]  Thread started for {module_name}", flush=True)
         import importlib
         module = importlib.import_module(module_name)
+        print(f"[main]  Module imported successfully", flush=True)
         module.run()
     except Exception:
-        # Exceptions in background threads won't surface to the HTTP response,
-        # so we print them explicitly — they'll appear in Cloud Logging.
         traceback.print_exc()
 
 

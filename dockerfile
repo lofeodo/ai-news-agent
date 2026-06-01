@@ -50,6 +50,7 @@ COPY . .
 # so the running container knows which agent it is.
 ARG AGENT_NAME
 ENV AGENT_NAME=${AGENT_NAME}
+ENV PYTHONUNBUFFERED=1
 
 # ── Port ──────────────────────────────────────────────────────────────────────
 # Cloud Run injects PORT at runtime (default 8080). We expose it here

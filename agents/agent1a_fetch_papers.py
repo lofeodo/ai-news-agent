@@ -1,4 +1,4 @@
-# agents/agent1_fetch.py
+# agents/agent1a_fetch_papers.py
 
 import anthropic
 import arxiv
@@ -24,7 +24,7 @@ _semaphore = threading.Semaphore(MAX_CONCURRENT_CLAUDE_CALLS)
 
 
 def fetch_papers():
-    """Fetch AI papers submitted in the last 24 hours from ArXiv."""
+    """Fetch AI papers submitted in the last LOOKBACK_HOURS from ArXiv."""
     print(f"Fetching papers from ArXiv (last {LOOKBACK_HOURS} hours)...")
 
     client = arxiv.Client()
@@ -157,12 +157,12 @@ def score_all_papers(papers: list) -> list:
     return results
 
 
-if __name__ == "__main__":
+def run():
+    """Main agent logic. Called by main.py (Cloud Run) or __main__ (local)."""
     start_time = datetime.now()
 
     papers = fetch_papers()
     sampled = sample_papers(papers)
-
     scored = score_all_papers(sampled)
 
     successful = [r for r in scored if r["scores"] is not None]
@@ -194,3 +194,7 @@ if __name__ == "__main__":
         }, f, indent=2, ensure_ascii=False)
 
     print(f"Saved full results to {out_path}")
+
+
+if __name__ == "__main__":
+    run()

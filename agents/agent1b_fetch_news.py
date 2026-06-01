@@ -1,4 +1,4 @@
-# agents/agent1b_news.py
+# agents/agent1b_fetch_news.py
 
 import anthropic
 import json
@@ -41,11 +41,9 @@ def fetch_hn_story(story_id: int, cutoff_timestamp: float) -> dict | None:
         response.raise_for_status()
         item = response.json()
 
-        # Only keep stories with a URL (skip Ask HN, Show HN text posts, etc.)
         if not item or item.get("type") != "story" or not item.get("url"):
             return None
 
-        # Drop stories older than LOOKBACK_HOURS
         if item.get("time", 0) < cutoff_timestamp:
             return None
 
@@ -54,7 +52,7 @@ def fetch_hn_story(story_id: int, cutoff_timestamp: float) -> dict | None:
             "title":       item.get("title", ""),
             "description": "",
             "url":         item.get("url", ""),
-            "language":    "en",            # HN is English only
+            "language":    "en",
             "hn_score":    item.get("score", 0)
         }
     except Exception as e:
@@ -70,7 +68,6 @@ def fetch_hn_articles() -> list:
 
     response = requests.get(HN_TOP_STORIES_URL, timeout=10)
     response.raise_for_status()
-    # Fetch 3x target — many stories will be non-articles or outside the time window
     story_ids = response.json()[:NEWS_FETCH_SIZE * 3]
 
     print(f"  Fetching {len(story_ids)} story IDs in parallel...")
@@ -149,7 +146,6 @@ def fetch_newsapi_articles() -> list:
 # ---------------------------------------------------------------------------
 
 def is_paywalled(url: str) -> bool:
-    """Return True if the URL belongs to a known paywalled domain."""
     for domain in PAYWALLED_DOMAINS:
         if domain in url:
             return True
@@ -157,7 +153,6 @@ def is_paywalled(url: str) -> bool:
 
 
 def is_non_latin(text: str) -> bool:
-    """Return True if the text contains characters from a non-Latin script."""
     for char in text:
         cp = ord(char)
         for start, end in NON_LATIN_RANGES:
@@ -167,13 +162,6 @@ def is_non_latin(text: str) -> bool:
 
 
 def prefilter(articles: list) -> list:
-    """
-    Drop articles that are:
-    - Missing URL or title
-    - From a paywalled or low-signal domain
-    - Containing non-Latin script characters in the title
-    - Exact URL duplicates
-    """
     seen_urls = set()
     filtered  = []
     stats     = {"no_url": 0, "no_title": 0, "paywalled": 0, "non_latin": 0, "duplicate": 0}
@@ -207,29 +195,27 @@ def prefilter(articles: list) -> list:
 
 
 # ---------------------------------------------------------------------------
-# Shared Claude call with exponential backoff retry on 429
+# Claude call with retry
 # ---------------------------------------------------------------------------
 
 def claude_call_with_retry(client: anthropic.Anthropic, max_retries: int = 4, **kwargs) -> object:
-    """
-    Call client.messages.create with exponential backoff on rate limit errors.
-    Retries up to max_retries times: waits 10s, 20s, 40s, 80s.
-    """
     for attempt in range(max_retries):
         try:
             return client.messages.create(**kwargs)
         except anthropic.RateLimitError:
             if attempt == max_retries - 1:
                 raise
-            wait = 10 * (2 ** attempt)   # 10s, 20s, 40s, 80s
+            wait = 10 * (2 ** attempt)
             print(f"  [retry] rate limited, waiting {wait}s...")
             time.sleep(wait)
 
 
+# ---------------------------------------------------------------------------
+# Language filter
+# ---------------------------------------------------------------------------
 
-
-LANG_BATCH_SIZE    = 200    # titles+snippets are tiny — large batches are fine
-LANG_SNIPPET_WORDS = 30     # words to take from description for language detection
+LANG_BATCH_SIZE    = 200
+LANG_SNIPPET_WORDS = 30
 LANG_FILTER_PROMPT = """\
 You are a language detector. Below is a numbered list of short text samples from news articles.
 
@@ -245,7 +231,6 @@ Samples:
 
 
 def format_samples_for_lang_prompt(articles: list) -> str:
-    """Format title + first 30 words of description as numbered samples."""
     lines = []
     for i, article in enumerate(articles):
         title   = article.get("title", "") or ""
@@ -257,7 +242,6 @@ def format_samples_for_lang_prompt(articles: list) -> str:
 
 
 def language_filter_batch(batch: list, batch_index: int, client: anthropic.Anthropic) -> list:
-    """Run language detection on a single batch. Returns articles that are EN or FR."""
     samples = format_samples_for_lang_prompt(batch)
     prompt  = LANG_FILTER_PROMPT.format(samples=samples)
 
@@ -290,10 +274,6 @@ def language_filter_batch(batch: list, batch_index: int, client: anthropic.Anthr
 
 
 def language_filter(articles: list) -> list:
-    """
-    Filter articles to English and French only using Claude.
-    Runs in parallel batches of LANG_BATCH_SIZE.
-    """
     n_batches = (len(articles) + LANG_BATCH_SIZE - 1) // LANG_BATCH_SIZE
     print(f"\nLanguage filtering {len(articles)} articles in {n_batches} batch(es)...")
 
@@ -317,13 +297,14 @@ def language_filter(articles: list) -> list:
     return all_results
 
 
-
+# ---------------------------------------------------------------------------
+# Filter + categorize
+# ---------------------------------------------------------------------------
 
 FILTER_BATCH_SIZE = 100
 
 
 def format_articles_for_prompt(articles: list) -> str:
-    """Format articles as a numbered list for the filter prompt."""
     lines = []
     for i, article in enumerate(articles):
         title = article["title"] or "(no title)"
@@ -333,11 +314,6 @@ def format_articles_for_prompt(articles: list) -> str:
 
 
 def filter_batch(batch: list, batch_index: int, prompt_template: str, client: anthropic.Anthropic) -> list:
-    """
-    Filter and categorize a single batch of articles.
-    Returns list of (global_index_offset, local_index, category) tuples resolved to articles.
-    batch_index is used only for logging.
-    """
     formatted = format_articles_for_prompt(batch)
     prompt    = prompt_template.format(articles=formatted)
 
@@ -373,10 +349,6 @@ def filter_batch(batch: list, batch_index: int, prompt_template: str, client: an
 
 
 def filter_and_categorize(articles: list) -> list:
-    """
-    Split articles into batches of FILTER_BATCH_SIZE, filter and categorize
-    each batch in parallel with Claude, then merge results.
-    """
     n_batches = (len(articles) + FILTER_BATCH_SIZE - 1) // FILTER_BATCH_SIZE
     print(f"\nFiltering and categorizing {len(articles)} articles in {n_batches} batches...")
 
@@ -407,33 +379,26 @@ def filter_and_categorize(articles: list) -> list:
 # Main
 # ---------------------------------------------------------------------------
 
-if __name__ == "__main__":
+def run():
+    """Main agent logic. Called by main.py (Cloud Run) or __main__ (local)."""
     start_time = datetime.now()
 
-    # Fetch
     hn_articles   = fetch_hn_articles()
     news_articles = fetch_newsapi_articles()
 
-    # Merge
     all_articles = hn_articles + news_articles
     print(f"\nMerged: {len(all_articles)} articles total")
 
-    # Pre-filter (code-level)
     print("Pre-filtering...")
     all_articles = prefilter(all_articles)
 
-    # Language filter (Claude-based, EN/FR only)
     all_articles = language_filter(all_articles)
+    filtered     = filter_and_categorize(all_articles)
 
-    # Claude filter + categorize
-    filtered = filter_and_categorize(all_articles)
-
-    # Summary
     elapsed = (datetime.now() - start_time).total_seconds()
     print(f"\n--- Done in {elapsed:.1f}s ---")
     print(f"Selected {len(filtered)} articles across categories\n")
 
-    # Group by category for display
     by_category = {}
     for article in filtered:
         cat = article["category"]
@@ -446,7 +411,6 @@ if __name__ == "__main__":
             print(f"  [{article['source']}] {article['title']}")
             print(f"  {article['url']}")
 
-    # Save
     os.makedirs(DATA_DIR, exist_ok=True)
     out_path = os.path.join(DATA_DIR, "news_filtered.json")
     with open(out_path, "w", encoding="utf-8") as f:
@@ -460,3 +424,7 @@ if __name__ == "__main__":
         }, f, indent=2, ensure_ascii=False)
 
     print(f"\nSaved results to {out_path}")
+
+
+if __name__ == "__main__":
+    run()

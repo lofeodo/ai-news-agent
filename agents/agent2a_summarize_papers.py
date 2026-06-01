@@ -1,4 +1,4 @@
-# agents/agent2a_summarize.py
+# agents/agent2a_summarize_papers.py
 
 import anthropic
 import io
@@ -70,7 +70,7 @@ def claude_call_with_retry(client: anthropic.Anthropic, max_retries: int = 4, **
         except anthropic.RateLimitError:
             if attempt == max_retries - 1:
                 raise
-            wait = 10 * (2 ** attempt)  # 10s, 20s, 40s, 80s
+            wait = 10 * (2 ** attempt)
             print(f"  [retry]    rate limited, waiting {wait}s...")
             time.sleep(wait)
 
@@ -103,7 +103,8 @@ def validate_summary(summary: str, paper_id: str) -> bool:
 # Main
 # ---------------------------------------------------------------------------
 
-if __name__ == "__main__":
+def run():
+    """Main agent logic. Called by main.py (Cloud Run) or __main__ (local)."""
     start_time = datetime.now()
 
     with open("prompts/paper_summary_prompt.txt", "r", encoding="utf-8") as f:
@@ -123,14 +124,12 @@ if __name__ == "__main__":
         paper_id = paper["id"].split("/")[-1]
         print(f"[{i}/{len(papers)}] {paper['title'][:80]}...")
 
-        # 1. Fetch full PDF text; fall back to abstract + reasoning if it fails
         text = download_and_extract(paper["pdf_url"], paper_id)
         used_fallback = text is None
         if used_fallback:
             print(f"  [pdf]      using abstract+reasoning fallback")
             text = fallback_text(paper)
 
-        # 2. Summarize
         try:
             summary = summarize_paper(paper, text, prompt_template, client)
         except Exception as e:
@@ -138,7 +137,6 @@ if __name__ == "__main__":
             results.append({**paper, "summary": None, "used_fallback": used_fallback, "summary_error": str(e)})
             continue
 
-        # 3. Validate
         validate_summary(summary, paper_id)
 
         status = "fallback" if used_fallback else "full PDF"
@@ -179,3 +177,7 @@ if __name__ == "__main__":
         }, f, indent=2, ensure_ascii=False)
 
     print(f"Saved to {out_path}")
+
+
+if __name__ == "__main__":
+    run()

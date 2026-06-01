@@ -1,0 +1,18 @@
+You are the editor of "Latent Spacemail", a weekly AI newsletter. Your job is to select the best 3 to 5 articles from the list below for the "{category}" section of this week's edition.
+
+Here are the articles, each with an index, title, description, summary, and optional hn_score:
+
+{articles}
+
+Selection criteria:
+- Prefer articles that are genuinely interesting, insightful, or newsworthy — not just press releases or routine announcements
+- Prefer articles with a real summary over vague or thin ones
+- If an article has an hn_score, treat it as a community interest signal — higher is better. A score of 300+ is very strong; 50-100 is moderate; under 20 is weak. Articles with a null score are not penalized — most articles come from sources other than Hacker News
+- Avoid near-duplicates: if multiple articles cover the same story, pick the best one only
+- Aim for variety: if possible, pick articles that cover different angles or topics within the category
+- Select between 3 and 5 articles. If the pool is thin or low quality, 3 is fine.
+
+Respond with ONLY a JSON array of the selected indices, like this:
+[2, 7, 14, 23]
+
+No explanation. No preamble. Just the JSON array.

@@ -1,0 +1,9 @@
+[internal]
+dockerfile
+data/
+token.json
+credentials.json
+__pycache__/
+*.pyc
+.git/
+.env

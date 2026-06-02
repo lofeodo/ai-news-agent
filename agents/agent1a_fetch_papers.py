@@ -54,7 +54,7 @@ def fetch_papers():
             "pdf_url": result.pdf_url,
             "categories": result.categories
         })
-        if len(papers) % 100 == 0:
+        if len(papers) % 10 == 0:
             print(f"  [arxiv]    fetched {len(papers)} papers so far...", flush=True)
 
     print(f"Found {len(papers)} papers in the last {LOOKBACK_HOURS} hours", flush=True)

@@ -46,8 +46,11 @@ def _run_agent(module_name: str, run_id: str) -> None:
         module = importlib.import_module(module_name)
         print(f"[main]  Module imported successfully", flush=True)
         module.run(run_id)
+        print(f"[main]  {module_name} completed successfully", flush=True)
     except Exception:
-        traceback.print_exc()
+        sys.stderr.write(f"[main]  ERROR in {module_name} (run_id={run_id}):\n")
+        traceback.print_exc(file=sys.stderr)
+        sys.stderr.flush()
 
 
 @app.post("/")
@@ -80,9 +83,9 @@ async def trigger(request: Request):
 
     if not run_id:
         run_id = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H%M%SZ")
-        print(f"[main]  No run_id in request body — generated: {run_id}")
+        print(f"[main]  No run_id in request body — generated: {run_id}", flush=True)
 
-    print(f"[main]  Starting {agent_name} in background thread (run_id={run_id})...")
+    print(f"[main]  Starting {agent_name} in background thread (run_id={run_id})...", flush=True)
     thread = threading.Thread(target=_run_agent, args=(module_name, run_id), daemon=True)
     thread.start()
 

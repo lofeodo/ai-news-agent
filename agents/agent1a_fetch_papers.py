@@ -16,7 +16,10 @@ from datetime import datetime, timedelta, timezone
 from scoring_tool import SCORING_TOOL
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import MAX_FETCH, SAMPLE_SIZE, LOOKBACK_HOURS, DATA_DIR, SCORING_MODEL, MAX_TOKENS, WORD_CUTOFF
+from config import (
+    MAX_FETCH, SAMPLE_SIZE, LOOKBACK_HOURS, DATA_DIR, SCORING_MODEL, MAX_TOKENS, WORD_CUTOFF,
+    GCP_PROJECT_ID, TOPIC_PAPERS_SCORED, USE_FIRESTORE,
+)
 
 # --- Rate limiting ---
 MAX_CONCURRENT_CLAUDE_CALLS = 5
@@ -157,8 +160,8 @@ def score_all_papers(papers: list) -> list:
     return results
 
 
-def run():
-    """Main agent logic. Called by main.py (Cloud Run) or __main__ (local)."""
+def run(run_id: str):
+    """Main agent logic. Called by main.py (Cloud Run) or orchestrator.py."""
     start_time = datetime.now()
 
     papers = fetch_papers()
@@ -195,6 +198,14 @@ def run():
 
     print(f"Saved full results to {out_path}")
 
+    if USE_FIRESTORE:
+        from google.cloud import pubsub_v1
+        publisher  = pubsub_v1.PublisherClient()
+        topic_path = publisher.topic_path(GCP_PROJECT_ID, TOPIC_PAPERS_SCORED)
+        data       = json.dumps({"run_id": run_id}).encode("utf-8")
+        publisher.publish(topic_path, data).result()
+        print(f"[agent1a]  Published to {TOPIC_PAPERS_SCORED} (run_id={run_id})")
+
 
 if __name__ == "__main__":
-    run()
+    run(run_id="local-debug")

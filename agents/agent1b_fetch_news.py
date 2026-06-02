@@ -16,7 +16,8 @@ from config import (
     DATA_DIR, SCORING_MODEL, MAX_TOKENS, FILTER_MAX_TOKENS,
     NEWS_FETCH_SIZE, NEWSAPI_QUERIES,
     PAYWALLED_DOMAINS, ALLOWED_LANGUAGES,
-    NON_LATIN_RANGES, LOOKBACK_HOURS
+    NON_LATIN_RANGES, LOOKBACK_HOURS,
+    GCP_PROJECT_ID, TOPIC_NEWS_FILTERED, USE_FIRESTORE,
 )
 
 # --- Constants ---
@@ -379,8 +380,8 @@ def filter_and_categorize(articles: list) -> list:
 # Main
 # ---------------------------------------------------------------------------
 
-def run():
-    """Main agent logic. Called by main.py (Cloud Run) or __main__ (local)."""
+def run(run_id: str):
+    """Main agent logic. Called by main.py (Cloud Run) or orchestrator.py."""
     start_time = datetime.now()
 
     hn_articles   = fetch_hn_articles()
@@ -425,6 +426,14 @@ def run():
 
     print(f"\nSaved results to {out_path}")
 
+    if USE_FIRESTORE:
+        from google.cloud import pubsub_v1
+        publisher  = pubsub_v1.PublisherClient()
+        topic_path = publisher.topic_path(GCP_PROJECT_ID, TOPIC_NEWS_FILTERED)
+        data       = json.dumps({"run_id": run_id}).encode("utf-8")
+        publisher.publish(topic_path, data).result()
+        print(f"[agent1b]  Published to {TOPIC_NEWS_FILTERED} (run_id={run_id})")
+
 
 if __name__ == "__main__":
-    run()
+    run(run_id="local-debug")

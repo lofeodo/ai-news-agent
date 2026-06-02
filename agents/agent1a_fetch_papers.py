@@ -106,6 +106,7 @@ def score_paper(paper: dict, full_text: str) -> dict:
 
     client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"), timeout=60.0)
 
+    print(f"  [api-call-start] {paper['title'][:40]}", flush=True)
     response = client.messages.create(
         model=SCORING_MODEL,
         max_tokens=MAX_TOKENS,
@@ -113,6 +114,7 @@ def score_paper(paper: dict, full_text: str) -> dict:
         tool_choice={"type": "tool", "name": "score_paper"},
         messages=[{"role": "user", "content": prompt}]
     )
+    print(f"  [api-call-done] {paper['title'][:40]}", flush=True)
 
     return response.content[0].input
 
@@ -136,15 +138,17 @@ def process_paper(paper: dict) -> dict:
     try:
         full_text = download_and_extract(paper["pdf_url"], paper_id)
 
+        print(f"  [semaphore-wait] {paper_id}", flush=True)
         with _semaphore:
-            print(f"  [scoring]  {paper['title'][:60]}...")
+            print(f"  [scoring]  {paper['title'][:60]}...", flush=True)
             scores = score_with_retry(paper, full_text)
+            print(f"  [scoring-done] {paper_id}", flush=True)
 
-        print(f"  [done]     {paper['title'][:50]} → {scores.get('total', '?')}/28")
+        print(f"  [done]     {paper['title'][:50]} → {scores.get('total', '?')}/28", flush=True)
         return {**paper, "scores": scores, "error": None}
 
     except Exception as e:
-        print(f"  [error]    {paper_id}: {e}")
+        print(f"  [error]    {paper_id}: {e}", flush=True)
         return {**paper, "scores": None, "error": str(e)}
 
 

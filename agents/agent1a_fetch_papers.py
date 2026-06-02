@@ -54,8 +54,10 @@ def fetch_papers():
             "pdf_url": result.pdf_url,
             "categories": result.categories
         })
+        if len(papers) % 100 == 0:
+            print(f"  [arxiv]    fetched {len(papers)} papers so far...", flush=True)
 
-    print(f"Found {len(papers)} papers in the last {LOOKBACK_HOURS} hours")
+    print(f"Found {len(papers)} papers in the last {LOOKBACK_HOURS} hours", flush=True)
     return papers
 
 
@@ -100,7 +102,7 @@ def score_paper(paper: dict, full_text: str) -> dict:
         full_text=truncated_text
     )
 
-    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
+    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"), timeout=60.0)
 
     response = client.messages.create(
         model=SCORING_MODEL,

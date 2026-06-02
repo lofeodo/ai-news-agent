@@ -17,7 +17,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import DATA_DIR, SCORING_MODEL
+from config import DATA_DIR, SCORING_MODEL, GCP_PROJECT_ID
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -32,7 +32,6 @@ CREDENTIALS_PATH = "credentials.json"
 TOKEN_PATH       = "token.json"
 
 # GCP Secret Manager secret names — only used when USE_SECRET_MANAGER=true
-SECRET_MANAGER_PROJECT  = os.environ.get("GCP_PROJECT_ID", "ai-news-letter")
 SECRET_TOKEN_NAME       = os.environ.get("GMAIL_TOKEN_SECRET_NAME", "gmail-token")
 SECRET_CREDENTIALS_NAME = os.environ.get("GMAIL_CREDENTIALS_SECRET_NAME", "gmail-credentials")
 
@@ -62,7 +61,7 @@ def _load_secret(secret_name: str) -> str:
     """Fetch a secret value from GCP Secret Manager."""
     from google.cloud import secretmanager
     client = secretmanager.SecretManagerServiceClient()
-    name   = f"projects/{SECRET_MANAGER_PROJECT}/secrets/{secret_name}/versions/latest"
+    name   = f"projects/{GCP_PROJECT_ID}/secrets/{secret_name}/versions/latest"
     response = client.access_secret_version(request={"name": name})
     return response.payload.data.decode("utf-8")
 
@@ -71,7 +70,7 @@ def _save_token_to_secret_manager(token_json: str) -> None:
     """Write a refreshed token back to Secret Manager as a new version."""
     from google.cloud import secretmanager
     client = secretmanager.SecretManagerServiceClient()
-    parent = f"projects/{SECRET_MANAGER_PROJECT}/secrets/{SECRET_TOKEN_NAME}"
+    parent = f"projects/{GCP_PROJECT_ID}/secrets/{SECRET_TOKEN_NAME}"
     client.add_secret_version(
         request={
             "parent": parent,
@@ -516,8 +515,8 @@ def send_email(service, html_body: str, subject: str) -> None:
 # Main
 # ---------------------------------------------------------------------------
 
-def run():
-    """Main agent logic. Called by main.py (Cloud Run) or __main__ (local)."""
+def run(run_id: str):
+    """Main agent logic. Called by main.py (Cloud Run) or orchestrator.py."""
     start_time = datetime.now()
 
     with open("prompts/article_selection_prompt.txt", "r", encoding="utf-8") as f:
@@ -583,4 +582,4 @@ def run():
 
 
 if __name__ == "__main__":
-    run()
+    run(run_id="local-debug")

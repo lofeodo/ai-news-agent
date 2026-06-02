@@ -28,7 +28,9 @@ _semaphore = threading.Semaphore(MAX_CONCURRENT_CLAUDE_CALLS)
 
 def fetch_papers():
     """Fetch AI papers submitted in the last LOOKBACK_HOURS from ArXiv."""
-    print(f"Fetching papers from ArXiv (last {LOOKBACK_HOURS} hours)...")
+    import socket
+    socket.setdefaulttimeout(30)
+    print(f"Fetching papers from ArXiv (last {LOOKBACK_HOURS} hours)...", flush=True)
 
     client = arxiv.Client()
 
@@ -54,7 +56,7 @@ def fetch_papers():
             "pdf_url": result.pdf_url,
             "categories": result.categories
         })
-        if len(papers) % 10 == 0:
+        if len(papers) % 100 == 0:
             print(f"  [arxiv]    fetched {len(papers)} papers so far...", flush=True)
 
     print(f"Found {len(papers)} papers in the last {LOOKBACK_HOURS} hours", flush=True)

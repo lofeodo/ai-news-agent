@@ -1,5 +1,7 @@
 # config.py
 
+import os
+
 # ArXiv fetching
 MAX_FETCH = 500         # safety ceiling for ArXiv API
 SAMPLE_SIZE = 35        # papers to score per week (pre-filter replaces random sample later)
@@ -69,3 +71,16 @@ NON_LATIN_RANGES = [
 
 # Paths
 DATA_DIR = "data"
+
+# GCP
+GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "ai-news-letter-497720")
+
+# Pub/Sub topic names
+TOPIC_PIPELINE_START     = "pipeline-start"
+TOPIC_PAPERS_SCORED      = "papers-scored"
+TOPIC_NEWS_FILTERED      = "news-filtered"
+TOPIC_CONTENT_SUMMARIZED = "content-summarized"
+
+# Firestore
+FIRESTORE_COLLECTION = "pipeline_runs"
+USE_FIRESTORE        = os.environ.get("USE_FIRESTORE", "false").lower() == "true"

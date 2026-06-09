@@ -13,7 +13,10 @@ from datetime import datetime
 import pypdf
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import DATA_DIR, SCORING_MODEL, PAPER_SUMMARY_MAX_TOKENS, WORD_CUTOFF
+from config import (
+    DATA_DIR, SCORING_MODEL, PAPER_SUMMARY_MAX_TOKENS, WORD_CUTOFF,
+    GCP_PROJECT_ID, TOPIC_CONTENT_SUMMARIZED, FIRESTORE_COLLECTION, USE_FIRESTORE,
+)
 
 # --- Rate limiting ---
 MAX_CONCURRENT_CLAUDE_CALLS = 5
@@ -103,8 +106,30 @@ def validate_summary(summary: str, paper_id: str) -> bool:
 # Main
 # ---------------------------------------------------------------------------
 
-def run():
-    """Main agent logic. Called by main.py (Cloud Run) or __main__ (local)."""
+def increment_and_check(run_id: str) -> bool:
+    """
+    Atomically increment agent2_completions in Firestore.
+    Returns True if this agent is the one that pushed the count to 2,
+    meaning both agent2a and agent2b are done and agent3 should be triggered.
+    """
+    from google.cloud import firestore
+
+    db  = firestore.Client(project=GCP_PROJECT_ID)
+    ref = db.collection(FIRESTORE_COLLECTION).document(run_id)
+
+    new_count = ref.update({
+        "agent2_completions": firestore.Increment(1)
+    })
+
+    # Read back the updated value to check if we're the one who hit 2
+    updated = ref.get().to_dict()
+    count   = updated.get("agent2_completions", 0)
+    print(f"[agent2a]  agent2_completions = {count}")
+    return count >= 2
+
+
+def run(run_id: str):
+    """Main agent logic. Called by main.py (Cloud Run) or orchestrator.py."""
     start_time = datetime.now()
 
     with open("prompts/paper_summary_prompt.txt", "r", encoding="utf-8") as f:
@@ -178,6 +203,18 @@ def run():
 
     print(f"Saved to {out_path}")
 
+    if USE_FIRESTORE:
+        should_trigger = increment_and_check(run_id)
+        if should_trigger:
+            from google.cloud import pubsub_v1
+            publisher  = pubsub_v1.PublisherClient()
+            topic_path = publisher.topic_path(GCP_PROJECT_ID, TOPIC_CONTENT_SUMMARIZED)
+            data       = json.dumps({"run_id": run_id}).encode("utf-8")
+            publisher.publish(topic_path, data).result()
+            print(f"[agent2a]  Both agent2s done — published to {TOPIC_CONTENT_SUMMARIZED} (run_id={run_id})")
+        else:
+            print(f"[agent2a]  Waiting for agent2b to finish before triggering agent3")
+
 
 if __name__ == "__main__":
-    run()
+    run(run_id="local-debug")

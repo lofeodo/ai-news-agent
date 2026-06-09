@@ -16,18 +16,93 @@ from datetime import datetime, timedelta, timezone
 from scoring_tool import SCORING_TOOL
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import MAX_FETCH, SAMPLE_SIZE, LOOKBACK_HOURS, DATA_DIR, SCORING_MODEL, MAX_TOKENS, WORD_CUTOFF
+from config import (
+    MAX_FETCH, SAMPLE_SIZE, LOOKBACK_HOURS, DATA_DIR, SCORING_MODEL, MAX_TOKENS, WORD_CUTOFF,
+    GCP_PROJECT_ID, TOPIC_PAPERS_SCORED, USE_FIRESTORE,
+)
 
 # --- Rate limiting ---
 MAX_CONCURRENT_CLAUDE_CALLS = 5
 _semaphore = threading.Semaphore(MAX_CONCURRENT_CLAUDE_CALLS)
 
 
+def _run_proxy_diagnostics(proxy_url, session):
+    """Run a battery of connectivity tests and print results."""
+    import socket as _socket
+
+    print("[proxy-diag] ====== PROXY DIAGNOSTICS START ======", flush=True)
+    print(f"[proxy-diag] HTTPS_PROXY env var: {proxy_url}", flush=True)
+    print(f"[proxy-diag] Session proxies: {session.proxies}", flush=True)
+
+    # Test 1: Raw TCP connection to proxy
+    try:
+        host = "146.190.216.223"
+        port = 3128
+        s = _socket.create_connection((host, port), timeout=10)
+        s.close()
+        print(f"[proxy-diag] TEST 1 PASS: TCP connection to {host}:{port} succeeded", flush=True)
+    except Exception as e:
+        print(f"[proxy-diag] TEST 1 FAIL: TCP connection to proxy failed: {e}", flush=True)
+
+    # Test 2: HTTP request through proxy to httpbin (shows our outbound IP)
+    try:
+        r = session.get("http://httpbin.org/ip", timeout=15)
+        print(f"[proxy-diag] TEST 2 PASS: HTTP via proxy OK — outbound IP: {r.json()}", flush=True)
+    except Exception as e:
+        print(f"[proxy-diag] TEST 2 FAIL: HTTP via proxy to httpbin failed: {e}", flush=True)
+
+    # Test 3: Direct request bypassing proxy (shows Cloud Run's raw IP)
+    try:
+        r = requests.get("http://httpbin.org/ip", timeout=15)
+        print(f"[proxy-diag] TEST 3 INFO: Direct (no proxy) outbound IP: {r.json()}", flush=True)
+    except Exception as e:
+        print(f"[proxy-diag] TEST 3 FAIL: Direct request to httpbin failed: {e}", flush=True)
+
+    # Test 4: Hit arxiv API directly via proxy session (the real test)
+    try:
+        r = session.get(
+            "https://export.arxiv.org/api/query?search_query=cat:cs.AI&max_results=1",
+            timeout=20
+        )
+        print(f"[proxy-diag] TEST 4 PASS: ArXiv API via proxy — status {r.status_code}", flush=True)
+    except Exception as e:
+        print(f"[proxy-diag] TEST 4 FAIL: ArXiv API via proxy failed: {e}", flush=True)
+
+    # Test 5: Check proxy auth by hitting proxy without credentials
+    try:
+        r = requests.get("http://httpbin.org/ip", proxies={"http": "http://146.190.216.223:3128"}, timeout=10)
+        print(f"[proxy-diag] TEST 5 WARN: Proxy allowed unauthenticated request (status {r.status_code})", flush=True)
+    except Exception as e:
+        print(f"[proxy-diag] TEST 5 PASS: Proxy correctly rejected unauthenticated request: {e}", flush=True)
+
+    print("[proxy-diag] ====== PROXY DIAGNOSTICS END ======", flush=True)
+
+
 def fetch_papers():
     """Fetch AI papers submitted in the last LOOKBACK_HOURS from ArXiv."""
-    print(f"Fetching papers from ArXiv (last {LOOKBACK_HOURS} hours)...")
+    import socket
+    import urllib.request
+    socket.setdefaulttimeout(30)
+    print(f"Fetching papers from ArXiv (last {LOOKBACK_HOURS} hours)...", flush=True)
+
+    proxy_url = os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY")
+    if proxy_url:
+        proxy_handler = urllib.request.ProxyHandler({
+            "http": proxy_url,
+            "https": proxy_url,
+        })
+        opener = urllib.request.build_opener(proxy_handler)
+        urllib.request.install_opener(opener)
+        print(f"[fetch_papers] Using proxy: {proxy_url}", flush=True)
 
     client = arxiv.Client()
+
+    if proxy_url:
+        client._session.proxies.update({
+            "http": proxy_url,
+            "https": proxy_url,
+        })
+        print(f"[fetch_papers] Proxy set on arxiv session", flush=True)
 
     search = arxiv.Search(
         query="cat:cs.AI OR cat:cs.LG",
@@ -51,8 +126,10 @@ def fetch_papers():
             "pdf_url": result.pdf_url,
             "categories": result.categories
         })
+        if len(papers) % 100 == 0:
+            print(f"  [arxiv]    fetched {len(papers)} papers so far...", flush=True)
 
-    print(f"Found {len(papers)} papers in the last {LOOKBACK_HOURS} hours")
+    print(f"Found {len(papers)} papers in the last {LOOKBACK_HOURS} hours", flush=True)
     return papers
 
 
@@ -97,8 +174,9 @@ def score_paper(paper: dict, full_text: str) -> dict:
         full_text=truncated_text
     )
 
-    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
+    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"), timeout=60.0)
 
+    print(f"  [api-call-start] {paper['title'][:40]}", flush=True)
     response = client.messages.create(
         model=SCORING_MODEL,
         max_tokens=MAX_TOKENS,
@@ -106,6 +184,7 @@ def score_paper(paper: dict, full_text: str) -> dict:
         tool_choice={"type": "tool", "name": "score_paper"},
         messages=[{"role": "user", "content": prompt}]
     )
+    print(f"  [api-call-done] {paper['title'][:40]}", flush=True)
 
     return response.content[0].input
 
@@ -129,15 +208,17 @@ def process_paper(paper: dict) -> dict:
     try:
         full_text = download_and_extract(paper["pdf_url"], paper_id)
 
+        print(f"  [semaphore-wait] {paper_id}", flush=True)
         with _semaphore:
-            print(f"  [scoring]  {paper['title'][:60]}...")
+            print(f"  [scoring]  {paper['title'][:60]}...", flush=True)
             scores = score_with_retry(paper, full_text)
+            print(f"  [scoring-done] {paper_id}", flush=True)
 
-        print(f"  [done]     {paper['title'][:50]} → {scores.get('total', '?')}/28")
+        print(f"  [done]     {paper['title'][:50]} → {scores.get('total', '?')}/28", flush=True)
         return {**paper, "scores": scores, "error": None}
 
     except Exception as e:
-        print(f"  [error]    {paper_id}: {e}")
+        print(f"  [error]    {paper_id}: {e}", flush=True)
         return {**paper, "scores": None, "error": str(e)}
 
 
@@ -157,8 +238,8 @@ def score_all_papers(papers: list) -> list:
     return results
 
 
-def run():
-    """Main agent logic. Called by main.py (Cloud Run) or __main__ (local)."""
+def run(run_id: str):
+    """Main agent logic. Called by main.py (Cloud Run) or orchestrator.py."""
     start_time = datetime.now()
 
     papers = fetch_papers()
@@ -195,6 +276,14 @@ def run():
 
     print(f"Saved full results to {out_path}")
 
+    if USE_FIRESTORE:
+        from google.cloud import pubsub_v1
+        publisher  = pubsub_v1.PublisherClient()
+        topic_path = publisher.topic_path(GCP_PROJECT_ID, TOPIC_PAPERS_SCORED)
+        data       = json.dumps({"run_id": run_id}).encode("utf-8")
+        publisher.publish(topic_path, data).result()
+        print(f"[agent1a]  Published to {TOPIC_PAPERS_SCORED} (run_id={run_id})")
+
 
 if __name__ == "__main__":
-    run()
+    run(run_id="local-debug")

@@ -14,12 +14,15 @@
 # The agent runs in a background thread so we can return 200 immediately —
 # Cloud Run has a request timeout, but our agents can take several minutes.
 
+import base64
+import json
 import os
 import sys
 import threading
 import traceback
+from datetime import datetime, timezone
 
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Request, Response
 
 # Make the agents/ directory importable
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "agents"))
@@ -35,20 +38,23 @@ AGENT_REGISTRY = {
 }
 
 
-def _run_agent(module_name: str) -> None:
-    """Import the agent module and call its run() function."""
+def _run_agent(module_name: str, run_id: str) -> None:
+    """Import the agent module and call its run(run_id) function."""
     try:
-        print(f"[main]  Thread started for {module_name}", flush=True)
+        print(f"[main]  Thread started for {module_name} (run_id={run_id})", flush=True)
         import importlib
         module = importlib.import_module(module_name)
         print(f"[main]  Module imported successfully", flush=True)
-        module.run()
+        module.run(run_id)
+        print(f"[main]  {module_name} completed successfully", flush=True)
     except Exception:
-        traceback.print_exc()
+        sys.stderr.write(f"[main]  ERROR in {module_name} (run_id={run_id}):\n")
+        traceback.print_exc(file=sys.stderr)
+        sys.stderr.flush()
 
 
 @app.post("/")
-def trigger():
+async def trigger(request: Request):
     agent_name = os.environ.get("AGENT_NAME", "").strip()
 
     if not agent_name:
@@ -64,11 +70,26 @@ def trigger():
             status_code=400,
         )
 
-    print(f"[main]  Starting {agent_name} in background thread...")
-    thread = threading.Thread(target=_run_agent, args=(module_name,), daemon=True)
+    # Parse Pub/Sub push envelope to extract run_id.
+    # Falls back to a generated run_id for manual POST triggers (local testing, gcloud curl).
+    run_id = None
+    try:
+        body = await request.json()
+        encoded = body["message"]["data"]
+        payload = json.loads(base64.b64decode(encoded).decode("utf-8"))
+        run_id  = payload.get("run_id")
+    except Exception:
+        pass  # not a Pub/Sub envelope — fall through to fallback
+
+    if not run_id:
+        run_id = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H%M%SZ")
+        print(f"[main]  No run_id in request body — generated: {run_id}", flush=True)
+
+    print(f"[main]  Starting {agent_name} in background thread (run_id={run_id})...", flush=True)
+    thread = threading.Thread(target=_run_agent, args=(module_name, run_id), daemon=True)
     thread.start()
 
-    return {"status": "started", "agent": agent_name}
+    return {"status": "started", "agent": agent_name, "run_id": run_id}
 
 
 @app.get("/health")

@@ -135,11 +135,16 @@ def run(run_id: str):
     with open("prompts/paper_summary_prompt.txt", "r", encoding="utf-8") as f:
         prompt_template = f.read()
 
-    in_path = os.path.join(DATA_DIR, "scored_papers.json")
-    with open(in_path, "r", encoding="utf-8") as f:
-        scored = json.load(f)
-
-    papers = scored["top_5"]
+    if USE_FIRESTORE:
+        from google.cloud import firestore as _fs
+        doc    = _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).get().to_dict()
+        papers = doc["scored_papers"]
+        print(f"[agent2a]  Loaded {len(papers)} papers from Firestore")
+    else:
+        in_path = os.path.join(DATA_DIR, "scored_papers.json")
+        with open(in_path, "r", encoding="utf-8") as f:
+            scored = json.load(f)
+        papers = scored["top_5"]
     print(f"Summarizing {len(papers)} papers...\n")
 
     client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
@@ -189,19 +194,25 @@ def run(run_id: str):
     if failed:
         print(f"Failed: {len(failed)} papers")
 
-    os.makedirs(DATA_DIR, exist_ok=True)
-    out_path = os.path.join(DATA_DIR, "paper_summaries.json")
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump({
-            "run_at":           start_time.isoformat(),
-            "elapsed_seconds":  elapsed,
-            "total_papers":     len(papers),
-            "total_summarized": len(successful),
-            "total_failed":     len(failed),
-            "papers":           results,
-        }, f, indent=2, ensure_ascii=False)
-
-    print(f"Saved to {out_path}")
+    if USE_FIRESTORE:
+        from google.cloud import firestore as _fs
+        _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).update({
+            "paper_summaries": results
+        })
+        print(f"[agent2a]  Saved paper_summaries to Firestore (run_id={run_id})")
+    else:
+        os.makedirs(DATA_DIR, exist_ok=True)
+        out_path = os.path.join(DATA_DIR, "paper_summaries.json")
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump({
+                "run_at":           start_time.isoformat(),
+                "elapsed_seconds":  elapsed,
+                "total_papers":     len(papers),
+                "total_summarized": len(successful),
+                "total_failed":     len(failed),
+                "papers":           results,
+            }, f, indent=2, ensure_ascii=False)
+        print(f"Saved to {out_path}")
 
     if USE_FIRESTORE:
         should_trigger = increment_and_check(run_id)

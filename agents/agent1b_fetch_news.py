@@ -427,7 +427,16 @@ def run(run_id: str):
     print(f"\nSaved results to {out_path}")
 
     if USE_FIRESTORE:
-        from google.cloud import pubsub_v1
+        from google.cloud import firestore, pubsub_v1
+        db  = firestore.Client(project=GCP_PROJECT_ID)
+        db.collection("pipeline_runs").document(run_id).update({
+            "news_filtered": {
+                "by_category": {cat: articles for cat, articles in by_category.items()},
+                "articles":    filtered,
+            }
+        })
+        print(f"[agent1b]  Saved news_filtered to Firestore (run_id={run_id})")
+
         publisher  = pubsub_v1.PublisherClient()
         topic_path = publisher.topic_path(GCP_PROJECT_ID, TOPIC_NEWS_FILTERED)
         data       = json.dumps({"run_id": run_id}).encode("utf-8")

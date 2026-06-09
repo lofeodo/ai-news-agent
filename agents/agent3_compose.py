@@ -17,7 +17,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import DATA_DIR, SCORING_MODEL, GCP_PROJECT_ID
+from config import DATA_DIR, SCORING_MODEL, GCP_PROJECT_ID, USE_FIRESTORE, FIRESTORE_COLLECTION
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -524,13 +524,19 @@ def run(run_id: str):
     with open("prompts/intro_prompt.txt", "r", encoding="utf-8") as f:
         intro_prompt = f.read()
 
-    with open(os.path.join(DATA_DIR, "paper_summaries.json"), "r", encoding="utf-8") as f:
-        paper_data = json.load(f)
-    with open(os.path.join(DATA_DIR, "news_summaries.json"), "r", encoding="utf-8") as f:
-        news_data = json.load(f)
-
-    papers      = paper_data["papers"]
-    by_category = news_data["by_category"]
+    if USE_FIRESTORE:
+        from google.cloud import firestore as _fs
+        doc         = _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).get().to_dict()
+        papers      = doc["paper_summaries"]
+        by_category = doc["news_summaries"]
+        print(f"[agent3]  Loaded paper_summaries and news_summaries from Firestore")
+    else:
+        with open(os.path.join(DATA_DIR, "paper_summaries.json"), "r", encoding="utf-8") as f:
+            paper_data = json.load(f)
+        with open(os.path.join(DATA_DIR, "news_summaries.json"), "r", encoding="utf-8") as f:
+            news_data = json.load(f)
+        papers      = paper_data["papers"]
+        by_category = news_data["by_category"]
 
     client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
 

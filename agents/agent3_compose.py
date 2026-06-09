@@ -1,23 +1,15 @@
 # agents/agent3_compose.py
 
 import anthropic
-import base64
 import json
 import os
 import re
 import sys
 import time
 from datetime import datetime
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import DATA_DIR, SCORING_MODEL, GCP_PROJECT_ID
+from config import DATA_DIR, SCORING_MODEL, GCP_PROJECT_ID, USE_FIRESTORE, FIRESTORE_COLLECTION
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -25,17 +17,11 @@ from config import DATA_DIR, SCORING_MODEL, GCP_PROJECT_ID
 
 NEWSLETTER_NAME = "Latent SpaceMail"
 RECIPIENT_EMAIL = os.environ.get("NEWSLETTER_RECIPIENT_EMAIL", "")
-SENDER_EMAIL    = "Latent SpaceMail <latentspacemail@gmail.com>"
+SENDER_EMAIL    = "latentspacemail@gmail.com"
+SENDER_NAME     = "Latent SpaceMail"
 
-GMAIL_SCOPES     = ["https://www.googleapis.com/auth/gmail.send"]
-CREDENTIALS_PATH = "credentials.json"
-TOKEN_PATH       = "token.json"
-
-# GCP Secret Manager secret names — only used when USE_SECRET_MANAGER=true
-SECRET_TOKEN_NAME       = os.environ.get("GMAIL_TOKEN_SECRET_NAME", "gmail-token")
-SECRET_CREDENTIALS_NAME = os.environ.get("GMAIL_CREDENTIALS_SECRET_NAME", "gmail-credentials")
-
-USE_SECRET_MANAGER = os.environ.get("USE_SECRET_MANAGER", "false").lower() == "true"
+SENDGRID_SECRET_NAME = "sendgrid-api-key"
+USE_SECRET_MANAGER   = os.environ.get("USE_SECRET_MANAGER", "false").lower() == "true"
 
 ARTICLES_PER_CATEGORY_TARGET = "3 to 5"
 
@@ -54,93 +40,22 @@ INTRO_MAX_TOKENS     = 300
 
 
 # ---------------------------------------------------------------------------
-# Gmail auth — local (file-based) vs Cloud Run (Secret Manager)
+# SendGrid
 # ---------------------------------------------------------------------------
 
-def _load_secret(secret_name: str) -> str:
-    """Fetch a secret value from GCP Secret Manager."""
-    from google.cloud import secretmanager
-    client = secretmanager.SecretManagerServiceClient()
-    name   = f"projects/{GCP_PROJECT_ID}/secrets/{secret_name}/versions/latest"
-    response = client.access_secret_version(request={"name": name})
-    return response.payload.data.decode("utf-8")
-
-
-def _save_token_to_secret_manager(token_json: str) -> None:
-    """Write a refreshed token back to Secret Manager as a new version."""
-    from google.cloud import secretmanager
-    client = secretmanager.SecretManagerServiceClient()
-    parent = f"projects/{GCP_PROJECT_ID}/secrets/{SECRET_TOKEN_NAME}"
-    client.add_secret_version(
-        request={
-            "parent": parent,
-            "payload": {"data": token_json.encode("utf-8")},
-        }
-    )
-    print("[gmail]  refreshed token saved to Secret Manager")
-
-
-def get_gmail_service():
-    """
-    Authenticate via OAuth 2.0 and return a Gmail API service object.
-
-    Local mode (USE_SECRET_MANAGER=false):
-      - Reads credentials.json and token.json from disk.
-      - On first run: opens a browser window for OAuth login.
-      - On subsequent runs: loads saved token.json silently.
-
-    Cloud Run mode (USE_SECRET_MANAGER=true):
-      - Reads both files from GCP Secret Manager.
-      - Refreshes expired tokens and writes the new version back to Secret Manager.
-      - No browser, no disk writes.
-    """
+def _get_sendgrid_api_key() -> str:
+    """Load SendGrid API key from Secret Manager (cloud) or env var (local)."""
     if USE_SECRET_MANAGER:
-        print("[gmail]  loading credentials from Secret Manager...")
-        credentials_json = _load_secret(SECRET_CREDENTIALS_NAME)
-        token_json       = _load_secret(SECRET_TOKEN_NAME)
-
-        creds = Credentials.from_authorized_user_info(
-            json.loads(token_json), GMAIL_SCOPES
-        )
-
-        if not creds.valid:
-            if creds.expired and creds.refresh_token:
-                print("[gmail]  refreshing expired token...")
-                # We need the client secrets to refresh — load them into a temp file
-                import tempfile
-                with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-                    f.write(credentials_json)
-                    tmp_path = f.name
-                try:
-                    creds.refresh(Request())
-                finally:
-                    os.unlink(tmp_path)
-                _save_token_to_secret_manager(creds.to_json())
-            else:
-                raise RuntimeError(
-                    "Gmail token is invalid and cannot be refreshed automatically. "
-                    "Run the OAuth flow locally and re-upload token.json to Secret Manager."
-                )
+        from google.cloud import secretmanager
+        client   = secretmanager.SecretManagerServiceClient()
+        name     = f"projects/{GCP_PROJECT_ID}/secrets/{SENDGRID_SECRET_NAME}/versions/latest"
+        response = client.access_secret_version(request={"name": name})
+        return response.payload.data.decode("utf-8").strip()
     else:
-        # Local file-based flow
-        creds = None
-        if os.path.exists(TOKEN_PATH):
-            creds = Credentials.from_authorized_user_file(TOKEN_PATH, GMAIL_SCOPES)
-
-        if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-                print("[gmail]  refreshing expired token...")
-                creds.refresh(Request())
-            else:
-                print("[gmail]  no valid token found — opening browser for OAuth login...")
-                flow  = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_PATH, GMAIL_SCOPES)
-                creds = flow.run_local_server(port=0)
-
-            with open(TOKEN_PATH, "w") as f:
-                f.write(creds.to_json())
-            print("[gmail]  token saved to token.json")
-
-    return build("gmail", "v1", credentials=creds)
+        key = os.environ.get("SENDGRID_API_KEY", "")
+        if not key:
+            raise RuntimeError("SENDGRID_API_KEY env var not set for local mode")
+        return key
 
 
 # ---------------------------------------------------------------------------
@@ -495,20 +410,29 @@ def compose_html(
 
 
 # ---------------------------------------------------------------------------
-# Gmail send
+# SendGrid send
 # ---------------------------------------------------------------------------
 
-def send_email(service, html_body: str, subject: str) -> None:
-    message = MIMEMultipart("alternative")
-    message["Subject"] = subject
-    message["From"]    = SENDER_EMAIL
-    message["To"]      = RECIPIENT_EMAIL
+def send_email(api_key: str, html_body: str, subject: str) -> None:
+    import urllib.request
+    payload = json.dumps({
+        "personalizations": [{"to": [{"email": RECIPIENT_EMAIL}]}],
+        "from":    {"email": SENDER_EMAIL, "name": SENDER_NAME},
+        "subject": subject,
+        "content": [{"type": "text/html", "value": html_body}],
+    }).encode("utf-8")
 
-    message.attach(MIMEText(html_body, "html"))
-
-    raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
-    service.users().messages().send(userId="me", body={"raw": raw}).execute()
-    print(f"[gmail]  sent to {RECIPIENT_EMAIL}")
+    req = urllib.request.Request(
+        "https://api.sendgrid.com/v3/mail/send",
+        data=payload,
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type":  "application/json",
+        },
+        method="POST",
+    )
+    with urllib.request.urlopen(req) as resp:
+        print(f"[sendgrid]  sent to {RECIPIENT_EMAIL} — status {resp.status}")
 
 
 # ---------------------------------------------------------------------------
@@ -524,13 +448,19 @@ def run(run_id: str):
     with open("prompts/intro_prompt.txt", "r", encoding="utf-8") as f:
         intro_prompt = f.read()
 
-    with open(os.path.join(DATA_DIR, "paper_summaries.json"), "r", encoding="utf-8") as f:
-        paper_data = json.load(f)
-    with open(os.path.join(DATA_DIR, "news_summaries.json"), "r", encoding="utf-8") as f:
-        news_data = json.load(f)
-
-    papers      = paper_data["papers"]
-    by_category = news_data["by_category"]
+    if USE_FIRESTORE:
+        from google.cloud import firestore as _fs
+        doc         = _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).get().to_dict()
+        papers      = doc["paper_summaries"]
+        by_category = doc["news_summaries"]
+        print(f"[agent3]  Loaded paper_summaries and news_summaries from Firestore")
+    else:
+        with open(os.path.join(DATA_DIR, "paper_summaries.json"), "r", encoding="utf-8") as f:
+            paper_data = json.load(f)
+        with open(os.path.join(DATA_DIR, "news_summaries.json"), "r", encoding="utf-8") as f:
+            news_data = json.load(f)
+        papers      = paper_data["papers"]
+        by_category = news_data["by_category"]
 
     client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
 
@@ -568,9 +498,9 @@ def run(run_id: str):
     if not RECIPIENT_EMAIL:
         print("  [warn]  NEWSLETTER_RECIPIENT_EMAIL not set — skipping send")
     else:
-        subject       = f"{NEWSLETTER_NAME} — {week_of}"
-        gmail_service = get_gmail_service()
-        send_email(gmail_service, html, subject)
+        subject    = f"{NEWSLETTER_NAME} — {week_of}"
+        api_key    = _get_sendgrid_api_key()
+        send_email(api_key, html, subject)
 
     elapsed = (datetime.now() - start_time).total_seconds()
     print(f"\n--- Done in {elapsed:.1f}s ---")

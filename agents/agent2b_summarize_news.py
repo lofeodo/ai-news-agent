@@ -137,9 +137,15 @@ def run(run_id: str):
     with open("prompts/news_summary_fallback_prompt.txt", "r", encoding="utf-8") as f:
         fallback_template = f.read()
 
-    in_path = os.path.join(DATA_DIR, "news_filtered.json")
-    with open(in_path, "r", encoding="utf-8") as f:
-        filtered = json.load(f)
+    if USE_FIRESTORE:
+        from google.cloud import firestore as _fs
+        doc      = _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).get().to_dict()
+        filtered = doc["news_filtered"]
+        print(f"[agent2b]  Loaded news_filtered from Firestore")
+    else:
+        in_path = os.path.join(DATA_DIR, "news_filtered.json")
+        with open(in_path, "r", encoding="utf-8") as f:
+            filtered = json.load(f)
 
     by_category: dict = filtered.get("by_category", {})
     all_articles: list = filtered.get("articles", [])
@@ -187,21 +193,27 @@ def run(run_id: str):
     print(f"Used fallback:   {total_fallback}")
     print(f"Failed entirely: {total_failed}")
 
-    os.makedirs(DATA_DIR, exist_ok=True)
-    out_path = os.path.join(DATA_DIR, "news_summaries.json")
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump({
-            "run_at":              start_time.isoformat(),
-            "elapsed_seconds":     elapsed,
-            "total_articles":      len(all_articles),
-            "total_summarized":    total_summarized,
-            "total_used_fallback": total_fallback,
-            "total_failed":        total_failed,
-            "by_category":         summarized_by_category,
-            "articles":            all_summarized,
-        }, f, indent=2, ensure_ascii=False)
-
-    print(f"Saved to {out_path}")
+    if USE_FIRESTORE:
+        from google.cloud import firestore as _fs
+        _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).update({
+            "news_summaries": summarized_by_category
+        })
+        print(f"[agent2b]  Saved news_summaries to Firestore (run_id={run_id})")
+    else:
+        os.makedirs(DATA_DIR, exist_ok=True)
+        out_path = os.path.join(DATA_DIR, "news_summaries.json")
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump({
+                "run_at":              start_time.isoformat(),
+                "elapsed_seconds":     elapsed,
+                "total_articles":      len(all_articles),
+                "total_summarized":    total_summarized,
+                "total_used_fallback": total_fallback,
+                "total_failed":        total_failed,
+                "by_category":         summarized_by_category,
+                "articles":            all_summarized,
+            }, f, indent=2, ensure_ascii=False)
+        print(f"Saved to {out_path}")
 
     if USE_FIRESTORE:
         should_trigger = increment_and_check(run_id)

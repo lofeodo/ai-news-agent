@@ -30,11 +30,12 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "agents"))
 app = FastAPI()
 
 AGENT_REGISTRY = {
-    "agent1a": "agent1a_fetch_papers",
-    "agent1b": "agent1b_fetch_news",
-    "agent2a": "agent2a_summarize_papers",
-    "agent2b": "agent2b_summarize_news",
-    "agent3":  "agent3_compose",
+    "agent1a":      "agent1a_fetch_papers",
+    "agent1b":      "agent1b_fetch_news",
+    "agent2a":      "agent2a_summarize_papers",
+    "agent2b":      "agent2b_summarize_news",
+    "agent3":       "agent3_compose",
+    "orchestrator": "orchestrator",
 }
 
 

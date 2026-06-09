@@ -101,6 +101,11 @@ def run_cloud(run_id: str) -> None:
     print("[orchestrator]  Pipeline started — agents will trigger each other via Pub/Sub")
 
 
+def run(run_id: str) -> None:
+    """Entry point called by main.py when deployed as a Cloud Run service."""
+    run_cloud(run_id)
+
+
 if __name__ == "__main__":
     run_id = generate_run_id()
 

@@ -9,7 +9,7 @@ import time
 from datetime import datetime
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import DATA_DIR, SCORING_MODEL, GCP_PROJECT_ID, USE_FIRESTORE, FIRESTORE_COLLECTION
+from config import DATA_DIR, SCORING_MODEL, GCP_PROJECT_ID, USE_FIRESTORE, FIRESTORE_COLLECTION, SEND_HOUR, SEND_WEEKDAY
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -498,8 +498,21 @@ def run(run_id: str):
     if not RECIPIENT_EMAIL:
         print("  [warn]  NEWSLETTER_RECIPIENT_EMAIL not set — skipping send")
     else:
-        subject    = f"{NEWSLETTER_NAME} — {week_of}"
-        api_key    = _get_sendgrid_api_key()
+        subject = f"{NEWSLETTER_NAME} — {week_of}"
+        api_key = _get_sendgrid_api_key()
+
+        # Wait until SEND_HOUR on SEND_WEEKDAY if we're running ahead of schedule.
+        from zoneinfo import ZoneInfo
+        eastern = ZoneInfo("America/Toronto")
+        now_eastern = datetime.now(eastern)
+        target = now_eastern.replace(hour=SEND_HOUR, minute=0, second=0, microsecond=0)
+        if now_eastern < target:
+            wait_seconds = (target - now_eastern).total_seconds()
+            print(f"  [scheduler]  pipeline finished early — sleeping {wait_seconds:.0f}s until {SEND_HOUR}:00 Eastern")
+            time.sleep(wait_seconds)
+        else:
+            print(f"  [scheduler]  past {SEND_HOUR}:00 Eastern — sending immediately")
+
         send_email(api_key, html, subject)
 
     elapsed = (datetime.now() - start_time).total_seconds()

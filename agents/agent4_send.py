@@ -77,16 +77,24 @@ def run(run_id: str):
 
     if USE_FIRESTORE:
         from google.cloud import firestore as _fs
-        doc = _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).get().to_dict()
-        if not doc:
-            raise RuntimeError(f"[agent4]  No Firestore document found for run_id={run_id}")
-        html    = doc.get("newsletter_html")
-        subject = doc.get("newsletter_subject")
-        if not html:
-            raise RuntimeError(f"[agent4]  newsletter_html not found in Firestore for run_id={run_id}")
-        if not subject:
-            subject = f"{NEWSLETTER_NAME} — {datetime.now().strftime('%B %d, %Y')}"
-        print(f"[agent4]  Loaded newsletter_html from Firestore (run_id={run_id})")
+        db = _fs.Client(project=GCP_PROJECT_ID)
+        # Query for the most recent run doc that has newsletter_html set.
+        # Agent4 is triggered by Scheduler independently — it doesn't receive a run_id.
+        results = (
+            db.collection(FIRESTORE_COLLECTION)
+            .where("newsletter_html", "!=", None)
+            .order_by("newsletter_html")   # required by Firestore for != queries
+            .order_by("started_at", direction=_fs.Query.DESCENDING)
+            .limit(1)
+            .stream()
+        )
+        docs = list(results)
+        if not docs:
+            raise RuntimeError("[agent4]  No Firestore document found with newsletter_html set")
+        data    = docs[0].to_dict()
+        html    = data.get("newsletter_html")
+        subject = data.get("newsletter_subject") or f"{NEWSLETTER_NAME} — {datetime.now().strftime('%B %d, %Y')}"
+        print(f"[agent4]  Loaded newsletter_html from Firestore (run_id={data.get('run_id')})")
     else:
         html_path = os.path.join(DATA_DIR, "newsletter.html")
         with open(html_path, "r", encoding="utf-8") as f:

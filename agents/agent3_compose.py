@@ -9,7 +9,7 @@ import time
 from datetime import datetime
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import DATA_DIR, SCORING_MODEL, GCP_PROJECT_ID, USE_FIRESTORE, FIRESTORE_COLLECTION, SEND_HOUR, SEND_WEEKDAY
+from config import DATA_DIR, SCORING_MODEL, GCP_PROJECT_ID, USE_FIRESTORE, FIRESTORE_COLLECTION, SEND_HOUR, SEND_MINUTE, SEND_WEEKDAY
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -505,13 +505,13 @@ def run(run_id: str):
         from zoneinfo import ZoneInfo
         eastern = ZoneInfo("America/Toronto")
         now_eastern = datetime.now(eastern)
-        target = now_eastern.replace(hour=SEND_HOUR, minute=0, second=0, microsecond=0)
+        target = now_eastern.replace(hour=SEND_HOUR, minute=SEND_MINUTE, second=0, microsecond=0)
         if now_eastern < target:
             wait_seconds = (target - now_eastern).total_seconds()
-            print(f"  [scheduler]  pipeline finished early — sleeping {wait_seconds:.0f}s until {SEND_HOUR}:00 Eastern")
+            print(f"  [scheduler]  pipeline finished early — sleeping {wait_seconds:.0f}s until {SEND_HOUR}:{SEND_MINUTE:02d} Eastern")
             time.sleep(wait_seconds)
         else:
-            print(f"  [scheduler]  past {SEND_HOUR}:00 Eastern — sending immediately")
+            print(f"  [scheduler]  past {SEND_HOUR}:{SEND_MINUTE:02d} Eastern — sending immediately")
 
         send_email(api_key, html, subject)
 

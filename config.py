@@ -88,5 +88,6 @@ USE_FIRESTORE        = os.environ.get("USE_FIRESTORE", "false").lower() == "true
 # Scheduling
 # SEND_WEEKDAY: 0=Monday, 1=Tuesday, ..., 6=Sunday (Python datetime.weekday() convention)
 # SEND_HOUR: 24h format (7 = 7:00 AM)
-SEND_WEEKDAY = 0
-SEND_HOUR    = 7
+SEND_WEEKDAY  = 0
+SEND_HOUR     = 7
+SEND_MINUTE   = 0

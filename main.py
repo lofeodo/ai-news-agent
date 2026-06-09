@@ -4,11 +4,13 @@
 # Reads AGENT_NAME env var to decide which agent to run.
 #
 # Valid values:
-#   agent1a   → agents/agent1a_fetch_papers.py
-#   agent1b   → agents/agent1b_fetch_news.py
-#   agent2a   → agents/agent2a_summarize_papers.py
-#   agent2b   → agents/agent2b_summarize_news.py
-#   agent3    → agents/agent3_compose.py
+#   agent1a      → agents/agent1a_fetch_papers.py
+#   agent1b      → agents/agent1b_fetch_news.py
+#   agent2a      → agents/agent2a_summarize_papers.py
+#   agent2b      → agents/agent2b_summarize_news.py
+#   agent3       → agents/agent3_compose.py
+#   agent4       → agents/agent4_send.py
+#   orchestrator → orchestrator.py
 #
 # Cloud Run invokes this via HTTP POST to /.
 # The agent runs in a background thread so we can return 200 immediately —
@@ -30,11 +32,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "agents"))
 app = FastAPI()
 
 AGENT_REGISTRY = {
-    "agent1a": "agent1a_fetch_papers",
-    "agent1b": "agent1b_fetch_news",
-    "agent2a": "agent2a_summarize_papers",
-    "agent2b": "agent2b_summarize_news",
-    "agent3":  "agent3_compose",
+    "agent1a":      "agent1a_fetch_papers",
+    "agent1b":      "agent1b_fetch_news",
+    "agent2a":      "agent2a_summarize_papers",
+    "agent2b":      "agent2b_summarize_news",
+    "agent3":       "agent3_compose",
+    "agent4":       "agent4_send",
+    "orchestrator": "orchestrator",
 }
 
 

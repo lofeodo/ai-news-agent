@@ -5,7 +5,6 @@ import json
 import os
 import re
 import sys
-import time
 from datetime import datetime
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -15,14 +14,7 @@ from config import DATA_DIR, SCORING_MODEL, GCP_PROJECT_ID, USE_FIRESTORE, FIRES
 # Constants
 # ---------------------------------------------------------------------------
 
-NEWSLETTER_NAME = "Latent SpaceMail"
-RECIPIENT_EMAIL = os.environ.get("NEWSLETTER_RECIPIENT_EMAIL", "")
-SENDER_EMAIL    = "latentspacemail@gmail.com"
-SENDER_NAME     = "Latent SpaceMail"
-
-SENDGRID_SECRET_NAME = "sendgrid-api-key"
-USE_SECRET_MANAGER   = os.environ.get("USE_SECRET_MANAGER", "false").lower() == "true"
-
+NEWSLETTER_NAME              = "Latent SpaceMail"
 ARTICLES_PER_CATEGORY_TARGET = "3 to 5"
 
 NEWS_CATEGORIES = [
@@ -37,25 +29,6 @@ NEWS_CATEGORIES = [
 
 SELECTION_MAX_TOKENS = 200
 INTRO_MAX_TOKENS     = 300
-
-
-# ---------------------------------------------------------------------------
-# SendGrid
-# ---------------------------------------------------------------------------
-
-def _get_sendgrid_api_key() -> str:
-    """Load SendGrid API key from Secret Manager (cloud) or env var (local)."""
-    if USE_SECRET_MANAGER:
-        from google.cloud import secretmanager
-        client   = secretmanager.SecretManagerServiceClient()
-        name     = f"projects/{GCP_PROJECT_ID}/secrets/{SENDGRID_SECRET_NAME}/versions/latest"
-        response = client.access_secret_version(request={"name": name})
-        return response.payload.data.decode("utf-8").strip()
-    else:
-        key = os.environ.get("SENDGRID_API_KEY", "")
-        if not key:
-            raise RuntimeError("SENDGRID_API_KEY env var not set for local mode")
-        return key
 
 
 # ---------------------------------------------------------------------------
@@ -488,19 +461,20 @@ def run(run_id: str):
     week_of = datetime.now().strftime("%B %d, %Y")
     html    = compose_html(intro, papers, selected_by_category, week_of)
 
+    print("\n=== Saving newsletter HTML ===")
     os.makedirs(DATA_DIR, exist_ok=True)
     html_path = os.path.join(DATA_DIR, "newsletter.html")
     with open(html_path, "w", encoding="utf-8") as f:
         f.write(html)
     print(f"  Saved to {html_path}")
 
-    print("\n=== Sending email ===")
-    if not RECIPIENT_EMAIL:
-        print("  [warn]  NEWSLETTER_RECIPIENT_EMAIL not set — skipping send")
-    else:
-        subject    = f"{NEWSLETTER_NAME} — {week_of}"
-        api_key    = _get_sendgrid_api_key()
-        send_email(api_key, html, subject)
+    if USE_FIRESTORE:
+        from google.cloud import firestore as _fs
+        _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).update({
+            "newsletter_html":    html,
+            "newsletter_subject": f"{NEWSLETTER_NAME} — {week_of}",
+        })
+        print(f"  Written newsletter_html and newsletter_subject to Firestore")
 
     elapsed = (datetime.now() - start_time).total_seconds()
     print(f"\n--- Done in {elapsed:.1f}s ---")

@@ -81,10 +81,10 @@ def _run_proxy_diagnostics(proxy_url, session):
 def fetch_papers():
     """Fetch AI papers submitted in the last LOOKBACK_HOURS from ArXiv."""
     import socket
+    import urllib.request
     socket.setdefaulttimeout(30)
     print(f"Fetching papers from ArXiv (last {LOOKBACK_HOURS} hours)...", flush=True)
 
-    import urllib.request
     proxy_url = os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY")
     if proxy_url:
         proxy_handler = urllib.request.ProxyHandler({
@@ -93,7 +93,7 @@ def fetch_papers():
         })
         opener = urllib.request.build_opener(proxy_handler)
         urllib.request.install_opener(opener)
-        print(f"[fetch_papers] urllib proxy installed: {proxy_url}", flush=True)
+        print(f"[fetch_papers] Using proxy: {proxy_url}", flush=True)
 
     client = arxiv.Client()
 
@@ -103,7 +103,6 @@ def fetch_papers():
             "https": proxy_url,
         })
         print(f"[fetch_papers] Proxy set on arxiv session", flush=True)
-        _run_proxy_diagnostics(proxy_url, client._session)
 
     search = arxiv.Search(
         query="cat:cs.AI OR cat:cs.LG",

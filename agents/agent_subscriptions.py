@@ -375,7 +375,13 @@ def _latest_newsletter_html(db, unsubscribe_token: str):
         return None
 
     html = docs[0].to_dict().get("newsletter_html", "")
-    # agent3 will embed this placeholder once we update it; .replace() is a
-    # harmless no-op until then.
-    link = f"{SERVICE_BASE_URL}/unsubscribe?token={unsubscribe_token}"
-    return html.replace("{{UNSUBSCRIBE_URL}}", link)
+    # agent3 embeds two placeholders in the footer. Substitute both with this
+    # subscriber's token-carrying links. NOTE: the preferences link depends on
+    # FRONTEND_BASE_URL, which is unset until the frontend exists (Phase 11) —
+    # until then the prefs link is malformed, but we still replace the
+    # placeholder so the raw "{{PREFERENCES_URL}}" string never ships.
+    unsub_link = f"{SERVICE_BASE_URL}/unsubscribe?token={unsubscribe_token}"
+    prefs_link = f"{FRONTEND_BASE_URL}/preferences.html?token={unsubscribe_token}"
+    html = html.replace("{{UNSUBSCRIBE_URL}}", unsub_link)
+    html = html.replace("{{PREFERENCES_URL}}", prefs_link)
+    return html

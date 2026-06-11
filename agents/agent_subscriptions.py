@@ -307,7 +307,7 @@ def confirm(token: str = ""):
     # Send last week's newsletter if they asked for it (once — guard against
     # double-clicks on the confirm link).
     if data.get("send_latest") and not data.get("latest_sent"):
-        html = _latest_newsletter_html(db, unsubscribe_token=data["token"])
+        html = _latest_newsletter_html(db, unsubscribe_token=data["token"], prefs=data.get("prefs", {}))
         if html:
             _send_email(data["email"],
                         f"{NEWSLETTER_NAME} — last week's edition",
@@ -360,7 +360,13 @@ def update_preferences(req: PreferencesUpdate):
 # Latest newsletter lookup (same composite-index query as agent4)
 # ---------------------------------------------------------------------------
 
-def _latest_newsletter_html(db, unsubscribe_token: str):
+def _newsletter_variant_key(prefs: dict) -> str:
+    fr = "1" if prefs.get("include_french", False) else "0"
+    ca = "1" if prefs.get("include_canada", False) else "0"
+    return f"{fr}_{ca}"
+
+
+def _latest_newsletter_html(db, unsubscribe_token: str, prefs: dict | None = None):
     from google.cloud import firestore as _fs
     docs = list(
         db.collection(FIRESTORE_COLLECTION)
@@ -374,7 +380,14 @@ def _latest_newsletter_html(db, unsubscribe_token: str):
         print("[subscriptions]  no newsletter found to send", flush=True)
         return None
 
-    html = docs[0].to_dict().get("newsletter_html", "")
+    data     = docs[0].to_dict()
+    variants = data.get("newsletter_variants")
+    if variants and prefs:
+        key  = _newsletter_variant_key(prefs)
+        html = variants.get(key) or variants.get("0_0", "")
+    else:
+        html = data.get("newsletter_html", "")
+
     # agent3 embeds two placeholders in the footer. Substitute both with this
     # subscriber's token-carrying links. NOTE: the preferences link depends on
     # FRONTEND_BASE_URL, which is unset until the frontend exists (Phase 11) —

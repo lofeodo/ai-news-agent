@@ -116,8 +116,19 @@ def _personalize(html: str, token: str) -> str:
 # Newsletter lookup
 # ---------------------------------------------------------------------------
 
+def _variant_key(prefs: dict) -> str:
+    """Map a subscriber prefs dict to its newsletter variant key."""
+    fr = "1" if prefs.get("include_french", False) else "0"
+    ca = "1" if prefs.get("include_canada", False) else "0"
+    return f"{fr}_{ca}"
+
+
 def _load_latest_newsletter(db):
-    """Return (html, subject) for the most recent run with newsletter_html set."""
+    """Return (variants, subject) for the most recent run with newsletter_html set.
+
+    variants is a dict keyed by "0_0" / "1_0" / "0_1" / "1_1".
+    Falls back to {"0_0": newsletter_html} for old runs that predate variants.
+    """
     from google.cloud import firestore as _fs
     # Most recent run doc that has newsletter_html set.
     # Agent4 is triggered by Scheduler independently — it doesn't receive a run_id.
@@ -132,11 +143,14 @@ def _load_latest_newsletter(db):
     docs = list(results)
     if not docs:
         raise RuntimeError("[agent4]  No Firestore document found with newsletter_html set")
-    data    = docs[0].to_dict()
-    html    = data.get("newsletter_html")
-    subject = data.get("newsletter_subject") or f"{NEWSLETTER_NAME} — {datetime.now().strftime('%B %d, %Y')}"
-    print(f"[agent4]  Loaded newsletter_html from Firestore (run_id={data.get('run_id')})", flush=True)
-    return html, subject
+    data     = docs[0].to_dict()
+    variants = data.get("newsletter_variants")
+    if not variants:
+        variants = {"0_0": data.get("newsletter_html", "")}
+    subject  = data.get("newsletter_subject") or f"{NEWSLETTER_NAME} — {datetime.now().strftime('%B %d, %Y')}"
+    print(f"[agent4]  Loaded newsletter variants from Firestore "
+          f"(run_id={data.get('run_id')}, keys={list(variants.keys())})", flush=True)
+    return variants, subject
 
 
 def _active_subscribers(db) -> list[dict]:
@@ -168,7 +182,9 @@ def run(run_id: str):
     # LOCAL MODE — single send to TEST_RECIPIENT_EMAIL, no Firestore.
     # -------------------------------------------------------------------
     if not USE_FIRESTORE:
-        html_path = os.path.join(DATA_DIR, "newsletter.html")
+        variant_path = os.path.join(DATA_DIR, "newsletter_0_0.html")
+        legacy_path  = os.path.join(DATA_DIR, "newsletter.html")
+        html_path    = variant_path if os.path.exists(variant_path) else legacy_path
         with open(html_path, "r", encoding="utf-8") as f:
             html = f.read()
         subject = f"{NEWSLETTER_NAME} — {datetime.now().strftime('%B %d, %Y')}"
@@ -195,8 +211,8 @@ def run(run_id: str):
     from google.cloud import firestore as _fs
     db = _fs.Client(project=GCP_PROJECT_ID)
 
-    html, subject = _load_latest_newsletter(db)
-    subscribers   = _active_subscribers(db)
+    variants, subject = _load_latest_newsletter(db)
+    subscribers      = _active_subscribers(db)
     print(f"[agent4]  {len(subscribers)} active subscriber(s)", flush=True)
 
     api_key = _get_sendgrid_api_key()
@@ -214,6 +230,15 @@ def run(run_id: str):
             failed += 1
             failures.append({"email": email or "<missing>", "error": "missing email or token"})
             print(f"  [warn]  skipping malformed subscriber doc: {sub}", flush=True)
+            continue
+
+        prefs = sub.get("prefs", {})
+        key   = _variant_key(prefs)
+        html  = variants.get(key) or variants.get("0_0", "")
+        if not html:
+            failed += 1
+            failures.append({"email": email, "error": f"no HTML for variant {key}"})
+            print(f"  [warn]  no HTML for variant {key}, skipping {email}", flush=True)
             continue
 
         personalized = _personalize(html, token)

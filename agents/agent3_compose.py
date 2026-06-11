@@ -27,6 +27,13 @@ NEWS_CATEGORIES = [
     "Canada & Montreal",
 ]
 
+NEWSLETTER_VARIANTS = {
+    "0_0": {"include_french": False, "include_canada": False},
+    "1_0": {"include_french": True,  "include_canada": False},
+    "0_1": {"include_french": False, "include_canada": True},
+    "1_1": {"include_french": True,  "include_canada": True},
+}
+
 SELECTION_MAX_TOKENS = 200
 INTRO_MAX_TOKENS     = 300
 
@@ -245,7 +252,13 @@ def compose_html(
     papers: list,
     selected_by_category: dict[str, list],
     week_of: str,
+    include_canada: bool = True,
 ) -> str:
+    active_categories = [
+        cat for cat in NEWS_CATEGORIES
+        if not (cat == "Canada & Montreal" and not include_canada)
+    ]
+
     category_icons = {
         "Model & Product Releases": "🚀",
         "Industry & Business":      "💼",
@@ -296,12 +309,6 @@ def compose_html(
         )
 
     # — table of contents (2 rows × 4 cols) —
-    _toc_labels = [
-        ("01", cat.split(" &")[0].split(",")[0].split(" ")[0].upper())
-        for cat in NEWS_CATEGORIES
-    ]
-    _toc_labels.append(("08", "RESEARCH"))
-
     def _toc_cell(num: str, short: str) -> str:
         return (
             f'<td style="width:25%;padding:0 0 6px 0;">'
@@ -310,19 +317,17 @@ def compose_html(
             f'</td>'
         )
 
-    toc_row1 = "".join(_toc_cell(n, s) for n, s in _toc_labels[:4])
-    toc_row2 = "".join(_toc_cell(n, s) for n, s in _toc_labels[4:])
-
-    # fix section numbers in toc since we used enumerate index above
-    _toc_labels_fixed = [(f"{i+1:02d}", cat.split(" &")[0].split(",")[0].upper())
-                         for i, cat in enumerate(NEWS_CATEGORIES)]
-    _toc_labels_fixed.append(("RES", "RESEARCH"))
-    toc_row1 = "".join(_toc_cell(n, s) for n, s in _toc_labels_fixed[:4])
-    toc_row2 = "".join(_toc_cell(n, s) for n, s in _toc_labels_fixed[4:])
+    _toc_entries = [(f"{i+1:02d}", cat.split(" &")[0].split(",")[0].upper())
+                    for i, cat in enumerate(active_categories)]
+    _toc_entries.append(("RES", "RESEARCH"))
+    while len(_toc_entries) % 4 != 0:
+        _toc_entries.append(("", ""))
+    toc_row1 = "".join(_toc_cell(n, s) for n, s in _toc_entries[:4])
+    toc_row2 = "".join(_toc_cell(n, s) for n, s in _toc_entries[4:])
 
     # — news section rows —
     news_rows = ""
-    for i, category in enumerate(NEWS_CATEGORIES):
+    for i, category in enumerate(active_categories):
         num      = f"{i+1:02d}"
         icon     = category_icons.get(category, "📌")
         articles = selected_by_category.get(category, [])
@@ -516,7 +521,12 @@ def run(run_id: str):
     client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
 
     print("\n=== Selecting articles per category ===")
-    selected_by_category: dict[str, list] = {}
+    # Two selection passes per category:
+    #   selected_all — full pool (French + English), used when include_french=True
+    #   selected_en  — English-only pool, used when include_french=False
+    # The second pass is skipped when the category has no French articles.
+    selected_all: dict[str, list] = {}
+    selected_en:  dict[str, list] = {}
 
     for category in NEWS_CATEGORIES:
         articles = by_category.get(category, [])
@@ -524,43 +534,63 @@ def run(run_id: str):
 
         if not articles:
             print(" → no articles, using fallback")
-            selected_by_category[category] = []
+            selected_all[category] = []
+            selected_en[category]  = []
             continue
 
-        selected = select_articles_for_category(category, articles, selection_prompt, client)
-        print(f" → selected {len(selected)}")
-        selected_by_category[category] = selected
+        full_selected = select_articles_for_category(category, articles, selection_prompt, client)
+        selected_all[category] = full_selected
+
+        en_articles = [a for a in articles if a.get("language") != "fr"]
+        if len(en_articles) < len(articles):
+            print(f" → selected {len(full_selected)} (re-running English-only)", end="")
+            selected_en[category] = select_articles_for_category(category, en_articles, selection_prompt, client)
+        else:
+            selected_en[category] = full_selected
+
+        print(f" → {len(full_selected)} (all) / {len(selected_en[category])} (en)")
 
     print("\n=== Writing intro paragraph ===")
-    intro = write_intro(papers, selected_by_category, intro_prompt, client)
+    intro = write_intro(papers, selected_all, intro_prompt, client)
     print(f"  Intro: {intro[:100]}...")
 
-    print("\n=== Composing HTML ===")
+    print("\n=== Composing HTML variants ===")
     week_of = datetime.now().strftime("%B %d, %Y")
-    html    = compose_html(intro, papers, selected_by_category, week_of)
+    newsletter_variants: dict[str, str] = {}
+    for key, prefs in NEWSLETTER_VARIANTS.items():
+        selection = selected_all if prefs["include_french"] else selected_en
+        html = compose_html(intro, papers, selection, week_of, include_canada=prefs["include_canada"])
+        newsletter_variants[key] = html
+        print(f"  Variant {key}: {len(html):,} chars")
 
     print("\n=== Saving newsletter HTML ===")
     os.makedirs(DATA_DIR, exist_ok=True)
-    html_path = os.path.join(DATA_DIR, "newsletter.html")
-    with open(html_path, "w", encoding="utf-8") as f:
-        f.write(html)
-    print(f"  Saved to {html_path}")
+    for key, html in newsletter_variants.items():
+        path = os.path.join(DATA_DIR, f"newsletter_{key}.html")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(html)
+        print(f"  Saved {path}")
+    legacy_path = os.path.join(DATA_DIR, "newsletter.html")
+    with open(legacy_path, "w", encoding="utf-8") as f:
+        f.write(newsletter_variants["0_0"])
+    print(f"  Saved {legacy_path} (legacy alias for 0_0)")
 
     if USE_FIRESTORE:
         from google.cloud import firestore as _fs
         _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).update({
-            "newsletter_html":    html,
-            "newsletter_subject": f"{NEWSLETTER_NAME} — {week_of}",
+            "newsletter_variants": newsletter_variants,
+            "newsletter_html":     newsletter_variants["0_0"],
+            "newsletter_subject":  f"{NEWSLETTER_NAME} — {week_of}",
         })
-        print(f"  Written newsletter_html and newsletter_subject to Firestore")
+        print(f"  Written newsletter_variants + newsletter_html (0_0) to Firestore")
 
     elapsed = (datetime.now() - start_time).total_seconds()
     print(f"\n--- Done in {elapsed:.1f}s ---")
 
-    total_selected = sum(len(v) for v in selected_by_category.values())
+    total_selected = sum(len(v) for v in selected_all.values())
     print(f"Papers:   {len(papers)}")
     print(f"Articles: {total_selected} selected across {len(NEWS_CATEGORIES)} categories")
-    print(f"HTML:     {html_path}")
+    print(f"Variants: {list(newsletter_variants.keys())}")
 
 
 if __name__ == "__main__":

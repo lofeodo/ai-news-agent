@@ -262,6 +262,20 @@ button[type="submit"]:disabled { opacity: 0.45; cursor: default; box-shadow: non
 .nav-links a { color: var(--muted); text-decoration: none; }
 .nav-links a:hover { color: var(--accent); }
 
+.nav-github {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.nav-github svg {
+  width: 13px;
+  height: 13px;
+  fill: currentColor;
+  flex-shrink: 0;
+  position: relative;
+  top: -0.5px;
+}
+
 /* Read-only email display on preferences page */
 .email-display {
   font-size: 0.88rem;

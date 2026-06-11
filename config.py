@@ -84,3 +84,4 @@ TOPIC_CONTENT_SUMMARIZED = "content-summarized"
 # Firestore
 FIRESTORE_COLLECTION = "pipeline_runs"
 USE_FIRESTORE        = os.environ.get("USE_FIRESTORE", "false").lower() == "true"
+SUBSCRIBERS_COLLECTION = "subscribers"

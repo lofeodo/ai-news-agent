@@ -283,8 +283,8 @@ def compose_html(
             f'</td>\n'
             # vertical divider + label
             f'<td style="vertical-align:middle;border-left:1px solid #333333;padding-left:16px;">'
-            f'<p style="margin:0;font-family:{_F};font-size:10px;font-weight:700;'
-            f'letter-spacing:3px;text-transform:uppercase;color:#4a4a4a;">'
+            f'<p style="margin:0;font-family:{_F};font-size:12px;font-weight:700;'
+            f'letter-spacing:2.5px;text-transform:uppercase;color:#727272;">'
             f'{icon}&nbsp; {label}</p>'
             f'</td>\n'
             f'</tr>\n'
@@ -302,8 +302,8 @@ def compose_html(
     def _toc_cell(num: str, short: str) -> str:
         return (
             f'<td style="width:25%;padding:0 0 6px 0;">'
-            f'<span style="font-family:{_F};font-size:9px;color:{_AMBER};font-weight:700;">{num}</span>'
-            f'<span style="font-family:{_F};font-size:9px;color:#363636;">&thinsp;{short}</span>'
+            f'<span style="font-family:{_F};font-size:11px;color:{_AMBER};font-weight:700;">{num}</span>'
+            f'<span style="font-family:{_F};font-size:11px;color:#585858;">&thinsp;{short}</span>'
             f'</td>'
         )
 
@@ -382,7 +382,7 @@ def compose_html(
       {_rule(_AMBER)}
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
       <tr><td style="padding:32px 40px 24px;">
-        <p style="margin:0 0 4px 0;font-family:{_F};font-size:11px;color:#2c2c2c;letter-spacing:3px;">&gt;_ TRANSMISSION</p>
+        <p style="margin:0 0 4px 0;font-family:{_F};font-size:13px;color:#484848;letter-spacing:3px;">&gt;_ TRANSMISSION</p>
         <h1 style="margin:0 0 0 0;font-family:{_F};font-size:32px;font-weight:700;
                    letter-spacing:-0.5px;line-height:1.1;color:{_AMBER};">{NEWSLETTER_NAME}</h1>
         {_rule("#222222", "14px")}
@@ -390,13 +390,13 @@ def compose_html(
                style="margin-top:12px;">
         <tr>
           <td style="vertical-align:bottom;">
-            <p style="margin:0;font-family:{_F};font-size:10px;color:#404040;
-                      letter-spacing:3px;text-transform:uppercase;">
+            <p style="margin:0;font-family:{_F};font-size:12px;color:#666666;
+                      letter-spacing:2.5px;text-transform:uppercase;">
               Weekly AI Intelligence Dispatch
             </p>
           </td>
           <td style="vertical-align:bottom;text-align:right;white-space:nowrap;">
-            <p style="margin:0;font-family:{_F};font-size:11px;color:#383838;">
+            <p style="margin:0;font-family:{_F};font-size:13px;color:#606060;">
               {week_of}
             </p>
           </td>

@@ -1,0 +1,286 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0f0f0f;
+  --surface: #161616;
+  --border: #2a2a2a;
+  --text: #e8e8e8;
+  --muted: #8b8b8b;
+  --accent: #c8b89a;
+  --error: #e07070;
+  --success: #7ec8a0;
+  --font: 'Menlo', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+}
+
+html { font-size: 15px; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 16px 64px;
+  position: relative;
+}
+
+/* Radial vignette — darkens the edges to focus attention on the card */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 45%, transparent 38%, rgba(0,0,0,0.72) 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Subtle scanline texture for the terminal aesthetic */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 2px,
+    rgba(0,0,0,0.06) 2px,
+    rgba(0,0,0,0.06) 3px
+  );
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* All non-canvas content sits above the vignette + scanlines */
+.wordmark, .card, .nav-links {
+  position: relative;
+  z-index: 2;
+}
+
+.wordmark {
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 40px;
+  text-decoration: none;
+  text-shadow: 0 0 18px rgba(200,184,154,0.35);
+  transition: color 0.2s, text-shadow 0.2s;
+}
+.wordmark:hover {
+  color: var(--accent);
+  text-shadow: 0 0 28px rgba(200,184,154,0.6);
+}
+
+.card {
+  width: 100%;
+  max-width: 520px;
+  /* Solid fallback for browsers without backdrop-filter (older Firefox, etc.) */
+  background: rgba(22, 22, 22, 0.97);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--accent);
+  padding: 36px 32px 40px;
+  box-shadow:
+    0 0 0 1px rgba(200,184,154,0.04),
+    0 0 40px rgba(200,184,154,0.06),
+    inset 0 1px 0 rgba(200,184,154,0.10);
+}
+/* Progressive enhancement: frosted glass where supported */
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .card {
+    background: rgba(22, 22, 22, 0.88);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+}
+
+/* Terminal prompt decoration on headings */
+.prompt {
+  color: var(--accent);
+  margin-right: 8px;
+  opacity: 0.8;
+}
+
+h1 {
+  font-size: 1.05rem;
+  font-weight: normal;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+
+.subtitle {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+
+.field { margin-bottom: 18px; }
+
+label {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-bottom: 6px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+input[type="email"],
+input[type="text"] {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.88rem;
+  padding: 9px 12px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+input[type="email"]:focus,
+input[type="text"]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(200,184,154,0.14);
+}
+
+/* Section divider label for checkbox groups */
+.checkboxes { margin-bottom: 24px; }
+
+.checkboxes > label[as="div"] {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  color: var(--muted);
+}
+.checkboxes > label[as="div"]::before,
+.checkboxes > label[as="div"]::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+.check-row input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  margin-top: 2px;
+  cursor: pointer;
+  position: relative;
+  transition: border-color 0.15s, background 0.15s;
+}
+.check-row input[type="checkbox"]:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.check-row input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 3px; top: 1px;
+  width: 5px; height: 8px;
+  border: 1.5px solid var(--bg);
+  border-top: none; border-left: none;
+  transform: rotate(45deg);
+}
+.check-row span {
+  font-size: 0.83rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+.check-row .check-desc {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+button[type="submit"] {
+  width: 100%;
+  background: var(--accent);
+  color: var(--bg);
+  font-family: var(--font);
+  font-size: 0.82rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: none;
+  padding: 11px;
+  cursor: pointer;
+  transition: opacity 0.15s, box-shadow 0.2s;
+}
+button[type="submit"]:hover {
+  opacity: 0.92;
+  box-shadow: 0 0 20px rgba(200,184,154,0.28), 0 0 6px rgba(200,184,154,0.18);
+}
+button[type="submit"]:disabled { opacity: 0.45; cursor: default; box-shadow: none; }
+
+.msg {
+  margin-top: 18px;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  display: none;
+}
+.msg.visible { display: block; }
+.msg.success { color: var(--success); }
+.msg.error   { color: var(--error); }
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 28px 0;
+}
+
+.note {
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.note a { color: var(--muted); }
+.note a:hover { color: var(--accent); }
+
+.nav-links {
+  margin-top: 32px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  display: flex;
+  gap: 20px;
+}
+.nav-links a { color: var(--muted); text-decoration: none; }
+.nav-links a:hover { color: var(--accent); }
+
+.nav-github {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.nav-github svg {
+  width: 13px;
+  height: 13px;
+  fill: currentColor;
+  flex-shrink: 0;
+  position: relative;
+  top: -0.5px;
+}
+
+/* Read-only email display on preferences page */
+.email-display {
+  font-size: 0.88rem;
+  color: var(--muted);
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}

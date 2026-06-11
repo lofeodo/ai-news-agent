@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unsubscribe — Latent SpaceMail</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="bg-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;will-change:transform;"></canvas>
+
+  <a class="wordmark" href="/">Latent SpaceMail</a>
+
+  <div class="card">
+    <h1><span class="prompt">❯</span> Unsubscribe</h1>
+    <p class="subtitle">Enter your email and we'll send you a one-click unsubscribe link.</p>
+
+    <form id="unsub-form" novalidate>
+      <div class="field">
+        <label for="email">Email address</label>
+        <input type="email" id="email" name="email" autocomplete="email" required placeholder="you@example.com">
+      </div>
+
+      <button type="submit" id="submit-btn">Send unsubscribe link</button>
+      <div class="msg" id="msg"></div>
+    </form>
+
+    <hr class="divider">
+    <p class="note">You can also click the <strong>Unsubscribe</strong> link at the bottom of any newsletter we've sent you — no form required.</p>
+  </div>
+
+  <div class="nav-links">
+    <a href="/">Subscribe</a>
+  </div>
+
+  <script>
+    const API = 'https://agent-subscriptions-zozrn33sna-nn.a.run.app';
+
+    const form = document.getElementById('unsub-form');
+    const btn  = document.getElementById('submit-btn');
+    const msg  = document.getElementById('msg');
+
+    function showMsg(text, type) {
+      msg.textContent = text;
+      msg.className = `msg visible ${type}`;
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      if (!email) { showMsg('Please enter your email address.', 'error'); return; }
+
+      btn.disabled = true;
+      msg.className = 'msg';
+
+      try {
+        const res = await fetch(`${API}/request-unsubscribe`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+
+        if (res.ok) {
+          form.reset();
+          showMsg("If that address is subscribed, we've sent you an unsubscribe link.", 'success');
+        } else if (res.status === 422) {
+          showMsg("That doesn't look like a valid email address.", 'error');
+        } else {
+          showMsg('Something went wrong. Please try again.', 'error');
+        }
+      } catch {
+        showMsg('Something went wrong. Please try again.', 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+  <script src="bg.js"></script>
+</body>
+</html>

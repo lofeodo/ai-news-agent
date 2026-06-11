@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Subscribe — Latent SpaceMail</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="bg-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;will-change:transform;"></canvas>
+
+  <a class="wordmark" href="/">Latent SpaceMail</a>
+
+  <div class="card">
+    <h1><span class="prompt">❯</span> Subscribe</h1>
+    <p class="subtitle">A weekly briefing on AI research and industry news.<br>Delivered every Monday morning.</p>
+
+    <form id="subscribe-form" novalidate>
+      <div class="field">
+        <label for="email">Email address</label>
+        <input type="email" id="email" name="email" autocomplete="email" required placeholder="you@example.com">
+      </div>
+
+      <div class="checkboxes">
+        <label as="div">Include in my newsletter</label>
+        <label class="check-row">
+          <input type="checkbox" id="send_latest" name="send_latest" checked>
+          <span>Send me the latest issue right away<span class="check-desc">Delivered after you confirm your subscription</span></span>
+        </label>
+        <label class="check-row">
+          <input type="checkbox" id="include_french" name="include_french">
+          <span>French-language articles<span class="check-desc">AI coverage from French-language sources</span></span>
+        </label>
+        <label class="check-row">
+          <input type="checkbox" id="include_canada" name="include_canada">
+          <span>Canada &amp; Montréal section<span class="check-desc">Local AI news from across Canada</span></span>
+        </label>
+      </div>
+
+      <button type="submit" id="submit-btn">Subscribe</button>
+      <div class="msg" id="msg"></div>
+    </form>
+  </div>
+
+  <div class="nav-links">
+    <a href="unsubscribe.html">Unsubscribe</a>
+    <a href="https://github.com/lofeodo/ai-news-agent" target="_blank" rel="noopener" class="nav-github" aria-label="View source on GitHub">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+      source
+    </a>
+  </div>
+
+  <script src="bg.js"></script>
+  <script>
+    const API = 'https://agent-subscriptions-zozrn33sna-nn.a.run.app';
+
+    const form = document.getElementById('subscribe-form');
+    const btn  = document.getElementById('submit-btn');
+    const msg  = document.getElementById('msg');
+
+    function showMsg(text, type) {
+      msg.textContent = text;
+      msg.className = `msg visible ${type}`;
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      if (!email) { showMsg('Please enter your email address.', 'error'); return; }
+
+      btn.disabled = true;
+      msg.className = 'msg';
+
+      try {
+        const res = await fetch(`${API}/subscribe`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            prefs: {
+              include_french: document.getElementById('include_french').checked,
+              include_canada: document.getElementById('include_canada').checked,
+            },
+            send_latest: document.getElementById('send_latest').checked,
+          }),
+        });
+
+        if (res.ok) {
+          form.reset();
+          showMsg('Check your inbox to confirm your subscription.', 'success');
+        } else if (res.status === 422) {
+          showMsg("That doesn't look like a valid email address.", 'error');
+        } else {
+          showMsg('Something went wrong. Please try again.', 'error');
+        }
+      } catch {
+        showMsg('Something went wrong. Please try again.', 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

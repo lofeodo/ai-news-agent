@@ -231,7 +231,10 @@ def render_article_card(article: dict, is_last: bool = False) -> str:
         f'<p style="margin:0 0 8px 0;font-family:{_F};font-size:16px;font-weight:600;line-height:1.35;">'
         f'<a href="{url}" style="color:#7a6548;text-decoration:underline;text-underline-offset:2px;">{title}</a>'
         f'{hn_html}</p>\n'
-        f'<p style="margin:0;font-family:{_F};font-size:14px;line-height:1.8;color:{_INK2};">{summary}</p>'
+        f'<p style="margin:0 0 10px 0;font-family:{_F};font-size:14px;line-height:1.8;color:{_INK2};">{summary}</p>'
+        f'<p style="margin:0;font-family:{_F};font-size:12px;">'
+        f'<a href="{url}" style="color:{_AMBER};text-decoration:none;">Read article &nbsp;&#8594;</a>'
+        f'</p>'
         f'</td></tr>\n'
         f'</table>\n'
     )

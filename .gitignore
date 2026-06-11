@@ -35,6 +35,12 @@ docker
 # Claude Code
 .claude/
 
-# MCP Playwright
+# MCP Playwright (snapshots and console logs from iterative browser sessions)
+.playwright-mcp/
 .mcp-playwright/
 playwright-state.json
+
+# Throwaway screenshots from local iteration sessions
+/*.png
+/*.jpg
+/*.jpeg

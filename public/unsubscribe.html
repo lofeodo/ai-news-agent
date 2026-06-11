@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Subscribe — Latent SpaceMail</title>
+  <title>Unsubscribe — Latent SpaceMail</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,45 +12,31 @@
   <a class="wordmark" href="/">Latent SpaceMail</a>
 
   <div class="card">
-    <h1><span class="prompt">❯</span> Subscribe</h1>
-    <p class="subtitle">A weekly briefing on AI research and industry news.<br>Delivered every Monday morning.</p>
+    <h1><span class="prompt">❯</span> Unsubscribe</h1>
+    <p class="subtitle">Enter your email and we'll send you a one-click unsubscribe link.</p>
 
-    <form id="subscribe-form" novalidate>
+    <form id="unsub-form" novalidate>
       <div class="field">
         <label for="email">Email address</label>
         <input type="email" id="email" name="email" autocomplete="email" required placeholder="you@example.com">
       </div>
 
-      <div class="checkboxes">
-        <label as="div">Include in my newsletter</label>
-        <label class="check-row">
-          <input type="checkbox" id="send_latest" name="send_latest" checked>
-          <span>Send me the latest issue right away<span class="check-desc">Delivered after you confirm your subscription</span></span>
-        </label>
-        <label class="check-row">
-          <input type="checkbox" id="include_french" name="include_french">
-          <span>French-language articles<span class="check-desc">AI coverage from French-language sources</span></span>
-        </label>
-        <label class="check-row">
-          <input type="checkbox" id="include_canada" name="include_canada">
-          <span>Canada &amp; Montréal section<span class="check-desc">Local AI news from across Canada</span></span>
-        </label>
-      </div>
-
-      <button type="submit" id="submit-btn">Subscribe</button>
+      <button type="submit" id="submit-btn">Send unsubscribe link</button>
       <div class="msg" id="msg"></div>
     </form>
+
+    <hr class="divider">
+    <p class="note">You can also click the <strong>Unsubscribe</strong> link at the bottom of any newsletter we've sent you — no form required.</p>
   </div>
 
   <div class="nav-links">
-    <a href="unsubscribe.html">Unsubscribe</a>
+    <a href="/">Subscribe</a>
   </div>
 
-  <script src="bg.js"></script>
   <script>
     const API = 'https://agent-subscriptions-zozrn33sna-nn.a.run.app';
 
-    const form = document.getElementById('subscribe-form');
+    const form = document.getElementById('unsub-form');
     const btn  = document.getElementById('submit-btn');
     const msg  = document.getElementById('msg');
 
@@ -68,22 +54,15 @@
       msg.className = 'msg';
 
       try {
-        const res = await fetch(`${API}/subscribe`, {
+        const res = await fetch(`${API}/request-unsubscribe`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email,
-            prefs: {
-              include_french: document.getElementById('include_french').checked,
-              include_canada: document.getElementById('include_canada').checked,
-            },
-            send_latest: document.getElementById('send_latest').checked,
-          }),
+          body: JSON.stringify({ email }),
         });
 
         if (res.ok) {
           form.reset();
-          showMsg('Check your inbox to confirm your subscription.', 'success');
+          showMsg("If that address is subscribed, we've sent you an unsubscribe link.", 'success');
         } else if (res.status === 422) {
           showMsg("That doesn't look like a valid email address.", 'error');
         } else {
@@ -96,5 +75,6 @@
       }
     });
   </script>
+  <script src="bg.js"></script>
 </body>
 </html>

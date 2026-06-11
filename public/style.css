@@ -23,6 +23,39 @@ body {
   flex-direction: column;
   align-items: center;
   padding: 48px 16px 64px;
+  position: relative;
+}
+
+/* Radial vignette — darkens the edges to focus attention on the card */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 45%, transparent 38%, rgba(0,0,0,0.72) 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Subtle scanline texture for the terminal aesthetic */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 2px,
+    rgba(0,0,0,0.06) 2px,
+    rgba(0,0,0,0.06) 3px
+  );
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* All non-canvas content sits above the vignette + scanlines */
+.wordmark, .card, .nav-links {
+  position: relative;
+  z-index: 2;
 }
 
 .wordmark {
@@ -32,8 +65,13 @@ body {
   color: var(--muted);
   margin-bottom: 40px;
   text-decoration: none;
+  text-shadow: 0 0 18px rgba(200,184,154,0.35);
+  transition: color 0.2s, text-shadow 0.2s;
 }
-.wordmark:hover { color: var(--accent); }
+.wordmark:hover {
+  color: var(--accent);
+  text-shadow: 0 0 28px rgba(200,184,154,0.6);
+}
 
 .card {
   width: 100%;
@@ -41,7 +79,12 @@ body {
   /* Solid fallback for browsers without backdrop-filter (older Firefox, etc.) */
   background: rgba(22, 22, 22, 0.97);
   border: 1px solid var(--border);
+  border-left: 2px solid var(--accent);
   padding: 36px 32px 40px;
+  box-shadow:
+    0 0 0 1px rgba(200,184,154,0.04),
+    0 0 40px rgba(200,184,154,0.06),
+    inset 0 1px 0 rgba(200,184,154,0.10);
 }
 /* Progressive enhancement: frosted glass where supported */
 @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
@@ -50,6 +93,13 @@ body {
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
   }
+}
+
+/* Terminal prompt decoration on headings */
+.prompt {
+  color: var(--accent);
+  margin-right: 8px;
+  opacity: 0.8;
 }
 
 h1 {
@@ -88,12 +138,31 @@ input[type="text"] {
   font-size: 0.88rem;
   padding: 9px 12px;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 input[type="email"]:focus,
-input[type="text"]:focus { border-color: var(--muted); }
+input[type="text"]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(200,184,154,0.14);
+}
 
+/* Section divider label for checkbox groups */
 .checkboxes { margin-bottom: 24px; }
+
+.checkboxes > label[as="div"] {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  color: var(--muted);
+}
+.checkboxes > label[as="div"]::before,
+.checkboxes > label[as="div"]::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
 
 .check-row {
   display: flex;
@@ -113,7 +182,7 @@ input[type="text"]:focus { border-color: var(--muted); }
   margin-top: 2px;
   cursor: pointer;
   position: relative;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, background 0.15s;
 }
 .check-row input[type="checkbox"]:checked {
   background: var(--accent);
@@ -151,10 +220,13 @@ button[type="submit"] {
   border: none;
   padding: 11px;
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: opacity 0.15s, box-shadow 0.2s;
 }
-button[type="submit"]:hover { opacity: 0.88; }
-button[type="submit"]:disabled { opacity: 0.45; cursor: default; }
+button[type="submit"]:hover {
+  opacity: 0.92;
+  box-shadow: 0 0 20px rgba(200,184,154,0.28), 0 0 6px rgba(200,184,154,0.18);
+}
+button[type="submit"]:disabled { opacity: 0.45; cursor: default; box-shadow: none; }
 
 .msg {
   margin-top: 18px;

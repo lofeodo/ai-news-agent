@@ -191,6 +191,16 @@ def compose_html(
       {paper_cards}
     </div>"""
 
+    # CASL: physical mailing address line. Sourced from an env var so nothing
+    # personal lands in the (public) repo. Renders nothing until MAILING_ADDRESS
+    # is set (deferred to Phase 12). When set, it satisfies CASL's address req.
+    _mailing_address = os.environ.get("MAILING_ADDRESS", "").strip()
+    address_html = (
+        f'<p style="margin:0 0 8px 0;">{_mailing_address}</p>'
+        if _mailing_address
+        else ""
+    )
+
     news_sections = ""
     category_icons = {
         "Model & Product Releases": "🚀",
@@ -375,7 +385,14 @@ def compose_html(
     {news_sections}
     {research_section}
     <div class="footer">
-      You're receiving this because you set it up. Unsubscribe by turning off the Cloud Scheduler. ✌️
+      <p style="margin:0 0 8px 0;">{NEWSLETTER_NAME} — Your Weekly AI Briefing</p>
+      <p style="margin:0 0 8px 0;">You're receiving this because you subscribed at {NEWSLETTER_NAME}.</p>
+      {address_html}
+      <p style="margin:0;">
+        <a href="{{{{UNSUBSCRIBE_URL}}}}" style="color:#aaaaaa; text-decoration:underline;">Unsubscribe</a>
+        &nbsp;·&nbsp;
+        <a href="{{{{PREFERENCES_URL}}}}" style="color:#aaaaaa; text-decoration:underline;">Manage preferences</a>
+      </p>
     </div>
   </div>
 </body>

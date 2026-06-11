@@ -12,7 +12,12 @@
 #   agent4       → agents/agent4_send.py
 #   orchestrator → orchestrator.py
 #
-# Cloud Run invokes this via HTTP POST to /.
+#   agent_subscriptions → agents/agent_subscriptions.py
+#     Special case: NOT in AGENT_REGISTRY because it has no run(run_id).
+#     It's a synchronous request/response API — its routes are mounted
+#     onto this app below, only when AGENT_NAME selects it.
+#
+# Cloud Run invokes the pipeline agents via HTTP POST to /.
 # The agent runs in a background thread so we can return 200 immediately —
 # Cloud Run has a request timeout, but our agents can take several minutes.
 
@@ -40,6 +45,30 @@ AGENT_REGISTRY = {
     "agent4":       "agent4_send",
     "orchestrator": "orchestrator",
 }
+
+# ── Subscription service ─────────────────────────────────────────────────────
+# Mounted only in the agent_subscriptions container, so the pipeline agents
+# never expose subscription routes. CORS is needed here (and nowhere else)
+# because browsers on the frontend origin call this API directly.
+if os.environ.get("AGENT_NAME", "").strip() == "agent_subscriptions":
+    from fastapi.middleware.cors import CORSMiddleware
+    from agent_subscriptions import router as subscriptions_router
+
+    # Comma-separated list of allowed frontend origins, e.g.
+    # "https://latentspacemail.web.app,https://latentspacemail.com"
+    # "*" is acceptable while developing; tighten before launch.
+    origins = [
+        o.strip()
+        for o in os.environ.get("ALLOWED_ORIGINS", "*").split(",")
+        if o.strip()
+    ]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_methods=["GET", "POST"],
+        allow_headers=["Content-Type"],
+    )
+    app.include_router(subscriptions_router)
 
 
 def _run_agent(module_name: str, run_id: str) -> None:

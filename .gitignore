@@ -31,3 +31,10 @@ token.json
 service_account*.json
 
 docker
+
+# Claude Code
+.claude/
+
+# MCP Playwright
+.mcp-playwright/
+playwright-state.json

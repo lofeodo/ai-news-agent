@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Subscribe — Latent SpaceMail</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="bg-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;will-change:transform;"></canvas>
+
+  <a class="wordmark" href="/" style="position:relative;z-index:1;">Latent SpaceMail</a>
+
+  <div class="card" style="position:relative;z-index:1;">
+    <h1>Subscribe</h1>
+    <p class="subtitle">A weekly briefing on AI research and industry news.<br>Delivered every Monday morning.</p>
+
+    <form id="subscribe-form" novalidate>
+      <div class="field">
+        <label for="email">Email address</label>
+        <input type="email" id="email" name="email" autocomplete="email" required placeholder="you@example.com">
+      </div>
+
+      <div class="checkboxes">
+        <label as="div">Include in my newsletter</label>
+        <label class="check-row">
+          <input type="checkbox" id="send_latest" name="send_latest" checked>
+          <span>Send me the latest issue right away<span class="check-desc">Delivered after you confirm your subscription</span></span>
+        </label>
+        <label class="check-row">
+          <input type="checkbox" id="include_french" name="include_french">
+          <span>French-language articles<span class="check-desc">AI coverage from French-language sources</span></span>
+        </label>
+        <label class="check-row">
+          <input type="checkbox" id="include_canada" name="include_canada">
+          <span>Canada &amp; Montréal section<span class="check-desc">Local AI news from across Canada</span></span>
+        </label>
+      </div>
+
+      <button type="submit" id="submit-btn">Subscribe</button>
+      <div class="msg" id="msg"></div>
+    </form>
+  </div>
+
+  <div class="nav-links" style="position:relative;z-index:1;">
+    <a href="unsubscribe.html">Unsubscribe</a>
+  </div>
+
+  <script>
+  (function () {
+    var canvas = document.getElementById('bg-canvas');
+    var ctx    = canvas.getContext('2d');
+    var W = window.innerWidth, H = window.innerHeight;
+
+    // Handle devicePixelRatio for sharp rendering on retina / HiDPI (iOS, Android, Mac)
+    function resize() {
+      var dpr = window.devicePixelRatio || 1;
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width  = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      // Reset transform then apply DPR scale so all draw calls use CSS-pixel coords
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    var FLAME = [
+      'rgba(255, 55,  10, 0.95)',
+      'rgba(255,130,  20, 0.90)',
+      'rgba(255,185,  50, 0.82)',
+      'rgba(240,230,  90, 0.65)',
+      'rgba(255,255, 210, 0.40)',
+    ];
+    var ENV_FILL   = 'rgba(200,184,154,0.22)';
+    var ENV_STROKE = 'rgba(200,184,154,0.42)';
+
+    function rnd(a, b) { return a + Math.random() * (b - a); }
+
+    // ---- Particle factory ----
+    // CRITICAL: life must always start < maxLife to prevent negative arc radius.
+    // Root cause of the freeze: life:Math.random() could exceed maxLife (0.55-1.0),
+    // making t>1 → sz<0 → arc() throws → RAF loop dies.
+    function makeParticle(envW) {
+      var ml = rnd(0.55, 1.0);
+      return {
+        ox:      rnd(-envW * 0.275, envW * 0.275),
+        phase:   rnd(0, Math.PI * 2),
+        speed:   rnd(0.4, 0.9),
+        life:    rnd(0, ml),   // always < maxLife
+        maxLife: ml,
+        size:    rnd(1.5, 4.0),
+        tier:    Math.floor(rnd(0, FLAME.length)),
+      };
+    }
+
+    // ---- Envelope ----
+    function Envelope(initial) {
+      this.init(initial !== false);
+    }
+
+    Envelope.prototype.init = function (initial) {
+      this.w   = rnd(36, 68);
+      this.h   = this.w * 0.65;
+      this.x   = rnd(0, W);
+      // Initial: spread across full viewport height so screen is populated immediately.
+      // Respawn: stagger below the bottom so new ones stream in continuously, not in bursts.
+      this.y   = initial
+        ? rnd(-this.h, H + this.h)
+        : H + this.h + rnd(20, H * 0.7);
+      this.vy  = -rnd(0.15, 0.37);
+      this.vx  = rnd(-0.18, 0.18);
+      this.wob = rnd(0, Math.PI * 2);
+      this.wobSpeed = rnd(0.008, 0.020);
+      this.rot = rnd(-0.35, 0.35);
+      this.rotSpeed = rnd(-0.003, 0.003);
+      this.alpha  = initial ? rnd(0, 0.9) : 0;
+      this.fadeIn = rnd(0.004, 0.007);
+      var n = Math.floor(rnd(20, 34));
+      this.pts = [];
+      for (var i = 0; i < n; i++) this.pts.push(makeParticle(this.w));
+    };
+
+    Envelope.prototype.update = function (dt) {
+      var s = dt * 60; // scale so behaviour matches ~60fps baseline
+      this.wob += this.wobSpeed * s;
+      this.rot += this.rotSpeed * s;
+      this.x   += (this.vx + Math.sin(this.wob) * 0.25) * s;
+      this.y   += this.vy * s;
+      this.alpha = Math.min(1, this.alpha + this.fadeIn * s);
+
+      for (var i = 0; i < this.pts.length; i++) {
+        var p = this.pts[i];
+        p.life += p.speed * dt;
+        if (p.life >= p.maxLife) {
+          var np = makeParticle(this.w);
+          p.ox = np.ox; p.phase = np.phase; p.speed = np.speed;
+          p.maxLife = np.maxLife; p.size = np.size; p.tier = np.tier;
+          p.life = 0;
+        }
+      }
+
+      if (this.y < -this.h - 80) this.init(false);
+    };
+
+    Envelope.prototype.draw = function () {
+      var hw = this.w / 2, hh = this.h / 2;
+      ctx.save();
+      ctx.globalAlpha = this.alpha;
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.rot);
+
+      // Body
+      ctx.beginPath();
+      ctx.rect(-hw, -hh, this.w, this.h);
+      ctx.fillStyle = ENV_FILL;
+      ctx.fill();
+      ctx.strokeStyle = ENV_STROKE;
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+
+      // Top flap V
+      ctx.beginPath();
+      ctx.moveTo(-hw, -hh);
+      ctx.lineTo(0, 0);
+      ctx.lineTo(hw, -hh);
+      ctx.stroke();
+
+      // Bottom crease V
+      ctx.lineWidth = 0.6;
+      ctx.beginPath();
+      ctx.moveTo(-hw, hh);
+      ctx.lineTo(0, 0);
+      ctx.lineTo(hw, hh);
+      ctx.stroke();
+
+      // Glow halo above envelope
+      var gy = -hh - this.h * 0.4;
+      var gr = this.h * 0.9;
+      var grd = ctx.createRadialGradient(0, gy, 0, 0, gy, gr);
+      grd.addColorStop(0, 'rgba(255,110,20,0.18)');
+      grd.addColorStop(1, 'rgba(255,110,20,0)');
+      ctx.globalAlpha = this.alpha * 0.7;
+      ctx.beginPath();
+      ctx.arc(0, gy, gr, 0, Math.PI * 2);
+      ctx.fillStyle = grd;
+      ctx.fill();
+
+      // Flame particles
+      for (var i = 0; i < this.pts.length; i++) {
+        var p  = this.pts[i];
+        var t  = p.life / p.maxLife;
+        var sz = Math.max(0, p.size * (1 - t * 0.7)); // clamp: can never be negative
+        if (sz === 0) continue;
+        var py  = -hh - t * this.h * 1.4;
+        var px  = p.ox * (1 - t * 0.5) + Math.sin(p.phase + p.life * 6) * 4 * t;
+        var ti  = Math.min(p.tier + Math.floor(t * 2), FLAME.length - 1);
+        ctx.globalAlpha = this.alpha * (1 - t) * 0.85;
+        ctx.beginPath();
+        ctx.arc(px, py, sz, 0, Math.PI * 2);
+        ctx.fillStyle = FLAME[ti];
+        ctx.fill();
+      }
+
+      ctx.restore();
+    };
+
+    var COUNT     = 22;
+    var envelopes = [];
+    for (var i = 0; i < COUNT; i++) envelopes.push(new Envelope(true));
+
+    // Delta-time loop: frame-rate independent so animation never freezes or skips
+    var lastTime = null;
+
+    // When tab regains focus, reset lastTime to avoid a huge dt jump that could
+    // cause visible skipping (important on mobile / background tab behaviour)
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) lastTime = null;
+    });
+
+    function loop(now) {
+      if (lastTime === null) lastTime = now;
+      var dt = Math.min((now - lastTime) / 1000, 0.1); // seconds, capped at 100 ms
+      lastTime = now;
+
+      ctx.clearRect(0, 0, W, H);
+      for (var i = 0; i < envelopes.length; i++) {
+        envelopes[i].update(dt);
+        envelopes[i].draw();
+      }
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  }());
+  </script>
+
+  <script>
+    const API = 'https://agent-subscriptions-zozrn33sna-nn.a.run.app';
+
+    const form = document.getElementById('subscribe-form');
+    const btn  = document.getElementById('submit-btn');
+    const msg  = document.getElementById('msg');
+
+    function showMsg(text, type) {
+      msg.textContent = text;
+      msg.className = `msg visible ${type}`;
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      if (!email) { showMsg('Please enter your email address.', 'error'); return; }
+
+      btn.disabled = true;
+      msg.className = 'msg';
+
+      try {
+        const res = await fetch(`${API}/subscribe`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            prefs: {
+              include_french: document.getElementById('include_french').checked,
+              include_canada: document.getElementById('include_canada').checked,
+            },
+            send_latest: document.getElementById('send_latest').checked,
+          }),
+        });
+
+        if (res.ok) {
+          form.reset();
+          showMsg('Check your inbox to confirm your subscription.', 'success');
+        } else if (res.status === 422) {
+          showMsg("That doesn’t look like a valid email address.", 'error');
+        } else {
+          showMsg('Something went wrong. Please try again.', 'error');
+        }
+      } catch {
+        showMsg('Something went wrong. Please try again.', 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

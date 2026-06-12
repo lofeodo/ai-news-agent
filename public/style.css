@@ -1,3 +1,5 @@
+@import url('fonts.css');
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
@@ -9,7 +11,10 @@
   --accent: #c8b89a;
   --error: #e07070;
   --success: #7ec8a0;
-  --font: 'Menlo', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+  --font: 'IBM Plex Mono', 'Cascadia Code', 'Menlo', 'Courier New', monospace;
+  --display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --body-serif: 'EB Garamond', Georgia, serif;
+  --label: 'Bebas Neue', 'Arial Narrow', Arial, sans-serif;
 }
 
 html { font-size: 16px; }
@@ -79,8 +84,8 @@ body::after {
   /* Solid fallback for browsers without backdrop-filter (older Firefox, etc.) */
   background: rgba(22, 22, 22, 0.97);
   border: 1px solid var(--border);
-  border-left: 2px solid var(--accent);
-  padding: 36px 32px 40px;
+  border-left: 4px solid var(--accent);
+  padding: 40px 36px 44px;
   box-shadow:
     0 0 0 1px rgba(200,184,154,0.04),
     0 0 40px rgba(200,184,154,0.06),
@@ -95,25 +100,51 @@ body::after {
   }
 }
 
-/* Terminal prompt decoration on headings */
+/* Terminal prompt — block label above h1, inline elsewhere */
+h1 .prompt {
+  display: block;
+  font-family: var(--font);
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  opacity: 0.55;
+  margin-bottom: 6px;
+  font-weight: normal;
+}
+
 .prompt {
+  font-family: var(--font);
+  font-size: 1rem;
   color: var(--accent);
   margin-right: 8px;
   opacity: 0.8;
 }
 
 h1 {
-  font-size: 1.05rem;
-  font-weight: normal;
-  letter-spacing: 0.04em;
+  font-family: var(--display);
+  font-size: 2.5rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 0.95;
   color: var(--accent);
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+h1::before {
+  content: '';
+  display: block;
+  width: 56px;
+  height: 3px;
+  background: var(--accent);
+  margin-bottom: 16px;
 }
 
 .subtitle {
-  font-size: 0.9rem;
+  font-family: var(--body-serif);
+  font-style: italic;
+  font-size: 0.95rem;
   color: var(--muted);
-  line-height: 1.6;
+  line-height: 1.7;
   margin-bottom: 28px;
 }
 
@@ -213,12 +244,12 @@ button[type="submit"] {
   width: 100%;
   background: var(--accent);
   color: var(--bg);
-  font-family: var(--font);
-  font-size: 0.88rem;
-  letter-spacing: 0.1em;
+  font-family: var(--label);
+  font-size: 0.95rem;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   border: none;
-  padding: 11px;
+  padding: 14px 11px;
   cursor: pointer;
   transition: opacity 0.15s, box-shadow 0.2s;
 }

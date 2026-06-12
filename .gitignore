@@ -44,3 +44,5 @@ playwright-state.json
 /*.png
 /*.jpg
 /*.jpeg
+
+*.cache

@@ -18,7 +18,7 @@ from scoring_tool import SCORING_TOOL
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import (
     MAX_FETCH, SAMPLE_SIZE, LOOKBACK_HOURS, DATA_DIR, SCORING_MODEL, MAX_TOKENS, WORD_CUTOFF,
-    GCP_PROJECT_ID, TOPIC_PAPERS_SCORED, USE_FIRESTORE,
+    GCP_PROJECT_ID, TOPIC_PAPERS_SCORED, USE_FIRESTORE, PAPERS_IN_NEWSLETTER,
 )
 
 # --- Rate limiting ---
@@ -248,7 +248,7 @@ def run(run_id: str):
 
     successful = [r for r in scored if r["scores"] is not None]
     failed = [r for r in scored if r["scores"] is None]
-    top_5 = successful[:5]
+    top_papers = successful[:PAPERS_IN_NEWSLETTER]
 
     elapsed = (datetime.now() - start_time).total_seconds()
     print(f"\n--- Done in {elapsed:.1f}s ---")
@@ -256,8 +256,8 @@ def run(run_id: str):
     if failed:
         print(f"Failed: {len(failed)} papers")
 
-    print("\n=== TOP 5 PAPERS ===")
-    for i, paper in enumerate(top_5, 1):
+    print(f"\n=== TOP {PAPERS_IN_NEWSLETTER} PAPERS ===")
+    for i, paper in enumerate(top_papers, 1):
         print(f"{i}. [{paper['scores']['total']}/28] {paper['title']}")
         print(f"   {paper['scores']['reasoning']}\n")
 
@@ -270,7 +270,7 @@ def run(run_id: str):
             "total_sampled": len(sampled),
             "total_scored": len(successful),
             "total_failed": len(failed),
-            "top_5": top_5,
+            "top_papers": top_papers,
             "all_scored": scored
         }, f, indent=2, ensure_ascii=False)
 
@@ -279,7 +279,7 @@ def run(run_id: str):
     if USE_FIRESTORE:
         from google.cloud import firestore, pubsub_v1
         db  = firestore.Client(project=GCP_PROJECT_ID)
-        db.collection("pipeline_runs").document(run_id).set({"scored_papers": top_5}, merge=True)
+        db.collection("pipeline_runs").document(run_id).set({"scored_papers": top_papers}, merge=True)
         print(f"[agent1a]  Saved scored_papers to Firestore (run_id={run_id})")
 
         publisher  = pubsub_v1.PublisherClient()

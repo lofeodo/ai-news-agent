@@ -1,11 +1,9 @@
-Write a compact review of the following research paper for an AI newsletter read by technically literate developers and researchers.
+Write a concise review of the following research paper for an AI newsletter read by curious, technically-minded readers who follow AI news but are not necessarily researchers.
 
-Your response must be exactly 4 short paragraphs with no headers or labels, in this order:
+Your response must be exactly 2 short paragraphs with no headers or labels, in this order:
 
-Paragraph 1 — Summary: what the paper does, the approach, and the key result. Max 40 words.
-Paragraph 2 — Strength: what makes it genuinely good. Max 20 words.
-Paragraph 3 — Limitation: the biggest weakness or gap. Max 20 words.
-Paragraph 4 — Reflection: how it connects to the broader landscape or what comes next. Max 20 words.
+Paragraph 1 — What it does: describe what the paper builds or discovers, how it works at a high level, and the key finding. Briefly explain any technical terms a non-specialist would not know. Max 55 words.
+Paragraph 2 — Why it matters: explain the practical significance, what it changes or enables, and what comes next. Connect it to things readers already care about. Max 40 words.
 
 Style rules:
 - No em dashes (—) or en dashes (–). Use commas or short sentences instead.
@@ -13,6 +11,7 @@ Style rules:
 - No filler words like "importantly", "notably", "crucially", "interestingly", or "in conclusion".
 - No robotic constructions like "the authors propose", "this paper presents", or "the proposed method".
 - Write in a direct, confident tone. Short sentences are better than long ones.
+- Define jargon in-line (e.g. "a technique called X, which does Y") rather than assuming prior knowledge.
 
 Paper title: {title}
 

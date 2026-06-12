@@ -94,10 +94,10 @@ def summarize_paper(paper: dict, text: str, prompt_template: str, client: anthro
 
 
 def validate_summary(summary: str, paper_id: str) -> bool:
-    """Warn if Claude didn't return 4 paragraphs."""
+    """Warn if Claude didn't return 2 paragraphs."""
     paragraphs = [p.strip() for p in summary.split("\n\n") if p.strip()]
-    if len(paragraphs) < 4:
-        print(f"  [validate] {paper_id}: expected 4 paragraphs, got {len(paragraphs)} — storing anyway")
+    if len(paragraphs) < 2:
+        print(f"  [validate] {paper_id}: expected 2 paragraphs, got {len(paragraphs)} — storing anyway")
         return False
     return True
 
@@ -144,7 +144,7 @@ def run(run_id: str):
         in_path = os.path.join(DATA_DIR, "scored_papers.json")
         with open(in_path, "r", encoding="utf-8") as f:
             scored = json.load(f)
-        papers = scored["top_5"]
+        papers = scored["top_papers"]
     print(f"Summarizing {len(papers)} papers...\n")
 
     client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))

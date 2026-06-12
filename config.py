@@ -3,9 +3,10 @@
 import os
 
 # ArXiv fetching
-MAX_FETCH = 500         # safety ceiling for ArXiv API
-SAMPLE_SIZE = 35        # papers to score per week (pre-filter replaces random sample later)
-WORD_CUTOFF = 5000        # papers — covers method + results, excludes references (~6-7k tokens)
+MAX_FETCH = 500              # safety ceiling for ArXiv API
+SAMPLE_SIZE = 35             # papers to score per week
+WORD_CUTOFF = 5000           # papers — covers method + results, excludes references (~6-7k tokens)
+PAPERS_IN_NEWSLETTER = 3     # how many top-scored papers appear in the newsletter
 ARTICLE_WORD_LIMIT = 1500 # news articles — most articles are under this anyway
 
 # Paper scoring
@@ -15,7 +16,7 @@ MAX_SCORE = 28
 SCORING_MODEL = "claude-haiku-4-5-20251001"
 MAX_TOKENS = 1000           # used for scoring
 FILTER_MAX_TOKENS = 4000    # used for news filtering — up to 100 index+category pairs per batch
-PAPER_SUMMARY_MAX_TOKENS = 600   # ~150 words with breathing room for 4 paragraphs
+PAPER_SUMMARY_MAX_TOKENS = 400   # ~95 words with breathing room for 2 paragraphs
 NEWS_SUMMARY_MAX_TOKENS  = 200   # 2-3 sentences
 
 # Shared timing

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 70 70" width="70" height="70">
+  <!-- Latent SpaceMail mark — reversed, for light backgrounds -->
+  <rect x="0" y="0" width="20" height="70" fill="#0d0d0d"/>
+  <rect x="20" y="50" width="50" height="20" fill="#0d0d0d"/>
+  <circle cx="45" cy="25" r="20" fill="none" stroke="#0d0d0d" stroke-width="3"/>
+</svg>

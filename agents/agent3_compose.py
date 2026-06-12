@@ -289,6 +289,14 @@ def compose_html(
         "Canada & Montreal":        "🍁",
     }
 
+    _frontend_url = os.environ.get("FRONTEND_BASE_URL", "").rstrip("/")
+    _LOGO_URL = f"{_frontend_url}/images/logo-email.png"
+    _LOGO_IMG = (
+        f'<img src="{_LOGO_URL}" alt="{NEWSLETTER_NAME}" width="48" height="48"'
+        f' style="display:block;border:0;margin-bottom:14px;">'
+        if _frontend_url else ""
+    )
+
     # CASL: physical mailing address sourced from env var (satisfies CASL when set)
     _mailing_address = os.environ.get("MAILING_ADDRESS", "").strip()
     address_html = (
@@ -414,6 +422,7 @@ def compose_html(
       {_rule(_AMBER)}
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
       <tr><td style="padding:32px 40px 24px;">
+        {_LOGO_IMG}
         <p style="margin:0 0 6px 0;font-family:{_F};font-size:12px;color:#484848;letter-spacing:5px;">&gt;_ TRANSMISSION</p>
         <h1 style="margin:0 0 0 0;font-family:{_F};font-size:48px;font-weight:700;
                    letter-spacing:-1px;line-height:1;color:{_AMBER};">{NEWSLETTER_NAME}</h1>

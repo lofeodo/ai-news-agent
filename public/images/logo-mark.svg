@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 70 70" width="70" height="70">
+  <!-- Latent SpaceMail mark — 7×7 unit grid, U=10px -->
+  <!-- Vertical stem: columns 1-2 (x=0..20), all 7 rows -->
+  <rect x="0" y="0" width="20" height="70" fill="#c8b89a"/>
+  <!-- Horizontal bar: row 6-7 (y=50..70), columns 3-7 (x=20..70) -->
+  <rect x="20" y="50" width="50" height="20" fill="#c8b89a"/>
+  <!-- Counter circle: centered in 5×5 void (x=20..70, y=0..50), radius=18, 1-cell breathing room -->
+  <circle cx="45" cy="25" r="20" fill="none" stroke="#c8b89a" stroke-width="3"/>
+</svg>

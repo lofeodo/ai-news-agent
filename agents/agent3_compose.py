@@ -204,7 +204,10 @@ def render_paper_card(paper: dict) -> str:
         f'</p></td>\n'
         f'</tr>\n'
         f'</table>\n'
-        f'<p style="margin:0 0 14px 0;font-family:{_F};font-size:11px;color:{_CHAR};">{authors}</p>\n'
+        f'<p style="margin:0 0 10px 0;font-family:{_F};font-size:11px;color:{_CHAR};">{authors}</p>\n'
+        f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:12px;">'
+        f'<tr><td height="2" style="background:{_AMBER};font-size:0;line-height:0;mso-line-height-rule:exactly;">&nbsp;</td></tr>'
+        f'</table>\n'
         f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">\n'
         f'{summary_rows}'
         f'</table>\n'
@@ -223,26 +226,43 @@ def render_article_card(article: dict, is_last: bool = False) -> str:
     summary = article.get("summary") or article.get("description") or ""
     hn      = article.get("hn_score")
 
-    hn_html = (
-        f'&nbsp;&nbsp;<span style="font-size:11px;color:{_HN};font-weight:700;'
-        f'letter-spacing:0.5px;">&#9650;&nbsp;{hn}</span>'
-        if hn else ""
-    )
     sep = "" if is_last else f"padding-bottom:24px;border-bottom:1px solid {_SEPR};"
     mb  = "0"  if is_last else "24px"
+
+    # Right column: concurrent voice — HN score (large) or just read link
+    if hn:
+        right_col = (
+            f'<td width="72" valign="top" style="border-left:1px solid {_SEPR};padding-left:14px;">'
+            f'<p style="margin:0 0 4px 0;font-family:{_F};font-size:10px;color:#aaaaaa;'
+            f'letter-spacing:2px;text-transform:uppercase;">HN</p>'
+            f'<p style="margin:0 0 10px 0;font-family:{_F};font-size:20px;font-weight:700;'
+            f'line-height:1;color:{_HN};">&#9650;&nbsp;{hn}</p>'
+            f'<p style="margin:0;font-family:{_F};font-size:12px;">'
+            f'<a href="{url}" style="color:{_AMBER};text-decoration:none;">Read&nbsp;&#8594;</a>'
+            f'</p>'
+            f'</td>\n'
+        )
+    else:
+        right_col = (
+            f'<td width="72" valign="top" style="border-left:1px solid {_SEPR};padding-left:14px;">'
+            f'<p style="margin:0;font-family:{_F};font-size:12px;">'
+            f'<a href="{url}" style="color:{_AMBER};text-decoration:none;">Read&nbsp;&#8594;</a>'
+            f'</p>'
+            f'</td>\n'
+        )
 
     return (
         f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"'
         f' style="margin-bottom:{mb};{sep}">\n'
-        f'<tr><td>'
+        f'<tr>\n'
+        f'<td valign="top" style="padding-right:16px;">'
         f'<p style="margin:0 0 8px 0;font-family:{_F};font-size:16px;font-weight:600;line-height:1.35;">'
         f'<a href="{url}" style="color:#7a6548;text-decoration:underline;text-underline-offset:2px;">{title}</a>'
-        f'{hn_html}</p>\n'
-        f'<p style="margin:0 0 10px 0;font-family:{_F};font-size:14px;line-height:1.8;color:{_INK2};">{summary}</p>'
-        f'<p style="margin:0;font-family:{_F};font-size:12px;">'
-        f'<a href="{url}" style="color:{_AMBER};text-decoration:none;">Read article &nbsp;&#8594;</a>'
-        f'</p>'
-        f'</td></tr>\n'
+        f'</p>\n'
+        f'<p style="margin:0;font-family:{_F};font-size:14px;line-height:1.8;color:{_INK2};">{summary}</p>'
+        f'</td>\n'
+        f'{right_col}'
+        f'</tr>\n'
         f'</table>\n'
     )
 
@@ -292,10 +312,14 @@ def compose_html(
             f'<tr><td style="background:{_D2};padding:13px 40px;">'
             f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">\n'
             f'<tr>\n'
-            # large section number
-            f'<td style="vertical-align:middle;white-space:nowrap;padding-right:16px;">'
+            # rhythm rule + large section number (Weingart marker)
+            f'<td style="vertical-align:top;white-space:nowrap;padding-right:16px;">'
+            f'<table role="presentation" cellspacing="0" cellpadding="0" border="0">'
+            f'<tr><td width="40" height="2" style="background:{_AMBER};font-size:0;line-height:0;mso-line-height-rule:exactly;">&nbsp;</td></tr>'
+            f'<tr><td style="padding-top:5px;">'
             f'<span style="font-family:{_F};font-size:28px;font-weight:700;color:{_AMBER};'
             f'line-height:1;letter-spacing:-1px;">{num}</span>'
+            f'</td></tr></table>'
             f'</td>\n'
             # vertical divider + label
             f'<td style="vertical-align:middle;border-left:1px solid #333333;padding-left:16px;">'
@@ -390,9 +414,10 @@ def compose_html(
       {_rule(_AMBER)}
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
       <tr><td style="padding:32px 40px 24px;">
-        <p style="margin:0 0 4px 0;font-family:{_F};font-size:13px;color:#484848;letter-spacing:3px;">&gt;_ TRANSMISSION</p>
-        <h1 style="margin:0 0 0 0;font-family:{_F};font-size:32px;font-weight:700;
-                   letter-spacing:-0.5px;line-height:1.1;color:{_AMBER};">{NEWSLETTER_NAME}</h1>
+        <p style="margin:0 0 6px 0;font-family:{_F};font-size:12px;color:#484848;letter-spacing:5px;">&gt;_ TRANSMISSION</p>
+        <h1 style="margin:0 0 0 0;font-family:{_F};font-size:48px;font-weight:700;
+                   letter-spacing:-1px;line-height:1;color:{_AMBER};">{NEWSLETTER_NAME}</h1>
+        <table role="presentation" width="56" cellspacing="0" cellpadding="0" border="0" style="margin:12px 0 0;"><tr><td height="3" style="background:{_AMBER};font-size:0;line-height:0;mso-line-height-rule:exactly;">&nbsp;</td></tr></table>
         {_rule("#222222", "14px")}
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
                style="margin-top:12px;">
@@ -429,6 +454,7 @@ def compose_html(
          INTRO
          ════════════════════════════════════════════ -->
     <tr><td style="background:{_CREAM};padding:28px 40px 26px;border-bottom:2px solid {_D2};">
+      <p style="margin:0 0 10px 0;font-family:{_F};font-size:10px;color:#8a8070;letter-spacing:4px;">&gt;_ EDITOR&apos;S NOTE &nbsp;&middot;&middot;&middot;&nbsp; {week_of}</p>
       <p style="margin:0 0 0 0;font-family:{_F};font-size:15px;line-height:1.88;color:{_INK};">{intro}</p>
     </td></tr>
 

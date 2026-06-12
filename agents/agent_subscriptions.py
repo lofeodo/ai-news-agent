@@ -122,54 +122,178 @@ def _send_email(to_email: str, subject: str, html_body: str) -> None:
 # Email bodies
 # ---------------------------------------------------------------------------
 
+_MONO = "'Menlo','Cascadia Mono','Consolas','Courier New',monospace"
+
+
+def _email_shell(
+    headline_big: str,
+    headline_small: str,
+    body_html: str,
+    cta_text: str,
+    cta_link: str,
+    footer_note: str,
+    tx_code: str,
+) -> str:
+    """Emigre/zine-inspired shell: large stacked headline, amber left stripe, full-width CTA band."""
+    return (
+        f'<!DOCTYPE html><html lang="en"><head>'
+        f'<meta charset="UTF-8">'
+        f'<meta name="viewport" content="width=device-width, initial-scale=1.0">'
+        f'<meta name="color-scheme" content="light">'
+        f'<meta name="format-detection" content="telephone=no,address=no,email=no">'
+        f'</head>'
+        f'<body style="margin:0;padding:0;background-color:#060606;font-family:{_MONO};">'
+        f'<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#060606;">'
+        f'<tr><td align="center" style="padding:44px 12px;">'
+        f'<table width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;">'
+
+        # 4px amber top bar
+        f'<tr><td style="background:#c8b89a;height:4px;font-size:0;line-height:0;">&nbsp;</td></tr>'
+
+        # HEADER: >_ | wordmark | right tx label — amber left stripe runs full height
+        f'<tr><td style="background:#080808;padding:0;border-left:4px solid #c8b89a;">'
+        f'<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>'
+        f'<td style="width:72px;padding:24px 0 24px 32px;vertical-align:middle;white-space:nowrap;">'
+        f'<div style="font-family:{_MONO};font-size:40px;font-weight:700;color:#c8b89a;line-height:1;letter-spacing:-3px;">&#10095;_</div>'
+        f'</td>'
+        f'<td style="width:1px;padding:18px 0;background:#1e1e1e;">&nbsp;</td>'
+        f'<td style="padding:22px 0 22px 20px;vertical-align:middle;">'
+        f'<div style="font-family:{_MONO};font-size:16px;font-weight:700;color:#c8b89a;letter-spacing:0.5px;line-height:1.1;">LATENT SPACEMAIL</div>'
+        f'<div style="font-family:{_MONO};font-size:8px;color:#2d2820;letter-spacing:3px;text-transform:uppercase;margin-top:9px;">Weekly AI Intelligence Dispatch</div>'
+        f'</td>'
+        f'<td style="padding:22px 32px 22px 0;vertical-align:bottom;text-align:right;white-space:nowrap;">'
+        f'<div style="font-family:{_MONO};font-size:8px;color:#272318;letter-spacing:2px;text-transform:uppercase;">T&thinsp;&mdash;&thinsp;{tx_code}</div>'
+        f'</td>'
+        f'</tr></table></td></tr>'
+
+        # Hairline separator
+        f'<tr><td style="background:#141410;height:1px;font-size:0;line-height:0;">&nbsp;</td></tr>'
+
+        # DOMINANT HEADLINE — 48px amber, Emigre display scale
+        f'<tr><td style="background:#0e0e0c;padding:44px 40px 0 32px;border-left:4px solid #c8b89a;">'
+        f'<div style="font-family:{_MONO};font-size:48px;font-weight:700;color:#c8b89a;letter-spacing:-3px;line-height:0.9;text-transform:uppercase;">{headline_big}</div>'
+        f'</td></tr>'
+
+        # Short amber rule — Weingart rhythm break
+        f'<tr><td style="background:#0e0e0c;padding:18px 40px 16px 32px;border-left:4px solid #c8b89a;">'
+        f'<table cellpadding="0" cellspacing="0" border="0"><tr><td style="background:#c8b89a;width:56px;height:3px;font-size:0;line-height:0;">&nbsp;</td></tr></table>'
+        f'</td></tr>'
+
+        # SECONDARY HEADLINE — tracked small caps
+        f'<tr><td style="background:#0e0e0c;padding:0 40px 0 32px;border-left:4px solid #c8b89a;">'
+        f'<div style="font-family:{_MONO};font-size:12px;font-weight:700;color:#6a6058;letter-spacing:5px;text-transform:uppercase;">{headline_small}</div>'
+        f'</td></tr>'
+
+        # BODY TEXT
+        f'<tr><td style="background:#0e0e0c;padding:32px 40px 44px 32px;border-left:4px solid #c8b89a;">'
+        f'{body_html}'
+        f'</td></tr>'
+
+        # Zone-break hairline + FULL-WIDTH CTA BAND
+        f'<tr><td style="background:#c8b89a;height:1px;font-size:0;line-height:0;">&nbsp;</td></tr>'
+        f'<tr><td style="background:#c8b89a;padding:0;border-left:4px solid #a89070;">'
+        f'<a href="{cta_link}" style="display:block;font-family:{_MONO};font-size:11px;font-weight:700;color:#0e0e0c;text-decoration:none;letter-spacing:3.5px;text-transform:uppercase;padding:21px 32px;">'
+        f'{cta_text} &nbsp;&nbsp; &#10095;'
+        f'</a></td></tr>'
+
+        # FOOTER — amber stripe continues
+        f'<tr><td style="background:#080806;padding:15px 40px 18px 32px;border-left:4px solid #c8b89a;">'
+        f'<p style="font-family:{_MONO};font-size:10px;line-height:1.7;color:#3e3830;margin:0;">{footer_note}</p>'
+        f'</td></tr>'
+
+        # 1px amber bottom hairline
+        f'<tr><td style="background:#c8b89a;height:1px;font-size:0;line-height:0;">&nbsp;</td></tr>'
+
+        f'</table></td></tr></table></body></html>'
+    )
+
+
 def _confirm_email_html(token: str) -> str:
     link = f"{SERVICE_BASE_URL}/confirm?token={token}"
-    return f"""
-    <div style="font-family: Georgia, serif; max-width: 560px; margin: auto;">
-      <h2>Confirm your subscription to {NEWSLETTER_NAME}</h2>
-      <p>Someone (hopefully you) asked to subscribe this address to
-         {NEWSLETTER_NAME}, a weekly AI research &amp; news briefing.</p>
-      <p><a href="{link}">Click here to confirm your subscription</a></p>
-      <p style="color:#777; font-size: 13px;">If this wasn't you, simply
-         ignore this email — you will not be subscribed.</p>
-    </div>
-    """
+    body = (
+        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#545048;margin:0 0 16px 0;">'
+        'Someone (hopefully you) asked to subscribe this address to '
+        f'<span style="color:#8a7e70;font-weight:700;">Latent SpaceMail</span>, a weekly AI research &amp; news briefing.'
+        '</p>'
+        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#545048;margin:0;">'
+        'Click the band below to confirm and start receiving your dispatch every Monday morning.'
+        '</p>'
+    )
+    return _email_shell(
+        headline_big="CONFIRM",
+        headline_small="YOUR SUBSCRIPTION",
+        body_html=body,
+        cta_text="CONFIRM SUBSCRIPTION",
+        cta_link=link,
+        footer_note="If this wasn't you, simply ignore this email — you will not be subscribed.",
+        tx_code="CONFIRM",
+    )
 
 
 def _unsubscribe_email_html(token: str) -> str:
     link = f"{SERVICE_BASE_URL}/unsubscribe?token={token}"
-    return f"""
-    <div style="font-family: Georgia, serif; max-width: 560px; margin: auto;">
-      <h2>Unsubscribe from {NEWSLETTER_NAME}</h2>
-      <p>Someone (hopefully you) asked to unsubscribe this address.</p>
-      <p><a href="{link}">Click here to confirm and unsubscribe</a></p>
-      <p style="color:#777; font-size: 13px;">If this wasn't you, ignore this
-         email — your subscription is unchanged.</p>
-    </div>
-    """
+    body = (
+        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#545048;margin:0 0 16px 0;">'
+        'Someone (hopefully you) asked to unsubscribe this address from '
+        f'<span style="color:#8a7e70;font-weight:700;">Latent SpaceMail</span>.'
+        '</p>'
+        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#545048;margin:0;">'
+        "Click the band below to confirm. You won't receive any further emails after this."
+        '</p>'
+    )
+    return _email_shell(
+        headline_big="CONFIRM",
+        headline_small="UNSUBSCRIBE",
+        body_html=body,
+        cta_text="CONFIRM UNSUBSCRIBE",
+        cta_link=link,
+        footer_note="If this wasn't you, ignore this email — your subscription is unchanged.",
+        tx_code="UNSUB",
+    )
 
 
 def _preferences_email_html(token: str) -> str:
     link = f"{FRONTEND_BASE_URL}/preferences.html?token={token}"
-    return f"""
-    <div style="font-family: Georgia, serif; max-width: 560px; margin: auto;">
-      <h2>Manage your {NEWSLETTER_NAME} preferences</h2>
-      <p><a href="{link}">Click here to update your preferences</a></p>
-      <p style="color:#777; font-size: 13px;">This link is unique to you —
-         don't share it. If you didn't request this, you can ignore it.</p>
-    </div>
-    """
+    body = (
+        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#545048;margin:0 0 16px 0;">'
+        'You requested a link to update your '
+        f'<span style="color:#8a7e70;font-weight:700;">Latent SpaceMail</span> subscription preferences.'
+        '</p>'
+        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#545048;margin:0;">'
+        'Click below to choose what content to include — French-language sources, Canadian AI coverage, and more.'
+        '</p>'
+    )
+    return _email_shell(
+        headline_big="MANAGE",
+        headline_small="YOUR PREFERENCES",
+        body_html=body,
+        cta_text="UPDATE PREFERENCES",
+        cta_link=link,
+        footer_note="This link is unique to you — don't share it. If you didn't request this, you can safely ignore it.",
+        tx_code="PREFS",
+    )
 
 
 def _already_subscribed_email_html(token: str) -> str:
     link = f"{FRONTEND_BASE_URL}/preferences.html?token={token}"
-    return f"""
-    <div style="font-family: Georgia, serif; max-width: 560px; margin: auto;">
-      <h2>You're already subscribed to {NEWSLETTER_NAME}</h2>
-      <p>This address already has an active subscription. If you wanted to
-         change your preferences, <a href="{link}">click here</a>.</p>
-    </div>
-    """
+    body = (
+        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#545048;margin:0 0 16px 0;">'
+        'This address already has an active '
+        f'<span style="color:#8a7e70;font-weight:700;">Latent SpaceMail</span> subscription — no action needed.'
+        '</p>'
+        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#545048;margin:0;">'
+        "If you'd like to update your content preferences — French-language sources, Canadian coverage — click below."
+        '</p>'
+    )
+    return _email_shell(
+        headline_big="ALREADY",
+        headline_small="SUBSCRIBED",
+        body_html=body,
+        cta_text="MANAGE PREFERENCES",
+        cta_link=link,
+        footer_note="Didn't try to subscribe? No worries — nothing has changed on your account.",
+        tx_code="ACTIVE",
+    )
 
 
 # ---------------------------------------------------------------------------

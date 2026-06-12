@@ -32,6 +32,9 @@ service_account*.json
 
 docker
 
+# Firebase CLI cache
+.firebase/
+
 # Claude Code
 .claude/
 

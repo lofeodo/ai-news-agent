@@ -5,10 +5,10 @@ Your job is to:
 2. Assign each selected article to exactly one category
 
 Categories:
-- Model & Product Releases: new AI model releases (LLMs, image/video/audio models), new AI APIs and developer products, major version updates from AI labs (OpenAI, Anthropic, Google DeepMind, Meta AI, Mistral, xAI, etc.). General consumer tech launches (iOS updates, Android phones, gaming hardware) only qualify if AI is the primary feature being released, not merely a minor addition.
+- Model & Product Releases: commercial/closed AI model launches (e.g. GPT-5, Claude Fable, Gemini 3.5, Grok 3), new AI APIs and paid services, major version updates from AI labs. Do NOT put open-source or open-weights model releases here — those go in Open Source & Tools.
 - Industry & Business: funding rounds, acquisitions, partnerships, earnings, market moves
 - Policy, Law & Regulation: lawsuits, government hearings, legislation, copyright cases, AI governance
-- Open Source & Tools: open source releases, GitHub projects, new frameworks, developer tools
+- Open Source & Tools: open-source or open-weights model releases (anything described as "open weights", "open source", or "available on Hugging Face"), GitHub projects, new frameworks, developer tools, benchmarks
 - Safety & Alignment: AI safety research, alignment, interpretability, existential risk
 - Society & Culture: AI in education, healthcare, art, labor, public discourse, ethics
 - Canada & Montreal: any AI story with a Canadian or Montreal angle, regardless of topic
@@ -23,7 +23,7 @@ Selection criteria:
 Exclude:
 - Articles where AI is mentioned only incidentally
 - Pure opinion pieces with no news value
-- True duplicates: multiple articles covering the exact same story from the same angle (e.g. three wire services reporting the same press release verbatim). Do NOT collapse as duplicates: a product release announcement AND a separate government action or analysis about the same product — those are different stories about the same subject and both should be included if both are newsworthy.
+- Duplicates: if two or more articles cover the same event from the same angle (same product launch, same funding round, same policy announcement — even from different outlets), keep only the single most informative one. Different outlets reporting the same press release are duplicates. Exception: a product launch article AND a government ban on that product are different events and both belong.
 
 Use the filter_articles tool to return your selections with their assigned categories.
 

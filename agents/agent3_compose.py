@@ -55,21 +55,66 @@ def claude_call_with_retry(client: anthropic.Anthropic, max_retries: int = 4, **
 
 
 # ---------------------------------------------------------------------------
-# Article selection
+# Article selection — pre-tagging helpers
 # ---------------------------------------------------------------------------
 
-def format_articles_for_selection(articles: list) -> str:
+# Keywords that identify named model releases from major AI labs.
+# Used to tag articles [NAMED RELEASE] so Claude doesn't have to scan blindly.
+_MODEL_RELEASE_KEYWORDS: dict[str, list[str]] = {
+    "Anthropic":       ["fable 5", "fable5", "claude fable", "mythos 5", "mythos5"],
+    "OpenAI":          ["gpt-5", "gpt5", "gpt-4o", "gpt-4.5", "o3 mini", "o4-mini", "o4 mini", "codex"],
+    "Google DeepMind": ["gemini 3", "gemini3", "gemma 3", "gemma3", "diffusiongemma", "gemini 2.5"],
+    "Meta AI":         ["llama 4", "llama4", "llama-4"],
+    "Mistral":         ["mistral large", "mistral small", "codestral", "pixtral", "mistral nemo"],
+    "xAI":             ["grok 3", "grok3", "grok-3"],
+    "DeepSeek":        ["deepseek v4", "deepseek-v4", "deepseek r2", "deepseek-r2"],
+    "GLM":             ["glm 5", "glm5", "glm-5"],
+    "Kimi":            ["kimi k2", "kimik2"],
+}
+
+
+def _article_tag(article: dict, category: str) -> str:
+    """Tag each article so Claude knows whether it is mandatory or optional.
+
+    [REQUIRED]      — HN score ≥ 100: community-validated, always include.
+    [NAMED RELEASE] — Mentions a specific model release from a major AI lab
+                      (only applied for Model & Product Releases category).
+    [OPTIONAL]      — Everything else: include only if it adds value.
+    """
+    hn = article.get("hn_score")
+    if hn is not None and hn >= 100:
+        return "[REQUIRED]"
+
+    if category == "Model & Product Releases":
+        text = (
+            (article.get("title") or "") + " " +
+            (article.get("summary") or "") +
+            " " + (article.get("description") or "")
+        ).lower()
+        for _lab, kws in _MODEL_RELEASE_KEYWORDS.items():
+            if any(kw in text for kw in kws):
+                return "[NAMED RELEASE]"
+
+    return "[OPTIONAL]"
+
+
+def format_articles_for_selection(articles: list, category: str = "") -> str:
     lines = []
     for i, a in enumerate(articles):
         hn = f"hn_score: {a['hn_score']}" if a.get("hn_score") is not None else "hn_score: null"
+        tag = _article_tag(a, category)
         fallback_note = " [summary from description only]" if a.get("used_fallback") else ""
         lines.append(
-            f"[{i}] {a.get('title', 'No title')}\n"
+            f"[{i}] {tag} {a.get('title', 'No title')}\n"
             f"    {hn}{fallback_note}\n"
             f"    Summary: {(a.get('summary') or a.get('description') or '')[:300]}"
         )
     return "\n\n".join(lines)
 
+
+# ---------------------------------------------------------------------------
+# Article selection
+# ---------------------------------------------------------------------------
 
 def parse_indices(response_text: str, max_index: int) -> list[int]:
     try:
@@ -95,7 +140,7 @@ def select_articles_for_category(
     # Sort by HN score descending (null last) so Claude anchors on high-signal articles
     sorted_articles = sorted(articles, key=lambda a: a.get("hn_score") or -1, reverse=True)
 
-    formatted = format_articles_for_selection(sorted_articles)
+    formatted = format_articles_for_selection(sorted_articles, category)
     prompt    = prompt_template.format(category=category, articles=formatted)
 
     response = claude_call_with_retry(
@@ -111,7 +156,34 @@ def select_articles_for_category(
         print(f"  [warn]   no valid indices for '{category}' — falling back to first 3")
         indices = list(range(min(3, len(sorted_articles))))
 
-    return [sorted_articles[i] for i in indices]
+    selected = [sorted_articles[i] for i in indices]
+
+    # Code-level safety net: guarantee all HN 100+ articles appear in the selection.
+    # Claude may miss them when pools are large (55+ articles). If a REQUIRED article
+    # was skipped, swap out the weakest OPTIONAL article to make room (up to MAX=5).
+    MAX_ARTICLES = 5
+    required_arts = [a for a in sorted_articles if (a.get("hn_score") or 0) >= 100]
+    selected_ids  = {id(a) for a in selected}
+    missing       = [r for r in required_arts if id(r) not in selected_ids]
+
+    if missing:
+        # Partition current selection into required and optional buckets
+        cur_req = [a for a in selected if (a.get("hn_score") or 0) >= 100]
+        cur_opt = [a for a in selected if (a.get("hn_score") or 0) < 100]
+
+        for req in missing:
+            if len(cur_req) + len(cur_opt) < MAX_ARTICLES:
+                cur_req.append(req)
+                print(f"  [force]  added missed REQUIRED HN={req['hn_score']}: {req['title'][:60]}")
+            elif cur_opt:
+                dropped = cur_opt.pop()
+                cur_req.append(req)
+                print(f"  [force]  swapped '{dropped['title'][:40]}' → HN={req['hn_score']} '{req['title'][:40]}'")
+            # If already at MAX with only REQUIRED articles, stop
+
+        selected = cur_req + cur_opt
+
+    return selected
 
 
 # ---------------------------------------------------------------------------

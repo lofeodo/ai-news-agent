@@ -232,7 +232,7 @@ def render_article_card(article: dict, is_last: bool = False) -> str:
     # Right column: concurrent voice — HN score (large) or just read link
     if hn:
         right_col = (
-            f'<td width="72" valign="top" style="border-left:1px solid {_SEPR};padding-left:14px;">'
+            f'<td class="mob-block mob-hn" width="72" valign="top" style="border-left:1px solid {_SEPR};padding-left:14px;">'
             f'<p style="margin:0 0 4px 0;font-family:{_F};font-size:10px;color:#aaaaaa;'
             f'letter-spacing:2px;text-transform:uppercase;">HN</p>'
             f'<p style="margin:0 0 10px 0;font-family:{_F};font-size:20px;font-weight:700;'
@@ -244,7 +244,7 @@ def render_article_card(article: dict, is_last: bool = False) -> str:
         )
     else:
         right_col = (
-            f'<td width="72" valign="top" style="border-left:1px solid {_SEPR};padding-left:14px;">'
+            f'<td class="mob-block mob-hn" width="72" valign="top" style="border-left:1px solid {_SEPR};padding-left:14px;">'
             f'<p style="margin:0;font-family:{_F};font-size:12px;">'
             f'<a href="{url}" style="color:{_AMBER};text-decoration:none;">Read&nbsp;&#8594;</a>'
             f'</p>'
@@ -255,7 +255,7 @@ def render_article_card(article: dict, is_last: bool = False) -> str:
         f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"'
         f' style="margin-bottom:{mb};{sep}">\n'
         f'<tr>\n'
-        f'<td valign="top" style="padding-right:16px;">'
+        f'<td class="mob-block" valign="top" style="padding-right:16px;">'
         f'<p style="margin:0 0 8px 0;font-family:{_F};font-size:16px;font-weight:600;line-height:1.35;">'
         f'<a href="{url}" style="color:#7a6548;text-decoration:underline;text-underline-offset:2px;">{title}</a>'
         f'</p>\n'
@@ -297,7 +297,7 @@ def compose_html(
         else "https://latentspacemail.web.app"
     )
     _LOGO_IMG = (
-        f'<img src="{_logo_base}/images/logo-email.png" alt="{NEWSLETTER_NAME}" width="48" height="48"'
+        f'<img src="{_logo_base}/newsletter/images/logo-email.png" alt="{NEWSLETTER_NAME}" width="48" height="48"'
         f' style="display:block;border:0;margin-bottom:14px;">'
     )
 
@@ -321,7 +321,7 @@ def compose_html(
     # — dark section-number strip (editorial zine style) —
     def _section_strip(num: str, icon: str, label: str) -> str:
         return (
-            f'<tr><td style="background:{_D2};padding:13px 40px;">'
+            f'<tr><td class="mob-pad" style="background:{_D2};padding:13px 40px;">'
             f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">\n'
             f'<tr>\n'
             # rhythm rule + large section number (Weingart marker)
@@ -347,7 +347,7 @@ def compose_html(
     # — table of contents (2 rows × 4 cols) —
     def _toc_cell(num: str, short: str) -> str:
         return (
-            f'<td style="width:25%;padding:0 0 6px 0;">'
+            f'<td class="mob-toc-cell" style="width:25%;padding:0 0 6px 0;">'
             f'<span style="font-family:{_F};font-size:11px;color:{_AMBER};font-weight:700;">{num}</span>'
             f'<span style="font-family:{_F};font-size:11px;color:#585858;">&thinsp;{short}</span>'
             f'</td>'
@@ -382,7 +382,7 @@ def compose_html(
             )
 
         news_rows += (
-            f'<tr><td style="background:{_WHITE};padding:28px 40px;">\n'
+            f'<tr><td class="mob-pad" style="background:{_WHITE};padding:28px 40px;">\n'
             f'{body}\n'
             f'</td></tr>\n'
         )
@@ -391,7 +391,7 @@ def compose_html(
     paper_cards   = "".join(render_paper_card(p) for p in papers)
     research_rows = (
         _section_strip("RES", "🔬", "Research Spotlights") +
-        f'<tr><td style="background:{_D1};padding:20px 40px 32px;">\n'
+        f'<tr><td class="mob-pad" style="background:{_D1};padding:20px 40px 32px;">\n'
         f'{paper_cards}'
         f'</td></tr>\n'
     )
@@ -407,6 +407,13 @@ def compose_html(
   <style>
     @media (prefers-color-scheme: dark) {{
       .dm-outer {{ background:#060606 !important; }}
+    }}
+    @media only screen and (max-width: 480px) {{
+      .mob-pad {{ padding-left: 16px !important; padding-right: 16px !important; }}
+      .mob-h1 {{ font-size: 26px !important; }}
+      .mob-block {{ display: block !important; width: 100% !important; }}
+      .mob-hn {{ border-left: none !important; padding-left: 0 !important; margin-top: 10px; }}
+      .mob-toc-cell {{ width: 50% !important; display: inline-block !important; box-sizing: border-box; }}
     }}
   </style>
 </head>
@@ -425,10 +432,10 @@ def compose_html(
       <!-- amber top accent bar -->
       {_rule(_AMBER)}
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-      <tr><td style="padding:32px 40px 24px;">
+      <tr><td class="mob-pad" style="padding:32px 40px 24px;">
         {_LOGO_IMG}
         <p style="margin:0 0 6px 0;font-family:{_F};font-size:12px;color:#484848;letter-spacing:5px;">&gt;_ TRANSMISSION</p>
-        <h1 style="margin:0 0 0 0;font-family:{_F};font-size:48px;font-weight:700;
+        <h1 class="mob-h1" style="margin:0 0 0 0;font-family:{_F};font-size:48px;font-weight:700;
                    letter-spacing:-1px;line-height:1;color:{_AMBER};">{NEWSLETTER_NAME}</h1>
         <table role="presentation" width="56" cellspacing="0" cellpadding="0" border="0" style="margin:12px 0 0;"><tr><td height="3" style="background:{_AMBER};font-size:0;line-height:0;mso-line-height-rule:exactly;">&nbsp;</td></tr></table>
         {_rule("#222222", "14px")}
@@ -454,7 +461,7 @@ def compose_html(
       <!-- contents index -->
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
              style="border-top:1px solid #181818;">
-      <tr><td style="padding:12px 40px 14px;background:#0d0d0d;">
+      <tr><td class="mob-pad" style="padding:12px 40px 14px;background:#0d0d0d;">
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
           <tr>{toc_row1}</tr>
           <tr>{toc_row2}</tr>
@@ -466,7 +473,7 @@ def compose_html(
     <!-- ════════════════════════════════════════════
          INTRO
          ════════════════════════════════════════════ -->
-    <tr><td style="background:{_CREAM};padding:28px 40px 26px;border-bottom:2px solid {_D2};">
+    <tr><td class="mob-pad" style="background:{_CREAM};padding:28px 40px 26px;border-bottom:2px solid {_D2};">
       <p style="margin:0 0 10px 0;font-family:{_F};font-size:10px;color:#8a8070;letter-spacing:4px;">&gt;_ EDITOR&apos;S NOTE &nbsp;&middot;&middot;&middot;&nbsp; {week_of}</p>
       <p style="margin:0 0 0 0;font-family:{_F};font-size:15px;line-height:1.88;color:{_INK};">{intro}</p>
     </td></tr>
@@ -480,7 +487,7 @@ def compose_html(
     <tr><td style="background:{_D0};padding:0;">
       {_rule("#1a1a1a")}
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-      <tr><td style="padding:24px 40px;text-align:center;">
+      <tr><td class="mob-pad" style="padding:24px 40px;text-align:center;">
         <p style="margin:0 0 4px 0;font-family:{_F};font-size:11px;color:#2e2e2e;
                   letter-spacing:3px;text-transform:uppercase;">{NEWSLETTER_NAME}</p>
         <p style="margin:0 0 14px 0;font-family:{_F};font-size:12px;color:#2e2e2e;">

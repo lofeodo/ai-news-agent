@@ -142,8 +142,8 @@ def _email_shell(
         f'<meta name="color-scheme" content="light">'
         f'<meta name="format-detection" content="telephone=no,address=no,email=no">'
         f'</head>'
-        f'<body style="margin:0;padding:0;background-color:#060606;font-family:{_MONO};">'
-        f'<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#060606;">'
+        f'<body style="margin:0;padding:0;font-family:{_MONO};">'
+        f'<table width="100%" cellpadding="0" cellspacing="0" border="0">'
         f'<tr><td align="center" style="padding:44px 12px;">'
         f'<table width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;">'
 
@@ -158,9 +158,8 @@ def _email_shell(
         f'</td>'
         f'<td style="width:1px;padding:18px 0;background:#1e1e1e;">&nbsp;</td>'
         f'<td style="padding:22px 0 22px 20px;vertical-align:middle;">'
-        + (f'<img src="{FRONTEND_BASE_URL}/images/logo-email.png" alt="Latent SpaceMail"'
-           f' width="32" height="32" style="display:block;border:0;margin-bottom:8px;">'
-           if FRONTEND_BASE_URL else "")
+        + f'<img src="https://latentspacemail.web.app/images/logo-email.png" alt="Latent SpaceMail"'
+          f' width="32" height="32" style="display:block;border:0;margin-bottom:8px;">'
         + f'<div style="font-family:{_MONO};font-size:16px;font-weight:700;color:#c8b89a;letter-spacing:0.5px;line-height:1.1;">LATENT SPACEMAIL</div>'
         f'<div style="font-family:{_MONO};font-size:8px;color:#2d2820;letter-spacing:3px;text-transform:uppercase;margin-top:9px;">Weekly AI Intelligence Dispatch</div>'
         f'</td>'

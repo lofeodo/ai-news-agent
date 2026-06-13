@@ -279,7 +279,10 @@ def run(run_id: str):
     if USE_FIRESTORE:
         from google.cloud import firestore, pubsub_v1
         db  = firestore.Client(project=GCP_PROJECT_ID)
-        db.collection("pipeline_runs").document(run_id).set({"scored_papers": top_papers}, merge=True)
+        db.collection("pipeline_runs").document(run_id).set(
+            {"scored_papers": top_papers, "started_at": start_time.isoformat(), "run_id": run_id},
+            merge=True
+        )
         print(f"[agent1a]  Saved scored_papers to Firestore (run_id={run_id})")
 
         publisher  = pubsub_v1.PublisherClient()

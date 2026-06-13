@@ -8,8 +8,9 @@ Selection criteria:
 - Prefer articles that are genuinely interesting, insightful, or newsworthy — not just press releases or routine announcements
 - Prefer articles with a real summary over vague or thin ones
 - If an article has an hn_score, treat it as a community interest signal — higher is better. A score of 300+ is very strong; 50-100 is moderate; under 20 is weak. Articles with a null score are not penalized — most articles come from sources other than Hacker News
-- Avoid near-duplicates: if multiple articles cover the same story, pick the best one only
-- Aim for variety: if possible, pick articles that cover different angles or topics within the category
+- No duplicate topics: never select more than one article about the same specific subject — same model release, same company announcement, same event. Two articles both about the same release (e.g. two articles about Claude Fable 5) count as one topic; pick the single most informative one, no matter how high the HN scores are. A high HN score reflects public interest in that story, not a reason to include a second article about it.
+- Company diversity: avoid selecting more than one article from or about the same company unless the category is very thin. If the best article is already covering Anthropic, the next slot should prefer a different company (OpenAI, Google, Meta, Mistral, etc.).
+- Aim for variety: if possible, pick articles that cover genuinely different angles or organizations within the category
 - Select between 3 and 5 articles. If the pool is thin or low quality, 3 is fine.
 
 Respond with ONLY a JSON array of the selected indices, like this:

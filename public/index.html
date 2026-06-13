@@ -17,6 +17,7 @@
 
   <div class="card">
     <h1><span class="prompt">❯</span> Subscribe</h1>
+    <p id="spots-remaining" class="spots-counter"></p>
     <p class="subtitle">A weekly briefing on AI research and industry news.<br>Delivered every Monday morning.</p>
 
     <form id="subscribe-form" novalidate>
@@ -67,12 +68,34 @@
       msg.className = `msg visible ${type}`;
     }
 
+    async function loadSpots() {
+      try {
+        const res = await fetch(`${API}/stats`);
+        if (!res.ok) return;
+        const { active, max } = await res.json();
+        const remaining = max - active;
+        const el = document.getElementById('spots-remaining');
+        if (!el) return;
+        if (remaining <= 0) {
+          el.textContent = `${max} / ${max}`;
+          el.classList.add('spots-full');
+          btn.disabled = true;
+          document.getElementById('email').disabled = true;
+        } else {
+          el.textContent = `${active} / ${max}`;
+          el.classList.remove('spots-full');
+        }
+      } catch (e) {}
+    }
+    loadSpots();
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('email').value.trim();
       if (!email) { showMsg('Please enter your email address.', 'error'); return; }
 
       btn.disabled = true;
+      btn.textContent = 'Subscribing…';
       const payload = {
         email,
         prefs: {
@@ -82,22 +105,29 @@
         send_latest: document.getElementById('send_latest').checked,
       };
 
-      // Show confirmation immediately — don't make the user wait for the API
-      form.reset();
-      showMsg("Check your inbox to confirm. If you don't see it, check your spam folder and mark it as not spam.", 'success');
-
       try {
         const res = await fetch(`${API}/subscribe`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
-        if (res.status === 422) {
+        if (res.status === 503) {
+          showMsg("Subscriber limit reached — no spots available.", 'error');
+          btn.disabled = false;
+          btn.textContent = 'Subscribe';
+          loadSpots();
+        } else if (res.status === 422) {
           showMsg("That doesn't look like a valid email address.", 'error');
           btn.disabled = false;
+          btn.textContent = 'Subscribe';
+        } else {
+          form.reset();
+          showMsg("Check your inbox to confirm. If you don't see it, check your spam folder and mark it as not spam.", 'success');
         }
       } catch {
-        // Network error — keep the optimistic message
+        showMsg("Something went wrong. Please try again.", 'error');
+        btn.disabled = false;
+        btn.textContent = 'Subscribe';
       }
     });
   </script>

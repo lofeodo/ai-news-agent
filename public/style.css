@@ -232,6 +232,27 @@ button[type="submit"]:hover {
 }
 button[type="submit"]:disabled { opacity: 0.45; cursor: default; box-shadow: none; }
 
+.spots-counter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.68rem;
+  color: #5e564e;
+  font-family: var(--font);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 6px 0 20px;
+}
+.spots-counter::before,
+.spots-counter::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.spots-counter:empty { display: none; }
+.spots-counter.spots-full { color: var(--error); }
+
 .msg {
   margin-top: 18px;
   font-size: 0.9rem;

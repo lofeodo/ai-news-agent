@@ -23,13 +23,14 @@ NEWS_SUMMARY_MAX_TOKENS  = 200   # 2-3 sentences
 LOOKBACK_HOURS = 168    # 7 days — applies to both ArXiv and news fetching
 
 # News fetching
-NEWS_FETCH_SIZE = 10   # articles per NewsAPI query
+NEWS_FETCH_SIZE = 100   # articles per NewsAPI query (NewsAPI hard cap)
 
 NEWSAPI_QUERIES = [
     # English global
     '"artificial intelligence" OR "machine learning" OR "deep learning"',
     '"LLM" OR "large language model" OR "generative AI" OR "foundation model"',
     '"OpenAI" OR "Anthropic" OR "Google DeepMind" OR "Mistral" OR "xAI" OR "Meta AI" OR "Apple Intelligence" OR "Amazon Bedrock" OR "Cohere" OR "Stability AI" OR "Midjourney" OR "Perplexity"',
+    '"ChatGPT" OR "Claude" OR "Gemini" OR "Llama" OR "Grok" OR "Copilot" OR "Sora" OR "DALL-E" OR "Fable"',
     '"AI regulation" OR "AI safety" OR "AI policy" OR "AI law" OR "AI ethics" OR "AI governance" OR "AI alignment"',
     '"open source AI" OR "AI tools" OR "AI agent" OR "AI assistant" OR "agentic AI"',
     '"AI chip" OR "GPU" OR "NVIDIA" OR "semiconductor" OR "AI infrastructure" OR "AI hardware"',

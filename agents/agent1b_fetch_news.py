@@ -93,6 +93,7 @@ def fetch_newsapi_query(query: str, from_time: str, api_key: str) -> list:
         "q":        query,
         "sortBy":   "publishedAt",
         "pageSize": NEWS_FETCH_SIZE,
+        "from":     from_time,
         "apiKey":   api_key
     }
 

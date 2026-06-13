@@ -290,11 +290,15 @@ def compose_html(
     }
 
     _frontend_url = os.environ.get("FRONTEND_BASE_URL", "").rstrip("/")
-    _LOGO_URL = f"{_frontend_url}/images/logo-email.png"
+    # Always use the production URL for email logo — localhost URLs break in sent mail
+    _logo_base = (
+        _frontend_url
+        if _frontend_url and "localhost" not in _frontend_url
+        else "https://latentspacemail.web.app"
+    )
     _LOGO_IMG = (
-        f'<img src="{_LOGO_URL}" alt="{NEWSLETTER_NAME}" width="48" height="48"'
+        f'<img src="{_logo_base}/images/logo-email.png" alt="{NEWSLETTER_NAME}" width="48" height="48"'
         f' style="display:block;border:0;margin-bottom:14px;">'
-        if _frontend_url else ""
     )
 
     # CASL: physical mailing address sourced from env var (satisfies CASL when set)
@@ -406,10 +410,10 @@ def compose_html(
     }}
   </style>
 </head>
-<body style="margin:0;padding:0;background:{_D1};-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+<body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
 
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-<tr><td class="dm-outer" style="padding:32px 12px 48px;background:{_D1};">
+<tr><td class="dm-outer" style="padding:32px 12px 48px;">
 
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
          style="max-width:640px;margin:0 auto;">

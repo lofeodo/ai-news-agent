@@ -22,12 +22,12 @@ import secrets
 import sys
 from datetime import datetime, timezone
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import GCP_PROJECT_ID, FIRESTORE_COLLECTION, SUBSCRIBERS_COLLECTION
+from config import GCP_PROJECT_ID, FIRESTORE_COLLECTION, SUBSCRIBERS_COLLECTION, MAX_SUBSCRIBERS
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -75,6 +75,15 @@ def _find_by_token(db, token: str):
         .stream()
     )
     return docs[0] if docs else None
+
+
+def _active_subscriber_count(db) -> int:
+    col = db.collection(SUBSCRIBERS_COLLECTION)
+    try:
+        result = col.where("active", "==", True).count().get()
+        return result[0][0].value
+    except Exception:
+        return sum(1 for _ in col.where("active", "==", True).stream())
 
 
 # ---------------------------------------------------------------------------
@@ -343,6 +352,17 @@ class PreferencesUpdate(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Public stats endpoint
+# ---------------------------------------------------------------------------
+
+@router.get("/stats")
+def get_stats():
+    db = _db()
+    count = _active_subscriber_count(db)
+    return {"active": count, "max": MAX_SUBSCRIBERS}
+
+
+# ---------------------------------------------------------------------------
 # Website-initiated endpoints (no token — always return 200)
 # ---------------------------------------------------------------------------
 
@@ -364,6 +384,10 @@ def subscribe(req: SubscribeRequest):
         _send_email(email, f"You're already subscribed to {NEWSLETTER_NAME}",
                     _already_subscribed_email_html(doc.to_dict()["token"]))
         return {"status": "ok"}
+
+    # Enforce subscriber cap before accepting a new subscription.
+    if _active_subscriber_count(db) >= MAX_SUBSCRIBERS:
+        raise HTTPException(status_code=503, detail="subscriber_limit_reached")
 
     # New subscriber, or inactive one re-subscribing: (re)generate the token.
     # Note: regenerating invalidates links in previously sent emails — fine.
@@ -424,6 +448,16 @@ def confirm(token: str = ""):
         return _INVALID_LINK_PAGE
 
     data = doc.to_dict()
+
+    # Guard against the race condition where two people hold confirmation
+    # links for the last open spot and both click at the same time.
+    if not data.get("active", False) and _active_subscriber_count(db) >= MAX_SUBSCRIBERS:
+        return _page(
+            "Newsletter is full",
+            "All spots were claimed just before you confirmed. Check back later.",
+            status=503,
+        )
+
     doc.reference.update({
         "active":       True,
         "confirmed_at": datetime.now(timezone.utc),   # CASL proof of consent

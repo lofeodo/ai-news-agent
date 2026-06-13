@@ -86,3 +86,6 @@ TOPIC_CONTENT_SUMMARIZED = "content-summarized"
 FIRESTORE_COLLECTION = "pipeline_runs"
 USE_FIRESTORE        = os.environ.get("USE_FIRESTORE", "false").lower() == "true"
 SUBSCRIBERS_COLLECTION = "subscribers"
+
+# Subscriber cap (SendGrid free tier: 100 emails/day)
+MAX_SUBSCRIBERS = int(os.environ.get("MAX_SUBSCRIBERS", "100"))

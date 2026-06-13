@@ -73,34 +73,31 @@
       if (!email) { showMsg('Please enter your email address.', 'error'); return; }
 
       btn.disabled = true;
-      msg.className = 'msg';
+      const payload = {
+        email,
+        prefs: {
+          include_french: document.getElementById('include_french').checked,
+          include_canada: document.getElementById('include_canada').checked,
+        },
+        send_latest: document.getElementById('send_latest').checked,
+      };
+
+      // Show confirmation immediately — don't make the user wait for the API
+      form.reset();
+      showMsg("Check your inbox to confirm. If you don't see it, check your spam folder and mark it as not spam.", 'success');
 
       try {
         const res = await fetch(`${API}/subscribe`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email,
-            prefs: {
-              include_french: document.getElementById('include_french').checked,
-              include_canada: document.getElementById('include_canada').checked,
-            },
-            send_latest: document.getElementById('send_latest').checked,
-          }),
+          body: JSON.stringify(payload),
         });
-
-        if (res.ok) {
-          form.reset();
-          showMsg('Check your inbox to confirm your subscription.', 'success');
-        } else if (res.status === 422) {
+        if (res.status === 422) {
           showMsg("That doesn't look like a valid email address.", 'error');
-        } else {
-          showMsg('Something went wrong. Please try again.', 'error');
+          btn.disabled = false;
         }
       } catch {
-        showMsg('Something went wrong. Please try again.', 'error');
-      } finally {
-        btn.disabled = false;
+        // Network error — keep the optimistic message
       }
     });
   </script>

@@ -51,6 +51,11 @@ FRONTEND_BASE_URL = os.environ.get("FRONTEND_BASE_URL", "").rstrip("/")
 # Local-mode only: send a single copy here. No effect in cloud mode.
 TEST_RECIPIENT_EMAIL = os.environ.get("TEST_RECIPIENT_EMAIL", "")
 
+# Cloud-mode test override: if set, skip the Firestore subscriber list and
+# send only to this address. Used for test-send jobs that must not reach
+# real subscribers.
+TEST_SEND_TO = os.environ.get("TEST_SEND_TO", "")
+
 
 # ---------------------------------------------------------------------------
 # SendGrid
@@ -212,7 +217,12 @@ def run(run_id: str):
     db = _fs.Client(project=GCP_PROJECT_ID)
 
     variants, subject = _load_latest_newsletter(db)
-    subscribers      = _active_subscribers(db)
+
+    if TEST_SEND_TO:
+        print(f"[agent4]  TEST_SEND_TO override — sending only to {TEST_SEND_TO}", flush=True)
+        subscribers = [{"email": TEST_SEND_TO, "token": "TEST-SEND"}]
+    else:
+        subscribers = _active_subscribers(db)
     print(f"[agent4]  {len(subscribers)} active subscriber(s)", flush=True)
 
     api_key = _get_sendgrid_api_key()

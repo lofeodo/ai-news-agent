@@ -5,7 +5,7 @@ Your job is to:
 2. Assign each selected article to exactly one category
 
 Categories:
-- Model & Product Releases: new AI models, APIs, product launches, version updates
+- Model & Product Releases: new AI model releases (LLMs, image/video/audio models), new AI APIs and developer products, major version updates from AI labs (OpenAI, Anthropic, Google DeepMind, Meta AI, Mistral, xAI, etc.). General consumer tech launches (iOS updates, Android phones, gaming hardware) only qualify if AI is the primary feature being released, not merely a minor addition.
 - Industry & Business: funding rounds, acquisitions, partnerships, earnings, market moves
 - Policy, Law & Regulation: lawsuits, government hearings, legislation, copyright cases, AI governance
 - Open Source & Tools: open source releases, GitHub projects, new frameworks, developer tools
@@ -23,7 +23,7 @@ Selection criteria:
 Exclude:
 - Articles where AI is mentioned only incidentally
 - Pure opinion pieces with no news value
-- Duplicate stories covering the same event (keep the most informative one)
+- True duplicates: multiple articles covering the exact same story from the same angle (e.g. three wire services reporting the same press release verbatim). Do NOT collapse as duplicates: a product release announcement AND a separate government action or analysis about the same product — those are different stories about the same subject and both should be included if both are newsworthy.
 
 Use the filter_articles tool to return your selections with their assigned categories.
 

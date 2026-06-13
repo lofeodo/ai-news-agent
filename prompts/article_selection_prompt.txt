@@ -1,17 +1,30 @@
 You are the editor of "Latent Spacemail", a weekly AI newsletter. Your job is to select the best 3 to 5 articles from the list below for the "{category}" section of this week's edition.
 
-Here are the articles, each with an index, title, description, summary, and optional hn_score:
+The articles below are sorted by HN score descending (highest community interest first), then alphabetically. Articles with a null HN score came from news sources other than Hacker News and are not penalized for having no score.
+
+Here are the articles, each with an index, title, HN score, and summary:
 
 {articles}
 
-Selection criteria:
-- Prefer articles that are genuinely interesting, insightful, or newsworthy — not just press releases or routine announcements
-- Prefer articles with a real summary over vague or thin ones
-- If an article has an hn_score, treat it as a community interest signal — higher is better. A score of 300+ is very strong; 50-100 is moderate; under 20 is weak. Articles with a null score are not penalized — most articles come from sources other than Hacker News
-- No duplicate topics: never select more than one article about the same specific subject — same model release, same company announcement, same event. Two articles both about the same release (e.g. two articles about Claude Fable 5) count as one topic; pick the single most informative one, no matter how high the HN scores are. A high HN score reflects public interest in that story, not a reason to include a second article about it.
-- Company diversity: avoid selecting more than one article from or about the same company unless the category is very thin. If the best article is already covering Anthropic, the next slot should prefer a different company (OpenAI, Google, Meta, Mistral, etc.).
-- Aim for variety: if possible, pick articles that cover genuinely different angles or organizations within the category
-- Select between 3 and 5 articles. If the pool is thin or low quality, 3 is fine.
+Selection process:
+
+PASS 1 — Lock in high-HN articles.
+Select every article with HN score 300+. This is non-negotiable: even if an article seems topically similar to another selected article, if it has 300+ HN votes the community has validated it deserves a slot on its own. Select articles with HN score 100–299 unless a direct duplicate (same outlet, same text) of another selected article. These are your anchor selections.
+
+PASS 2 — Scan for named model releases (for "Model & Product Releases" category especially, but applies everywhere).
+Read through ALL articles in the pool and identify any that mention a specific named model release from a leading AI lab: Anthropic (Fable, Claude, Mythos), OpenAI (GPT, o1, Codex, Sora), Google DeepMind (Gemini, Gemma, NotebookLM), Meta AI (Llama), Mistral, xAI (Grok), Cohere, DeepSeek, or similar. These named model releases are always high priority — include at least one per major lab that had a release this week, even if the article has a null HN score. The article title may describe a controversy (e.g. "Anthropic rankles users") but if the summary confirms it's reporting on a model launch, treat it as a release article.
+
+PASS 3 — Fill remaining slots with the best null-HN articles.
+Using quality and newsworthiness: prefer meaningful analysis, notable funding ($500M+), important regulatory decisions. Deprioritize: minor startup press releases, stock option grants, generic "AI is transforming X" opinion pieces, DeFi/crypto trading tools, business acquisitions listed under Model & Product Releases (those belong in Industry & Business).
+
+Constraints:
+- No duplicate topics: if multiple articles cover the same named model release or same company announcement from the same angle, pick the single most informative one. Exception: an official company statement AND independent analysis of the same event serve different editorial purposes.
+- One company per initiative: if multiple articles describe the same company's same product or funding round (what it is + how much it raised), pick the single best one.
+- Company diversity (tiebreaker only): when quality and HN scores are comparable, prefer articles from different companies. Never exclude a high-HN article (300+) or a named model release solely because another article from the same company was chosen.
+- Aim for variety: different organizations, different topics within the category.
+- Select between 3 and 5 articles. 3 is fine if thin. Do not pad with filler.
+
+FINAL CHECK before responding: scan for any article with HN score 300+ that is not yet in your selection. If you find one, add it (up to 5 total). The only exception is if it is literally the same article text already selected under a different index.
 
 Respond with ONLY a JSON array of the selected indices, like this:
 [2, 7, 14, 23]

@@ -92,7 +92,10 @@ def select_articles_for_category(
     if not articles:
         return []
 
-    formatted = format_articles_for_selection(articles)
+    # Sort by HN score descending (null last) so Claude anchors on high-signal articles
+    sorted_articles = sorted(articles, key=lambda a: a.get("hn_score") or -1, reverse=True)
+
+    formatted = format_articles_for_selection(sorted_articles)
     prompt    = prompt_template.format(category=category, articles=formatted)
 
     response = claude_call_with_retry(
@@ -102,13 +105,13 @@ def select_articles_for_category(
         messages=[{"role": "user", "content": prompt}],
     )
 
-    indices = parse_indices(response.content[0].text, len(articles))
+    indices = parse_indices(response.content[0].text, len(sorted_articles))
 
     if not indices:
         print(f"  [warn]   no valid indices for '{category}' — falling back to first 3")
-        indices = list(range(min(3, len(articles))))
+        indices = list(range(min(3, len(sorted_articles))))
 
-    return [articles[i] for i in indices]
+    return [sorted_articles[i] for i in indices]
 
 
 # ---------------------------------------------------------------------------

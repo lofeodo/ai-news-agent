@@ -134,7 +134,7 @@ def fetch_newsapi_articles() -> list:
         print(f"  Query {i}/{len(NEWSAPI_QUERIES)}: {query[:60]}...")
         try:
             results = fetch_newsapi_query(query, from_time, api_key)
-            print(f"    → {len(results)} articles")
+            print(f"    got {len(results)} articles")
             all_articles.extend(results)
         except Exception as e:
             print(f"    [error] {e}")

@@ -34,7 +34,7 @@ from config import GCP_PROJECT_ID, FIRESTORE_COLLECTION, SUBSCRIBERS_COLLECTION,
 # ---------------------------------------------------------------------------
 
 NEWSLETTER_NAME      = "Latent SpaceMail"
-SENDER_EMAIL         = "latentspacemail@gmail.com"   # Phase 12: newsletter@latentspacemail.com
+SENDER_EMAIL         = "newsletter@lofeodo.com"
 SENDER_NAME          = "Latent SpaceMail"
 SENDGRID_SECRET_NAME = "sendgrid-api-key"
 USE_SECRET_MANAGER   = os.environ.get("USE_SECRET_MANAGER", "false").lower() == "true"

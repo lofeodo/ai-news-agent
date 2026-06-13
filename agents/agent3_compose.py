@@ -505,32 +505,6 @@ def compose_html(
 
 
 # ---------------------------------------------------------------------------
-# SendGrid send
-# ---------------------------------------------------------------------------
-
-def send_email(api_key: str, html_body: str, subject: str) -> None:
-    import urllib.request
-    payload = json.dumps({
-        "personalizations": [{"to": [{"email": RECIPIENT_EMAIL}]}],
-        "from":    {"email": SENDER_EMAIL, "name": SENDER_NAME},
-        "subject": subject,
-        "content": [{"type": "text/html", "value": html_body}],
-    }).encode("utf-8")
-
-    req = urllib.request.Request(
-        "https://api.sendgrid.com/v3/mail/send",
-        data=payload,
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type":  "application/json",
-        },
-        method="POST",
-    )
-    with urllib.request.urlopen(req) as resp:
-        print(f"[sendgrid]  sent to {RECIPIENT_EMAIL} — status {resp.status}")
-
-
-# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 

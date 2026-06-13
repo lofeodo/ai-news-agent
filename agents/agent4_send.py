@@ -32,7 +32,7 @@ from config import (
 # ---------------------------------------------------------------------------
 
 NEWSLETTER_NAME      = "Latent SpaceMail"
-SENDER_EMAIL         = "latentspacemail@gmail.com"
+SENDER_EMAIL         = "newsletter@lofeodo.com"
 SENDER_NAME          = "Latent SpaceMail"
 SENDGRID_SECRET_NAME = "sendgrid-api-key"
 USE_SECRET_MANAGER   = os.environ.get("USE_SECRET_MANAGER", "false").lower() == "true"

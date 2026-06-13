@@ -311,16 +311,37 @@ def _already_subscribed_email_html(token: str) -> str:
 # Small HTML pages returned by the GET endpoints (clicked from emails)
 # ---------------------------------------------------------------------------
 
-def _page(title: str, body: str, status: int = 200) -> HTMLResponse:
-    return HTMLResponse(status_code=status, content=f"""
-    <html><body style="font-family: Georgia, serif; max-width: 560px;
-                       margin: 80px auto; text-align: center;">
-      <h2>{title}</h2><p>{body}</p>
-    </body></html>
-    """)
+def _full_page(title: str, body: str, status: int = 200) -> HTMLResponse:
+    """Full-fidelity page matching the website aesthetic — canvas, logo, card, fonts."""
+    base = FRONTEND_BASE_URL or ""
+    return HTMLResponse(status_code=status, content=f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Latent SpaceMail — {title}</title>
+  <link rel="preload" href="{base}/fonts/cormorant-garamond-600.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{base}/fonts.css">
+  <link rel="stylesheet" href="{base}/style.css">
+</head>
+<body>
+  <canvas id="bg-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;will-change:transform;"></canvas>
+  <a class="wordmark" href="{base}" aria-label="Latent SpaceMail home">
+    <img src="{base}/images/logo-mark.svg" alt="Latent SpaceMail" height="36" width="36">
+  </a>
+  <div class="card">
+    <h1><span class="prompt">&#10095;</span> {title}</h1>
+    <p class="subtitle">{body}</p>
+  </div>
+  <div class="nav-links">
+    <a href="{base}">Subscribe</a>
+  </div>
+  <script src="{base}/bg.js"></script>
+</body>
+</html>""")
 
 
-_INVALID_LINK_PAGE = _page(
+_INVALID_LINK_PAGE = _full_page(
     "Invalid or expired link",
     "This link is no longer valid. You can request a fresh one from the website.",
     status=404,
@@ -452,7 +473,7 @@ def confirm(token: str = ""):
     # Guard against the race condition where two people hold confirmation
     # links for the last open spot and both click at the same time.
     if not data.get("active", False) and _active_subscriber_count(db) >= MAX_SUBSCRIBERS:
-        return _page(
+        return _full_page(
             "Newsletter is full",
             "All spots were claimed just before you confirmed. Check back later.",
             status=503,
@@ -474,7 +495,7 @@ def confirm(token: str = ""):
                         html)
             doc.reference.update({"latest_sent": True})
 
-    return _page("Subscription confirmed 🎉",
+    return _full_page("Subscription confirmed 🎉",
                  f"You'll receive {NEWSLETTER_NAME} every Monday morning.")
 
 
@@ -487,7 +508,7 @@ def unsubscribe(token: str = ""):
 
     doc.reference.update({"active": False})
     print(f"[subscriptions]  unsubscribed: {doc.to_dict()['email']}", flush=True)
-    return _page("You've been unsubscribed",
+    return _full_page("You've been unsubscribed",
                  "Sorry to see you go. You can re-subscribe any time.")
 
 

@@ -466,7 +466,7 @@ def subscribe(request: Request, req: SubscribeRequest):
 @router.get("/preview")
 @limiter.limit("30/minute")
 def newsletter_preview(request: Request):
-    """Return the latest newsletter HTML for public web preview."""
+    """Serve the latest newsletter as a standalone web page with a nav topbar."""
     db = _db()
     from google.cloud import firestore as _fs
     docs = list(
@@ -477,18 +477,96 @@ def newsletter_preview(request: Request):
         .limit(1)
         .stream()
     )
-    if not docs:
-        return HTMLResponse("<p>No issue available yet. Check back Monday!</p>", status_code=404)
-
-    data = docs[0].to_dict()
-    variants = data.get("newsletter_variants")
-    html = (variants or {}).get("0_0") or data.get("newsletter_html", "")
 
     subscribe_url = f"{FRONTEND_BASE_URL}/"
-    html = html.replace("{{UNSUBSCRIBE_URL}}", subscribe_url)
-    html = html.replace("{{PREFERENCES_URL}}", subscribe_url)
-    headers = {"Content-Security-Policy": "frame-ancestors https://latentspacemail.web.app https://latentspacemail.firebaseapp.com"}
-    return HTMLResponse(content=html, status_code=200, headers=headers)
+
+    if not docs:
+        newsletter_body = "<p style='font-family:monospace;color:#8b8b8b;padding:40px'>No issue available yet. Check back Monday!</p>"
+    else:
+        data = docs[0].to_dict()
+        variants = data.get("newsletter_variants")
+        newsletter_body = (variants or {}).get("0_0") or data.get("newsletter_html", "")
+        newsletter_body = newsletter_body.replace("{{UNSUBSCRIBE_URL}}", subscribe_url)
+        newsletter_body = newsletter_body.replace("{{PREFERENCES_URL}}", subscribe_url)
+
+    # Strip the outer <html>/<head>/<body> tags so we can wrap in our own shell
+    import re as _re
+    inner = _re.sub(r'(?s)^.*?<body[^>]*>', '', newsletter_body)
+    inner = _re.sub(r'(?s)</body>.*$', '', inner)
+    # Preserve any <style> blocks from the original <head>
+    email_styles = "".join(_re.findall(r'(?s)<style[^>]*>.*?</style>', newsletter_body))
+
+    page = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Latest Issue — Latent SpaceMail</title>
+  {email_styles}
+  <style>
+    *, *::before, *::after {{ box-sizing: border-box; margin: 0; padding: 0; }}
+    body {{ background: #0f0f0f; }}
+    .lsm-topbar {{
+      position: sticky; top: 0; z-index: 999;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px; height: 48px;
+      background: rgba(10,10,10,0.96);
+      border-bottom: 1px solid #2a2a2a;
+      font-family: 'Menlo','Cascadia Code','Consolas','Courier New',monospace;
+    }}
+    .lsm-topbar__left {{ display: flex; align-items: center; gap: 12px; }}
+    .lsm-topbar__back {{
+      display: inline-flex; align-items: center; gap: 6px;
+      color: #8b8b8b; text-decoration: none; font-size: 0.78rem; letter-spacing: 0.05em;
+    }}
+    .lsm-topbar__back:hover {{ color: #c8b89a; }}
+    .lsm-topbar__back svg {{ width:12px; height:12px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }}
+    .lsm-topbar__sep {{ color: #2a2a2a; font-size: 0.78rem; }}
+    .lsm-topbar__label {{ font-size: 0.75rem; color: #8b8b8b; letter-spacing: 0.08em; text-transform: uppercase; }}
+    .lsm-topbar__badge {{
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.7rem; color: #c8b89a; letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 3px 8px; border: 1px solid rgba(200,184,154,0.25); background: rgba(200,184,154,0.06);
+    }}
+    .lsm-topbar__badge-dot {{
+      width: 5px; height: 5px; border-radius: 50%; background: #c8b89a;
+      animation: lsm-pulse 2.2s ease-in-out infinite;
+    }}
+    @keyframes lsm-pulse {{
+      0%,100% {{ opacity:1; }} 50% {{ opacity:0.4; }}
+    }}
+    .lsm-topbar__subscribe {{
+      font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: #0f0f0f; background: #c8b89a; text-decoration: none;
+      padding: 7px 14px; white-space: nowrap;
+    }}
+    .lsm-topbar__subscribe:hover {{ opacity: 0.88; }}
+    .lsm-newsletter {{ padding-top: 0; }}
+  </style>
+</head>
+<body>
+  <nav class="lsm-topbar">
+    <div class="lsm-topbar__left">
+      <a class="lsm-topbar__back" href="{subscribe_url}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        Back
+      </a>
+      <span class="lsm-topbar__sep">/</span>
+      <span class="lsm-topbar__label">Latest Issue</span>
+      <span class="lsm-topbar__badge">
+        <span class="lsm-topbar__badge-dot"></span>
+        Live
+      </span>
+    </div>
+    <a class="lsm-topbar__subscribe" href="{subscribe_url}">Subscribe →</a>
+  </nav>
+  <div class="lsm-newsletter">
+    {inner}
+  </div>
+</body>
+</html>"""
+
+    return HTMLResponse(content=page, status_code=200)
 
 
 @router.post("/request-unsubscribe")

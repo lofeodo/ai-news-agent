@@ -487,7 +487,8 @@ def newsletter_preview(request: Request):
     subscribe_url = f"{FRONTEND_BASE_URL}/"
     html = html.replace("{{UNSUBSCRIBE_URL}}", subscribe_url)
     html = html.replace("{{PREFERENCES_URL}}", subscribe_url)
-    return HTMLResponse(content=html, status_code=200)
+    headers = {"Content-Security-Policy": "frame-ancestors https://latentspacemail.web.app https://latentspacemail.firebaseapp.com"}
+    return HTMLResponse(content=html, status_code=200, headers=headers)
 
 
 @router.post("/request-unsubscribe")

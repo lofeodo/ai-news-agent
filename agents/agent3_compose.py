@@ -270,12 +270,17 @@ _HN    = "#ff6600"   # Hacker News orange
 _SEPR  = "#ededed"   # separator on white
 
 
+def _strip_markdown_headers(text: str) -> str:
+    """Remove markdown header lines that Claude may generate despite prompt instructions."""
+    return re.sub(r"^#{1,6}\s+[^\n]*\n?", "", text, flags=re.MULTILINE).strip()
+
+
 def render_paper_card(paper: dict) -> str:
     scores       = paper.get("scores") or {}
     score        = scores.get("total", 0)
     authors_list = paper.get("authors", [])
     authors      = _html.escape(", ".join(authors_list[:3]) + (" et al." if len(authors_list) > 3 else ""))
-    summary      = paper.get("summary") or ""
+    summary      = _strip_markdown_headers(paper.get("summary") or "")
     paragraphs   = [p.strip() for p in summary.split("\n\n") if p.strip()]
     pdf_url      = _safe_url(paper.get("pdf_url"))
     title        = _html.escape(paper.get("title", ""))

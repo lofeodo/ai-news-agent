@@ -20,11 +20,14 @@ import os
 import re
 import secrets
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import GCP_PROJECT_ID, FIRESTORE_COLLECTION, SUBSCRIBERS_COLLECTION, MAX_SUBSCRIBERS
@@ -50,7 +53,15 @@ FRONTEND_BASE_URL = os.environ.get("FRONTEND_BASE_URL", "").rstrip("/")
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
-router = APIRouter()
+# Token TTLs: short window for confirmation, long-lived for action links
+CONFIRM_TOKEN_TTL = timedelta(hours=48)
+ACTION_TOKEN_TTL  = timedelta(days=365)
+
+# Admin token for the /stats endpoint (no auth required if unset)
+ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "")
+
+limiter = Limiter(key_func=get_remote_address)
+router  = APIRouter()
 
 
 # ---------------------------------------------------------------------------
@@ -65,7 +76,10 @@ def _db():
 
 
 def _find_by_token(db, token: str):
-    """Return the subscriber doc snapshot matching this token, or None."""
+    """Return the subscriber doc snapshot matching this token, or None.
+
+    Returns None if the token is missing, not found, or expired.
+    """
     if not token:
         return None
     docs = list(
@@ -74,7 +88,18 @@ def _find_by_token(db, token: str):
         .limit(1)
         .stream()
     )
-    return docs[0] if docs else None
+    if not docs:
+        return None
+    doc  = docs[0]
+    data = doc.to_dict()
+    expires_at = data.get("token_expires_at")
+    if expires_at:
+        now = datetime.now(timezone.utc)
+        if getattr(expires_at, "tzinfo", None) is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        if now > expires_at:
+            return None
+    return doc
 
 
 def _active_subscriber_count(db) -> int:
@@ -124,7 +149,7 @@ def _send_email(to_email: str, subject: str, html_body: str) -> None:
         method="POST",
     )
     with urllib.request.urlopen(req) as resp:
-        print(f"[subscriptions]  email sent to {to_email} — status {resp.status}", flush=True)
+        print(f"[subscriptions]  email sent — status {resp.status}", flush=True)
 
 
 # ---------------------------------------------------------------------------
@@ -358,17 +383,17 @@ class Prefs(BaseModel):
 
 
 class SubscribeRequest(BaseModel):
-    email: str
+    email: Annotated[str, Field(max_length=254)]
     prefs: Prefs = Prefs()
     send_latest: bool = False
 
 
 class EmailOnlyRequest(BaseModel):
-    email: str
+    email: Annotated[str, Field(max_length=254)]
 
 
 class PreferencesUpdate(BaseModel):
-    token: str
+    token: Annotated[str, Field(max_length=128)]
     prefs: Prefs
 
 
@@ -377,7 +402,9 @@ class PreferencesUpdate(BaseModel):
 # ---------------------------------------------------------------------------
 
 @router.get("/stats")
-def get_stats():
+def get_stats(token: Annotated[str, Query(max_length=128)] = ""):
+    if ADMIN_TOKEN and token != ADMIN_TOKEN:
+        return JSONResponse(status_code=403, content={"error": "forbidden"})
     db = _db()
     count = _active_subscriber_count(db)
     return {"active": count, "max": MAX_SUBSCRIBERS}
@@ -388,7 +415,8 @@ def get_stats():
 # ---------------------------------------------------------------------------
 
 @router.post("/subscribe")
-def subscribe(req: SubscribeRequest):
+@limiter.limit("5/minute")
+def subscribe(request: Request, req: SubscribeRequest):
     email = req.email.strip().lower()
     if not EMAIL_RE.match(email):
         # The one case where we don't pretend success: a malformed address
@@ -408,19 +436,21 @@ def subscribe(req: SubscribeRequest):
 
     # Enforce subscriber cap before accepting a new subscription.
     if _active_subscriber_count(db) >= MAX_SUBSCRIBERS:
-        raise HTTPException(status_code=503, detail="subscriber_limit_reached")
+        raise HTTPException(status_code=503, detail="service_unavailable")
 
     # New subscriber, or inactive one re-subscribing: (re)generate the token.
     # Note: regenerating invalidates links in previously sent emails — fine.
-    token = secrets.token_urlsafe(32)
+    token      = secrets.token_urlsafe(32)
+    expires_at = datetime.now(timezone.utc) + CONFIRM_TOKEN_TTL
     ref.set({
-        "email":         email,
-        "subscribed_at": datetime.now(timezone.utc),
-        "confirmed_at":  None,
-        "active":        False,           # double opt-in: activated by /confirm
-        "token":         token,
-        "send_latest":   req.send_latest,
-        "latest_sent":   False,
+        "email":            email,
+        "subscribed_at":    datetime.now(timezone.utc),
+        "confirmed_at":     None,
+        "active":           False,        # double opt-in: activated by /confirm
+        "token":            token,
+        "token_expires_at": expires_at,
+        "send_latest":      req.send_latest,
+        "latest_sent":      False,
         "prefs": {
             "include_french": req.prefs.include_french,
             "include_canada": req.prefs.include_canada,
@@ -433,7 +463,8 @@ def subscribe(req: SubscribeRequest):
 
 
 @router.post("/request-unsubscribe")
-def request_unsubscribe(req: EmailOnlyRequest):
+@limiter.limit("5/minute")
+def request_unsubscribe(request: Request, req: EmailOnlyRequest):
     email = req.email.strip().lower()
     db  = _db()
     doc = db.collection(SUBSCRIBERS_COLLECTION).document(email).get()
@@ -446,7 +477,8 @@ def request_unsubscribe(req: EmailOnlyRequest):
 
 
 @router.post("/request-preferences")
-def request_preferences(req: EmailOnlyRequest):
+@limiter.limit("5/minute")
+def request_preferences(request: Request, req: EmailOnlyRequest):
     email = req.email.strip().lower()
     db  = _db()
     doc = db.collection(SUBSCRIBERS_COLLECTION).document(email).get()
@@ -462,7 +494,14 @@ def request_preferences(req: EmailOnlyRequest):
 # ---------------------------------------------------------------------------
 
 @router.get("/confirm")
-def confirm(token: str = ""):
+@limiter.limit("10/minute")
+def confirm(
+    request: Request,
+    token: Annotated[str, Query(max_length=128)] = "",
+):
+    if not token or not re.match(r'^[A-Za-z0-9_-]+$', token):
+        return _INVALID_LINK_PAGE
+
     db  = _db()
     doc = _find_by_token(db, token)
     if doc is None:
@@ -479,16 +518,21 @@ def confirm(token: str = ""):
             status=503,
         )
 
+    # Rotate token to a long-lived action token on confirmation.
+    new_token  = secrets.token_urlsafe(32)
+    action_exp = datetime.now(timezone.utc) + ACTION_TOKEN_TTL
     doc.reference.update({
-        "active":       True,
-        "confirmed_at": datetime.now(timezone.utc),   # CASL proof of consent
+        "active":            True,
+        "confirmed_at":      datetime.now(timezone.utc),   # CASL proof of consent
+        "token":             new_token,
+        "token_expires_at":  action_exp,
     })
-    print(f"[subscriptions]  confirmed: {data['email']}", flush=True)
+    print("[subscriptions]  confirmed subscriber", flush=True)
 
     # Send last week's newsletter if they asked for it (once — guard against
     # double-clicks on the confirm link).
     if data.get("send_latest") and not data.get("latest_sent"):
-        html = _latest_newsletter_html(db, unsubscribe_token=data["token"], prefs=data.get("prefs", {}))
+        html = _latest_newsletter_html(db, unsubscribe_token=new_token, prefs=data.get("prefs", {}))
         if html:
             _send_email(data["email"],
                         f"{NEWSLETTER_NAME} — last week's edition",
@@ -500,35 +544,53 @@ def confirm(token: str = ""):
 
 
 @router.get("/unsubscribe")
-def unsubscribe(token: str = ""):
+@limiter.limit("10/minute")
+def unsubscribe(
+    request: Request,
+    token: Annotated[str, Query(max_length=128)] = "",
+):
+    if not token or not re.match(r'^[A-Za-z0-9_-]+$', token):
+        return _INVALID_LINK_PAGE
+
     db  = _db()
     doc = _find_by_token(db, token)
     if doc is None:
         return _INVALID_LINK_PAGE
 
     doc.reference.update({"active": False})
-    print(f"[subscriptions]  unsubscribed: {doc.to_dict()['email']}", flush=True)
+    print("[subscriptions]  unsubscribed subscriber", flush=True)
     return _full_page("You've been unsubscribed",
                  "Sorry to see you go. You can re-subscribe any time.")
 
 
 @router.get("/preferences")
-def get_preferences(token: str = ""):
+@limiter.limit("10/minute")
+def get_preferences(
+    request: Request,
+    token: Annotated[str, Query(max_length=128)] = "",
+):
+    if not token or not re.match(r'^[A-Za-z0-9_-]+$', token):
+        return JSONResponse(status_code=404, content={"error": "not_found"})
+
     db  = _db()
     doc = _find_by_token(db, token)
     if doc is None:
-        return JSONResponse(status_code=404, content={"error": "invalid token"})
+        return JSONResponse(status_code=404, content={"error": "not_found"})
 
     data = doc.to_dict()
     return {"email": data["email"], "prefs": data.get("prefs", {})}
 
 
 @router.post("/preferences")
-def update_preferences(req: PreferencesUpdate):
+@limiter.limit("10/minute")
+def update_preferences(request: Request, req: PreferencesUpdate):
+    if not req.token or not re.match(r'^[A-Za-z0-9_-]+$', req.token):
+        return JSONResponse(status_code=404, content={"error": "not_found"})
+
     db  = _db()
     doc = _find_by_token(db, req.token)
     if doc is None:
-        return JSONResponse(status_code=404, content={"error": "invalid token"})
+        return JSONResponse(status_code=404, content={"error": "not_found"})
 
     doc.reference.update({"prefs": {
         "include_french": req.prefs.include_french,

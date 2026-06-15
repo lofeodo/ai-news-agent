@@ -205,9 +205,9 @@ def _email_shell(
         # Hairline separator
         f'<tr><td style="background:#141410;height:1px;font-size:0;line-height:0;">&nbsp;</td></tr>'
 
-        # DOMINANT HEADLINE — 48px amber, Emigre display scale
+        # DOMINANT HEADLINE — 48px amber, Emigre display scale; also a link so mobile users see it as clickable
         f'<tr><td style="background:#0e0e0c;padding:44px 40px 0 32px;border-left:4px solid #c8b89a;">'
-        f'<div style="font-family:{_MONO};font-size:48px;font-weight:700;color:#c8b89a;letter-spacing:-3px;line-height:0.9;text-transform:uppercase;">{headline_big}</div>'
+        f'<a href="{cta_link}" style="display:block;font-family:{_MONO};font-size:48px;font-weight:700;color:#c8b89a;letter-spacing:-3px;line-height:0.9;text-transform:uppercase;text-decoration:none;">{headline_big}</a>'
         f'</td></tr>'
 
         # Short amber rule — Weingart rhythm break
@@ -234,7 +234,7 @@ def _email_shell(
 
         # FOOTER — amber stripe continues
         f'<tr><td style="background:#080806;padding:15px 40px 18px 32px;border-left:4px solid #c8b89a;">'
-        f'<p style="font-family:{_MONO};font-size:10px;line-height:1.7;color:#3e3830;margin:0;">{footer_note}</p>'
+        f'<p style="font-family:{_MONO};font-size:10px;line-height:1.7;color:#9a9088;margin:0;">{footer_note}</p>'
         f'</td></tr>'
 
         # 1px amber bottom hairline
@@ -247,12 +247,12 @@ def _email_shell(
 def _confirm_email_html(token: str) -> str:
     link = f"{SERVICE_BASE_URL}/confirm?token={token}"
     body = (
-        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#545048;margin:0 0 16px 0;">'
+        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#9a9088;margin:0 0 16px 0;">'
         'Someone (hopefully you) asked to subscribe this address to '
-        f'<span style="color:#8a7e70;font-weight:700;">Latent SpaceMail</span>, a weekly AI research &amp; news briefing.'
+        f'<span style="color:#c8b89a;font-weight:700;">Latent SpaceMail</span>, a weekly AI research &amp; news briefing.'
         '</p>'
-        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#545048;margin:0;">'
-        'Click the band below to confirm and start receiving your dispatch every Monday morning.'
+        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#9a9088;margin:0;">'
+        'Tap <strong style="color:#c8b89a;">CONFIRM</strong> above or click the button below to start receiving your dispatch every Monday morning.'
         '</p>'
     )
     return _email_shell(
@@ -269,12 +269,13 @@ def _confirm_email_html(token: str) -> str:
 def _unsubscribe_email_html(token: str) -> str:
     link = f"{SERVICE_BASE_URL}/unsubscribe?token={token}"
     body = (
-        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#545048;margin:0 0 16px 0;">'
+        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#9a9088;margin:0 0 16px 0;">'
         'Someone (hopefully you) asked to unsubscribe this address from '
-        f'<span style="color:#8a7e70;font-weight:700;">Latent SpaceMail</span>.'
+        f'<span style="color:#c8b89a;font-weight:700;">Latent SpaceMail</span>.'
         '</p>'
-        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#545048;margin:0;">'
-        "Click the band below to confirm. You won't receive any further emails after this."
+        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#9a9088;margin:0;">'
+        'Tap <strong style="color:#c8b89a;">CONFIRM</strong> above or click the button below to complete your unsubscription. '
+        "You won't receive any further emails after this."
         '</p>'
     )
     return _email_shell(
@@ -291,12 +292,12 @@ def _unsubscribe_email_html(token: str) -> str:
 def _preferences_email_html(token: str) -> str:
     link = f"{FRONTEND_BASE_URL}/preferences.html?token={token}"
     body = (
-        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#545048;margin:0 0 16px 0;">'
+        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#9a9088;margin:0 0 16px 0;">'
         'You requested a link to update your '
-        f'<span style="color:#8a7e70;font-weight:700;">Latent SpaceMail</span> subscription preferences.'
+        f'<span style="color:#c8b89a;font-weight:700;">Latent SpaceMail</span> subscription preferences.'
         '</p>'
-        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#545048;margin:0;">'
-        'Click below to choose what content to include — French-language sources, Canadian AI coverage, and more.'
+        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#9a9088;margin:0;">'
+        'Tap <strong style="color:#c8b89a;">MANAGE</strong> above or click the button below to choose what content to include — French-language sources, Canadian AI coverage, and more.'
         '</p>'
     )
     return _email_shell(
@@ -313,12 +314,12 @@ def _preferences_email_html(token: str) -> str:
 def _already_subscribed_email_html(token: str) -> str:
     link = f"{FRONTEND_BASE_URL}/preferences.html?token={token}"
     body = (
-        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#545048;margin:0 0 16px 0;">'
+        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#9a9088;margin:0 0 16px 0;">'
         'This address already has an active '
-        f'<span style="color:#8a7e70;font-weight:700;">Latent SpaceMail</span> subscription — no action needed.'
+        f'<span style="color:#c8b89a;font-weight:700;">Latent SpaceMail</span> subscription — no action needed.'
         '</p>'
-        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#545048;margin:0;">'
-        "If you'd like to update your content preferences — French-language sources, Canadian coverage — click below."
+        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#9a9088;margin:0;">'
+        "If you'd like to update your content preferences — French-language sources, Canadian coverage — tap the heading above or click the button below."
         '</p>'
     )
     return _email_shell(

@@ -406,7 +406,7 @@ def compose_html(
     # CASL: physical mailing address sourced from env var (satisfies CASL when set)
     _mailing_address = os.environ.get("MAILING_ADDRESS", "").strip()
     address_html = (
-        f'<p style="margin:0 0 10px 0;font-family:{_F};font-size:12px;color:#3a3a3a;">'
+        f'<p style="margin:0 0 10px 0;font-family:{_F};font-size:12px;color:{_AMBER};">'
         f'{_html.escape(_mailing_address)}</p>'
         if _mailing_address else ""
     )
@@ -590,16 +590,16 @@ def compose_html(
       {_rule("#1a1a1a")}
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
       <tr><td class="mob-pad" style="padding:24px 40px;text-align:center;">
-        <p style="margin:0 0 4px 0;font-family:{_F};font-size:11px;color:#2e2e2e;
+        <p style="margin:0 0 4px 0;font-family:{_F};font-size:11px;color:{_AMBER};
                   letter-spacing:3px;text-transform:uppercase;">{NEWSLETTER_NAME}</p>
-        <p style="margin:0 0 14px 0;font-family:{_F};font-size:12px;color:#2e2e2e;">
+        <p style="margin:0 0 14px 0;font-family:{_F};font-size:12px;color:{_AMBER};">
           You're receiving this because you subscribed.
         </p>
         {address_html}
         <p style="margin:0;font-family:{_F};font-size:12px;">
-          <a href="{{{{UNSUBSCRIBE_URL}}}}" style="color:#484848;text-decoration:underline;">Unsubscribe</a>
-          <span style="color:#242424;">&nbsp;&nbsp;·&nbsp;&nbsp;</span>
-          <a href="{{{{PREFERENCES_URL}}}}" style="color:#484848;text-decoration:underline;">Manage preferences</a>
+          <a href="{{{{UNSUBSCRIBE_URL}}}}" style="color:#c8b89a;text-decoration:underline;">Unsubscribe</a>
+          <span style="color:{_AMBER};">&nbsp;&nbsp;·&nbsp;&nbsp;</span>
+          <a href="{{{{PREFERENCES_URL}}}}" style="color:#c8b89a;text-decoration:underline;">Manage preferences</a>
         </p>
       </td></tr>
       </table>

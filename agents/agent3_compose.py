@@ -220,10 +220,16 @@ def write_intro(
         for p in papers
     )
 
-    headline_lines = []
+    # Flatten all selected articles, annotate with category + HN score, sort by
+    # HN score descending so the prompt sees high-signal items first.
+    all_headlines = []
     for cat, arts in selected_by_category.items():
         for a in arts[:2]:
-            headline_lines.append(f"<headline>- [{cat}] {a.get('title', '')}</headline>")
+            hn = a.get("hn_score")
+            hn_str = f" [HN:{hn}]" if hn is not None else ""
+            all_headlines.append((hn or -1, f"<headline>- [{cat}]{hn_str} {a.get('title', '')}</headline>"))
+    all_headlines.sort(key=lambda x: x[0], reverse=True)
+    headline_lines = [line for _, line in all_headlines]
 
     prompt = prompt_template.format(
         date=datetime.now().strftime("%B %d, %Y"),

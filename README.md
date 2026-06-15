@@ -7,9 +7,18 @@ A weekly agentic pipeline that automatically curates and delivers a morning AI b
 ## Pipeline
 
 ```mermaid
-flowchart TD
-    CS1["☁️ Cloud Scheduler\n6 AM Monday"] --> ORC["Orchestrator\nCloud Run"]
-    ORC -->|"Pub/Sub: pipeline-start"| A1A["Agent 1a\nFetch & score ArXiv papers\n(up to 500 → 35 sampled → top 3)"]
+flowchart TB
+    subgraph SUB["Subscription subsystem"]
+        direction LR
+        FE["🌐 Firebase Hosting\nlofeodo.com/newsletter/"] <--> SUBS["Subscription API\nCloud Run · FastAPI"]
+        SUBS <--> FSS[("Firestore\nsubscribers")]
+    end
+
+    SUB ~~~ CS1
+
+    CS1["☁️ Cloud Scheduler — 6 AM Monday"] --> ORC["Orchestrator · Cloud Run"]
+
+    ORC -->|"Pub/Sub: pipeline-start"| A1A["Agent 1a\nFetch & score ArXiv papers\nup to 500 → 35 sampled → top 3"]
     ORC -->|"Pub/Sub: pipeline-start"| A1B["Agent 1b\nFetch HN + NewsAPI\nlanguage-filter → categorize"]
 
     A1A -->|"Pub/Sub: papers-scored"| A2A["Agent 2a\nDownload PDFs\nwrite paper mini-reviews"]
@@ -17,17 +26,14 @@ flowchart TD
 
     A2A -->|"Firestore atomic counter\nagent2_completions"| FAN{"Fan-in\ncount == 2?"}
     A2B --> FAN
+
     FAN -->|"Pub/Sub: content-summarized"| A3["Agent 3\nSelect articles · write intro\ncompose 4 HTML variants\nsave to Firestore"]
 
-    CS2["☁️ Cloud Scheduler\n7 AM Monday"] --> A4["Agent 4\nLoad latest newsletter\npersonalize per subscriber\nsend via SendGrid"]
+    FAN ~~~ CS2
+    CS2["☁️ Cloud Scheduler — 7 AM Monday"] --> A4["Agent 4\nLoad latest newsletter\npersonalize per subscriber\nsend via SendGrid"]
 
-    subgraph "Subscription subsystem"
-        FE["Firebase Hosting\nlofeodo.com/newsletter/"] <--> SUBS["Subscription API\nCloud Run\nFastAPI"]
-        SUBS <--> FS[("Firestore\nsubscribers")]
-    end
-
-    A3 --> FS2[("Firestore\npipeline_runs")]
-    A4 --> FS2
+    A3 --> FSP[("Firestore\npipeline_runs")]
+    A4 --> FSP
 ```
 
 ---

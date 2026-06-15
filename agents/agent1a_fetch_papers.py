@@ -186,6 +186,8 @@ def score_paper(paper: dict, full_text: str) -> dict:
     )
     print(f"  [api-call-done] {paper['title'][:40]}", flush=True)
 
+    if not response.content:
+        raise RuntimeError(f"Empty Claude response for paper: {paper['title'][:40]}")
     return response.content[0].input
 
 
@@ -258,8 +260,9 @@ def run(run_id: str):
 
     print(f"\n=== TOP {PAPERS_IN_NEWSLETTER} PAPERS ===")
     for i, paper in enumerate(top_papers, 1):
-        print(f"{i}. [{paper['scores']['total']}/28] {paper['title']}")
-        print(f"   {paper['scores']['reasoning']}\n")
+        scores = paper.get("scores") or {}
+        print(f"{i}. [{scores.get('total', '?')}/28] {paper['title']}")
+        print(f"   {scores.get('reasoning', '')}\n")
 
     os.makedirs(DATA_DIR, exist_ok=True)
     out_path = os.path.join(DATA_DIR, "scored_papers.json")
@@ -288,7 +291,7 @@ def run(run_id: str):
         publisher  = pubsub_v1.PublisherClient()
         topic_path = publisher.topic_path(GCP_PROJECT_ID, TOPIC_PAPERS_SCORED)
         data       = json.dumps({"run_id": run_id}).encode("utf-8")
-        publisher.publish(topic_path, data).result()
+        publisher.publish(topic_path, data).result(timeout=30)
         print(f"[agent1a]  Published to {TOPIC_PAPERS_SCORED} (run_id={run_id})")
 
 

@@ -257,6 +257,9 @@ def language_filter_batch(batch: list, batch_index: int, client: anthropic.Anthr
             messages=[{"role": "user", "content": prompt}]
         )
 
+    if not response.content:
+        print(f"  [lang] Batch {batch_index}: empty Claude response — treating as empty")
+        return []
     tool_input   = response.content[0].input
     keep_indices = tool_input.get("keep_indices", [])
 
@@ -329,6 +332,9 @@ def filter_batch(batch: list, batch_index: int, prompt_template: str, client: an
             messages=[{"role": "user", "content": prompt}]
         )
 
+    if not response.content:
+        print(f"  Batch {batch_index}: empty Claude response — skipping batch")
+        return []
     tool_input = response.content[0].input
     selected   = tool_input.get("articles", [])
 
@@ -441,7 +447,7 @@ def run(run_id: str):
         publisher  = pubsub_v1.PublisherClient()
         topic_path = publisher.topic_path(GCP_PROJECT_ID, TOPIC_NEWS_FILTERED)
         data       = json.dumps({"run_id": run_id}).encode("utf-8")
-        publisher.publish(topic_path, data).result()
+        publisher.publish(topic_path, data).result(timeout=30)
         print(f"[agent1b]  Published to {TOPIC_NEWS_FILTERED} (run_id={run_id})")
 
 

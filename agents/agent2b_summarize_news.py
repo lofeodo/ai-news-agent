@@ -1,13 +1,17 @@
 # agents/agent2b_summarize_news.py
 
 import anthropic
+import base64
 import json
 import os
+import re
+import requests
 import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
+from urllib.parse import urlparse
 
 from newspaper import Article
 
@@ -33,10 +37,64 @@ USER_AGENT = (
 
 
 # ---------------------------------------------------------------------------
+# URL classification helpers
+# ---------------------------------------------------------------------------
+
+def _is_twitter_url(url: str) -> bool:
+    host = urlparse(url).hostname or ""
+    return host in ("x.com", "twitter.com", "www.x.com", "www.twitter.com")
+
+
+def _parse_github_repo(url: str) -> tuple[str, str] | None:
+    """Return (owner, repo) if url points to a GitHub repo, else None."""
+    try:
+        parsed = urlparse(url)
+        if parsed.hostname not in ("github.com", "www.github.com"):
+            return None
+        parts = [p for p in parsed.path.split("/") if p]
+        if len(parts) < 2:
+            return None
+        return parts[0], parts[1]
+    except Exception:
+        return None
+
+
+def _fetch_github_repo_text(url: str) -> str | None:
+    """Fetch repo description + README via GitHub API (no auth needed for public repos)."""
+    parsed = _parse_github_repo(url)
+    if not parsed:
+        return None
+    owner, repo = parsed
+    headers = {"Accept": "application/vnd.github+json", "User-Agent": USER_AGENT}
+    try:
+        r = requests.get(f"https://api.github.com/repos/{owner}/{repo}", headers=headers, timeout=10)
+        r.raise_for_status()
+        meta  = r.json()
+        parts = [f"{meta.get('name', repo)}: {meta.get('description', '')}"]
+        if meta.get("topics"):
+            parts.append("Topics: " + ", ".join(meta["topics"]))
+
+        readme_r = requests.get(
+            f"https://api.github.com/repos/{owner}/{repo}/readme", headers=headers, timeout=10
+        )
+        if readme_r.status_code == 200:
+            raw = base64.b64decode(readme_r.json().get("content", "")).decode("utf-8", errors="replace")
+            raw = re.sub(r"#{1,6}\s+", "", raw)
+            words = raw.split()[:ARTICLE_WORD_LIMIT]
+            parts.append(" ".join(words))
+
+        return "\n\n".join(p for p in parts if p) or None
+    except Exception:
+        return None
+
+
+# ---------------------------------------------------------------------------
 # Fetch helpers
 # ---------------------------------------------------------------------------
 
 def fetch_article_text(url: str) -> str | None:
+    if _parse_github_repo(url):
+        return _fetch_github_repo_text(url)
     try:
         article = Article(url, request_timeout=FETCH_TIMEOUT)
         article.config.browser_user_agent = USER_AGENT
@@ -77,6 +135,8 @@ def summarize_article(article: dict, text: str | None, prompt_template: str, fal
     used_fallback = text is None
 
     if used_fallback:
+        if not description.strip():
+            return {**article, "summary": None, "used_fallback": True, "summary_error": "no_content"}
         prompt = fallback_template.format(title=title, description=description)
     else:
         prompt = prompt_template.format(title=title, text=text)
@@ -89,7 +149,11 @@ def summarize_article(article: dict, text: str | None, prompt_template: str, fal
                 max_tokens=NEWS_SUMMARY_MAX_TOKENS,
                 messages=[{"role": "user", "content": prompt}]
             )
+        if not response.content:
+            raise RuntimeError("Empty Claude response content")
         summary = response.content[0].text.strip()
+        if summary.upper() == "SKIP":
+            return {**article, "summary": None, "used_fallback": used_fallback, "summary_error": "no_content"}
         return {**article, "summary": summary, "used_fallback": used_fallback, "summary_error": None}
     except Exception as e:
         return {**article, "summary": None, "used_fallback": used_fallback, "summary_error": str(e)}
@@ -97,7 +161,11 @@ def summarize_article(article: dict, text: str | None, prompt_template: str, fal
 
 def process_article(args: tuple) -> dict:
     client, article, prompt_template, fallback_template = args
-    url  = article.get("url", "")
+    url = article.get("url", "")
+
+    if _is_twitter_url(url):
+        return {**article, "summary": None, "used_fallback": False, "summary_error": "twitter_no_content"}
+
     text = fetch_article_text(url) if url else None
     return summarize_article(article, text, prompt_template, fallback_template, client)
 
@@ -108,21 +176,23 @@ def process_article(args: tuple) -> dict:
 
 def increment_and_check(run_id: str) -> bool:
     """
-    Atomically increment agent2_completions in Firestore.
-    Returns True if this agent is the one that pushed the count to 2,
-    meaning both agent2a and agent2b are done and agent3 should be triggered.
+    Atomically increment agent2_completions in Firestore using a transaction.
+    Returns True if this agent pushed the count to 2 (both agent2a and agent2b done).
     """
     from google.cloud import firestore
 
     db  = firestore.Client(project=GCP_PROJECT_ID)
     ref = db.collection(FIRESTORE_COLLECTION).document(run_id)
 
-    ref.update({
-        "agent2_completions": firestore.Increment(1)
-    })
+    @firestore.transactional
+    def _increment(transaction, ref):
+        snapshot = ref.get(transaction=transaction)
+        data     = snapshot.to_dict() or {}
+        new_val  = data.get("agent2_completions", 0) + 1
+        transaction.update(ref, {"agent2_completions": new_val})
+        return new_val
 
-    updated = ref.get().to_dict()
-    count   = updated.get("agent2_completions", 0)
+    count = _increment(db.transaction(), ref)
     print(f"[agent2b]  agent2_completions = {count}")
     return count >= 2
 
@@ -139,8 +209,13 @@ def run(run_id: str):
 
     if USE_FIRESTORE:
         from google.cloud import firestore as _fs
-        doc      = _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).get().to_dict()
-        filtered = doc["news_filtered"]
+        doc_snap = _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).get()
+        doc      = doc_snap.to_dict()
+        if not doc:
+            raise RuntimeError(f"[agent2b] Firestore document not found for run_id={run_id}")
+        filtered = doc.get("news_filtered")
+        if filtered is None:
+            raise RuntimeError(f"[agent2b] 'news_filtered' missing from Firestore document run_id={run_id}")
         print(f"[agent2b]  Loaded news_filtered from Firestore")
     else:
         in_path = os.path.join(DATA_DIR, "news_filtered.json")
@@ -222,7 +297,7 @@ def run(run_id: str):
             publisher  = pubsub_v1.PublisherClient()
             topic_path = publisher.topic_path(GCP_PROJECT_ID, TOPIC_CONTENT_SUMMARIZED)
             data       = json.dumps({"run_id": run_id}).encode("utf-8")
-            publisher.publish(topic_path, data).result()
+            publisher.publish(topic_path, data).result(timeout=30)
             print(f"[agent2b]  Both agent2s done — published to {TOPIC_CONTENT_SUMMARIZED} (run_id={run_id})")
         else:
             print(f"[agent2b]  Waiting for agent2a to finish before triggering agent3")

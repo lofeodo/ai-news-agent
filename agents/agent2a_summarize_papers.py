@@ -90,6 +90,8 @@ def summarize_paper(paper: dict, text: str, prompt_template: str, client: anthro
             messages=[{"role": "user", "content": prompt}]
         )
 
+    if not response.content:
+        raise RuntimeError("Empty Claude response content")
     return response.content[0].text.strip()
 
 
@@ -108,22 +110,23 @@ def validate_summary(summary: str, paper_id: str) -> bool:
 
 def increment_and_check(run_id: str) -> bool:
     """
-    Atomically increment agent2_completions in Firestore.
-    Returns True if this agent is the one that pushed the count to 2,
-    meaning both agent2a and agent2b are done and agent3 should be triggered.
+    Atomically increment agent2_completions in Firestore using a transaction.
+    Returns True if this agent pushed the count to 2 (both agent2a and agent2b done).
     """
     from google.cloud import firestore
 
     db  = firestore.Client(project=GCP_PROJECT_ID)
     ref = db.collection(FIRESTORE_COLLECTION).document(run_id)
 
-    new_count = ref.update({
-        "agent2_completions": firestore.Increment(1)
-    })
+    @firestore.transactional
+    def _increment(transaction, ref):
+        snapshot = ref.get(transaction=transaction)
+        data     = snapshot.to_dict() or {}
+        new_val  = data.get("agent2_completions", 0) + 1
+        transaction.update(ref, {"agent2_completions": new_val})
+        return new_val
 
-    # Read back the updated value to check if we're the one who hit 2
-    updated = ref.get().to_dict()
-    count   = updated.get("agent2_completions", 0)
+    count = _increment(db.transaction(), ref)
     print(f"[agent2a]  agent2_completions = {count}")
     return count >= 2
 
@@ -137,8 +140,13 @@ def run(run_id: str):
 
     if USE_FIRESTORE:
         from google.cloud import firestore as _fs
-        doc    = _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).get().to_dict()
-        papers = doc["scored_papers"]
+        doc_snap = _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).get()
+        doc      = doc_snap.to_dict()
+        if not doc:
+            raise RuntimeError(f"[agent2a] Firestore document not found for run_id={run_id}")
+        papers   = doc.get("scored_papers")
+        if papers is None:
+            raise RuntimeError(f"[agent2a] 'scored_papers' missing from Firestore document run_id={run_id}")
         print(f"[agent2a]  Loaded {len(papers)} papers from Firestore")
     else:
         in_path = os.path.join(DATA_DIR, "scored_papers.json")
@@ -221,7 +229,7 @@ def run(run_id: str):
             publisher  = pubsub_v1.PublisherClient()
             topic_path = publisher.topic_path(GCP_PROJECT_ID, TOPIC_CONTENT_SUMMARIZED)
             data       = json.dumps({"run_id": run_id}).encode("utf-8")
-            publisher.publish(topic_path, data).result()
+            publisher.publish(topic_path, data).result(timeout=30)
             print(f"[agent2a]  Both agent2s done — published to {TOPIC_CONTENT_SUMMARIZED} (run_id={run_id})")
         else:
             print(f"[agent2a]  Waiting for agent2b to finish before triggering agent3")

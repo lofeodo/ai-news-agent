@@ -5,6 +5,7 @@ import json
 import os
 import re
 import sys
+import time
 from datetime import datetime
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -150,6 +151,8 @@ def select_articles_for_category(
         messages=[{"role": "user", "content": prompt}],
     )
 
+    if not response.content:
+        raise RuntimeError(f"Empty Claude response for article selection in '{category}'")
     indices = parse_indices(response.content[0].text, len(sorted_articles))
 
     if not indices:
@@ -197,7 +200,7 @@ def write_intro(
     client: anthropic.Anthropic,
 ) -> str:
     paper_lines = "\n".join(
-        f"- {p['title']} (score: {p['scores']['total']}/28)" for p in papers
+        f"- {p['title']} (score: {(p.get('scores') or {}).get('total', 0)}/28)" for p in papers
     )
 
     headline_lines = []
@@ -218,6 +221,8 @@ def write_intro(
         messages=[{"role": "user", "content": prompt}],
     )
 
+    if not response.content:
+        raise RuntimeError("Empty Claude response from intro writer")
     return response.content[0].text.strip()
 
 
@@ -248,10 +253,12 @@ _SEPR  = "#ededed"   # separator on white
 
 
 def render_paper_card(paper: dict) -> str:
-    score        = paper["scores"]["total"]
+    scores       = paper.get("scores") or {}
+    score        = scores.get("total", 0)
     authors_list = paper.get("authors", [])
     authors      = ", ".join(authors_list[:3]) + (" et al." if len(authors_list) > 3 else "")
-    paragraphs   = [p.strip() for p in paper["summary"].split("\n\n") if p.strip()]
+    summary      = paper.get("summary") or ""
+    paragraphs   = [p.strip() for p in summary.split("\n\n") if p.strip()]
 
     summary_rows = "".join(
         f'<tr><td style="padding:{"0" if i == 0 else "10px"} 0 0 0;'
@@ -601,9 +608,14 @@ def run(run_id: str):
 
     if USE_FIRESTORE:
         from google.cloud import firestore as _fs
-        doc         = _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).get().to_dict()
-        papers      = doc["paper_summaries"]
-        by_category = doc["news_summaries"]
+        doc_snap    = _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).get()
+        doc         = doc_snap.to_dict()
+        if not doc:
+            raise RuntimeError(f"[agent3] Firestore document not found for run_id={run_id}")
+        papers      = doc.get("paper_summaries")
+        by_category = doc.get("news_summaries")
+        if papers is None or by_category is None:
+            raise RuntimeError(f"[agent3] 'paper_summaries' or 'news_summaries' missing from Firestore document run_id={run_id}")
         print(f"[agent3]  Loaded paper_summaries and news_summaries from Firestore")
     else:
         with open(os.path.join(DATA_DIR, "paper_summaries.json"), "r", encoding="utf-8") as f:

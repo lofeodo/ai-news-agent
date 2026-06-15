@@ -702,6 +702,14 @@ def run(run_id: str):
         f.write(newsletter_variants["0_0"])
     print(f"  Saved {legacy_path} (legacy alias for 0_0)")
 
+    # Copy to public dir so Firebase Hosting serves it as the live preview
+    public_preview = os.path.join(
+        os.path.dirname(__file__), "..", "public", "newsletter", "latest.html"
+    )
+    with open(public_preview, "w", encoding="utf-8") as f:
+        f.write(newsletter_variants["0_0"])
+    print(f"  Saved {public_preview} (public preview)")
+
     if USE_FIRESTORE:
         from google.cloud import firestore as _fs
         _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).update({

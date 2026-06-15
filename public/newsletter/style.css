@@ -65,54 +65,68 @@ body::after {
 }
 
 .issue-teaser {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 28px;
-  padding: 8px 16px 8px 12px;
-  border: 1px solid rgba(200,184,154,0.28);
-  background: rgba(200,184,154,0.05);
+  justify-content: space-between;
+  width: 100%;
+  max-width: 520px;
+  margin-bottom: 16px;
+  padding: 14px 20px 14px 16px;
+  border: 1px solid rgba(200,184,154,0.30);
+  border-left: 3px solid var(--accent);
+  background: rgba(200,184,154,0.04);
   text-decoration: none;
   font-family: var(--font);
-  font-size: 0.78rem;
-  letter-spacing: 0.04em;
   color: var(--muted);
-  transition: border-color 0.2s, background 0.2s, color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 0 0 1px rgba(200,184,154,0.03), inset 0 1px 0 rgba(200,184,154,0.06);
 }
 .issue-teaser:hover {
   border-color: rgba(200,184,154,0.55);
-  background: rgba(200,184,154,0.10);
-  color: var(--accent);
-  box-shadow: 0 0 18px rgba(200,184,154,0.10);
+  border-left-color: var(--accent);
+  background: rgba(200,184,154,0.08);
+  box-shadow: 0 0 24px rgba(200,184,154,0.10), inset 0 1px 0 rgba(200,184,154,0.10);
+}
+.issue-teaser__left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 .issue-teaser__dot {
   display: inline-block;
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 6px rgba(200,184,154,0.7);
+  box-shadow: 0 0 8px rgba(200,184,154,0.8);
   animation: pulse-dot 2.2s ease-in-out infinite;
   flex-shrink: 0;
 }
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; box-shadow: 0 0 6px rgba(200,184,154,0.7); }
-  50%       { opacity: 0.5; box-shadow: 0 0 2px rgba(200,184,154,0.3); }
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(200,184,154,0.8); }
+  50%       { opacity: 0.45; box-shadow: 0 0 2px rgba(200,184,154,0.3); }
 }
 .issue-teaser__label {
-  color: var(--text);
-  letter-spacing: 0.06em;
+  font-size: 0.7rem;
+  color: var(--accent);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  font-size: 0.73rem;
+}
+.issue-teaser__title {
+  font-size: 0.88rem;
+  color: var(--text);
+  letter-spacing: 0.02em;
 }
 .issue-teaser__arrow {
   color: var(--accent);
+  font-size: 0.88rem;
   letter-spacing: 0.02em;
-  font-size: 0.82rem;
   transition: transform 0.2s;
+  flex-shrink: 0;
+  margin-left: 12px;
 }
 .issue-teaser:hover .issue-teaser__arrow {
-  transform: translateX(3px);
+  transform: translateX(4px);
 }
 
 .wordmark {

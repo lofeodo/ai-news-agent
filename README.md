@@ -1,6 +1,6 @@
 # Latent SpaceMail
 
-A weekly agentic pipeline that automatically curates and delivers a morning AI briefing, combining the top AI-research papers from ArXiv with the top AI-industry news from live sources, as a personalized HTML email newsletter. Built on Google Cloud Platform with six specialized agents orchestrated via Pub/Sub and Firestore.
+A weekly agentic pipeline that automatically curates and delivers a morning AI briefing, combining selected AI-research papers from ArXiv with the top AI-industry news from live sources, as a personalized HTML email newsletter. Built on Google Cloud Platform with six specialized agents orchestrated via Pub/Sub and Firestore.
 
 ---
 

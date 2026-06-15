@@ -8,6 +8,7 @@ Paragraph 2 — Why it matters: explain the practical significance, what it chan
 Style rules:
 - No em dashes (—) or en dashes (–). Use commas or short sentences instead.
 - No bullet points, bold, headers, or labels of any kind.
+- No markdown of any kind. Never start a line with #, ##, ###, *, -, or any other markdown syntax.
 - No filler words like "importantly", "notably", "crucially", "interestingly", or "in conclusion".
 - No robotic constructions like "the authors propose", "this paper presents", or "the proposed method".
 - Write in a direct, confident tone. Short sentences are better than long ones.

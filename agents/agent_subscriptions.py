@@ -463,6 +463,34 @@ def subscribe(request: Request, req: SubscribeRequest):
     return {"status": "ok"}
 
 
+@router.get("/preview")
+@limiter.limit("30/minute")
+def newsletter_preview(request: Request):
+    """Return the latest newsletter HTML for public web preview."""
+    db = _db()
+    from google.cloud import firestore as _fs
+    docs = list(
+        db.collection(FIRESTORE_COLLECTION)
+        .where("newsletter_html", "!=", None)
+        .order_by("newsletter_html")
+        .order_by("started_at", direction=_fs.Query.DESCENDING)
+        .limit(1)
+        .stream()
+    )
+    if not docs:
+        return HTMLResponse("<p>No issue available yet. Check back Monday!</p>", status_code=404)
+
+    data = docs[0].to_dict()
+    variants = data.get("newsletter_variants")
+    html = (variants or {}).get("0_0") or data.get("newsletter_html", "")
+
+    subscribe_url = f"{FRONTEND_BASE_URL}/"
+    html = html.replace("{{UNSUBSCRIBE_URL}}", subscribe_url)
+    html = html.replace("{{PREFERENCES_URL}}", subscribe_url)
+    headers = {"Content-Security-Policy": "frame-ancestors https://latentspacemail.web.app https://latentspacemail.firebaseapp.com"}
+    return HTMLResponse(content=html, status_code=200, headers=headers)
+
+
 @router.post("/request-unsubscribe")
 @limiter.limit("5/minute")
 def request_unsubscribe(request: Request, req: EmailOnlyRequest):

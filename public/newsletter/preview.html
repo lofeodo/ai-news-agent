@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Latest Issue — Latent SpaceMail</title>
+  <link rel="icon" type="image/svg+xml" href="/newsletter/images/logo-mark.svg">
+  <link rel="icon" type="image/png" href="/newsletter/images/logo-email.png">
+  <link rel="stylesheet" href="fonts.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f0f;
+      --surface: #161616;
+      --border: #2a2a2a;
+      --text: #e8e8e8;
+      --muted: #8b8b8b;
+      --accent: #c8b89a;
+      --font: 'Menlo', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+    }
+
+    .topbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      height: 48px;
+      background: rgba(15, 15, 15, 0.94);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .topbar__left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .topbar__back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.78rem;
+      letter-spacing: 0.05em;
+      transition: color 0.15s;
+    }
+    .topbar__back:hover { color: var(--accent); }
+    .topbar__back svg {
+      width: 12px; height: 12px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+
+    .topbar__sep {
+      color: var(--border);
+      font-size: 0.78rem;
+    }
+
+    .topbar__label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .topbar__badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.7rem;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border: 1px solid rgba(200,184,154,0.25);
+      background: rgba(200,184,154,0.06);
+    }
+    .topbar__badge-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .topbar__subscribe {
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--bg);
+      background: var(--accent);
+      text-decoration: none;
+      padding: 7px 14px;
+      transition: opacity 0.15s, box-shadow 0.2s;
+      white-space: nowrap;
+    }
+    .topbar__subscribe:hover {
+      opacity: 0.88;
+      box-shadow: 0 0 14px rgba(200,184,154,0.3);
+    }
+
+    .preview-frame {
+      position: fixed;
+      top: 48px; left: 0; right: 0; bottom: 0;
+      width: 100%;
+      height: calc(100% - 48px);
+      border: none;
+      background: #060606;
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__left">
+      <a class="topbar__back" href="/newsletter/">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        Back
+      </a>
+      <span class="topbar__sep">/</span>
+      <span class="topbar__label">Latest Issue</span>
+      <span class="topbar__badge">
+        <span class="topbar__badge-dot"></span>
+        Live
+      </span>
+    </div>
+    <a class="topbar__subscribe" href="/newsletter/">Subscribe →</a>
+  </header>
+
+  <iframe
+    class="preview-frame"
+    src="https://agent-subscriptions-zozrn33sna-nn.a.run.app/preview"
+    title="Latest Latent SpaceMail issue"
+    sandbox="allow-same-origin"
+  ></iframe>
+</body>
+</html>

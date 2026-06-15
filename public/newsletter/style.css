@@ -59,9 +59,74 @@ body::after {
 }
 
 /* All non-canvas content sits above the vignette + scanlines */
-.wordmark, .card, .nav-links {
+.wordmark, .card, .nav-links, .issue-teaser {
   position: relative;
   z-index: 2;
+}
+
+.issue-teaser {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 520px;
+  margin-bottom: 16px;
+  padding: 14px 20px 14px 16px;
+  border: 1px solid rgba(200,184,154,0.30);
+  border-left: 3px solid var(--accent);
+  background: rgba(200,184,154,0.04);
+  text-decoration: none;
+  font-family: var(--font);
+  color: var(--muted);
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 0 0 1px rgba(200,184,154,0.03), inset 0 1px 0 rgba(200,184,154,0.06);
+}
+.issue-teaser:hover {
+  border-color: rgba(200,184,154,0.55);
+  border-left-color: var(--accent);
+  background: rgba(200,184,154,0.08);
+  box-shadow: 0 0 24px rgba(200,184,154,0.10), inset 0 1px 0 rgba(200,184,154,0.10);
+}
+.issue-teaser__left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.issue-teaser__dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px rgba(200,184,154,0.8);
+  animation: pulse-dot 2.2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(200,184,154,0.8); }
+  50%       { opacity: 0.45; box-shadow: 0 0 2px rgba(200,184,154,0.3); }
+}
+.issue-teaser__label {
+  font-size: 0.7rem;
+  color: var(--accent);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.issue-teaser__title {
+  font-size: 0.88rem;
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+.issue-teaser__arrow {
+  color: var(--accent);
+  font-size: 0.88rem;
+  letter-spacing: 0.02em;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+.issue-teaser:hover .issue-teaser__arrow {
+  transform: translateX(4px);
 }
 
 .wordmark {
@@ -344,5 +409,8 @@ button[type="submit"]:disabled { opacity: 0.45; cursor: default; box-shadow: non
   }
   .nav-links {
     margin-top: 16px;
+  }
+  .issue-teaser {
+    display: none;
   }
 }

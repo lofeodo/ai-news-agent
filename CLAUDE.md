@@ -49,11 +49,11 @@ agent1b (news fetch)  ──┘                                    ├──> ag
                           └──> agent2b (summarize news)  ──┘
 ```
 
-- **agent1a** – Fetches cs.AI/cs.LG papers from ArXiv, scores with Claude using a 7-dimension rubric (`scoring_rubric.txt`), keeps top 5. Max 5 concurrent Claude calls with exponential backoff.
-- **agent1b** – Fetches Hacker News + 9 NewsAPI queries, filters paywalled/non-Latin, then has Claude categorize into 7 categories (`filter_tool.py` schema).
-- **agent2a/2b** – Summarize papers/articles in parallel threads; use Firestore atomic counter to sync before triggering agent3.
-- **agent3** – Claude selects articles per category and writes an intro; renders final `newsletter.html`. Embeds `{{UNSUBSCRIBE_URL}}` and `{{PREFERENCES_URL}}` placeholders in the footer, which agent4 substitutes per-subscriber at send time.
-- **agent4** – Triggered by Cloud Scheduler at 7 AM Monday (pipeline runs at 6 AM). In cloud mode, queries the `subscribers` collection and sends a **personalized copy** to each active subscriber — substituting `{{UNSUBSCRIBE_URL}}` and `{{PREFERENCES_URL}}` placeholders (embedded by agent3) with per-subscriber token links. In local mode, sends a single copy to `TEST_RECIPIENT_EMAIL`.
+- **agent1a** – Fetches cs.AI/cs.LG papers from ArXiv (up to 500, last 7 days), randomly samples 35, scores with Claude using a 7-dimension 28-point rubric (`scoring_rubric.txt`), keeps top 3 (`PAPERS_IN_NEWSLETTER`). Max 5 concurrent Claude calls with exponential backoff (10s/20s/40s). PDF/API fetches route through a Squid proxy (`HTTPS_PROXY` / `HTTP_PROXY` env vars) because GCP IPs are throttled by ArXiv — both the `urllib` opener and the `arxiv` library session are patched.
+- **agent1b** – Fetches Hacker News + 10 NewsAPI queries (English global, French global, Canada/Montreal), filters paywalled/non-Latin in code, then Claude language-filters (EN/FR only) and categorizes into 7 categories (`filter_tool.py` schema). Max 5 concurrent Claude calls.
+- **agent2a/2b** – Summarize papers/articles in parallel threads; use Firestore atomic counter (`agent2_completions`) to sync before triggering agent3. The agent that increments the counter to 2 publishes `content-summarized`.
+- **agent3** – Runs two article-selection passes per category (all-language + English-only) to support subscriber preference variants. Claude selects the best 3-5 articles per category; HN ≥ 100 articles are always included. Writes the editor's intro, then renders **4 HTML variants** keyed by `{include_french}_{include_canada}` (`0_0`, `1_0`, `0_1`, `1_1`). Saves all variants to Firestore and copies `0_0` to `public/newsletter/latest.html` for the live preview.
+- **agent4** – Triggered by Cloud Scheduler at 7 AM Monday (pipeline runs at 6 AM). In cloud mode, loads all 4 newsletter variants from Firestore, queries active subscribers, picks each subscriber's variant by preference key, substitutes `{{UNSUBSCRIBE_URL}}` and `{{PREFERENCES_URL}}` per subscriber, and sends via SendGrid. In local mode, sends a single copy to `TEST_RECIPIENT_EMAIL`.
 
 ### Subscription Service
 
@@ -67,7 +67,7 @@ Routes:
 - `GET /unsubscribe?token=` — deactivates subscription.
 - `GET/POST /preferences?token=` — read or update subscriber preferences (`include_french`, `include_canada`).
 
-Subscriber doc fields: `email`, `token`, `active`, `subscribed_at`, `confirmed_at`, `prefs`, `send_latest`, `latest_sent`.
+Subscriber doc fields: `email`, `token`, `token_expires_at`, `active`, `subscribed_at`, `confirmed_at`, `prefs: {include_french, include_canada}`, `send_latest`, `latest_sent`. Token TTL: 48h for confirmation links, 365 days for action links (unsubscribe/preferences).
 
 `main.py` conditionally mounts the subscription router when `AGENT_NAME=agent_subscriptions`.
 
@@ -92,7 +92,10 @@ All Claude calls use `claude-haiku-4-5-20251001` (configured in `config.py`).
 | `TEST_RECIPIENT_EMAIL` | Local mode only: single send address for agent4 |
 | `SERVICE_BASE_URL` | Public URL of the subscription service (for confirmation/unsubscribe links) |
 | `FRONTEND_BASE_URL` | Public URL of the Firebase Hosting frontend (for preferences magic links) |
-| `ALLOWED_ORIGINS` | CORS origins for subscription API |
+| `HTTPS_PROXY` / `HTTP_PROXY` | Squid proxy URL for agent1a ArXiv fetches (GCP IPs are throttled) |
+| `ALLOWED_ORIGINS` | CORS origins for subscription API (comma-separated; required in production) |
+| `TEST_SEND_TO` | Cloud mode: skip subscriber list and send only to this address (test runs) |
+| `MAILING_ADDRESS` | Physical address in email footer (CASL compliance) |
 
 ## Pub/Sub Topics (Cloud Mode)
 

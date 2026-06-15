@@ -348,6 +348,7 @@ button[type="submit"]:disabled { opacity: 0.45; cursor: default; box-shadow: non
   font-size: 0.82rem;
   color: var(--muted);
   display: flex;
+  align-items: center;
   gap: 20px;
 }
 .nav-links a { color: var(--muted); text-decoration: none; }
@@ -413,7 +414,19 @@ button[type="submit"]:disabled { opacity: 0.45; cursor: default; box-shadow: non
   .issue-teaser {
     display: none;
   }
+  .nav-links {
+    justify-content: center;
+    gap: 0;
+    font-size: 0.75rem;
+  }
+  .nav-links a {
+    white-space: nowrap;
+  }
+  .nav-links a + a {
+    margin-left: 20px;
+  }
   .nav-preview {
     color: var(--accent) !important;
+    font-weight: bold;
   }
 }

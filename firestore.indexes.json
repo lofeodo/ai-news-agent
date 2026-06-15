@@ -1,0 +1,13 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "pipeline_runs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "newsletter_html", "order": "ASCENDING" },
+        { "fieldPath": "started_at",      "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

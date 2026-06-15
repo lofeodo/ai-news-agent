@@ -30,11 +30,24 @@ import traceback
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, Request, Response
+from starlette.middleware.base import BaseHTTPMiddleware
 
 # Make the agents/ directory importable
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "agents"))
 
 app = FastAPI()
+
+
+class _SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        return response
+
+
+app.add_middleware(_SecurityHeadersMiddleware)
 
 AGENT_REGISTRY = {
     "agent1a":      "agent1a_fetch_papers",
@@ -52,22 +65,33 @@ AGENT_REGISTRY = {
 # because browsers on the frontend origin call this API directly.
 if os.environ.get("AGENT_NAME", "").strip() == "agent_subscriptions":
     from fastapi.middleware.cors import CORSMiddleware
-    from agent_subscriptions import router as subscriptions_router
+    from slowapi import _rate_limit_exceeded_handler
+    from slowapi.errors import RateLimitExceeded
+    from agent_subscriptions import router as subscriptions_router, limiter
 
     # Comma-separated list of allowed frontend origins, e.g.
     # "https://latentspacemail.web.app,https://latentspacemail.com"
-    # "*" is acceptable while developing; tighten before launch.
-    origins = [
-        o.strip()
-        for o in os.environ.get("ALLOWED_ORIGINS", "*").split(",")
-        if o.strip()
-    ]
+    # No default wildcard — must be set explicitly. Falls back to "*" only
+    # when USE_FIRESTORE is false (local dev).
+    _origins_env = os.environ.get("ALLOWED_ORIGINS", "")
+    origins = [o.strip() for o in _origins_env.split(",") if o.strip()]
+    if not origins:
+        _use_firestore = os.environ.get("USE_FIRESTORE", "false").lower() == "true"
+        if _use_firestore:
+            raise RuntimeError(
+                "ALLOWED_ORIGINS must be set in production (USE_FIRESTORE=true). "
+                "Example: https://latentspacemail.web.app"
+            )
+        origins = ["*"]  # local dev only
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=origins,
         allow_methods=["GET", "POST"],
         allow_headers=["Content-Type"],
     )
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
     app.include_router(subscriptions_router)
 
 

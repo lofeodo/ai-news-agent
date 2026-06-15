@@ -96,7 +96,7 @@ def send_email(api_key: str, to_email: str, html_body: str, subject: str) -> Non
         method="POST",
     )
     with urllib.request.urlopen(req) as resp:
-        print(f"[sendgrid]  sent to {to_email} — status {resp.status}", flush=True)
+        print(f"[sendgrid]  sent — status {resp.status}", flush=True)
 
 
 # ---------------------------------------------------------------------------
@@ -258,7 +258,7 @@ def run(run_id: str):
         except Exception as e:
             failed += 1
             failures.append({"email": email, "error": str(e)})
-            print(f"  [error]  send failed for {email}: {e}", flush=True)
+            print(f"  [error]  send failed: {e}", flush=True)
             # Continue — one bad send must not abort the rest.
 
     elapsed = (datetime.now() - start_time).total_seconds()

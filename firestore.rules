@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // All collections are private — only server-side Cloud Run service
+    // accounts (authenticated via IAM) may read or write. No client-side
+    // SDK access is permitted.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

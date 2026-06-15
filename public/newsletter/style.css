@@ -415,17 +415,13 @@ button[type="submit"]:disabled { opacity: 0.45; cursor: default; box-shadow: non
     display: none;
   }
   .nav-links {
+    flex-wrap: wrap;
     justify-content: center;
-    gap: 0;
-    font-size: 0.75rem;
-  }
-  .nav-links a {
-    white-space: nowrap;
-  }
-  .nav-links a + a {
-    margin-left: 20px;
+    gap: 6px 20px;
   }
   .nav-preview {
+    width: 100%;
+    text-align: center;
     color: var(--accent) !important;
     font-weight: bold;
   }

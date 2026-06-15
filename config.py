@@ -75,7 +75,7 @@ NON_LATIN_RANGES = [
 DATA_DIR = "data"
 
 # GCP
-GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "ai-news-letter-497720")
+GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "")
 
 # Pub/Sub topic names
 TOPIC_PIPELINE_START     = "pipeline-start"

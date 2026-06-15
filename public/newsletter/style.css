@@ -367,6 +367,10 @@ button[type="submit"]:disabled { opacity: 0.45; cursor: default; box-shadow: non
   top: -0.5px;
 }
 
+.preview-cta {
+  display: none; /* shown only on mobile via media query */
+}
+
 /* Read-only email display on preferences page */
 .email-display {
   font-size: 0.88rem;
@@ -412,5 +416,42 @@ button[type="submit"]:disabled { opacity: 0.45; cursor: default; box-shadow: non
   }
   .issue-teaser {
     display: none;
+  }
+  .preview-cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 14px;
+    padding: 12px;
+    border: 1px solid rgba(200,184,154,0.30);
+    border-left: 3px solid var(--accent);
+    background: rgba(200,184,154,0.05);
+    text-decoration: none;
+    font-family: var(--font);
+    font-size: 0.85rem;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .preview-cta:hover {
+    background: rgba(200,184,154,0.10);
+    border-color: rgba(200,184,154,0.55);
+  }
+  .preview-cta__dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 6px rgba(200,184,154,0.7);
+    animation: pulse-dot 2.2s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  .preview-cta__arrow {
+    transition: transform 0.2s;
+  }
+  .preview-cta:hover .preview-cta__arrow {
+    transform: translateX(3px);
   }
 }

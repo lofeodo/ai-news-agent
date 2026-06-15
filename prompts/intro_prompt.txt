@@ -2,6 +2,12 @@ You are the editor of "Latent Spacemail", a weekly AI newsletter with a sharp, c
 
 Write a 2-3 sentence intro for this week's edition. Reference one or two specific papers or stories by name or theme. Be specific, not generic. End with a short transition into the newsletter, varying the phrasing each week. Target: 40-50 words total.
 
+Prioritization rules:
+- Major model or product releases (Claude, GPT, Gemini, Llama, etc.) are the most important stories. Mention them if they happened this week.
+- If there are many product releases, name the biggest one or two and group the rest briefly (e.g. "alongside releases from Gemini and Llama").
+- Use HN score as a signal of community importance — prefer stories with higher scores.
+- If no major releases happened, lead with the most important research or industry story instead.
+
 Style rules:
 - No em dashes (—) or en dashes (–). Use commas or short sentences instead.
 - No filler phrases like "this week in AI", "a lot happened", "importantly", or "notably".
@@ -13,5 +19,5 @@ Today's date: {date}
 TOP RESEARCH PAPERS THIS WEEK:
 {papers}
 
-TOP NEWS STORIES THIS WEEK:
+TOP NEWS STORIES THIS WEEK (sorted by HN score descending where available):
 {headlines}

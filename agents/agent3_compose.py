@@ -153,6 +153,16 @@ def select_articles_for_category(
     if not articles:
         return []
 
+    # Drop articles with no summary and no description — they would render as blank cards
+    before = len(articles)
+    articles = [a for a in articles if (a.get("summary") or "").strip() or (a.get("description") or "").strip()]
+    dropped = before - len(articles)
+    if dropped:
+        print(f"  [select] '{category}': dropped {dropped} article(s) with no content")
+
+    if not articles:
+        return []
+
     # Sort by HN score descending (null last) so Claude anchors on high-signal articles
     sorted_articles = sorted(articles, key=lambda a: a.get("hn_score") or -1, reverse=True)
 

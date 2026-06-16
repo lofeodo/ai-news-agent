@@ -9,6 +9,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
+from urllib.parse import urlparse
 from filter_tool import FILTER_TOOL, LANGUAGE_FILTER_TOOL
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -147,6 +148,18 @@ def fetch_newsapi_articles() -> list:
 # Pre-filtering (code-level, no Claude)
 # ---------------------------------------------------------------------------
 
+_SOCIAL_MEDIA_HOSTS = frozenset({
+    "x.com", "www.x.com",
+    "twitter.com", "www.twitter.com",
+    "t.co",
+})
+
+
+def is_social_media(url: str) -> bool:
+    host = urlparse(url).hostname or ""
+    return host in _SOCIAL_MEDIA_HOSTS
+
+
 def is_paywalled(url: str) -> bool:
     for domain in PAYWALLED_DOMAINS:
         if domain in url:
@@ -166,7 +179,7 @@ def is_non_latin(text: str) -> bool:
 def prefilter(articles: list) -> list:
     seen_urls = set()
     filtered  = []
-    stats     = {"no_url": 0, "no_title": 0, "paywalled": 0, "non_latin": 0, "duplicate": 0}
+    stats     = {"no_url": 0, "no_title": 0, "social_media": 0, "paywalled": 0, "non_latin": 0, "duplicate": 0}
 
     for article in articles:
         url   = article.get("url", "").strip()
@@ -177,6 +190,9 @@ def prefilter(articles: list) -> list:
             continue
         if not title:
             stats["no_title"] += 1
+            continue
+        if is_social_media(url):
+            stats["social_media"] += 1
             continue
         if is_paywalled(url):
             stats["paywalled"] += 1

@@ -132,12 +132,12 @@
 <body>
   <header class="topbar">
     <div class="topbar__left">
-      <a class="topbar__back" id="topbar-back" href="/newsletter/">
+      <a class="topbar__back" href="/newsletter/">
         <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
         Back
       </a>
       <span class="topbar__sep">/</span>
-      <span class="topbar__label" id="topbar-label">Latest Issue</span>
+      <span class="topbar__label">Latest Issue</span>
       <span class="topbar__badge">
         <span class="topbar__badge-dot"></span>
         Live
@@ -152,33 +152,5 @@
     src="https://agent-subscriptions-zozrn33sna-nn.a.run.app/preview"
     title="Latest Latent SpaceMail issue"
   ></iframe>
-
-  <script>
-    const NEWSLETTER_SRC = document.getElementById('preview-frame').src;
-    const frame = document.getElementById('preview-frame');
-    const backBtn = document.getElementById('topbar-back');
-    const label = document.getElementById('topbar-label');
-    let newsletterLoaded = false;
-
-    frame.addEventListener('load', () => {
-      if (!newsletterLoaded) {
-        newsletterLoaded = true;
-        return;
-      }
-      // Iframe navigated away from the newsletter into an article
-      backBtn.removeAttribute('href');
-      backBtn.style.cursor = 'pointer';
-      label.textContent = 'Article';
-      backBtn.onclick = (e) => {
-        e.preventDefault();
-        frame.src = NEWSLETTER_SRC;
-        newsletterLoaded = false;
-        backBtn.setAttribute('href', '/newsletter/');
-        backBtn.style.cursor = '';
-        backBtn.onclick = null;
-        label.textContent = 'Latest Issue';
-      };
-    });
-  </script>
 </body>
 </html>

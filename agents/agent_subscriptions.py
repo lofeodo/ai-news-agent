@@ -487,6 +487,14 @@ def newsletter_preview(request: Request):
     subscribe_url = f"{FRONTEND_BASE_URL}/"
     html = html.replace("{{UNSUBSCRIBE_URL}}", subscribe_url)
     html = html.replace("{{PREFERENCES_URL}}", subscribe_url)
+
+    # Open article links in a new tab (external sites block iframe embedding).
+    html = re.sub(
+        r'(<a\b(?:(?!target=)[^>])*?)(href="https?://[^"]*")',
+        r'\1\2 target="_blank" rel="noopener noreferrer"',
+        html,
+    )
+
     headers = {"Content-Security-Policy": "frame-ancestors https://latentspacemail.web.app https://latentspacemail.firebaseapp.com https://lofeodo.com"}
     return HTMLResponse(content=html, status_code=200, headers=headers)
 

@@ -23,6 +23,7 @@ Selection criteria:
 Exclude:
 - Articles where AI is mentioned only incidentally
 - Pure opinion pieces with no news value
+- Social media posts (tweets, X threads, or any post from x.com / twitter.com) — this is a newsletter, not a social feed; blog posts are acceptable
 - Duplicates: if two or more articles cover the same event from the same angle (same product launch, same funding round, same policy announcement — even from different outlets), keep only the single most informative one. Different outlets reporting the same press release are duplicates. Exception: a product launch article AND a government ban on that product are different events and both belong.
 
 Use the filter_articles tool to return your selections with their assigned categories.

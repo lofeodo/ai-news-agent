@@ -272,7 +272,7 @@ _CHAR  = "#6a6560"   # secondary text on dark
 # Accents
 _AMBER = "#c8b89a"   # brand amber (soft, warm)
 _GOLD  = "#d4a843"   # bright gold for score numbers
-_HN    = "#ff6600"   # Hacker News orange
+_HN    = "#22c55e"   # Hacker News score green
 _SEPR  = "#ededed"   # separator on white
 
 
@@ -347,7 +347,7 @@ def render_article_card(article: dict, is_last: bool = False) -> str:
         right_col = (
             f'<td class="mob-block mob-hn" width="72" valign="top" style="border-left:1px solid {_SEPR};padding-left:14px;">'
             f'<p style="margin:0 0 4px 0;font-family:{_F};font-size:10px;color:#aaaaaa;'
-            f'letter-spacing:2px;text-transform:uppercase;">HN</p>'
+            f'letter-spacing:2px;text-transform:uppercase;">HN Score</p>'
             f'<p style="margin:0 0 10px 0;font-family:{_F};font-size:20px;font-weight:700;'
             f'line-height:1;color:{_HN};">&#9650;&nbsp;{hn}</p>'
             f'<p style="margin:0;font-family:{_F};font-size:12px;">'

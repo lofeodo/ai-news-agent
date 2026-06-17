@@ -96,10 +96,9 @@
 
   <script src="bg.js"></script>
   <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+    // auth.js already initializes Firebase — import auth from there to avoid duplicate-app error.
+    import { auth, onAuthStateChanged } from './auth.js';
     import {
-      getAuth,
-      onAuthStateChanged,
       signInWithEmailAndPassword,
       createUserWithEmailAndPassword,
       sendEmailVerification,
@@ -107,10 +106,6 @@
       GoogleAuthProvider,
       signInWithPopup,
     } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
-    import { firebaseConfig } from './auth.js';
-
-    const app  = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
 
     const returnUrl = new URLSearchParams(location.search).get('returnUrl') || '/';
 

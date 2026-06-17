@@ -70,11 +70,7 @@
   </div>
 
   <script type="module">
-    import { auth, onAuthStateChanged, authFetch } from './auth.js';
-
-    const API = 'https://agent-subscriptions-zozrn33sna-nn.a.run.app';
-
-    // Auth-aware nav: swap "sign in" for "account" when logged in
+    import { auth, onAuthStateChanged } from './auth.js';
     onAuthStateChanged(auth, (user) => {
       if (user) {
         document.getElementById('nav-signin').style.display  = 'none';

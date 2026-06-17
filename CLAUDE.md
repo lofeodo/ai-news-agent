@@ -57,19 +57,41 @@ agent1b (news fetch)  ──┘                                    ├──> ag
 
 ### Subscription Service
 
-`agents/agent_subscriptions.py` is a standalone FastAPI app (no `run(run_id)` function). Deployed as a separate Cloud Run service. Email round-trip is the authentication model — no passwords. Firestore collection: `subscribers`.
+`agents/agent_subscriptions.py` is a standalone FastAPI app (no `run(run_id)` function). Deployed as a separate Cloud Run service. Firestore collection: `subscribers`.
 
-Routes:
-- `POST /subscribe` — double opt-in; sends confirmation email. Supports `send_latest: true` to deliver the most recent newsletter on confirm.
-- `POST /request-unsubscribe` — sends an unsubscribe confirmation email (always returns 200 to avoid email oracle).
-- `POST /request-preferences` — sends a magic link to the preferences page.
-- `GET /confirm?token=` — activates subscription; optionally sends last week's newsletter.
+**Two auth paths coexist:**
+
+**Token-based (legacy, email links):** "Inbox is the auth" — tokens only travel inside emails. Still used for newsletter footer links (unsubscribe, preferences).
+- `POST /subscribe` — double opt-in; sends confirmation email.
+- `POST /request-unsubscribe` — sends unsubscribe confirmation email (always 200).
+- `POST /request-preferences` — sends preferences magic link email (always 200).
+- `GET /confirm?token=` — activates subscription; rotates token to 365d action token.
 - `GET /unsubscribe?token=` — deactivates subscription.
-- `GET/POST /preferences?token=` — read or update subscriber preferences (`include_french`, `include_canada`).
+- `GET/POST /preferences?token=` — read or update preferences.
 
-Subscriber doc fields: `email`, `token`, `token_expires_at`, `active`, `subscribed_at`, `confirmed_at`, `prefs: {include_french, include_canada}`, `send_latest`, `latest_sent`. Token TTL: 48h for confirmation links, 365 days for action links (unsubscribe/preferences).
+**Account-based (Firebase Auth, `Authorization: Bearer <id_token>`):** Users sign in via Google or email+password through `login.html`. Firebase ID token verified in `agents/auth_middleware.py` using `firebase-admin`. No confirmation email needed — Firebase already verified the email. Creates a `users/{uid}` doc on first call.
+- `GET /auth/me` — return user info + subscription status.
+- `POST /auth/subscribe` — subscribe instantly (email already verified; requires `email_verified: true`).
+- `POST /auth/unsubscribe` — deactivate subscription.
+- `GET /auth/preferences` — return prefs.
+- `POST /auth/preferences` — update prefs.
 
-`main.py` conditionally mounts the subscription router when `AGENT_NAME=agent_subscriptions`.
+**Subscriber doc fields:** `email`, `token`, `token_expires_at`, `active`, `subscribed_at`, `confirmed_at`, `prefs: {include_french, include_canada}`, `send_latest`, `latest_sent`, `uid` (Firebase UID, null for legacy subscribers). Token TTL: 48h for confirmation, 365d for action links.
+
+**Firestore collections:** `subscribers` (existing), `users` (new — doc ID = Firebase UID, fields: `email`, `display_name`, `provider`, `created_at`).
+
+`main.py` conditionally mounts the subscription router when `AGENT_NAME=agent_subscriptions`. CORS `allow_headers` includes `Authorization` for the account-based routes.
+
+### Firebase Auth Setup (one-time, manual)
+
+In Firebase Console → Authentication → Sign-in method:
+1. Enable **Google** provider
+2. Enable **Email/Password** (standard, not email link)
+3. Add authorized domains: `newsletter.lofeodo.com`, `latentspacemail.web.app`
+
+Then copy `firebaseConfig` from Firebase Console → Project Settings → General → SDK snippet and replace the placeholder values in `public/newsletter/auth.js`.
+
+For local development of the subscription service, Firebase Admin SDK uses Application Default Credentials: `gcloud auth application-default login`. On Cloud Run, ADC works automatically.
 
 ### Claude Tool Use Pattern
 
@@ -96,6 +118,7 @@ All Claude calls use `claude-haiku-4-5-20251001` (configured in `config.py`).
 | `ALLOWED_ORIGINS` | CORS origins for subscription API (comma-separated; required in production) |
 | `TEST_SEND_TO` | Cloud mode: skip subscriber list and send only to this address (test runs) |
 | `MAILING_ADDRESS` | Physical address in email footer (CASL compliance) |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Local only: path to service account JSON for Firebase Admin SDK (alternative to `gcloud auth application-default login`) |
 
 ## Pub/Sub Topics (Cloud Mode)
 

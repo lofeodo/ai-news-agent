@@ -70,15 +70,35 @@ agent1b (news fetch)  ──┘                                    ├──> ag
 - `GET/POST /preferences?token=` — read or update preferences.
 
 **Account-based (Firebase Auth, `Authorization: Bearer <id_token>`):** Users sign in via Google or email+password through `login.html`. Firebase ID token verified in `agents/auth_middleware.py` using `firebase-admin`. No confirmation email needed — Firebase already verified the email. Creates a `users/{uid}` doc on first call.
-- `GET /auth/me` — return user info + subscription status.
-- `POST /auth/subscribe` — subscribe instantly (email already verified; requires `email_verified: true`).
+- `GET /auth/me` — return user info + subscription status + tier.
+- `POST /auth/subscribe` — subscribe instantly (email already verified; requires `email_verified: true`). Accepts `{"send_latest": bool}` body.
 - `POST /auth/unsubscribe` — deactivate subscription.
-- `GET /auth/preferences` — return prefs.
+- `GET /auth/preferences` — return prefs + tier.
 - `POST /auth/preferences` — update prefs.
+- `POST /auth/sections/refine` — **premium only**; takes `{"raw_topic": "SpaceX"}`, calls Claude Haiku, returns `{"refined_topic": "SpaceX product launches & mission updates"}`. Rate-limited 5/min.
+- `GET /auth/sections` — **premium only**; returns `{default_sections, section_config}`.
+- `POST /auth/sections` — **premium only**; saves user's section configuration.
 
 **Subscriber doc fields:** `email`, `token`, `token_expires_at`, `active`, `subscribed_at`, `confirmed_at`, `prefs: {include_french, include_canada}`, `send_latest`, `latest_sent`, `uid` (Firebase UID, null for legacy subscribers). Token TTL: 48h for confirmation, 365d for action links.
 
-**Firestore collections:** `subscribers` (existing), `users` (new — doc ID = Firebase UID, fields: `email`, `display_name`, `provider`, `created_at`).
+**Firestore collections:** `subscribers` (existing), `users` (doc ID = Firebase UID, fields: `email`, `display_name`, `provider`, `created_at`, `tier`, `section_config`).
+
+### Account Tiers
+
+Two tiers: `"free"` (default) and `"premium"`. Tier is set at login time based on the `PREMIUM_EMAILS` env var (comma-separated emails). Premium unlocks the Newsletter Sections customization UI on `preferences.html`.
+
+**Section config schema** (stored in `users/{uid}.section_config`):
+```json
+{
+  "enabled_sections": ["Model & Product Releases", "Industry & Business", ...],
+  "custom_sections": [
+    { "id": "abc123", "raw_input": "SpaceX", "refined_topic": "SpaceX product launches & mission updates" }
+  ]
+}
+```
+`enabled_sections: null` means all default sections are enabled (the default). The `DEFAULT_SECTIONS` list (canonical order) is defined in `agents/agent_subscriptions.py`.
+
+**Future work — custom section article sourcing:** Custom sections currently store the topic preference but do not yet fetch articles. The planned approach is to use Claude's web search tool (`web_search`) in the pipeline to retrieve relevant articles for each subscriber's custom sections, then include them as additional newsletter sections. This is a pipeline-level change (agent1b or a new agent1c) tracked as a follow-up.
 
 `main.py` conditionally mounts the subscription router when `AGENT_NAME=agent_subscriptions`. CORS `allow_headers` includes `Authorization` for the account-based routes.
 
@@ -119,6 +139,7 @@ All Claude calls use `claude-haiku-4-5-20251001` (configured in `config.py`).
 | `TEST_SEND_TO` | Cloud mode: skip subscriber list and send only to this address (test runs) |
 | `MAILING_ADDRESS` | Physical address in email footer (CASL compliance) |
 | `GOOGLE_APPLICATION_CREDENTIALS` | Local only: path to service account JSON for Firebase Admin SDK (alternative to `gcloud auth application-default login`) |
+| `PREMIUM_EMAILS` | Comma-separated emails that get `tier: "premium"` on login (e.g. `daniel.lofeodo@gmail.com`) |
 
 ## Pub/Sub Topics (Cloud Mode)
 

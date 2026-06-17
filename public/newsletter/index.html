@@ -47,6 +47,12 @@
     <div class="auth-divider"><span>or</span></div>
 
     <a href="login.html" class="btn-email-link">Sign in with email →</a>
+
+    <!-- Shown instead of sign-in buttons when already authenticated -->
+    <div id="signed-in-ctas" style="display:none">
+      <a href="preferences.html" class="btn-primary-action">Manage preferences →</a>
+      <a href="latest.html" class="btn-secondary-link">View latest issue →</a>
+    </div>
   </div>
 
   <div class="nav-links">
@@ -69,7 +75,11 @@
 
     onAuthStateChanged(auth, (user) => {
       if (user && user.emailVerified) {
-        location.href = 'preferences.html';
+        // Swap sign-in UI for account CTAs — no redirect so the page stays browsable
+        document.getElementById('google-btn').style.display       = 'none';
+        document.querySelector('.auth-divider').style.display     = 'none';
+        document.querySelector('.btn-email-link').style.display   = 'none';
+        document.getElementById('signed-in-ctas').style.display   = 'block';
       }
     });
 

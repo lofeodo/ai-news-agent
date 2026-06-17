@@ -62,8 +62,29 @@ ACTION_TOKEN_TTL  = timedelta(days=365)
 # Admin token for the /stats endpoint (no auth required if unset)
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "")
 
+# Comma-separated list of emails granted premium tier.
+PREMIUM_EMAILS = {
+    e.strip().lower()
+    for e in os.environ.get("PREMIUM_EMAILS", "").split(",")
+    if e.strip()
+}
+
+DEFAULT_SECTIONS = [
+    "Model & Product Releases",
+    "Industry & Business",
+    "Policy, Law & Regulation",
+    "Open Source & Tools",
+    "Safety & Alignment",
+    "Society & Culture",
+    "Research Spotlights",
+]
+
 limiter = Limiter(key_func=get_remote_address)
 router  = APIRouter()
+
+
+def _get_user_tier(email: str) -> str:
+    return "premium" if email in PREMIUM_EMAILS else "free"
 
 
 # ---------------------------------------------------------------------------
@@ -404,6 +425,25 @@ class AuthPreferencesUpdate(BaseModel):
     prefs: Prefs
 
 
+class SectionRefineRequest(BaseModel):
+    raw_topic: Annotated[str, Field(max_length=200)]
+
+
+class CustomSectionItem(BaseModel):
+    id:            Annotated[str, Field(max_length=64)]
+    raw_input:     Annotated[str, Field(max_length=200)]
+    refined_topic: Annotated[str, Field(max_length=200)]
+
+
+class SectionConfig(BaseModel):
+    enabled_sections: list[str] | None = None
+    custom_sections:  list[CustomSectionItem] = []
+
+
+class SectionConfigUpdate(BaseModel):
+    section_config: SectionConfig
+
+
 # ---------------------------------------------------------------------------
 # Public stats endpoint
 # ---------------------------------------------------------------------------
@@ -712,23 +752,26 @@ async def auth_me(request: Request, user: dict = Depends(get_current_user)):
     email = user.get("email", "").lower()
     uid   = user["uid"]
     now   = datetime.now(timezone.utc)
+    tier  = _get_user_tier(email)
 
     db.collection(USERS_COLLECTION).document(uid).set({
         "email":        email,
         "display_name": user.get("name"),
         "provider":     _detect_provider(user),
         "created_at":   now,
+        "tier":         tier,
     }, merge=True)
 
     sub_doc  = db.collection(SUBSCRIBERS_COLLECTION).document(email).get()
     sub_data = sub_doc.to_dict() if sub_doc.exists else None
     return {
-        "uid":          uid,
-        "email":        email,
-        "display_name": user.get("name"),
+        "uid":            uid,
+        "email":          email,
+        "display_name":   user.get("name"),
         "email_verified": user.get("email_verified", False),
-        "subscribed":   bool(sub_data and sub_data.get("active")),
-        "prefs":        sub_data.get("prefs", {}) if sub_data else {},
+        "subscribed":     bool(sub_data and sub_data.get("active")),
+        "prefs":          sub_data.get("prefs", {}) if sub_data else {},
+        "tier":           tier,
     }
 
 
@@ -738,6 +781,12 @@ async def auth_subscribe(request: Request, user: dict = Depends(get_current_user
     """Subscribe the authenticated user. No confirmation email — account email is already verified."""
     if not user.get("email_verified"):
         raise HTTPException(status_code=403, detail="email_not_verified")
+
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    send_latest = bool(body.get("send_latest", False))
 
     db    = _db()
     email = user["email"].lower()
@@ -753,22 +802,39 @@ async def auth_subscribe(request: Request, user: dict = Depends(get_current_user
     if _active_subscriber_count(db) >= MAX_SUBSCRIBERS:
         raise HTTPException(status_code=503, detail="service_unavailable")
 
+    token_val = secrets.token_urlsafe(32)
     if doc.exists:
-        ref.update({"active": True, "confirmed_at": now, "uid": uid})
+        ref.update({
+            "active":       True,
+            "confirmed_at": now,
+            "uid":          uid,
+            "send_latest":  send_latest,
+            "latest_sent":  False,
+        })
     else:
         ref.set({
             "email":            email,
             "subscribed_at":    now,
             "confirmed_at":     now,
             "active":           True,
-            # Token still generated so newsletter footer links work for this subscriber.
-            "token":            secrets.token_urlsafe(32),
+            "token":            token_val,
             "token_expires_at": now + ACTION_TOKEN_TTL,
-            "send_latest":      False,
+            "send_latest":      send_latest,
             "latest_sent":      False,
             "uid":              uid,
             "prefs": {"include_french": True, "include_canada": True},
         })
+
+    if send_latest:
+        current_data = ref.get().to_dict()
+        html = _latest_newsletter_html(
+            db,
+            unsubscribe_token=current_data["token"],
+            prefs=current_data.get("prefs", {}),
+        )
+        if html:
+            _send_email(email, f"{NEWSLETTER_NAME} — last week's edition", html)
+            ref.update({"latest_sent": True})
 
     print(f"[subscriptions]  account-based subscribe: {email}", flush=True)
     return {"status": "ok"}
@@ -790,14 +856,15 @@ async def auth_unsubscribe(request: Request, user: dict = Depends(get_current_us
 @router.get("/auth/preferences")
 @limiter.limit("10/minute")
 async def auth_get_preferences(request: Request, user: dict = Depends(get_current_user)):
-    """Return the authenticated user's current preferences."""
+    """Return the authenticated user's current preferences and tier."""
     db    = _db()
     email = user["email"].lower()
+    tier  = _get_user_tier(email)
     doc   = db.collection(SUBSCRIBERS_COLLECTION).document(email).get()
     if not doc.exists or not doc.to_dict().get("active"):
-        return {"subscribed": False, "prefs": {}}
+        return {"subscribed": False, "prefs": {}, "tier": tier}
     data = doc.to_dict()
-    return {"subscribed": True, "prefs": data.get("prefs", {})}
+    return {"subscribed": True, "prefs": data.get("prefs", {}), "tier": tier}
 
 
 @router.post("/auth/preferences")
@@ -817,4 +884,91 @@ async def auth_update_preferences(
         "include_french": req.prefs.include_french,
         "include_canada": req.prefs.include_canada,
     }})
+    return {"status": "ok"}
+
+
+# ---------------------------------------------------------------------------
+# Premium: custom section endpoints
+# ---------------------------------------------------------------------------
+
+@router.post("/auth/sections/refine")
+@limiter.limit("5/minute")
+async def auth_sections_refine(
+    request: Request,
+    req: SectionRefineRequest,
+    user: dict = Depends(get_current_user),
+):
+    """Use Claude to refine a free-form topic into a clean newsletter section title."""
+    email = user.get("email", "").lower()
+    if _get_user_tier(email) != "premium":
+        raise HTTPException(status_code=403, detail="premium_required")
+
+    import anthropic as _anthropic
+    client = _anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY", ""))
+    raw = req.raw_topic.strip()
+    try:
+        message = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=50,
+            messages=[{
+                "role": "user",
+                "content": (
+                    f'A newsletter subscriber wants a custom section about: "{raw}"\n'
+                    "Return only a concise newsletter section title (4–8 words) that clearly captures "
+                    "what they want covered — e.g. \"SpaceX product launches & mission updates\". "
+                    "No explanation, just the title."
+                ),
+            }],
+        )
+        refined = message.content[0].text.strip().strip("\"'")
+    except Exception:
+        raise HTTPException(status_code=503, detail="ai_unavailable")
+
+    return {"refined_topic": refined}
+
+
+@router.get("/auth/sections")
+@limiter.limit("10/minute")
+async def auth_get_sections(request: Request, user: dict = Depends(get_current_user)):
+    """Return the user's section configuration (premium only)."""
+    email = user.get("email", "").lower()
+    if _get_user_tier(email) != "premium":
+        raise HTTPException(status_code=403, detail="premium_required")
+
+    uid      = user["uid"]
+    db       = _db()
+    user_doc = db.collection(USERS_COLLECTION).document(uid).get()
+    section_config = user_doc.to_dict().get("section_config") if user_doc.exists else None
+    return {"default_sections": DEFAULT_SECTIONS, "section_config": section_config}
+
+
+@router.post("/auth/sections")
+@limiter.limit("10/minute")
+async def auth_update_sections(
+    request: Request,
+    req: SectionConfigUpdate,
+    user: dict = Depends(get_current_user),
+):
+    """Save the user's section configuration (premium only)."""
+    email = user.get("email", "").lower()
+    if _get_user_tier(email) != "premium":
+        raise HTTPException(status_code=403, detail="premium_required")
+
+    if req.section_config.enabled_sections is not None:
+        valid = set(DEFAULT_SECTIONS)
+        for s in req.section_config.enabled_sections:
+            if s not in valid:
+                raise HTTPException(status_code=422, detail="unknown_section")
+
+    uid = user["uid"]
+    db  = _db()
+    db.collection(USERS_COLLECTION).document(uid).update({
+        "section_config": {
+            "enabled_sections": req.section_config.enabled_sections,
+            "custom_sections": [
+                {"id": cs.id, "raw_input": cs.raw_input, "refined_topic": cs.refined_topic}
+                for cs in req.section_config.custom_sections
+            ],
+        }
+    })
     return {"status": "ok"}

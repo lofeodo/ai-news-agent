@@ -586,6 +586,288 @@ input[type="password"]:focus {
 }
 .btn-email-link:hover { color: var(--accent); }
 
+/* ── Tier badge ── */
+.tier-badge {
+  display: inline-block;
+  font-size: 0.58rem;
+  font-family: var(--label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #0f0f0f;
+  background: var(--accent);
+  padding: 2px 6px 1px;
+  flex-shrink: 0;
+  vertical-align: middle;
+  line-height: 1.6;
+}
+
+/* ── Primary/secondary action links (index.html signed-in state) ── */
+.btn-primary-action {
+  display: block;
+  width: 100%;
+  background: var(--accent);
+  color: var(--bg);
+  font-family: var(--label);
+  font-size: 0.95rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  border: none;
+  padding: 14px 11px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: opacity 0.15s, box-shadow 0.2s;
+}
+.btn-primary-action:hover {
+  opacity: 0.92;
+  box-shadow: 0 0 20px rgba(200,184,154,0.28), 0 0 6px rgba(200,184,154,0.18);
+}
+.btn-secondary-link {
+  display: block;
+  text-align: center;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.84rem;
+  letter-spacing: 0.04em;
+  padding: 8px 0;
+  margin-top: 10px;
+  transition: color 0.15s;
+}
+.btn-secondary-link:hover { color: var(--accent); }
+
+/* ── Newsletter section toggles ── */
+.sections-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sections-label {
+  font-size: 0.82rem;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.sections-subheader {
+  font-size: 0.72rem;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 14px 0 10px;
+  border-top: 1px solid var(--border);
+  margin-top: 10px;
+}
+.section-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(42,42,42,0.7);
+  cursor: pointer;
+  /* Reset global label styles */
+  font-size: 0.88rem;
+  color: var(--text);
+  text-transform: none;
+  letter-spacing: normal;
+  margin-bottom: 0;
+}
+.section-row:last-child { border-bottom: none; }
+.section-row__name {
+  font-size: 0.88rem;
+  color: var(--text);
+  line-height: 1.4;
+  flex: 1;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* CSS-only toggle switch */
+.toggle-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: 14px;
+}
+.toggle-switch input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.toggle-track {
+  display: block;
+  width: 32px;
+  height: 18px;
+  background: var(--border);
+  border-radius: 9px;
+  transition: background 0.2s;
+  position: relative;
+  flex-shrink: 0;
+}
+.toggle-switch input:checked + .toggle-track { background: var(--accent); }
+.toggle-switch:focus-within .toggle-track {
+  box-shadow: 0 0 0 2px rgba(200,184,154,0.28);
+}
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  pointer-events: none;
+}
+.toggle-switch input:checked + .toggle-track .toggle-thumb { transform: translateX(14px); }
+
+/* ── Custom section cards ── */
+.custom-section-card {
+  display: flex;
+  align-items: center;
+  padding: 9px 12px;
+  background: rgba(200,184,154,0.04);
+  border: 1px solid rgba(200,184,154,0.14);
+  border-left: 3px solid var(--accent);
+  margin-bottom: 8px;
+}
+.custom-section-card__name {
+  font-size: 0.88rem;
+  color: var(--text);
+  flex: 1;
+  line-height: 1.4;
+}
+.custom-section-card__delete {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 2px 0 2px 12px;
+  width: auto;
+  flex-shrink: 0;
+  transition: color 0.15s;
+  line-height: 1;
+}
+.custom-section-card__delete:hover { color: var(--error); }
+
+/* ── Add section button ── */
+.btn-add-section {
+  display: block;
+  width: 100%;
+  background: none;
+  border: 1px dashed rgba(200,184,154,0.2);
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  padding: 9px 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  margin-top: 2px;
+}
+.btn-add-section:hover {
+  color: var(--accent);
+  border-color: rgba(200,184,154,0.42);
+  background: rgba(200,184,154,0.03);
+}
+
+/* ── AI refine panel ── */
+.refine-panel {
+  margin-top: 12px;
+  padding: 16px;
+  background: rgba(12,12,12,0.8);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+}
+.refine-suggestion {
+  font-size: 0.9rem;
+  color: var(--text);
+  padding: 9px 12px;
+  background: rgba(200,184,154,0.06);
+  border: 1px solid rgba(200,184,154,0.18);
+  line-height: 1.5;
+  margin: 0;
+  font-family: var(--font);
+}
+.refine-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.btn-refine {
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  font-family: var(--label);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  width: auto;
+}
+.btn-refine:hover:not(:disabled) { opacity: 0.88; }
+.btn-refine:disabled { opacity: 0.45; cursor: default; }
+.btn-action-outline {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  padding: 7px 12px;
+  cursor: pointer;
+  width: auto;
+  transition: color 0.15s, border-color 0.15s;
+}
+.btn-action-outline:hover { color: var(--accent); border-color: rgba(200,184,154,0.42); }
+.btn-use-suggestion {
+  background: none;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: var(--font);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  padding: 7px 12px;
+  cursor: pointer;
+  width: auto;
+  transition: background 0.15s;
+}
+.btn-use-suggestion:hover { background: rgba(200,184,154,0.08); }
+
+/* ── Save sections button ── */
+.btn-save-sections {
+  display: block;
+  width: 100%;
+  margin-top: 18px;
+  background: transparent;
+  border: 1px solid rgba(200,184,154,0.45);
+  color: var(--accent);
+  font-family: var(--label);
+  font-size: 0.88rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 11px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.2s, box-shadow 0.2s;
+}
+.btn-save-sections:hover:not(:disabled) {
+  background: rgba(200,184,154,0.06);
+  border-color: var(--accent);
+  box-shadow: 0 0 14px rgba(200,184,154,0.12);
+}
+.btn-save-sections:disabled { opacity: 0.45; cursor: default; }
+
 @media (max-width: 600px) {
   body {
     padding: 16px 12px 20px;

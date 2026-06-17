@@ -27,6 +27,7 @@
     <div class="account-badge" id="account-badge" style="display:none">
       <span class="account-badge__dot"></span>
       <span class="account-badge__email" id="account-email"></span>
+      <span class="tier-badge" id="tier-badge" style="display:none">◆ Premium</span>
       <button type="button" class="account-badge__signout" id="signout-btn">Sign out</button>
     </div>
 
@@ -35,7 +36,11 @@
 
     <!-- Not subscribed notice (account flow) -->
     <div id="not-subscribed-notice" style="display:none">
-      <p class="subtitle" style="margin-bottom:24px">You're not currently subscribed to Latent SpaceMail — a weekly briefing on AI research and industry news, delivered every Monday.</p>
+      <p class="subtitle" style="margin-bottom:20px">You're not currently subscribed to Latent SpaceMail — a weekly briefing on AI research and industry news, delivered every Monday.</p>
+      <label class="check-row" style="margin-bottom:20px">
+        <input type="checkbox" id="send-latest-check">
+        <span>Send me the latest issue right away<span class="check-desc">Receive last week's newsletter immediately upon subscribing</span></span>
+      </label>
       <button type="button" id="subscribe-btn" style="width:100%;background:var(--accent);color:var(--bg);font-family:var(--label);font-size:0.95rem;letter-spacing:0.18em;text-transform:uppercase;border:none;padding:14px 11px;cursor:pointer;transition:opacity 0.15s,box-shadow 0.2s;">Subscribe</button>
       <div class="msg" id="subscribe-msg" style="margin-top:14px;"></div>
     </div>
@@ -67,6 +72,62 @@
         <div class="msg" id="unsub-msg"></div>
       </div>
     </form>
+
+    <!-- Newsletter Sections (premium, account flow, shown only when subscribed) -->
+    <div id="sections-panel" style="display:none">
+      <hr class="divider">
+      <div class="sections-header">
+        <span class="sections-label">Newsletter Sections</span>
+        <span class="tier-badge">◆ Premium</span>
+      </div>
+
+      <!-- Free-tier notice -->
+      <div id="sections-locked" style="display:none">
+        <p class="note" style="margin-top:14px">Customize which sections appear in your newsletter — a <strong style="color:var(--accent);font-weight:normal">Premium</strong> feature.</p>
+      </div>
+
+      <!-- Premium UI -->
+      <div id="sections-premium" style="display:none">
+        <p class="note" style="margin:14px 0 16px">Toggle which sections appear in your weekly briefing.</p>
+
+        <div id="default-sections-list"></div>
+
+        <div class="sections-subheader">Custom Sections</div>
+        <div id="custom-sections-list"></div>
+
+        <button type="button" class="btn-add-section" id="add-section-btn">+ Add custom section</button>
+
+        <!-- Inline AI refine panel -->
+        <div id="refine-panel" style="display:none">
+          <div class="refine-panel">
+            <p class="note" style="margin-bottom:12px">What should this section cover?</p>
+            <div class="field" style="margin-bottom:10px">
+              <input type="text" id="raw-topic-input" placeholder="e.g. SpaceX, climate AI, robotics…" maxlength="200" autocomplete="off">
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button type="button" class="btn-refine" id="refine-btn">Refine with AI →</button>
+              <button type="button" class="btn-action-outline" id="cancel-refine-btn">Cancel</button>
+            </div>
+            <div id="refine-loading" style="display:none;margin-top:10px">
+              <span class="note">Refining…</span>
+            </div>
+            <div id="refine-result" style="display:none;margin-top:14px">
+              <p class="note" style="margin-bottom:8px">AI suggests:</p>
+              <p class="refine-suggestion" id="refined-topic-display"></p>
+              <div class="refine-actions">
+                <button type="button" class="btn-use-suggestion" id="use-suggestion-btn">Use this</button>
+                <button type="button" class="btn-action-outline" id="edit-suggestion-btn">Edit</button>
+                <button type="button" class="btn-action-outline" id="retry-refine-btn">Try again</button>
+              </div>
+            </div>
+            <div class="msg error" id="refine-error" style="margin-top:8px;display:none"></div>
+          </div>
+        </div>
+
+        <button type="button" class="btn-save-sections" id="save-sections-btn">Save sections</button>
+        <div class="msg" id="sections-msg" style="margin-top:10px"></div>
+      </div>
+    </div>
 
     <!-- Request new link (token flow fallback) -->
     <div id="new-link-section" style="display:none">
@@ -120,8 +181,17 @@
     const unsubMsg         = document.getElementById('unsub-msg');
     const newLinkSection   = document.getElementById('new-link-section');
     const signinPrompt     = document.getElementById('signin-prompt');
+    const tierBadge        = document.getElementById('tier-badge');
+    const sectionsPanel    = document.getElementById('sections-panel');
+    const sectionsLocked   = document.getElementById('sections-locked');
+    const sectionsPrem     = document.getElementById('sections-premium');
 
-    let authMode = false; // true = using Firebase Auth, false = token flow
+    let authMode       = false; // true = using Firebase Auth, false = token flow
+    let userTier       = 'free';
+    let defaultSections = [];
+    let pendingEnabled  = null;  // null = all enabled; Set<string> when customized
+    let pendingCustom   = [];    // array of {id, raw_input, refined_topic}
+    let currentRefined  = '';    // temp: AI-suggested title during refine flow
 
     function showSaveMsg(text, type) {
       saveMsg.textContent = text;
@@ -170,12 +240,26 @@
             return;
           }
           const data = await res.json();
+
+          // Apply tier
+          userTier = data.tier || 'free';
+          if (userTier === 'premium') tierBadge.style.display = 'inline-block';
+
           if (!data.subscribed) {
             notSubNotice.style.display = 'block';
             return;
           }
           unsubSection.style.display = 'block';
           showPrefsForm(data.prefs);
+
+          // Sections panel (only when subscribed)
+          sectionsPanel.style.display = 'block';
+          if (userTier === 'premium') {
+            sectionsPrem.style.display = 'block';
+            loadSections();
+          } else {
+            sectionsLocked.style.display = 'block';
+          }
         } catch {
           loadingMsg.style.display = 'none';
           invalidMsg.textContent   = 'Connection error. Please check your internet and try again.';
@@ -273,8 +357,12 @@
       subscribeBtn.disabled = true;
       subscribeBtn.textContent = 'Subscribing…';
       subscribeMsg.className = 'msg';
+      const sendLatest = document.getElementById('send-latest-check').checked;
       try {
-        const res = await authFetch(`${API}/auth/subscribe`, { method: 'POST' });
+        const res = await authFetch(`${API}/auth/subscribe`, {
+          method: 'POST',
+          body: JSON.stringify({ send_latest: sendLatest }),
+        });
         if (res.ok) {
           // Reload prefs to show the preferences form
           location.reload();
@@ -301,6 +389,188 @@
     document.getElementById('signout-btn').addEventListener('click', async () => {
       await signOut(auth);
       location.reload();
+    });
+
+    // ── Section management (premium only) ───────────────────────────────────
+
+    async function loadSections() {
+      try {
+        const res = await authFetch(`${API}/auth/sections`);
+        if (!res.ok) return;
+        const data = await res.json();
+        defaultSections = data.default_sections || [];
+        const cfg = data.section_config;
+        if (cfg) {
+          pendingEnabled = cfg.enabled_sections ? new Set(cfg.enabled_sections) : null;
+          pendingCustom  = cfg.custom_sections  || [];
+        }
+        renderSections();
+      } catch (e) {}
+    }
+
+    function renderSections() {
+      const listEl = document.getElementById('default-sections-list');
+      listEl.innerHTML = '';
+      for (const name of defaultSections) {
+        const isOn = pendingEnabled ? pendingEnabled.has(name) : true;
+        const row  = document.createElement('label');
+        row.className = 'section-row';
+        row.innerHTML = `
+          <span class="section-row__name">${name}</span>
+          <span class="toggle-switch">
+            <input type="checkbox" ${isOn ? 'checked' : ''} data-section="${name}" role="switch" aria-label="${name}">
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          </span>`;
+        listEl.appendChild(row);
+      }
+      renderCustomSections();
+    }
+
+    function renderCustomSections() {
+      const listEl = document.getElementById('custom-sections-list');
+      listEl.innerHTML = '';
+      if (pendingCustom.length === 0) {
+        listEl.innerHTML = '<p class="note" style="font-size:0.78rem;margin-bottom:10px;opacity:0.7">No custom sections yet.</p>';
+        return;
+      }
+      for (const cs of pendingCustom) {
+        const card = document.createElement('div');
+        card.className = 'custom-section-card';
+        card.innerHTML = `
+          <span class="custom-section-card__name">${cs.refined_topic}</span>
+          <button type="button" class="custom-section-card__delete" aria-label="Remove ${cs.refined_topic}">✕</button>`;
+        card.querySelector('.custom-section-card__delete').addEventListener('click', () => {
+          pendingCustom = pendingCustom.filter(c => c.id !== cs.id);
+          renderCustomSections();
+        });
+        listEl.appendChild(card);
+      }
+    }
+
+    // Add section button toggles the refine panel
+    document.getElementById('add-section-btn').addEventListener('click', () => {
+      const panel = document.getElementById('refine-panel');
+      const open  = panel.style.display !== 'none';
+      panel.style.display = open ? 'none' : 'block';
+      if (!open) {
+        document.getElementById('raw-topic-input').value     = '';
+        document.getElementById('refine-result').style.display  = 'none';
+        document.getElementById('refine-loading').style.display = 'none';
+        document.getElementById('refine-error').style.display   = 'none';
+        document.getElementById('refine-error').textContent     = '';
+        document.getElementById('raw-topic-input').focus();
+      }
+    });
+
+    document.getElementById('cancel-refine-btn').addEventListener('click', () => {
+      document.getElementById('refine-panel').style.display = 'none';
+    });
+
+    async function doRefine() {
+      const rawTopic = document.getElementById('raw-topic-input').value.trim();
+      if (!rawTopic) return;
+      const refineBtn  = document.getElementById('refine-btn');
+      const loadingEl  = document.getElementById('refine-loading');
+      const resultEl   = document.getElementById('refine-result');
+      const errorEl    = document.getElementById('refine-error');
+      refineBtn.disabled        = true;
+      loadingEl.style.display   = 'block';
+      resultEl.style.display    = 'none';
+      errorEl.style.display     = 'none';
+      try {
+        const res = await authFetch(`${API}/auth/sections/refine`, {
+          method: 'POST',
+          body: JSON.stringify({ raw_topic: rawTopic }),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          errorEl.textContent   = body.detail === 'ai_unavailable'
+            ? 'AI is unavailable right now. Please try again.'
+            : 'Something went wrong. Please try again.';
+          errorEl.style.display = 'block';
+          return;
+        }
+        const data = await res.json();
+        currentRefined = data.refined_topic;
+        document.getElementById('refined-topic-display').textContent = currentRefined;
+        resultEl.style.display = 'block';
+      } catch {
+        errorEl.textContent   = 'Something went wrong. Please try again.';
+        errorEl.style.display = 'block';
+      } finally {
+        refineBtn.disabled      = false;
+        loadingEl.style.display = 'none';
+      }
+    }
+
+    document.getElementById('refine-btn').addEventListener('click', doRefine);
+    document.getElementById('raw-topic-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); doRefine(); }
+    });
+
+    function addCustomSection(refined, raw) {
+      const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+      pendingCustom = [...pendingCustom, { id, raw_input: raw, refined_topic: refined }];
+      renderCustomSections();
+      document.getElementById('refine-panel').style.display    = 'none';
+      document.getElementById('raw-topic-input').value         = '';
+      document.getElementById('refine-result').style.display   = 'none';
+    }
+
+    document.getElementById('use-suggestion-btn').addEventListener('click', () => {
+      addCustomSection(currentRefined, document.getElementById('raw-topic-input').value.trim());
+    });
+    document.getElementById('edit-suggestion-btn').addEventListener('click', () => {
+      document.getElementById('raw-topic-input').value        = currentRefined;
+      document.getElementById('refine-result').style.display  = 'none';
+      document.getElementById('raw-topic-input').focus();
+    });
+    document.getElementById('retry-refine-btn').addEventListener('click', () => {
+      document.getElementById('refine-result').style.display = 'none';
+      doRefine();
+    });
+
+    document.getElementById('save-sections-btn').addEventListener('click', async () => {
+      const saveSecBtn   = document.getElementById('save-sections-btn');
+      const sectionsMsg  = document.getElementById('sections-msg');
+      saveSecBtn.disabled        = true;
+      sectionsMsg.className      = 'msg';
+      sectionsMsg.style.display  = 'none';
+
+      // Collect enabled state from DOM toggles
+      const enabledSet = new Set();
+      document.querySelectorAll('#default-sections-list input[data-section]').forEach(inp => {
+        if (inp.checked) enabledSet.add(inp.dataset.section);
+      });
+      const allOn = defaultSections.every(s => enabledSet.has(s));
+
+      try {
+        const res = await authFetch(`${API}/auth/sections`, {
+          method: 'POST',
+          body: JSON.stringify({
+            section_config: {
+              enabled_sections: allOn ? null : [...enabledSet],
+              custom_sections:  pendingCustom,
+            },
+          }),
+        });
+        if (res.ok) {
+          pendingEnabled             = allOn ? null : enabledSet;
+          sectionsMsg.textContent    = 'Sections saved.';
+          sectionsMsg.className      = 'msg visible success';
+          sectionsMsg.style.display  = 'block';
+        } else {
+          sectionsMsg.textContent    = 'Failed to save. Please try again.';
+          sectionsMsg.className      = 'msg visible error';
+          sectionsMsg.style.display  = 'block';
+        }
+      } catch {
+        sectionsMsg.textContent    = 'Something went wrong. Please try again.';
+        sectionsMsg.className      = 'msg visible error';
+        sectionsMsg.style.display  = 'block';
+      } finally {
+        saveSecBtn.disabled = false;
+      }
     });
 
     // ── Request new link (token flow fallback) ───────────────────────────────

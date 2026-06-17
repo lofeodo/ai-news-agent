@@ -188,6 +188,14 @@ AGENT_NAME=agent_subscriptions uvicorn main:app --reload
 # Requires: gcloud auth application-default login (Firestore always on)
 ```
 
+**Run the frontend locally with auth support:**
+```bash
+firebase serve --only hosting
+# Serves public/newsletter/ at localhost:5000 and provides /__/firebase/init.json
+# Plain HTTP servers (python -m http.server, etc.) won't serve that endpoint,
+# so auth.js will fail to initialize on pages that use Firebase Auth.
+```
+
 ## Deployment
 
 **Build and push to Artifact Registry:**

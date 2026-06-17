@@ -89,7 +89,7 @@ In Firebase Console → Authentication → Sign-in method:
 2. Enable **Email/Password** (standard, not email link)
 3. Add authorized domains: `newsletter.lofeodo.com`, `latentspacemail.web.app`
 
-Then copy `firebaseConfig` from Firebase Console → Project Settings → General → SDK snippet and replace the placeholder values in `public/newsletter/auth.js`.
+`auth.js` loads the Firebase project config automatically from `/__/firebase/init.json`, which Firebase Hosting serves on all deployments. **No API key in source.** For local frontend development with auth, run `firebase serve --only hosting` instead of a plain HTTP server (plain servers don't serve that endpoint).
 
 For local development of the subscription service, Firebase Admin SDK uses Application Default Credentials: `gcloud auth application-default login`. On Cloud Run, ADC works automatically.
 

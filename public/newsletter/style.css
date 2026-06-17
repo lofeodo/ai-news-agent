@@ -377,6 +377,203 @@ button[type="submit"]:disabled { opacity: 0.45; cursor: default; box-shadow: non
   margin-bottom: 24px;
 }
 
+input[type="password"] {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.94rem;
+  padding: 9px 12px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+input[type="password"]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(200,184,154,0.14);
+}
+
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.input-wrap input {
+  flex: 1;
+  padding-right: 52px;
+}
+.show-password-btn {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 0;
+  width: auto;
+  transition: color 0.15s;
+}
+.show-password-btn:hover { color: var(--accent); }
+
+.field-link {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  transition: color 0.15s;
+}
+.field-link:hover { color: var(--accent); }
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 22px 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.btn-google {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.88rem;
+  letter-spacing: 0.03em;
+  padding: 11px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  text-align: center;
+}
+.btn-google:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(200,184,154,0.4);
+  box-shadow: 0 0 12px rgba(200,184,154,0.08);
+}
+.btn-google svg { flex-shrink: 0; }
+
+.auth-mode-toggle {
+  margin-top: 20px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  text-align: center;
+}
+.auth-mode-toggle a {
+  color: var(--accent);
+  text-decoration: none;
+  margin-left: 4px;
+}
+.auth-mode-toggle a:hover { text-decoration: underline; }
+
+.verify-notice {
+  background: rgba(200,184,154,0.06);
+  border: 1px solid rgba(200,184,154,0.25);
+  border-left: 3px solid var(--accent);
+  padding: 16px 18px;
+  margin-bottom: 22px;
+  font-size: 0.88rem;
+  color: var(--text);
+  line-height: 1.6;
+}
+.verify-notice p { margin-bottom: 12px; }
+.verify-notice button {
+  background: none;
+  border: 1px solid rgba(200,184,154,0.35);
+  color: var(--accent);
+  font-family: var(--font);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  width: auto;
+}
+.verify-notice button:hover {
+  background: rgba(200,184,154,0.08);
+  border-color: var(--accent);
+}
+
+.btn-back {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: color 0.15s;
+  width: auto;
+}
+.btn-back:hover { color: var(--accent); }
+
+.account-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 22px;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+.account-badge__email {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.account-badge__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px rgba(200,184,154,0.7);
+  flex-shrink: 0;
+}
+.account-badge__signout {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: var(--font);
+  padding: 0;
+  width: auto;
+  transition: color 0.15s;
+}
+.account-badge__signout:hover { color: var(--accent); }
+
 @media (max-width: 600px) {
   body {
     padding: 16px 12px 20px;

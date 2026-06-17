@@ -19,20 +19,38 @@
 
   <div class="card">
     <h1><span class="prompt">❯</span> Unsubscribe</h1>
-    <p class="subtitle">Enter your email and we'll send you a one-click unsubscribe link.</p>
 
-    <form id="unsub-form" novalidate>
-      <div class="field">
-        <label for="email">Email address</label>
-        <input type="email" id="email" name="email" autocomplete="email" required placeholder="you@example.com">
+    <!-- Shown while checking auth state -->
+    <p class="subtitle" id="loading-msg">Loading…</p>
+
+    <!-- Account flow: one-click unsubscribe -->
+    <div id="account-section" style="display:none">
+      <div class="account-badge" id="account-badge">
+        <span class="account-badge__dot"></span>
+        <span class="account-badge__email" id="account-email"></span>
       </div>
+      <p class="subtitle" style="margin-bottom:20px">Confirm that you want to unsubscribe from Latent SpaceMail. You can re-subscribe any time.</p>
+      <button type="button" id="unsub-btn" style="width:100%;background:transparent;border:1px solid var(--error);color:var(--error);font-family:var(--font);font-size:0.82rem;letter-spacing:0.1em;text-transform:uppercase;padding:12px;cursor:pointer;transition:background 0.15s,box-shadow 0.15s;margin-bottom:16px;">Confirm unsubscribe</button>
+      <div class="msg" id="unsub-msg"></div>
+    </div>
 
-      <button type="submit" id="submit-btn">Send unsubscribe link</button>
-      <div class="msg" id="msg"></div>
-    </form>
+    <!-- Token / anonymous flow: email form -->
+    <div id="email-section" style="display:none">
+      <p class="subtitle">Enter your email and we'll send you a one-click unsubscribe link.</p>
 
-    <hr class="divider">
-    <p class="note">You can also click the <strong>Unsubscribe</strong> link at the bottom of any newsletter we've sent you — no form required.</p>
+      <form id="unsub-form" novalidate>
+        <div class="field">
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" autocomplete="email" required placeholder="you@example.com">
+        </div>
+
+        <button type="submit" id="submit-btn">Send unsubscribe link</button>
+        <div class="msg" id="msg"></div>
+      </form>
+
+      <hr class="divider">
+      <p class="note">You can also click the <strong>Unsubscribe</strong> link at the bottom of any newsletter we've sent you — no form required.</p>
+    </div>
   </div>
 
   <div class="nav-links">
@@ -43,45 +61,108 @@
     </a>
   </div>
 
-  <script>
+  <script src="bg.js"></script>
+  <script type="module">
+    import { auth, onAuthStateChanged, authFetch } from './auth.js';
+
     const API = 'https://agent-subscriptions-zozrn33sna-nn.a.run.app';
 
-    const form = document.getElementById('unsub-form');
-    const btn  = document.getElementById('submit-btn');
-    const msg  = document.getElementById('msg');
+    const loadingMsg    = document.getElementById('loading-msg');
+    const accountSection = document.getElementById('account-section');
+    const emailSection  = document.getElementById('email-section');
+    const accountEmail  = document.getElementById('account-email');
+    const unsubBtn      = document.getElementById('unsub-btn');
+    const unsubMsg      = document.getElementById('unsub-msg');
 
-    function showMsg(text, type) {
-      msg.textContent = text;
-      msg.className = `msg visible ${type}`;
-    }
+    let authResolved = false;
+    const authTimeout = setTimeout(() => {
+      if (!authResolved) showEmailFlow();
+    }, 3000);
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('email').value.trim();
-      if (!email) { showMsg('Please enter your email address.', 'error'); return; }
-
-      btn.disabled = true;
-      const payload = { email };
-
-      // Show confirmation immediately — don't make the user wait for the API
-      form.reset();
-      showMsg("If that address is subscribed, we've sent you an unsubscribe link. Check your spam folder if you don't see it.", 'success');
-
-      try {
-        const res = await fetch(`${API}/request-unsubscribe`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        if (res.status === 422) {
-          showMsg("That doesn't look like a valid email address.", 'error');
-          btn.disabled = false;
-        }
-      } catch {
-        // Network error — keep the optimistic message
+    onAuthStateChanged(auth, (user) => {
+      if (authResolved) return;
+      authResolved = true;
+      clearTimeout(authTimeout);
+      if (user) {
+        showAccountFlow(user);
+      } else {
+        showEmailFlow();
       }
     });
+
+    function showAccountFlow(user) {
+      loadingMsg.style.display    = 'none';
+      accountEmail.textContent    = user.email;
+      accountSection.style.display = 'block';
+    }
+
+    function showEmailFlow() {
+      loadingMsg.style.display   = 'none';
+      emailSection.style.display = 'block';
+    }
+
+    // Account-based one-click unsubscribe
+    unsubBtn.addEventListener('click', async () => {
+      unsubBtn.disabled = true;
+      unsubBtn.textContent = 'Unsubscribing…';
+      try {
+        const res = await authFetch(`${API}/auth/unsubscribe`, { method: 'POST' });
+        if (res.ok) {
+          unsubMsg.textContent = "You've been unsubscribed. Sorry to see you go.";
+          unsubMsg.className   = 'msg visible success';
+          accountSection.querySelector('button').style.display = 'none';
+        } else {
+          unsubMsg.textContent = 'Something went wrong. Please try again.';
+          unsubMsg.className   = 'msg visible error';
+          unsubBtn.disabled    = false;
+          unsubBtn.textContent = 'Confirm unsubscribe';
+        }
+      } catch {
+        unsubMsg.textContent = 'Something went wrong. Please try again.';
+        unsubMsg.className   = 'msg visible error';
+        unsubBtn.disabled    = false;
+        unsubBtn.textContent = 'Confirm unsubscribe';
+      }
+    });
+
+    // Email-based unsubscribe (anonymous flow)
+    const form = document.getElementById('unsub-form');
+    if (form) {
+      const btn = document.getElementById('submit-btn');
+      const msg = document.getElementById('msg');
+
+      function showMsg(text, type) {
+        msg.textContent = text;
+        msg.className = `msg visible ${type}`;
+      }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value.trim();
+        if (!email) { showMsg('Please enter your email address.', 'error'); return; }
+
+        btn.disabled = true;
+        const payload = { email };
+
+        // Optimistic UX — show confirmation immediately
+        form.reset();
+        showMsg("If that address is subscribed, we've sent you an unsubscribe link. Check your spam folder if you don't see it.", 'success');
+
+        try {
+          const res = await fetch(`${API}/request-unsubscribe`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          if (res.status === 422) {
+            showMsg("That doesn't look like a valid email address.", 'error');
+            btn.disabled = false;
+          }
+        } catch {
+          // Network error — keep optimistic message
+        }
+      });
+    }
   </script>
-  <script src="bg.js"></script>
 </body>
 </html>

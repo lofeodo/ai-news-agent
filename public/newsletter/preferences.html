@@ -23,12 +23,25 @@
     <!-- Shown while loading -->
     <p class="subtitle" id="loading-msg">Loading your preferences…</p>
 
-    <!-- Shown on invalid/missing token -->
-    <p class="msg error" id="invalid-msg">This link is invalid or has expired. Request a new one below.</p>
+    <!-- Account badge (shown when signed in via Firebase Auth) -->
+    <div class="account-badge" id="account-badge" style="display:none">
+      <span class="account-badge__dot"></span>
+      <span class="account-badge__email" id="account-email"></span>
+      <button type="button" class="account-badge__signout" id="signout-btn">Sign out</button>
+    </div>
 
-    <!-- Populated on success -->
+    <!-- Shown on invalid/missing token (token flow only) -->
+    <p class="msg error" id="invalid-msg" style="display:none">This link is invalid or has expired. Request a new one below.</p>
+
+    <!-- Not subscribed notice (account flow) -->
+    <div id="not-subscribed-notice" style="display:none">
+      <p class="subtitle" style="margin-bottom:20px">You're not currently subscribed to Latent SpaceMail.</p>
+      <a href="/" class="btn-subscribe-link">Subscribe →</a>
+    </div>
+
+    <!-- Preferences form (populated from either auth or token flow) -->
     <form id="prefs-form" style="display:none" novalidate>
-      <div class="email-display" id="email-display"></div>
+      <div class="email-display" id="email-display" style="display:none"></div>
 
       <div class="checkboxes">
         <label as="div">Newsletter content</label>
@@ -44,9 +57,17 @@
 
       <button type="submit" id="save-btn">Save preferences</button>
       <div class="msg" id="save-msg"></div>
+
+      <!-- Unsubscribe section (account flow only) -->
+      <div id="unsub-section" style="display:none">
+        <hr class="divider">
+        <p class="note" style="margin-bottom:14px">Want to stop receiving the newsletter?</p>
+        <button type="button" id="unsub-btn" style="background:transparent;border:1px solid var(--error);color:var(--error);width:100%;font-family:var(--font);font-size:0.82rem;letter-spacing:0.1em;text-transform:uppercase;padding:10px;cursor:pointer;transition:background 0.15s;">Unsubscribe</button>
+        <div class="msg" id="unsub-msg"></div>
+      </div>
     </form>
 
-    <!-- Request new link (always visible after load attempt) -->
+    <!-- Request new link (token flow fallback) -->
     <div id="new-link-section" style="display:none">
       <hr class="divider">
       <p class="note" style="margin-bottom:14px">Need a new preferences link? Enter your email and we'll send one.</p>
@@ -59,55 +80,123 @@
         <div class="msg" id="req-msg"></div>
       </form>
     </div>
+
+    <!-- Sign in prompt (no token, not logged in) -->
+    <div id="signin-prompt" style="display:none">
+      <p class="note" style="margin-bottom:16px">Sign in to manage your preferences, or use the link from your newsletter email.</p>
+      <a href="login.html?returnUrl=preferences.html" id="signin-link" style="display:block;background:var(--accent);color:var(--bg);font-family:var(--label);font-size:0.95rem;letter-spacing:0.18em;text-transform:uppercase;border:none;padding:14px 11px;cursor:pointer;text-align:center;text-decoration:none;transition:opacity 0.15s;">Sign in</a>
+    </div>
   </div>
 
   <div class="nav-links">
     <a href="/">Subscribe</a>
-    <a href="unsubscribe.html">Unsubscribe</a>
     <a href="https://github.com/lofeodo/ai-news-agent" target="_blank" rel="noopener" class="nav-github" aria-label="View source on GitHub">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
       source
     </a>
   </div>
 
-  <script>
-    const API = 'https://agent-subscriptions-zozrn33sna-nn.a.run.app';
+  <script src="bg.js"></script>
+  <script type="module">
+    import { auth, onAuthStateChanged, signOut, authFetch } from './auth.js';
 
+    const API   = 'https://agent-subscriptions-zozrn33sna-nn.a.run.app';
     const token = new URLSearchParams(location.search).get('token') || '';
 
-    const loadingMsg  = document.getElementById('loading-msg');
-    const invalidMsg  = document.getElementById('invalid-msg');
-    const prefsForm   = document.getElementById('prefs-form');
-    const emailDisplay = document.getElementById('email-display');
-    const saveBtn     = document.getElementById('save-btn');
-    const saveMsg     = document.getElementById('save-msg');
-    const newLinkSection = document.getElementById('new-link-section');
+    const loadingMsg       = document.getElementById('loading-msg');
+    const accountBadge     = document.getElementById('account-badge');
+    const accountEmail     = document.getElementById('account-email');
+    const invalidMsg       = document.getElementById('invalid-msg');
+    const notSubNotice     = document.getElementById('not-subscribed-notice');
+    const prefsForm        = document.getElementById('prefs-form');
+    const emailDisplay     = document.getElementById('email-display');
+    const saveBtn          = document.getElementById('save-btn');
+    const saveMsg          = document.getElementById('save-msg');
+    const unsubSection     = document.getElementById('unsub-section');
+    const unsubBtn         = document.getElementById('unsub-btn');
+    const unsubMsg         = document.getElementById('unsub-msg');
+    const newLinkSection   = document.getElementById('new-link-section');
+    const signinPrompt     = document.getElementById('signin-prompt');
+
+    let authMode = false; // true = using Firebase Auth, false = token flow
 
     function showSaveMsg(text, type) {
       saveMsg.textContent = text;
       saveMsg.className = `msg visible ${type}`;
     }
 
+    function showPrefsForm(prefs) {
+      loadingMsg.style.display = 'none';
+      invalidMsg.style.display = 'none';
+      document.getElementById('include_french').checked = !!(prefs && prefs.include_french);
+      document.getElementById('include_canada').checked = !!(prefs && prefs.include_canada);
+      prefsForm.style.display = 'block';
+    }
+
     function showInvalid() {
       loadingMsg.style.display = 'none';
-      invalidMsg.className = 'msg error visible';
+      invalidMsg.style.display = 'block';
       newLinkSection.style.display = 'block';
     }
 
-    async function loadPrefs() {
-      if (!token) { showInvalid(); return; }
+    // ── Firebase Auth flow ───────────────────────────────────────────────────
+    // Priority 1: if user is signed in, use account-based auth.
+    // We wait briefly for onAuthStateChanged before falling back to token.
 
+    let authResolved = false;
+    const authTimeout = setTimeout(() => {
+      if (!authResolved) fallbackToToken();
+    }, 3000);
+
+    onAuthStateChanged(auth, async (user) => {
+      if (authResolved) return;
+      authResolved = true;
+      clearTimeout(authTimeout);
+
+      if (user) {
+        authMode = true;
+        accountEmail.textContent     = user.email;
+        accountBadge.style.display   = 'flex';
+        unsubSection.style.display   = 'block';
+
+        try {
+          const res  = await authFetch(`${API}/auth/preferences`);
+          loadingMsg.style.display = 'none';
+          if (!res.ok) { showInvalid(); return; }
+          const data = await res.json();
+          if (!data.subscribed) {
+            notSubNotice.style.display = 'block';
+            return;
+          }
+          showPrefsForm(data.prefs);
+        } catch {
+          loadingMsg.style.display = 'none';
+          showInvalid();
+        }
+      } else {
+        fallbackToToken();
+      }
+    });
+
+    function fallbackToToken() {
+      if (!token) {
+        loadingMsg.style.display   = 'none';
+        signinPrompt.style.display = 'block';
+        return;
+      }
+      loadTokenPrefs();
+    }
+
+    // ── Token flow ───────────────────────────────────────────────────────────
+    async function loadTokenPrefs() {
       try {
         const res = await fetch(`${API}/preferences?token=${encodeURIComponent(token)}`);
         loadingMsg.style.display = 'none';
-
         if (!res.ok) { showInvalid(); return; }
-
         const data = await res.json();
-        emailDisplay.textContent = data.email || '';
-        document.getElementById('include_french').checked = !!(data.prefs && data.prefs.include_french);
-        document.getElementById('include_canada').checked = !!(data.prefs && data.prefs.include_canada);
-        prefsForm.style.display = 'block';
+        emailDisplay.textContent     = data.email || '';
+        emailDisplay.style.display   = 'block';
+        showPrefsForm(data.prefs);
         newLinkSection.style.display = 'block';
       } catch {
         loadingMsg.style.display = 'none';
@@ -115,29 +204,32 @@
       }
     }
 
+    // ── Save preferences ─────────────────────────────────────────────────────
     prefsForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      saveBtn.disabled = true;
-      saveMsg.className = 'msg';
+      saveBtn.disabled    = true;
+      saveMsg.className   = 'msg';
+
+      const prefs = {
+        include_french: document.getElementById('include_french').checked,
+        include_canada: document.getElementById('include_canada').checked,
+      };
 
       try {
-        const res = await fetch(`${API}/preferences`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            token,
-            prefs: {
-              include_french: document.getElementById('include_french').checked,
-              include_canada: document.getElementById('include_canada').checked,
-            },
-          }),
-        });
-
-        if (res.ok) {
-          showSaveMsg('Preferences saved.', 'success');
+        let res;
+        if (authMode) {
+          res = await authFetch(`${API}/auth/preferences`, {
+            method: 'POST',
+            body: JSON.stringify({ prefs }),
+          });
         } else {
-          showSaveMsg('This link is invalid or has expired.', 'error');
+          res = await fetch(`${API}/preferences`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, prefs }),
+          });
         }
+        showSaveMsg(res.ok ? 'Preferences saved.' : 'This link is invalid or has expired.', res.ok ? 'success' : 'error');
       } catch {
         showSaveMsg('Something went wrong. Please try again.', 'error');
       } finally {
@@ -145,47 +237,70 @@
       }
     });
 
-    // Request new preferences link
+    // ── Unsubscribe (account flow) ───────────────────────────────────────────
+    unsubBtn && unsubBtn.addEventListener('click', async () => {
+      if (!confirm('Unsubscribe from Latent SpaceMail?')) return;
+      unsubBtn.disabled = true;
+      try {
+        const res = await authFetch(`${API}/auth/unsubscribe`, { method: 'POST' });
+        if (res.ok) {
+          unsubMsg.textContent  = 'You\'ve been unsubscribed.';
+          unsubMsg.className    = 'msg visible success';
+          prefsForm.style.display = 'none';
+          notSubNotice.style.display = 'block';
+        } else {
+          unsubMsg.textContent = 'Something went wrong. Please try again.';
+          unsubMsg.className   = 'msg visible error';
+          unsubBtn.disabled    = false;
+        }
+      } catch {
+        unsubMsg.textContent = 'Something went wrong. Please try again.';
+        unsubMsg.className   = 'msg visible error';
+        unsubBtn.disabled    = false;
+      }
+    });
+
+    // ── Sign out ─────────────────────────────────────────────────────────────
+    document.getElementById('signout-btn').addEventListener('click', async () => {
+      await signOut(auth);
+      location.reload();
+    });
+
+    // ── Request new link (token flow fallback) ───────────────────────────────
     const requestForm = document.getElementById('request-form');
-    const reqBtn = document.getElementById('req-btn');
-    const reqMsg = document.getElementById('req-msg');
+    const reqBtn      = document.getElementById('req-btn');
+    const reqMsg      = document.getElementById('req-msg');
 
     requestForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('req-email').value.trim();
       if (!email) return;
-
-      reqBtn.disabled = true;
+      reqBtn.disabled  = true;
       reqMsg.className = 'msg';
-
       try {
         const res = await fetch(`${API}/request-preferences`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email }),
         });
-
         if (res.ok) {
           requestForm.reset();
           reqMsg.textContent = "If that address is subscribed, we've sent you a new preferences link.";
-          reqMsg.className = 'msg visible success';
+          reqMsg.className   = 'msg visible success';
         } else if (res.status === 422) {
           reqMsg.textContent = "That doesn't look like a valid email address.";
-          reqMsg.className = 'msg visible error';
+          reqMsg.className   = 'msg visible error';
         } else {
           reqMsg.textContent = 'Something went wrong. Please try again.';
-          reqMsg.className = 'msg visible error';
+          reqMsg.className   = 'msg visible error';
         }
       } catch {
         reqMsg.textContent = 'Something went wrong. Please try again.';
-        reqMsg.className = 'msg visible error';
+        reqMsg.className   = 'msg visible error';
       } finally {
         reqBtn.disabled = false;
       }
     });
-
-    loadPrefs();
   </script>
-  <script src="bg.js"></script>
 </body>
 </html>

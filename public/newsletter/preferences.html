@@ -155,23 +155,28 @@
 
       if (user) {
         authMode = true;
-        accountEmail.textContent     = user.email;
-        accountBadge.style.display   = 'flex';
-        unsubSection.style.display   = 'block';
+        accountEmail.textContent   = user.email;
+        accountBadge.style.display = 'flex';
 
         try {
           const res  = await authFetch(`${API}/auth/preferences`);
           loadingMsg.style.display = 'none';
-          if (!res.ok) { showInvalid(); return; }
+          if (!res.ok) {
+            invalidMsg.textContent   = 'Unable to load preferences right now. Please try again in a moment.';
+            invalidMsg.style.display = 'block';
+            return;
+          }
           const data = await res.json();
           if (!data.subscribed) {
             notSubNotice.style.display = 'block';
             return;
           }
+          unsubSection.style.display = 'block';
           showPrefsForm(data.prefs);
         } catch {
           loadingMsg.style.display = 'none';
-          showInvalid();
+          invalidMsg.textContent   = 'Connection error. Please check your internet and try again.';
+          invalidMsg.style.display = 'block';
         }
       } else {
         fallbackToToken();

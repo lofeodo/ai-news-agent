@@ -7,12 +7,13 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/fireba
 import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 
 export const firebaseConfig = {
-  apiKey:            "REPLACE_WITH_YOUR_API_KEY",
+  apiKey:            "AIzaSyD-Nx1nExmGPY7QFegBlZVAXOd56t2V0Wg",
   authDomain:        "ai-news-letter-497720.firebaseapp.com",
   projectId:         "ai-news-letter-497720",
   storageBucket:     "ai-news-letter-497720.firebasestorage.app",
-  messagingSenderId: "REPLACE_WITH_YOUR_MESSAGING_SENDER_ID",
-  appId:             "REPLACE_WITH_YOUR_APP_ID",
+  messagingSenderId: "26202086206",
+  appId:             "1:26202086206:web:19cc12c87c252091dfaa6f",
+  measurementId:     "G-YEJM5TGS8L",
 };
 
 const app = initializeApp(firebaseConfig);

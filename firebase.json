@@ -1,7 +1,7 @@
 {
   "hosting": {
     "site": "latentspacemail",
-    "public": "public",
+    "public": "public/newsletter",
     "ignore": ["firebase.json", "**/.*"]
   }
 }

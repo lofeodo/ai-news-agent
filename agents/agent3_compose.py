@@ -417,10 +417,10 @@ def compose_html(
     _logo_base = (
         _frontend_url
         if _frontend_url and "localhost" not in _frontend_url
-        else "https://latentspacemail.web.app"
+        else "https://newsletter.lofeodo.com"
     )
     _LOGO_IMG = (
-        f'<img src="{_logo_base}/newsletter/images/logo-email.png" alt="{NEWSLETTER_NAME}" width="48" height="48"'
+        f'<img src="{_logo_base}/images/logo-email.png" alt="{NEWSLETTER_NAME}" width="48" height="48"'
         f' style="display:block;border:0;margin-bottom:14px;">'
     )
 

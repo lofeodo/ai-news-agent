@@ -192,7 +192,7 @@ def _email_shell(
         f'</td>'
         f'<td style="width:1px;padding:18px 0;background:#1e1e1e;">&nbsp;</td>'
         f'<td style="padding:22px 0 22px 20px;vertical-align:middle;">'
-        + f'<img src="https://latentspacemail.web.app/newsletter/images/logo-email.png" alt="Latent SpaceMail"'
+        + f'<img src="https://newsletter.lofeodo.com/images/logo-email.png" alt="Latent SpaceMail"'
           f' width="32" height="32" style="display:block;border:0;margin-bottom:8px;">'
         + f'<div style="font-family:{_MONO};font-size:16px;font-weight:700;color:#c8b89a;letter-spacing:0.5px;line-height:1.1;">LATENT SPACEMAIL</div>'
         f'<div style="font-family:{_MONO};font-size:8px;color:#2d2820;letter-spacing:3px;text-transform:uppercase;margin-top:9px;">Weekly AI Intelligence Dispatch</div>'
@@ -497,7 +497,7 @@ def newsletter_preview(request: Request):
         html,
     )
 
-    headers = {"Content-Security-Policy": "frame-ancestors https://latentspacemail.web.app https://latentspacemail.firebaseapp.com https://lofeodo.com"}
+    headers = {"Content-Security-Policy": "frame-ancestors https://latentspacemail.web.app https://latentspacemail.firebaseapp.com https://newsletter.lofeodo.com"}
     return HTMLResponse(content=html, status_code=200, headers=headers)
 
 

@@ -1,22 +1,16 @@
 // auth.js — shared Firebase Auth helpers loaded as an ES module on every page.
 //
-// SETUP: Replace the placeholder values in firebaseConfig with the real values
-// from Firebase Console → Project Settings → General → Your apps → SDK snippet.
+// Firebase Hosting automatically serves the project config at /__/firebase/init.json
+// so no API key is needed in source. Use `firebase serve` for local development
+// (plain HTTP servers don't serve that endpoint).
 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 
-export const firebaseConfig = {
-  apiKey:            "AIzaSyD-Nx1nExmGPY7QFegBlZVAXOd56t2V0Wg",
-  authDomain:        "ai-news-letter-497720.firebaseapp.com",
-  projectId:         "ai-news-letter-497720",
-  storageBucket:     "ai-news-letter-497720.firebasestorage.app",
-  messagingSenderId: "26202086206",
-  appId:             "1:26202086206:web:19cc12c87c252091dfaa6f",
-  measurementId:     "G-YEJM5TGS8L",
-};
+const _r = await fetch('/__/firebase/init.json');
+if (!_r.ok) throw new Error('[auth.js] Firebase config not available. Run `firebase serve` locally.');
+const app = initializeApp(await _r.json());
 
-const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export { onAuthStateChanged, signOut };
 
@@ -26,7 +20,6 @@ export async function getIdToken() {
   return user.getIdToken();
 }
 
-// Wraps fetch with an Authorization: Bearer header using the current user's ID token.
 export async function authFetch(url, options = {}) {
   const token = await getIdToken();
   if (!token) throw new Error('not_authenticated');

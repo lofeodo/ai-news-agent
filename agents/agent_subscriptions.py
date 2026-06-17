@@ -362,7 +362,7 @@ def _full_page(title: str, body: str, status: int = 200) -> HTMLResponse:
     <p class="subtitle">{body}</p>
   </div>
   <div class="nav-links">
-    <a href="{base}">Subscribe</a>
+    <a href="{base}">Home</a>
   </div>
   <script src="{base}/bg.js"></script>
 </body>

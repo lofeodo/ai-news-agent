@@ -90,7 +90,7 @@ if os.environ.get("AGENT_NAME", "").strip() == "agent_subscriptions":
         CORSMiddleware,
         allow_origins=origins,
         allow_methods=["GET", "POST"],
-        allow_headers=["Content-Type"],
+        allow_headers=["Content-Type", "Authorization"],
     )
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)

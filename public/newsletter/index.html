@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Latent SpaceMail — Subscribe</title>
+  <title>Latent SpaceMail</title>
   <link rel="icon" type="image/svg+xml" href="/images/logo-mark.svg">
   <link rel="icon" type="image/png" href="/images/logo-email.png">
   <link rel="preload" href="/fonts/cormorant-garamond-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="fonts.css">
-  <link rel="stylesheet" href="style.css?v=2">
+  <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
   <canvas id="bg-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;will-change:transform;"></canvas>
@@ -27,129 +27,98 @@
   </a>
 
   <div class="card">
-    <h1><span class="prompt">❯</span> Subscribe</h1>
-    <p id="spots-remaining" class="spots-counter"></p>
+    <h1><span class="prompt">❯</span> Latent SpaceMail</h1>
     <p class="subtitle">A weekly briefing on AI research and industry news.<br>Delivered every Monday morning.</p>
 
-    <form id="subscribe-form" novalidate>
-      <div class="field">
-        <label for="email">Email address</label>
-        <input type="email" id="email" name="email" autocomplete="email" required placeholder="you@example.com">
-      </div>
+    <p id="spots-remaining" class="spots-counter"></p>
 
-      <div class="checkboxes">
-        <label as="div">Include in my newsletter</label>
-        <label class="check-row">
-          <input type="checkbox" id="send_latest" name="send_latest" checked>
-          <span>Send me the latest issue right away<span class="check-desc">Delivered after you confirm your subscription</span></span>
-        </label>
-        <label class="check-row">
-          <input type="checkbox" id="include_french" name="include_french" checked>
-          <span>French-language articles<span class="check-desc">AI coverage from French-language sources</span></span>
-        </label>
-        <label class="check-row">
-          <input type="checkbox" id="include_canada" name="include_canada" checked>
-          <span>Canada &amp; Montréal section<span class="check-desc">Local AI news from across Canada</span></span>
-        </label>
-      </div>
+    <div id="auth-error" class="msg error" style="display:none;margin-bottom:16px;"></div>
 
-      <button type="submit" id="submit-btn">Subscribe</button>
-      <div class="msg" id="msg"></div>
-    </form>
+    <button type="button" id="google-btn" class="btn-google">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+      Continue with Google
+    </button>
+
+    <div class="auth-divider"><span>or</span></div>
+
+    <a href="login.html" class="btn-email-link">Sign in with email →</a>
   </div>
 
   <div class="nav-links">
-    <a href="/preview.html" class="nav-preview">preview latest issue</a>
-    <a href="unsubscribe.html" id="nav-unsub">unsubscribe</a>
-    <a href="login.html" id="nav-signin">sign in</a>
-    <a href="preferences.html" id="nav-account" style="display:none">account</a>
+    <a href="/preview.html">preview latest issue</a>
     <a href="https://github.com/lofeodo/ai-news-agent" target="_blank" rel="noopener" class="nav-github" aria-label="View source on GitHub">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
       source
     </a>
   </div>
 
+  <script src="bg.js"></script>
   <script type="module">
     import { auth, onAuthStateChanged } from './auth.js';
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        document.getElementById('nav-signin').style.display  = 'none';
-        document.getElementById('nav-account').style.display = 'inline';
-      }
-    });
-  </script>
-  <script>
+    import {
+      GoogleAuthProvider,
+      signInWithPopup,
+    } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+
     const API = 'https://agent-subscriptions-zozrn33sna-nn.a.run.app';
 
-    const form = document.getElementById('subscribe-form');
-    const btn  = document.getElementById('submit-btn');
-    const msg  = document.getElementById('msg');
-
-    function showMsg(text, type) {
-      msg.textContent = text;
-      msg.className = `msg visible ${type}`;
-    }
+    onAuthStateChanged(auth, (user) => {
+      if (user && user.emailVerified) {
+        location.href = 'preferences.html';
+      }
+    });
 
     async function loadSpots() {
       try {
         const res = await fetch(`${API}/stats`);
         if (!res.ok) return;
         const { active, max } = await res.json();
-        const remaining = max - active;
         const el = document.getElementById('spots-remaining');
         if (!el) return;
-        if (remaining <= 0) {
-          el.textContent = `${max} / ${max}`;
-          el.classList.add('spots-full');
-          btn.disabled = true;
-          document.getElementById('email').disabled = true;
-        } else {
-          el.textContent = `${active} / ${max}`;
-          el.classList.remove('spots-full');
-        }
+        el.textContent = `${active} / ${max}`;
+        if (active >= max) el.classList.add('spots-full');
       } catch (e) {}
     }
     loadSpots();
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('email').value.trim();
-      if (!email) { showMsg('Please enter your email address.', 'error'); return; }
+    const googleBtn  = document.getElementById('google-btn');
+    const authError  = document.getElementById('auth-error');
 
-      btn.disabled = true;
-      btn.textContent = 'Subscribing…';
-      const payload = {
-        email,
-        prefs: {
-          include_french: document.getElementById('include_french').checked,
-          include_canada: document.getElementById('include_canada').checked,
-        },
-        send_latest: document.getElementById('send_latest').checked,
-      };
+    const googleSvg = googleBtn.querySelector('svg').outerHTML;
 
+    function showError(msg) {
+      authError.textContent    = msg;
+      authError.style.display  = 'block';
+    }
+
+    googleBtn.addEventListener('click', async () => {
+      authError.style.display = 'none';
+      googleBtn.disabled = true;
+      googleBtn.textContent = 'Connecting…';
       try {
-        const res = await fetch(`${API}/subscribe`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        if (res.status === 503) {
-          showMsg("Subscriber limit reached — no spots available.", 'error');
-          btn.disabled = false;
-          btn.textContent = 'Subscribe';
-          loadSpots();
-        } else if (res.status === 422) {
-          showMsg("That doesn't look like a valid email address.", 'error');
-          btn.disabled = false;
-          btn.textContent = 'Subscribe';
-        } else {
-          form.reset();
-          showMsg("Check your inbox to confirm. If you don't see it, check your spam folder and mark it as not spam.", 'success');
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+        // onAuthStateChanged handles redirect to preferences.html
+      } catch (e) {
+        const code = e?.code || '';
+        if (code !== 'auth/popup-closed-by-user') {
+          if (code === 'auth/popup-blocked') {
+            showError('Sign-in popup was blocked. Allow popups for this site and try again.');
+          } else if (code === 'auth/unauthorized-domain') {
+            showError('Sign-in is not enabled for this domain. Contact the site owner.');
+          } else if (code === 'auth/network-request-failed') {
+            showError('Network error. Check your connection and try again.');
+          } else {
+            showError('Something went wrong. Please try again.');
+          }
         }
-      } catch {
-        showMsg("Something went wrong. Please try again.", 'error');
-        btn.disabled = false;
-        btn.textContent = 'Subscribe';
+        googleBtn.disabled = false;
+        googleBtn.innerHTML = `${googleSvg} Continue with Google`;
       }
     });
   </script>

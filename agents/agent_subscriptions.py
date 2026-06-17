@@ -481,8 +481,10 @@ def newsletter_preview(request: Request):
         return HTMLResponse("<p>No issue available yet. Check back Monday!</p>", status_code=404)
 
     data = docs[0].to_dict()
-    variants = data.get("newsletter_variants")
-    html = (variants or {}).get("0_0") or data.get("newsletter_html", "")
+    variants = data.get("newsletter_variants") or {}
+    # Show the Canada-inclusive variant so visitors see the full scope of the newsletter.
+    # Fall back through 0_0 and then the legacy newsletter_html field.
+    html = variants.get("0_1") or variants.get("0_0") or data.get("newsletter_html", "")
 
     subscribe_url = f"{FRONTEND_BASE_URL}/"
     html = html.replace("{{UNSUBSCRIBE_URL}}", subscribe_url)
@@ -650,8 +652,7 @@ def _latest_newsletter_html(db, unsubscribe_token: str, prefs: dict | None = Non
     from google.cloud import firestore as _fs
     docs = list(
         db.collection(FIRESTORE_COLLECTION)
-        .where("newsletter_html", "!=", None)
-        .order_by("newsletter_html")
+        .where("newsletter_composed", "==", True)
         .order_by("started_at", direction=_fs.Query.DESCENDING)
         .limit(1)
         .stream()

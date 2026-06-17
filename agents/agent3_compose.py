@@ -734,9 +734,10 @@ def run(run_id: str):
     if USE_FIRESTORE:
         from google.cloud import firestore as _fs
         _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).update({
-            "newsletter_variants": newsletter_variants,
-            "newsletter_html":     newsletter_variants["0_0"],
-            "newsletter_subject":  f"{NEWSLETTER_NAME} — {week_of}",
+            "newsletter_variants":  newsletter_variants,
+            "newsletter_html":      newsletter_variants["0_0"],
+            "newsletter_subject":   f"{NEWSLETTER_NAME} — {week_of}",
+            "newsletter_composed":  True,
         })
         print(f"  Written newsletter_variants + newsletter_html (0_0) to Firestore")
 

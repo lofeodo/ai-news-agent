@@ -135,12 +135,11 @@ def _load_latest_newsletter(db):
     Falls back to {"0_0": newsletter_html} for old runs that predate variants.
     """
     from google.cloud import firestore as _fs
-    # Most recent run doc that has newsletter_html set.
+    # Most recent run doc where agent3 finished saving all variants.
     # Agent4 is triggered by Scheduler independently — it doesn't receive a run_id.
     results = (
         db.collection(FIRESTORE_COLLECTION)
-        .where("newsletter_html", "!=", None)
-        .order_by("newsletter_html")   # required by Firestore for != queries
+        .where("newsletter_composed", "==", True)
         .order_by("started_at", direction=_fs.Query.DESCENDING)
         .limit(1)
         .stream()

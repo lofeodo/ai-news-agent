@@ -4,8 +4,8 @@
       "collectionGroup": "pipeline_runs",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "newsletter_html", "order": "ASCENDING" },
-        { "fieldPath": "started_at",      "order": "DESCENDING" }
+        { "fieldPath": "newsletter_composed", "order": "ASCENDING" },
+        { "fieldPath": "started_at",          "order": "DESCENDING" }
       ]
     }
   ],

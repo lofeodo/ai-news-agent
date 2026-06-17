@@ -23,11 +23,13 @@ import sys
 from datetime import datetime, timezone, timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+
+from auth_middleware import get_current_user
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import GCP_PROJECT_ID, FIRESTORE_COLLECTION, SUBSCRIBERS_COLLECTION, MAX_SUBSCRIBERS
@@ -398,6 +400,10 @@ class PreferencesUpdate(BaseModel):
     prefs: Prefs
 
 
+class AuthPreferencesUpdate(BaseModel):
+    prefs: Prefs
+
+
 # ---------------------------------------------------------------------------
 # Public stats endpoint
 # ---------------------------------------------------------------------------
@@ -642,6 +648,13 @@ def update_preferences(request: Request, req: PreferencesUpdate):
 # Latest newsletter lookup (same composite-index query as agent4)
 # ---------------------------------------------------------------------------
 
+def _detect_provider(decoded_token: dict) -> str:
+    provider = decoded_token.get("firebase", {}).get("sign_in_provider", "")
+    if "google" in provider:
+        return "google"
+    return "password"
+
+
 def _newsletter_variant_key(prefs: dict) -> str:
     fr = "1" if prefs.get("include_french", False) else "0"
     ca = "1" if prefs.get("include_canada", False) else "0"
@@ -679,3 +692,129 @@ def _latest_newsletter_html(db, unsubscribe_token: str, prefs: dict | None = Non
     html = html.replace("{{UNSUBSCRIBE_URL}}", unsub_link)
     html = html.replace("{{PREFERENCES_URL}}", prefs_link)
     return html
+
+
+# ---------------------------------------------------------------------------
+# Account-based endpoints (Firebase Auth JWT required)
+# ---------------------------------------------------------------------------
+# These routes accept an "Authorization: Bearer <firebase_id_token>" header
+# and operate on the authenticated user's account instead of a shared token.
+# All legacy token-based routes above remain fully functional.
+
+USERS_COLLECTION = "users"
+
+
+@router.get("/auth/me")
+@limiter.limit("30/minute")
+async def auth_me(request: Request, user: dict = Depends(get_current_user)):
+    """Return the current user's profile and subscription status."""
+    db    = _db()
+    email = user.get("email", "").lower()
+    uid   = user["uid"]
+    now   = datetime.now(timezone.utc)
+
+    db.collection(USERS_COLLECTION).document(uid).set({
+        "email":        email,
+        "display_name": user.get("name"),
+        "provider":     _detect_provider(user),
+        "created_at":   now,
+    }, merge=True)
+
+    sub_doc  = db.collection(SUBSCRIBERS_COLLECTION).document(email).get()
+    sub_data = sub_doc.to_dict() if sub_doc.exists else None
+    return {
+        "uid":          uid,
+        "email":        email,
+        "display_name": user.get("name"),
+        "email_verified": user.get("email_verified", False),
+        "subscribed":   bool(sub_data and sub_data.get("active")),
+        "prefs":        sub_data.get("prefs", {}) if sub_data else {},
+    }
+
+
+@router.post("/auth/subscribe")
+@limiter.limit("10/minute")
+async def auth_subscribe(request: Request, user: dict = Depends(get_current_user)):
+    """Subscribe the authenticated user. No confirmation email — account email is already verified."""
+    if not user.get("email_verified"):
+        raise HTTPException(status_code=403, detail="email_not_verified")
+
+    db    = _db()
+    email = user["email"].lower()
+    uid   = user["uid"]
+    now   = datetime.now(timezone.utc)
+
+    ref = db.collection(SUBSCRIBERS_COLLECTION).document(email)
+    doc = ref.get()
+
+    if doc.exists and doc.to_dict().get("active"):
+        return {"status": "already_subscribed"}
+
+    if _active_subscriber_count(db) >= MAX_SUBSCRIBERS:
+        raise HTTPException(status_code=503, detail="service_unavailable")
+
+    if doc.exists:
+        ref.update({"active": True, "confirmed_at": now, "uid": uid})
+    else:
+        ref.set({
+            "email":            email,
+            "subscribed_at":    now,
+            "confirmed_at":     now,
+            "active":           True,
+            # Token still generated so newsletter footer links work for this subscriber.
+            "token":            secrets.token_urlsafe(32),
+            "token_expires_at": now + ACTION_TOKEN_TTL,
+            "send_latest":      False,
+            "latest_sent":      False,
+            "uid":              uid,
+            "prefs": {"include_french": True, "include_canada": True},
+        })
+
+    print(f"[subscriptions]  account-based subscribe: {email}", flush=True)
+    return {"status": "ok"}
+
+
+@router.post("/auth/unsubscribe")
+@limiter.limit("10/minute")
+async def auth_unsubscribe(request: Request, user: dict = Depends(get_current_user)):
+    """Unsubscribe the authenticated user."""
+    db    = _db()
+    email = user["email"].lower()
+    ref   = db.collection(SUBSCRIBERS_COLLECTION).document(email)
+    if ref.get().exists:
+        ref.update({"active": False})
+    print(f"[subscriptions]  account-based unsubscribe: {email}", flush=True)
+    return {"status": "ok"}
+
+
+@router.get("/auth/preferences")
+@limiter.limit("10/minute")
+async def auth_get_preferences(request: Request, user: dict = Depends(get_current_user)):
+    """Return the authenticated user's current preferences."""
+    db    = _db()
+    email = user["email"].lower()
+    doc   = db.collection(SUBSCRIBERS_COLLECTION).document(email).get()
+    if not doc.exists or not doc.to_dict().get("active"):
+        return {"subscribed": False, "prefs": {}}
+    data = doc.to_dict()
+    return {"subscribed": True, "prefs": data.get("prefs", {})}
+
+
+@router.post("/auth/preferences")
+@limiter.limit("10/minute")
+async def auth_update_preferences(
+    request: Request,
+    req: AuthPreferencesUpdate,
+    user: dict = Depends(get_current_user),
+):
+    """Update the authenticated user's preferences."""
+    db    = _db()
+    email = user["email"].lower()
+    ref   = db.collection(SUBSCRIBERS_COLLECTION).document(email)
+    if not ref.get().exists:
+        raise HTTPException(status_code=404, detail="not_subscribed")
+    ref.update({"prefs": {
+        "include_french": req.prefs.include_french,
+        "include_canada": req.prefs.include_canada,
+    }})
+    return {"status": "ok"}

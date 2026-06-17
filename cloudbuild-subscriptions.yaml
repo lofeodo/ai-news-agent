@@ -1,0 +1,11 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  id: build-agent-subscriptions
+  args: ['build', '--build-arg', 'AGENT_NAME=agent_subscriptions',
+         '-t', 'northamerica-northeast1-docker.pkg.dev/ai-news-letter-497720/ai-news-agent/agent-subscriptions:latest', '.']
+
+images:
+- 'northamerica-northeast1-docker.pkg.dev/ai-news-letter-497720/ai-news-agent/agent-subscriptions:latest'
+
+options:
+  machineType: 'E2_HIGHCPU_8'

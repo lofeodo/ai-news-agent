@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Latent SpaceMail — Sign in</title>
+  <link rel="icon" type="image/svg+xml" href="/images/logo-mark.svg">
+  <link rel="icon" type="image/png" href="/images/logo-email.png">
+  <link rel="preload" href="/fonts/cormorant-garamond-600.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="bg-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;will-change:transform;"></canvas>
+
+  <a class="wordmark" href="/" aria-label="Latent SpaceMail home">
+    <img src="/images/logo-mark.svg" alt="Latent SpaceMail" height="36" width="36">
+  </a>
+
+  <div class="card">
+    <h1><span class="prompt">❯</span> <span id="page-title">Sign in</span></h1>
+    <p class="subtitle" id="page-subtitle">Access your account to manage your newsletter.</p>
+
+    <!-- Auth error -->
+    <div class="msg error" id="auth-error" style="display:none;margin-bottom:18px;"></div>
+
+    <!-- Email verification notice (shown after sign-up) -->
+    <div class="verify-notice" id="verify-notice" style="display:none">
+      <p>A verification email is on its way. Click the link in that email, then come back and sign in.</p>
+      <button type="button" id="resend-btn">Resend verification email</button>
+    </div>
+
+    <!-- Password reset sent notice -->
+    <div class="msg success" id="reset-sent" style="display:none;margin-bottom:18px;">
+      Password reset link sent. Check your inbox.
+    </div>
+
+    <!-- Back button (for forgot-password mode) -->
+    <button type="button" class="btn-back" id="back-btn" style="display:none">
+      ← Back to sign in
+    </button>
+
+    <!-- Google button (hidden in forgot-password mode) -->
+    <button type="button" id="google-btn" class="btn-google">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+      Continue with Google
+    </button>
+
+    <!-- "or" divider (hidden in forgot-password mode) -->
+    <div class="auth-divider" id="auth-divider"><span>or</span></div>
+
+    <!-- Sign-in / sign-up / forgot form -->
+    <form id="auth-form" novalidate>
+      <div class="field">
+        <label for="email">Email address</label>
+        <input type="email" id="email" name="email" autocomplete="email" required placeholder="you@example.com">
+      </div>
+
+      <div class="field" id="password-field">
+        <label for="password">Password</label>
+        <div class="input-wrap">
+          <input type="password" id="password" name="password" autocomplete="current-password" placeholder="••••••••">
+          <button type="button" class="show-password-btn" id="show-password-btn" aria-label="Toggle password visibility">show</button>
+        </div>
+        <a href="#" class="field-link" id="forgot-link">Forgot password?</a>
+      </div>
+
+      <div class="field" id="confirm-field" style="display:none">
+        <label for="confirm-password">Confirm password</label>
+        <div class="input-wrap">
+          <input type="password" id="confirm-password" name="confirm-password" autocomplete="new-password" placeholder="••••••••">
+        </div>
+      </div>
+
+      <button type="submit" id="auth-btn">Sign in</button>
+    </form>
+
+    <p class="auth-mode-toggle" id="mode-toggle-row">
+      <span id="toggle-text">Don't have an account?</span>
+      <a href="#" id="mode-toggle">Create one</a>
+    </p>
+  </div>
+
+  <div class="nav-links">
+    <a href="/">Subscribe</a>
+    <a href="https://github.com/lofeodo/ai-news-agent" target="_blank" rel="noopener" class="nav-github" aria-label="View source on GitHub">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+      source
+    </a>
+  </div>
+
+  <script src="bg.js"></script>
+  <script type="module">
+    // auth.js already initializes Firebase — import auth from there to avoid duplicate-app error.
+    import { auth, onAuthStateChanged } from './auth.js';
+    import {
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      sendEmailVerification,
+      sendPasswordResetEmail,
+      GoogleAuthProvider,
+      signInWithPopup,
+    } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+
+    const returnUrl = new URLSearchParams(location.search).get('returnUrl') || '/';
+
+    // If already signed in, redirect immediately.
+    onAuthStateChanged(auth, (user) => {
+      if (user && user.emailVerified) {
+        location.href = returnUrl;
+      }
+    });
+
+    // ── Mode management ──────────────────────────────────────────────────────
+    // mode: 'signin' | 'signup' | 'forgot'
+    let mode = 'signin';
+    let pendingUser = null; // user created but not yet verified
+
+    const pageTitle      = document.getElementById('page-title');
+    const pageSubtitle   = document.getElementById('page-subtitle');
+    const authError      = document.getElementById('auth-error');
+    const verifyNotice   = document.getElementById('verify-notice');
+    const resetSent      = document.getElementById('reset-sent');
+    const backBtn        = document.getElementById('back-btn');
+    const googleBtn      = document.getElementById('google-btn');
+    const authDivider    = document.getElementById('auth-divider');
+    const authForm       = document.getElementById('auth-form');
+    const passwordField  = document.getElementById('password-field');
+    const confirmField   = document.getElementById('confirm-field');
+    const authBtn        = document.getElementById('auth-btn');
+    const modeToggleRow  = document.getElementById('mode-toggle-row');
+    const toggleText     = document.getElementById('toggle-text');
+    const modeToggle     = document.getElementById('mode-toggle');
+    const forgotLink     = document.getElementById('forgot-link');
+
+    function clearMessages() {
+      authError.style.display    = 'none';
+      authError.textContent      = '';
+      verifyNotice.style.display = 'none';
+      resetSent.style.display    = 'none';
+    }
+
+    function showError(msg) {
+      clearMessages();
+      authError.textContent  = msg;
+      authError.style.display = 'block';
+    }
+
+    function setMode(newMode) {
+      mode = newMode;
+      clearMessages();
+      authForm.style.display = 'block';
+
+      if (mode === 'forgot') {
+        pageTitle.textContent     = 'Reset password';
+        pageSubtitle.textContent  = 'Enter your email and we\'ll send a reset link.';
+        backBtn.style.display     = 'inline-flex';
+        googleBtn.style.display   = 'none';
+        authDivider.style.display = 'none';
+        passwordField.style.display = 'none';
+        confirmField.style.display  = 'none';
+        authBtn.textContent       = 'Send reset link';
+        modeToggleRow.style.display = 'none';
+        document.getElementById('password').required = false;
+      } else if (mode === 'signup') {
+        pageTitle.textContent     = 'Create account';
+        pageSubtitle.textContent  = 'A verification email will be sent to confirm your address.';
+        backBtn.style.display     = 'none';
+        googleBtn.style.display   = 'flex';
+        authDivider.style.display = 'flex';
+        passwordField.style.display = 'block';
+        confirmField.style.display  = 'block';
+        authBtn.textContent       = 'Create account';
+        modeToggleRow.style.display = 'block';
+        toggleText.textContent    = 'Already have an account?';
+        modeToggle.textContent    = 'Sign in';
+        document.getElementById('password').autocomplete = 'new-password';
+        document.getElementById('password').required = true;
+        forgotLink.style.display  = 'none';
+      } else {
+        pageTitle.textContent     = 'Sign in';
+        pageSubtitle.textContent  = 'Access your account to manage your newsletter.';
+        backBtn.style.display     = 'none';
+        googleBtn.style.display   = 'flex';
+        authDivider.style.display = 'flex';
+        passwordField.style.display = 'block';
+        confirmField.style.display  = 'none';
+        authBtn.textContent       = 'Sign in';
+        modeToggleRow.style.display = 'block';
+        toggleText.textContent    = 'Don\'t have an account?';
+        modeToggle.textContent    = 'Create one';
+        document.getElementById('password').autocomplete = 'current-password';
+        document.getElementById('password').required = true;
+        forgotLink.style.display  = 'block';
+      }
+    }
+
+    // ── Event listeners ──────────────────────────────────────────────────────
+
+    modeToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      setMode(mode === 'signin' ? 'signup' : 'signin');
+    });
+
+    forgotLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      setMode('forgot');
+    });
+
+    backBtn.addEventListener('click', () => setMode('signin'));
+
+    // Password show/hide
+    const showPasswordBtn = document.getElementById('show-password-btn');
+    const passwordInput   = document.getElementById('password');
+    showPasswordBtn.addEventListener('click', () => {
+      const isHidden = passwordInput.type === 'password';
+      passwordInput.type          = isHidden ? 'text' : 'password';
+      showPasswordBtn.textContent = isHidden ? 'hide' : 'show';
+    });
+
+    // Google sign-in
+    googleBtn.addEventListener('click', async () => {
+      clearMessages();
+      googleBtn.disabled = true;
+      googleBtn.textContent = 'Connecting…';
+      try {
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+        // onAuthStateChanged handles redirect
+      } catch (e) {
+        showError(friendlyError(e));
+        googleBtn.disabled = false;
+        googleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg> Continue with Google`;
+      }
+    });
+
+    // Resend verification email
+    document.getElementById('resend-btn').addEventListener('click', async () => {
+      if (!pendingUser) return;
+      try {
+        await sendEmailVerification(pendingUser);
+        verifyNotice.querySelector('p').textContent = 'Verification email resent. Check your inbox.';
+      } catch {
+        showError('Could not resend. Try signing in and Firebase will prompt you.');
+      }
+    });
+
+    // Form submit
+    authForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearMessages();
+      const email    = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!email) { showError('Please enter your email address.'); return; }
+
+      authBtn.disabled    = true;
+      const origText      = authBtn.textContent;
+      authBtn.textContent = mode === 'forgot' ? 'Sending…' : mode === 'signup' ? 'Creating…' : 'Signing in…';
+
+      try {
+        if (mode === 'forgot') {
+          await sendPasswordResetEmail(auth, email);
+          authForm.style.display    = 'none';
+          resetSent.style.display   = 'block';
+          modeToggleRow.style.display = 'none';
+          return;
+        }
+
+        if (mode === 'signup') {
+          const confirm = document.getElementById('confirm-password').value;
+          if (!password) { showError('Please enter a password.'); return; }
+          if (password.length < 8) { showError('Password must be at least 8 characters.'); return; }
+          if (password !== confirm) { showError('Passwords do not match.'); return; }
+          const cred = await createUserWithEmailAndPassword(auth, email, password);
+          pendingUser = cred.user;
+          await sendEmailVerification(cred.user);
+          authForm.style.display      = 'none';
+          verifyNotice.style.display  = 'block';
+          googleBtn.style.display     = 'none';
+          authDivider.style.display   = 'none';
+          modeToggleRow.style.display = 'none';
+          return;
+        }
+
+        // Sign in
+        if (!password) { showError('Please enter your password.'); return; }
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        if (!cred.user.emailVerified) {
+          pendingUser = cred.user;
+          authForm.style.display      = 'none';
+          verifyNotice.style.display  = 'block';
+          googleBtn.style.display     = 'none';
+          authDivider.style.display   = 'none';
+          modeToggleRow.style.display = 'none';
+          return;
+        }
+        // Verified — onAuthStateChanged handles redirect
+
+      } catch (err) {
+        showError(friendlyError(err));
+      } finally {
+        authBtn.disabled    = false;
+        authBtn.textContent = origText;
+      }
+    });
+
+    // ── Error message humanization ───────────────────────────────────────────
+
+    function friendlyError(err) {
+      const code = err?.code || '';
+      if (code === 'auth/invalid-credential' || code === 'auth/user-not-found' || code === 'auth/wrong-password') {
+        return 'Incorrect email or password.';
+      }
+      if (code === 'auth/email-already-in-use') {
+        return 'An account already exists for that email. Try signing in instead.';
+      }
+      if (code === 'auth/weak-password') {
+        return 'Password must be at least 6 characters.';
+      }
+      if (code === 'auth/invalid-email') {
+        return 'That doesn\'t look like a valid email address.';
+      }
+      if (code === 'auth/too-many-requests') {
+        return 'Too many attempts. Please wait a moment and try again.';
+      }
+      if (code === 'auth/popup-closed-by-user') {
+        return ''; // user closed the popup — silent fail
+      }
+      if (code === 'auth/popup-blocked') {
+        return 'Sign-in popup was blocked. Allow popups for this site and try again.';
+      }
+      if (code === 'auth/unauthorized-domain') {
+        return 'Sign-in is not enabled for this domain. Contact the site owner.';
+      }
+      if (code === 'auth/network-request-failed') {
+        return 'Network error. Check your connection and try again.';
+      }
+      return 'Something went wrong. Please try again.';
+    }
+  </script>
+</body>
+</html>

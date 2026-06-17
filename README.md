@@ -65,9 +65,13 @@ Triggered separately by Cloud Scheduler at 7 AM. Loads the most recent run's new
 
 ### Subscription system
 
-A separate FastAPI service handles sign-ups and preferences. Auth model: **the inbox is the authentication** — website-initiated actions always trigger an email round-trip; token-carrying links (clicked inside an email) prove inbox ownership. Tokens are `secrets.token_urlsafe(32)`, 48-hour TTL for confirmation, 1-year TTL for action links. Unsubscribe sets `active: false` (soft delete, never hard-deleted).
+A separate FastAPI service handles sign-ups and preferences. Two auth paths coexist:
 
-Subscriber document fields: `email`, `token`, `token_expires_at`, `active`, `subscribed_at`, `confirmed_at`, `prefs: {include_french, include_canada}`, `send_latest`, `latest_sent`.
+**Token-based (email links):** The original "inbox is the authentication" model. Website-initiated actions trigger an email round-trip; token-carrying links clicked inside an email prove inbox ownership. Tokens are `secrets.token_urlsafe(32)`, 48h TTL for confirmation, 1-year TTL for action links. Still used for newsletter footer links (unsubscribe, preferences) for all subscribers.
+
+**Account-based (Firebase Auth):** Users sign up or sign in via `login.html` using Google OAuth or email + password. The frontend gets a Firebase ID token and sends it as `Authorization: Bearer <token>`. The backend (`agents/auth_middleware.py`) verifies it with `firebase-admin`. No confirmation email needed — Firebase handles email verification. Account-based subscribers can manage preferences and unsubscribe directly without waiting for an email link.
+
+Subscriber document fields: `email`, `token`, `token_expires_at`, `active`, `subscribed_at`, `confirmed_at`, `prefs: {include_french, include_canada}`, `send_latest`, `latest_sent`, `uid` (Firebase UID, null for legacy token-only subscribers). Unsubscribe sets `active: false` (soft delete, never hard-deleted).
 
 ---
 
@@ -76,15 +80,16 @@ Subscriber document fields: `email`, `token`, `token_expires_at`, `active`, `sub
 - **Language:** Python 3.11
 - **Compute:** Google Cloud Run (single Docker image, `AGENT_NAME` env var selects agent)
 - **Messaging:** Google Cloud Pub/Sub (push subscriptions, JSON `{run_id}` payload)
-- **State:** Google Cloud Firestore (`pipeline_runs`, `subscribers` collections)
+- **State:** Google Cloud Firestore (`pipeline_runs`, `subscribers`, `users` collections)
 - **Scheduling:** Google Cloud Scheduler (two weekly cron jobs)
 - **Secrets:** Google Secret Manager
-- **Frontend:** Firebase Hosting (static, custom domain via Cloudflare DNS)
+- **Auth:** Firebase Authentication (Google OAuth + email/password; ID tokens verified server-side with `firebase-admin`)
+- **Frontend:** Firebase Hosting (static, custom domain via Cloudflare DNS; vanilla HTML/JS + Firebase Auth JS SDK)
 - **Email:** SendGrid (custom domain `newsletter@lofeodo.com`, DKIM + SPF + DMARC)
 - **AI:** Anthropic Claude (`claude-haiku-4-5-20251001`) — scoring, filtering, summarization, composition
 - **External APIs:** ArXiv (via DigitalOcean Squid proxy), Hacker News API, NewsAPI, GitHub API
 - **HTTP framework:** FastAPI + uvicorn
-- **Key libraries:** `arxiv`, `pypdf`, `newspaper3k`, `slowapi`
+- **Key libraries:** `arxiv`, `pypdf`, `newspaper3k`, `slowapi`, `firebase-admin`
 
 ---
 
@@ -100,6 +105,7 @@ Subscriber document fields: `email`, `token`, `token_expires_at`, `active`, `sub
 │   ├── agent3_compose.py           # Article selection, intro, HTML composition
 │   ├── agent4_send.py              # Per-subscriber personalization + SendGrid send
 │   ├── agent_subscriptions.py      # Subscription FastAPI service (separate deployment)
+│   ├── auth_middleware.py          # Firebase ID token verification (FastAPI dependency)
 │   ├── filter_tool.py              # Claude tool schema for news categorization
 │   └── scoring_tool.py             # Claude tool schema for paper scoring
 ├── prompts/
@@ -111,10 +117,12 @@ Subscriber document fields: `email`, `token`, `token_expires_at`, `active`, `sub
 │   ├── article_selection_prompt.txt
 │   └── intro_prompt.txt            # Editor's note prompt
 ├── public/newsletter/              # Firebase Hosting frontend
-│   ├── index.html                  # Subscribe form
-│   ├── preferences.html            # Preferences page (token-auth)
-│   ├── unsubscribe.html            # Unsubscribe request form
+│   ├── index.html                  # Subscribe form (auth-aware nav)
+│   ├── login.html                  # Sign in / create account (Google + email+password)
+│   ├── preferences.html            # Preferences (account auth or token fallback)
+│   ├── unsubscribe.html            # Unsubscribe (one-click if signed in, email form otherwise)
 │   ├── preview.html                # Newsletter preview page
+│   ├── auth.js                     # Shared Firebase Auth helper (ES module)
 │   └── latest.html                 # Written by agent3 each run
 ├── orchestrator.py                 # Local sequential runner / cloud pipeline trigger
 ├── main.py                         # Cloud Run entrypoint (FastAPI, AGENT_NAME dispatch)
@@ -148,6 +156,7 @@ Secrets live in **Google Secret Manager** (cloud) or environment variables (loca
 | `MAILING_ADDRESS` | agent3 | Physical address in email footer (CASL compliance) |
 | `ADMIN_TOKEN` | agent_subscriptions | Token to access `/stats` endpoint |
 | `MAX_SUBSCRIBERS` | agent_subscriptions | Subscriber cap (default `100`, SendGrid free tier) |
+| `GOOGLE_APPLICATION_CREDENTIALS` | agent_subscriptions (local) | Path to service account JSON for Firebase Admin SDK; alternative to `gcloud auth application-default login` |
 
 ---
 
@@ -179,6 +188,14 @@ AGENT_NAME=agent_subscriptions uvicorn main:app --reload
 # Requires: gcloud auth application-default login (Firestore always on)
 ```
 
+**Run the frontend locally with auth support:**
+```bash
+firebase serve --only hosting
+# Serves public/newsletter/ at localhost:5000 and provides /__/firebase/init.json
+# Plain HTTP servers (python -m http.server, etc.) won't serve that endpoint,
+# so auth.js will fail to initialize on pages that use Firebase Auth.
+```
+
 ## Deployment
 
 **Build and push to Artifact Registry:**
@@ -208,7 +225,7 @@ The subscription service and agent4 (sender) are synchronous and don't need `--n
 
 **No CPU throttling on pipeline agents.** Cloud Run's default "CPU only allocated during request" would pause the background thread immediately after the HTTP response is returned. Pipeline agents use `--no-cpu-throttling` so the thread runs to completion. Synchronous services (agent4, subscriptions) don't need this.
 
-**Inbox as authentication.** The subscription service has no passwords or sessions. Website-initiated actions (subscribe, unsubscribe request, preferences request) always return 200 and trigger an email — the email link carries the proof of inbox ownership. This prevents email oracle attacks and eliminates password management.
+**Dual auth model.** The subscription service supports two auth paths. The original "inbox as auth" token model (email links) remains fully functional for newsletter footer links and legacy subscribers. A new account-based path uses Firebase Authentication (Google OAuth + email/password): the frontend gets a Firebase ID token and sends it as `Authorization: Bearer`; `auth_middleware.py` verifies it with `firebase-admin`. Account-based subscribers get immediate subscribe/unsubscribe/preferences without waiting for an email — the Firebase auth flow already verified inbox ownership. Both paths read and write the same `subscribers` Firestore collection; account subscribers get a `uid` field linking them to the `users` collection.
 
 **Email deliverability.** Mail sends from `newsletter@lofeodo.com` via SendGrid with full domain authentication (DKIM + SPF via CNAME records, DMARC policy). Sending from a gmail.com address through a third-party relay fails SPF alignment and lands in spam — a controlled sending domain is required.
 

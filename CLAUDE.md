@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Git Workflow
 
-Create incremental git commits with individual changes — one commit per meaningful unit (e.g., add CSS, update one page, create a new file), not one big commit at the end of a feature. Push after each commit.
+**Never commit or push unless explicitly asked by the user.**
+
+When asked to commit: create incremental commits with individual changes — one commit per meaningful unit (e.g., add CSS, update one page, create a new file), not one big commit at the end of a feature. Push only when explicitly asked.
 
 ## What This Project Does
 

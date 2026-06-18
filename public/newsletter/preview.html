@@ -12,20 +12,15 @@
 
     :root {
       --bg: #0f0f0f;
-      --surface: #161616;
       --border: #2a2a2a;
       --text: #e8e8e8;
       --muted: #8b8b8b;
       --accent: #c8b89a;
       --font: 'Menlo', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+      --label: 'Bebas Neue', 'Arial Narrow', Arial, sans-serif;
     }
 
-    html, body {
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font);
-    }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); }
 
     .topbar {
       position: fixed;
@@ -40,45 +35,35 @@
       border-bottom: 1px solid var(--border);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
+      gap: 16px;
     }
 
     .topbar__left {
       display: flex;
       align-items: center;
       gap: 12px;
+      min-width: 0;
     }
 
-    .topbar__back {
+    .topbar__logo {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      color: var(--muted);
-      text-decoration: none;
-      font-size: 0.78rem;
-      letter-spacing: 0.05em;
-      transition: color 0.15s;
-    }
-    .topbar__back:hover { color: var(--accent); }
-    .topbar__back svg {
-      width: 12px; height: 12px;
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
+      opacity: 0.7;
+      transition: opacity 0.15s;
       flex-shrink: 0;
+      text-decoration: none;
     }
+    .topbar__logo:hover { opacity: 1; }
+    .topbar__logo img { display: block; }
 
-    .topbar__sep {
-      color: var(--border);
-      font-size: 0.78rem;
-    }
+    .topbar__sep { color: var(--border); font-size: 0.78rem; }
 
     .topbar__label {
       font-size: 0.75rem;
       color: var(--muted);
       letter-spacing: 0.08em;
       text-transform: uppercase;
+      white-space: nowrap;
     }
 
     .topbar__badge {
@@ -92,32 +77,54 @@
       padding: 3px 8px;
       border: 1px solid rgba(200,184,154,0.25);
       background: rgba(200,184,154,0.06);
+      flex-shrink: 0;
     }
     .topbar__badge-dot {
       width: 5px; height: 5px;
       border-radius: 50%;
       background: var(--accent);
       flex-shrink: 0;
+      animation: pulse-dot 2.2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.35; }
     }
 
-    .topbar__subscribe {
+    .topbar__right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+
+    .topbar__cta {
       display: inline-flex;
       align-items: center;
-      gap: 0;
-      font-size: 0.75rem;
-      letter-spacing: 0.12em;
+      font-family: var(--font);
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--bg);
+      color: #0f0f0f;
       background: var(--accent);
       text-decoration: none;
       padding: 7px 14px;
       transition: opacity 0.15s, box-shadow 0.2s;
       white-space: nowrap;
     }
-    .topbar__subscribe:hover {
-      opacity: 0.88;
-      box-shadow: 0 0 14px rgba(200,184,154,0.3);
+    .topbar__cta:hover { opacity: 0.88; box-shadow: 0 0 14px rgba(200,184,154,0.3); }
+
+    .topbar__account {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.72rem;
+      color: var(--muted);
     }
+    .topbar__account-link {
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 0.68rem;
+      transition: color 0.15s;
+    }
+    .topbar__account-link:hover { color: var(--accent); }
 
     .preview-frame {
       position: fixed;
@@ -127,14 +134,18 @@
       border: none;
       background: #060606;
     }
+
+    @media (max-width: 600px) {
+      .topbar { padding: 0 12px; }
+      .topbar__badge { display: none; }
+    }
   </style>
 </head>
 <body>
   <header class="topbar">
     <div class="topbar__left">
-      <a class="topbar__back" href="/">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
-        Back
+      <a class="topbar__logo" href="/" aria-label="Latent SpaceMail home">
+        <img src="/images/logo-mark.svg" alt="" height="26" width="26">
       </a>
       <span class="topbar__sep">/</span>
       <span class="topbar__label">Latest Issue</span>
@@ -143,7 +154,14 @@
         Live
       </span>
     </div>
-    <a class="topbar__subscribe" href="/login.html">Get started →</a>
+    <div class="topbar__right">
+      <!-- Shown when signed in -->
+      <div class="topbar__account" id="topbar-account">
+        <a href="/preferences.html" class="topbar__account-link">Preferences</a>
+      </div>
+      <!-- Shown when signed out -->
+      <a class="topbar__cta" href="/login.html" id="topbar-cta">Get started →</a>
+    </div>
   </header>
 
   <iframe
@@ -152,5 +170,15 @@
     src="https://agent-subscriptions-zozrn33sna-nn.a.run.app/preview"
     title="Latest Latent SpaceMail issue"
   ></iframe>
+
+  <script type="module">
+    import { auth, onAuthStateChanged } from './auth.js';
+    onAuthStateChanged(auth, (user) => {
+      if (user && user.emailVerified) {
+        document.getElementById('topbar-cta').style.display     = 'none';
+        document.getElementById('topbar-account').style.display = 'flex';
+      }
+    });
+  </script>
 </body>
 </html>

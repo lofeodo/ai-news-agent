@@ -2,6 +2,153 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* ── Shared top navbar ─────────────────────────────────────────────────────── */
+.topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  height: 48px;
+  background: rgba(15, 15, 15, 0.94);
+  border-bottom: 1px solid #2a2a2a;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  gap: 16px;
+}
+
+.topbar__logo {
+  display: inline-flex;
+  align-items: center;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+.topbar__logo:hover { opacity: 1; }
+.topbar__logo img { display: block; }
+
+.topbar__nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.topbar__nav-link {
+  color: #8b8b8b;
+  text-decoration: none;
+  font-family: 'Menlo', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  transition: color 0.15s;
+  white-space: nowrap;
+}
+.topbar__nav-link:hover { color: #c8b89a; }
+.topbar__nav-link.active { color: #c8b89a; }
+
+.topbar__right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.topbar__auth {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Menlo', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+  font-size: 0.72rem;
+  color: #8b8b8b;
+}
+
+.topbar__auth-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #c8b89a;
+  box-shadow: 0 0 6px rgba(200,184,154,0.7);
+  flex-shrink: 0;
+}
+
+.topbar__auth-email {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar__auth-tier {
+  display: inline-block;
+  font-size: 0.58rem;
+  font-family: 'Bebas Neue', 'Arial Narrow', Arial, sans-serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #0f0f0f;
+  background: #c8b89a;
+  padding: 2px 5px 1px;
+  line-height: 1.6;
+}
+
+.topbar__signout {
+  background: none;
+  border: none;
+  color: #8b8b8b;
+  font-family: 'Menlo', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 0;
+  width: auto;
+  transition: color 0.15s;
+}
+.topbar__signout:hover { color: #c8b89a; }
+
+.topbar__signin {
+  display: inline-flex;
+  align-items: center;
+  font-family: 'Menlo', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0f0f0f;
+  background: #c8b89a;
+  text-decoration: none;
+  padding: 6px 13px;
+  transition: opacity 0.15s, box-shadow 0.2s;
+  white-space: nowrap;
+}
+.topbar__signin:hover {
+  opacity: 0.88;
+  box-shadow: 0 0 12px rgba(200,184,154,0.3);
+}
+
+.topbar__github {
+  display: inline-flex;
+  align-items: center;
+  color: #8b8b8b;
+  transition: color 0.15s;
+  text-decoration: none;
+}
+.topbar__github:hover { color: #c8b89a; }
+.topbar__github svg {
+  width: 14px; height: 14px;
+  fill: currentColor;
+}
+
+@media (max-width: 600px) {
+  .topbar { padding: 0 12px; gap: 8px; }
+  .topbar__nav-link { display: none; }
+  .topbar__nav-link.active { display: block; }
+  .topbar__auth-email { max-width: 90px; }
+  .topbar__github { display: none; }
+}
+
 :root {
   --bg: #0f0f0f;
   --surface: #161616;
@@ -28,7 +175,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 48px 16px 64px;
+  padding: 96px 16px 64px;
   position: relative;
 }
 
@@ -868,12 +1015,30 @@ input[type="password"]:focus {
 }
 .btn-save-sections:disabled { opacity: 0.45; cursor: default; }
 
+/* ── Drag-to-reorder (sections page) ──────────────────────────────────────── */
+.section-row[draggable="true"] { cursor: default; }
+.drag-handle {
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: grab;
+  padding-right: 10px;
+  flex-shrink: 0;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+  user-select: none;
+}
+.section-row:hover .drag-handle { opacity: 0.9; }
+.drag-handle:active { cursor: grabbing; }
+.section-row.drag-over {
+  border-color: var(--accent) !important;
+  background: rgba(200,184,154,0.06);
+}
+.section-row.dragging { opacity: 0.35; }
+
 @media (max-width: 600px) {
   body {
-    padding: 16px 12px 20px;
-  }
-  .wordmark {
-    margin-bottom: 14px;
+    padding: 72px 12px 20px;
   }
   .card {
     padding: 20px 18px 24px;

@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Latent SpaceMail — Newsletter Sections</title>
+  <link rel="icon" type="image/svg+xml" href="/images/logo-mark.svg">
+  <link rel="icon" type="image/png" href="/images/logo-email.png">
+  <link rel="preload" href="/fonts/cormorant-garamond-600.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="bg-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;will-change:transform;"></canvas>
+
+  <div class="card">
+    <h1><span class="prompt">❯</span> Newsletter Sections</h1>
+
+    <p class="subtitle" id="loading-msg">Loading your sections…</p>
+
+    <!-- Account badge -->
+    <div class="account-badge" id="account-badge" style="display:none">
+      <span class="account-badge__dot"></span>
+      <span class="account-badge__email" id="account-email"></span>
+      <span class="tier-badge" id="tier-badge" style="display:none">◆ Premium</span>
+      <button type="button" class="account-badge__signout" id="signout-btn">Sign out</button>
+    </div>
+
+    <!-- Not signed in -->
+    <div id="signin-prompt" style="display:none">
+      <p class="note" style="margin-bottom:16px">Sign in to manage your newsletter sections.</p>
+      <a href="login.html?returnUrl=sections.html" style="display:block;background:var(--accent);color:var(--bg);font-family:var(--label);font-size:0.95rem;letter-spacing:0.18em;text-transform:uppercase;border:none;padding:14px 11px;cursor:pointer;text-align:center;text-decoration:none;transition:opacity 0.15s;">Sign in</a>
+    </div>
+
+    <!-- Free-tier locked notice -->
+    <div id="sections-locked" style="display:none">
+      <p class="note" style="margin-top:8px">Customize which sections appear in your newsletter — a <strong style="color:var(--accent);font-weight:normal">Premium</strong> feature.</p>
+    </div>
+
+    <!-- Premium UI -->
+    <div id="sections-premium" style="display:none">
+      <p class="note" style="margin-bottom:18px">Toggle sections on or off, and drag to reorder them.</p>
+
+      <div id="default-sections-list"></div>
+
+      <div class="sections-subheader">Custom Sections</div>
+      <div id="custom-sections-list"></div>
+
+      <button type="button" class="btn-add-section" id="add-section-btn">+ Add custom section</button>
+
+      <!-- Inline AI refine panel -->
+      <div id="refine-panel" style="display:none">
+        <div class="refine-panel">
+          <p class="note" style="margin-bottom:12px">What should this section cover?</p>
+          <div class="field" style="margin-bottom:10px">
+            <input type="text" id="raw-topic-input" placeholder="e.g. SpaceX, climate AI, robotics…" maxlength="200" autocomplete="off">
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button type="button" class="btn-refine" id="refine-btn">Refine with AI →</button>
+            <button type="button" class="btn-action-outline" id="cancel-refine-btn">Cancel</button>
+          </div>
+          <div id="refine-loading" style="display:none;margin-top:10px">
+            <span class="note">Refining…</span>
+          </div>
+          <div id="refine-result" style="display:none;margin-top:14px">
+            <p class="note" style="margin-bottom:8px">AI suggests:</p>
+            <p class="refine-suggestion" id="refined-topic-display"></p>
+            <div class="refine-actions">
+              <button type="button" class="btn-use-suggestion" id="use-suggestion-btn">Use this</button>
+              <button type="button" class="btn-action-outline" id="edit-suggestion-btn">Edit</button>
+              <button type="button" class="btn-action-outline" id="retry-refine-btn">Try again</button>
+            </div>
+          </div>
+          <div class="msg error" id="refine-error" style="margin-top:8px;display:none"></div>
+        </div>
+      </div>
+
+      <button type="button" class="btn-save-sections" id="save-sections-btn">Save sections</button>
+      <div class="msg" id="sections-msg" style="margin-top:10px"></div>
+    </div>
+  </div>
+
+  <script src="bg.js"></script>
+  <script type="module" src="nav.js"></script>
+  <script type="module">
+    import { auth, onAuthStateChanged, signOut, authFetch } from './auth.js';
+
+    const API = 'https://agent-subscriptions-zozrn33sna-nn.a.run.app';
+
+    const loadingMsg    = document.getElementById('loading-msg');
+    const accountBadge  = document.getElementById('account-badge');
+    const accountEmail  = document.getElementById('account-email');
+    const tierBadge     = document.getElementById('tier-badge');
+    const signinPrompt  = document.getElementById('signin-prompt');
+    const sectionsLocked  = document.getElementById('sections-locked');
+    const sectionsPrem    = document.getElementById('sections-premium');
+
+    let defaultSections = [];
+    let pendingEnabled  = null;  // null = all on; array preserving order when customized
+    let pendingCustom   = [];
+    let currentRefined  = '';
+    let dragSrcIndex    = null;
+    let dragList        = null;  // 'default' | 'custom'
+
+    // ── Auth gate ────────────────────────────────────────────────────────────
+
+    let resolved = false;
+    const timeout = setTimeout(() => {
+      if (!resolved) { resolved = true; showSignin(); }
+    }, 3000);
+
+    onAuthStateChanged(auth, async (user) => {
+      if (resolved) return;
+      resolved = true;
+      clearTimeout(timeout);
+
+      if (!user || !user.emailVerified) { showSignin(); return; }
+
+      accountEmail.textContent   = user.email;
+      accountBadge.style.display = 'flex';
+
+      try {
+        const res  = await authFetch(`${API}/auth/sections`);
+        loadingMsg.style.display = 'none';
+        if (!res.ok) {
+          if (res.status === 403) { showLocked(); return; }
+          showError('Unable to load sections. Please try again.');
+          return;
+        }
+        const data = await res.json();
+        // 403 from /auth/me is handled above; if we got here we're premium
+        tierBadge.style.display = 'inline-block';
+        defaultSections = data.default_sections || [];
+        const cfg = data.section_config;
+        if (cfg) {
+          pendingEnabled = cfg.enabled_sections || null;
+          pendingCustom  = cfg.custom_sections  || [];
+        }
+        sectionsPrem.style.display = 'block';
+        renderSections();
+      } catch {
+        loadingMsg.style.display = 'none';
+        showError('Connection error. Please check your internet and try again.');
+      }
+    });
+
+    function showSignin() {
+      loadingMsg.style.display   = 'none';
+      signinPrompt.style.display = 'block';
+    }
+
+    function showLocked() {
+      loadingMsg.style.display    = 'none';
+      sectionsLocked.style.display = 'block';
+    }
+
+    function showError(msg) {
+      loadingMsg.textContent    = msg;
+      loadingMsg.style.color    = 'var(--error)';
+    }
+
+    document.getElementById('signout-btn').addEventListener('click', async () => {
+      await signOut(auth);
+      location.href = '/';
+    });
+
+    // ── Render ───────────────────────────────────────────────────────────────
+
+    function getOrderedSections() {
+      if (!pendingEnabled) return [...defaultSections];
+      // preserve saved order; append any new sections not yet in saved list
+      const known = new Set(pendingEnabled);
+      const extra = defaultSections.filter(s => !known.has(s));
+      return [...pendingEnabled.filter(s => defaultSections.includes(s)), ...extra];
+    }
+
+    function renderSections() {
+      const listEl = document.getElementById('default-sections-list');
+      listEl.innerHTML = '';
+      const ordered = getOrderedSections();
+      const enabledSet = pendingEnabled ? new Set(pendingEnabled) : new Set(defaultSections);
+
+      for (let i = 0; i < ordered.length; i++) {
+        const name = ordered[i];
+        const isOn = enabledSet.has(name);
+        const row  = document.createElement('div');
+        row.className = 'section-row';
+        row.draggable = true;
+        row.dataset.index = i;
+        row.dataset.name  = name;
+        row.innerHTML = `
+          <span class="drag-handle" aria-hidden="true">⠿</span>
+          <span class="section-row__name">${name}</span>
+          <label class="toggle-switch" aria-label="${name}">
+            <input type="checkbox" ${isOn ? 'checked' : ''} data-section="${name}" role="switch">
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          </label>`;
+        attachDragEvents(row, 'default');
+        listEl.appendChild(row);
+      }
+      renderCustomSections();
+    }
+
+    function renderCustomSections() {
+      const listEl = document.getElementById('custom-sections-list');
+      listEl.innerHTML = '';
+      if (pendingCustom.length === 0) {
+        listEl.innerHTML = '<p class="note" style="font-size:0.78rem;margin-bottom:10px;opacity:0.7">No custom sections yet.</p>';
+        return;
+      }
+      for (let i = 0; i < pendingCustom.length; i++) {
+        const cs   = pendingCustom[i];
+        const card = document.createElement('div');
+        card.className   = 'custom-section-card';
+        card.draggable   = true;
+        card.dataset.index = i;
+        card.dataset.id    = cs.id;
+        card.innerHTML = `
+          <span class="drag-handle" aria-hidden="true">⠿</span>
+          <span class="custom-section-card__name">${cs.refined_topic}</span>
+          <button type="button" class="custom-section-card__delete" aria-label="Remove ${cs.refined_topic}">✕</button>`;
+        card.querySelector('.custom-section-card__delete').addEventListener('click', () => {
+          pendingCustom = pendingCustom.filter(c => c.id !== cs.id);
+          renderCustomSections();
+        });
+        attachDragEvents(card, 'custom');
+        listEl.appendChild(card);
+      }
+    }
+
+    // ── Drag-to-reorder ──────────────────────────────────────────────────────
+
+    function attachDragEvents(el, listType) {
+      el.addEventListener('dragstart', (e) => {
+        dragSrcIndex = parseInt(el.dataset.index, 10);
+        dragList     = listType;
+        el.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      el.addEventListener('dragend', () => {
+        el.classList.remove('dragging');
+        document.querySelectorAll('.drag-over').forEach(r => r.classList.remove('drag-over'));
+      });
+      el.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (dragList !== listType) return;
+        document.querySelectorAll('.drag-over').forEach(r => r.classList.remove('drag-over'));
+        el.classList.add('drag-over');
+      });
+      el.addEventListener('drop', (e) => {
+        e.preventDefault();
+        el.classList.remove('drag-over');
+        if (dragList !== listType) return;
+        const destIndex = parseInt(el.dataset.index, 10);
+        if (dragSrcIndex === destIndex) return;
+
+        if (listType === 'default') {
+          const ordered = getOrderedSections();
+          const enabledSet = pendingEnabled ? new Set(pendingEnabled) : new Set(defaultSections);
+          const [moved] = ordered.splice(dragSrcIndex, 1);
+          ordered.splice(destIndex, 0, moved);
+          pendingEnabled = ordered.filter(s => enabledSet.has(s));
+          // keep any enabled sections that were disabled but in list
+          const allEnabled = [...enabledSet].filter(s => !pendingEnabled.includes(s));
+          if (allEnabled.length === 0 && ordered.every(s => enabledSet.has(s))) {
+            pendingEnabled = null; // all on = default
+          } else {
+            pendingEnabled = ordered.map(s => s); // track full order
+          }
+          renderSections();
+        } else {
+          const [moved] = pendingCustom.splice(dragSrcIndex, 1);
+          pendingCustom.splice(destIndex, 0, moved);
+          renderCustomSections();
+        }
+      });
+    }
+
+    // ── Add custom section ───────────────────────────────────────────────────
+
+    document.getElementById('add-section-btn').addEventListener('click', () => {
+      const panel = document.getElementById('refine-panel');
+      const open  = panel.style.display !== 'none';
+      panel.style.display = open ? 'none' : 'block';
+      if (!open) {
+        document.getElementById('raw-topic-input').value            = '';
+        document.getElementById('refine-result').style.display      = 'none';
+        document.getElementById('refine-loading').style.display     = 'none';
+        document.getElementById('refine-error').style.display       = 'none';
+        document.getElementById('refine-error').textContent         = '';
+        document.getElementById('raw-topic-input').focus();
+      }
+    });
+
+    document.getElementById('cancel-refine-btn').addEventListener('click', () => {
+      document.getElementById('refine-panel').style.display = 'none';
+    });
+
+    async function doRefine() {
+      const rawTopic  = document.getElementById('raw-topic-input').value.trim();
+      if (!rawTopic) return;
+      const refineBtn = document.getElementById('refine-btn');
+      const loadingEl = document.getElementById('refine-loading');
+      const resultEl  = document.getElementById('refine-result');
+      const errorEl   = document.getElementById('refine-error');
+      refineBtn.disabled      = true;
+      loadingEl.style.display = 'block';
+      resultEl.style.display  = 'none';
+      errorEl.style.display   = 'none';
+      try {
+        const res = await authFetch(`${API}/auth/sections/refine`, {
+          method: 'POST',
+          body: JSON.stringify({ raw_topic: rawTopic }),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          errorEl.textContent   = body.detail === 'ai_unavailable'
+            ? 'AI is unavailable right now. Please try again.'
+            : 'Something went wrong. Please try again.';
+          errorEl.style.display = 'block';
+          return;
+        }
+        const data = await res.json();
+        currentRefined = data.refined_topic;
+        document.getElementById('refined-topic-display').textContent = currentRefined;
+        resultEl.style.display = 'block';
+      } catch {
+        errorEl.textContent   = 'Something went wrong. Please try again.';
+        errorEl.style.display = 'block';
+      } finally {
+        refineBtn.disabled      = false;
+        loadingEl.style.display = 'none';
+      }
+    }
+
+    document.getElementById('refine-btn').addEventListener('click', doRefine);
+    document.getElementById('raw-topic-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); doRefine(); }
+    });
+
+    function addCustomSection(refined, raw) {
+      const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+      pendingCustom = [...pendingCustom, { id, raw_input: raw, refined_topic: refined }];
+      renderCustomSections();
+      document.getElementById('refine-panel').style.display   = 'none';
+      document.getElementById('raw-topic-input').value        = '';
+      document.getElementById('refine-result').style.display  = 'none';
+    }
+
+    document.getElementById('use-suggestion-btn').addEventListener('click', () => {
+      addCustomSection(currentRefined, document.getElementById('raw-topic-input').value.trim());
+    });
+    document.getElementById('edit-suggestion-btn').addEventListener('click', () => {
+      document.getElementById('raw-topic-input').value       = currentRefined;
+      document.getElementById('refine-result').style.display = 'none';
+      document.getElementById('raw-topic-input').focus();
+    });
+    document.getElementById('retry-refine-btn').addEventListener('click', () => {
+      document.getElementById('refine-result').style.display = 'none';
+      doRefine();
+    });
+
+    // ── Save ─────────────────────────────────────────────────────────────────
+
+    document.getElementById('save-sections-btn').addEventListener('click', async () => {
+      const saveBtn    = document.getElementById('save-sections-btn');
+      const sectionsMsg = document.getElementById('sections-msg');
+      saveBtn.disabled        = true;
+      sectionsMsg.className   = 'msg';
+      sectionsMsg.style.display = 'none';
+
+      // Collect current order and enabled state from DOM
+      const rows = document.querySelectorAll('#default-sections-list .section-row');
+      const orderedNames = [...rows].map(r => r.dataset.name);
+      const enabledNames = [...rows]
+        .filter(r => r.querySelector('input[type="checkbox"]').checked)
+        .map(r => r.dataset.name);
+      const allOn = enabledNames.length === defaultSections.length;
+
+      try {
+        const res = await authFetch(`${API}/auth/sections`, {
+          method: 'POST',
+          body: JSON.stringify({
+            section_config: {
+              enabled_sections: allOn ? null : enabledNames,
+              custom_sections: pendingCustom,
+            },
+          }),
+        });
+        if (res.ok) {
+          pendingEnabled = allOn ? null : orderedNames;
+          sectionsMsg.textContent   = 'Sections saved.';
+          sectionsMsg.className     = 'msg visible success';
+          sectionsMsg.style.display = 'block';
+        } else {
+          sectionsMsg.textContent   = 'Failed to save. Please try again.';
+          sectionsMsg.className     = 'msg visible error';
+          sectionsMsg.style.display = 'block';
+        }
+      } catch {
+        sectionsMsg.textContent   = 'Something went wrong. Please try again.';
+        sectionsMsg.className     = 'msg visible error';
+        sectionsMsg.style.display = 'block';
+      } finally {
+        saveBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

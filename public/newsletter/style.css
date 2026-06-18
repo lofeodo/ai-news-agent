@@ -143,8 +143,8 @@
 
 @media (max-width: 600px) {
   .topbar { padding: 0 12px; gap: 8px; }
-  .topbar__nav-link { display: none; }
-  .topbar__nav-link.active { display: block; }
+  .topbar__nav-link { display: none !important; }
+  .topbar__nav-link.active { display: block !important; }
   .topbar__auth-email { max-width: 90px; }
   .topbar__github { display: none; }
 }

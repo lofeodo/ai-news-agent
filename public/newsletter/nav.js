@@ -13,46 +13,29 @@ document.querySelectorAll('.topbar__nav-link[data-href]').forEach(a => {
 });
 
 // Auth state
-const authEl      = document.getElementById('topbar-auth');
-const signinEl    = document.getElementById('topbar-signin');
-const emailEl     = document.getElementById('topbar-email');
-const tierEl      = document.getElementById('topbar-tier');
-const sectionsEl  = document.getElementById('topbar-sections');
-const signoutBtn  = document.getElementById('topbar-signout');
-
-let resolved = false;
-const timeout = setTimeout(() => {
-  if (!resolved) { resolved = true; showSignedOut(); }
-}, 2500);
+const authEl     = document.getElementById('topbar-auth');
+const signinEl   = document.getElementById('topbar-signin');
+const emailEl    = document.getElementById('topbar-email');
+const tierEl     = document.getElementById('topbar-tier');
+const signoutBtn = document.getElementById('topbar-signout');
 
 onAuthStateChanged(auth, async (user) => {
-  if (resolved) return;
-  resolved = true;
-  clearTimeout(timeout);
+  if (!user || !user.emailVerified) return; // sign-in button already visible by default
 
-  if (!user || !user.emailVerified) { showSignedOut(); return; }
+  // Phase 1: show email + sign-out immediately, without waiting for tier fetch
+  if (signinEl) signinEl.style.display = 'none';
+  if (authEl)   authEl.style.display   = 'flex';
+  if (emailEl)  emailEl.textContent    = user.email;
 
-  let tier = 'free';
+  // Phase 2: fetch tier and show premium badge if applicable
   try {
     const res = await authFetch(`${API}/auth/me`);
-    if (res.ok) tier = (await res.json()).tier || 'free';
+    if (res.ok) {
+      const tier = (await res.json()).tier || 'free';
+      if (tier === 'premium' && tierEl) tierEl.style.display = 'inline-block';
+    }
   } catch {}
-
-  showSignedIn(user, tier);
 });
-
-function showSignedOut() {
-  if (authEl)   authEl.style.display   = 'none';
-  if (signinEl) signinEl.style.display = 'flex';
-}
-
-function showSignedIn(user, tier) {
-  if (signinEl) signinEl.style.display  = 'none';
-  if (authEl)   authEl.style.display    = 'flex';
-  if (emailEl)  emailEl.textContent     = user.email;
-  if (tierEl && tier === 'premium') tierEl.style.display = 'inline-block';
-  if (sectionsEl) sectionsEl.style.display = 'block';
-}
 
 if (signoutBtn) {
   signoutBtn.addEventListener('click', async () => {

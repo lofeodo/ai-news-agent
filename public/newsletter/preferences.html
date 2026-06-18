@@ -64,42 +64,45 @@
       <div class="msg" id="subscribe-msg" style="margin-top:14px;"></div>
     </div>
 
-    <!-- Preferences form (populated from either auth or token flow) -->
-    <form id="prefs-form" style="display:none" novalidate>
+    <!-- Content preferences (shown when subscribed, both flows) -->
+    <div class="prefs-section" id="content-section" style="display:none">
+      <div class="prefs-section__header">Content</div>
       <div class="email-display" id="email-display" style="display:none"></div>
+      <form id="prefs-form" novalidate>
+        <div class="checkboxes">
+          <label class="check-row">
+            <input type="checkbox" id="include_french" name="include_french">
+            <span>French-language articles<span class="check-desc">AI coverage from French-language sources</span></span>
+          </label>
+          <label class="check-row">
+            <input type="checkbox" id="include_canada" name="include_canada">
+            <span>Canada &amp; Montréal section<span class="check-desc">Local AI news from across Canada</span></span>
+          </label>
+        </div>
+        <button type="submit" id="save-btn">Save preferences</button>
+        <div class="msg" id="save-msg"></div>
+      </form>
+    </div>
 
-      <div class="checkboxes">
-        <label as="div">Newsletter content</label>
-        <label class="check-row">
-          <input type="checkbox" id="include_french" name="include_french">
-          <span>French-language articles<span class="check-desc">AI coverage from French-language sources</span></span>
-        </label>
-        <label class="check-row">
-          <input type="checkbox" id="include_canada" name="include_canada">
-          <span>Canada &amp; Montréal section<span class="check-desc">Local AI news from across Canada</span></span>
-        </label>
-      </div>
+    <!-- Newsletter sections (premium, account flow only) -->
+    <div class="prefs-section" id="sections-section" style="display:none">
+      <div class="prefs-section__header">Newsletter Sections <span class="tier-badge" style="margin-left:6px;vertical-align:middle">◆ Premium</span></div>
+      <a href="/sections.html" class="prefs-feature-card">
+        <div class="prefs-feature-card__body">
+          <div class="prefs-feature-card__title">Customize your sections</div>
+          <div class="prefs-feature-card__desc">Reorder, enable, or disable default sections. Add custom topics and let AI refine them into focused coverage.</div>
+        </div>
+        <span class="prefs-feature-card__arrow">→</span>
+      </a>
+    </div>
 
-      <button type="submit" id="save-btn">Save preferences</button>
-      <div class="msg" id="save-msg"></div>
-
-      <!-- Unsubscribe section (account flow only) -->
-      <div id="unsub-section" style="display:none">
-        <hr class="divider">
-        <p class="note" style="margin-bottom:14px">Want to stop receiving the newsletter?</p>
-        <button type="button" id="unsub-btn" style="background:transparent;border:1px solid var(--error);color:var(--error);width:100%;font-family:var(--font);font-size:0.82rem;letter-spacing:0.1em;text-transform:uppercase;padding:10px;cursor:pointer;transition:background 0.15s;">Unsubscribe</button>
-        <div class="msg" id="unsub-msg"></div>
-      </div>
-
-      <!-- Sections link (premium, account flow only) -->
-      <div id="sections-link-row" style="display:none">
-        <hr class="divider">
-        <a href="/sections.html" style="display:flex;align-items:center;justify-content:space-between;color:var(--muted);text-decoration:none;font-size:0.84rem;transition:color 0.15s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">
-          <span>Customize newsletter sections <span class="tier-badge" style="margin-left:6px">◆ Premium</span></span>
-          <span style="margin-left:12px">→</span>
-        </a>
-      </div>
-    </form>
+    <!-- Subscription management (account flow only) -->
+    <div class="prefs-section prefs-section--danger" id="subscription-section" style="display:none">
+      <div class="prefs-section__header">Subscription</div>
+      <p class="note" style="margin-bottom:14px">Want to stop receiving the newsletter?</p>
+      <button type="button" id="unsub-btn" style="background:transparent;border:1px solid var(--error);color:var(--error);width:100%;font-family:var(--font);font-size:0.82rem;letter-spacing:0.1em;text-transform:uppercase;padding:10px;cursor:pointer;transition:background 0.15s;">Unsubscribe</button>
+      <div class="msg" id="unsub-msg"></div>
+    </div>
 
     <!-- Request new link (token flow fallback) -->
     <div id="new-link-section" style="display:none">
@@ -130,24 +133,25 @@
     const API   = 'https://agent-subscriptions-zozrn33sna-nn.a.run.app';
     const token = new URLSearchParams(location.search).get('token') || '';
 
-    const loadingMsg       = document.getElementById('loading-msg');
-    const accountBadge     = document.getElementById('account-badge');
-    const accountEmail     = document.getElementById('account-email');
-    const invalidMsg       = document.getElementById('invalid-msg');
-    const notSubNotice     = document.getElementById('not-subscribed-notice');
-    const subscribeBtn     = document.getElementById('subscribe-btn');
-    const subscribeMsg     = document.getElementById('subscribe-msg');
-    const prefsForm        = document.getElementById('prefs-form');
-    const emailDisplay     = document.getElementById('email-display');
-    const saveBtn          = document.getElementById('save-btn');
-    const saveMsg          = document.getElementById('save-msg');
-    const unsubSection     = document.getElementById('unsub-section');
-    const unsubBtn         = document.getElementById('unsub-btn');
-    const unsubMsg         = document.getElementById('unsub-msg');
-    const newLinkSection   = document.getElementById('new-link-section');
-    const signinPrompt     = document.getElementById('signin-prompt');
-    const tierBadge        = document.getElementById('tier-badge');
-    const sectionsLinkRow  = document.getElementById('sections-link-row');
+    const loadingMsg         = document.getElementById('loading-msg');
+    const accountBadge       = document.getElementById('account-badge');
+    const accountEmail       = document.getElementById('account-email');
+    const invalidMsg         = document.getElementById('invalid-msg');
+    const notSubNotice       = document.getElementById('not-subscribed-notice');
+    const subscribeBtn       = document.getElementById('subscribe-btn');
+    const subscribeMsg       = document.getElementById('subscribe-msg');
+    const contentSection     = document.getElementById('content-section');
+    const prefsForm          = document.getElementById('prefs-form');
+    const emailDisplay       = document.getElementById('email-display');
+    const saveBtn            = document.getElementById('save-btn');
+    const saveMsg            = document.getElementById('save-msg');
+    const subscriptionSection = document.getElementById('subscription-section');
+    const unsubBtn           = document.getElementById('unsub-btn');
+    const unsubMsg           = document.getElementById('unsub-msg');
+    const newLinkSection     = document.getElementById('new-link-section');
+    const signinPrompt       = document.getElementById('signin-prompt');
+    const tierBadge          = document.getElementById('tier-badge');
+    const sectionsSection    = document.getElementById('sections-section');
 
     let authMode = false; // true = using Firebase Auth, false = token flow
     let userTier = 'free';
@@ -162,7 +166,7 @@
       invalidMsg.style.display = 'none';
       document.getElementById('include_french').checked = !!(prefs && prefs.include_french);
       document.getElementById('include_canada').checked = !!(prefs && prefs.include_canada);
-      prefsForm.style.display = 'block';
+      contentSection.style.display = 'block';
     }
 
     function showInvalid() {
@@ -208,11 +212,11 @@
             notSubNotice.style.display = 'block';
             return;
           }
-          unsubSection.style.display = 'block';
+          subscriptionSection.style.display = 'block';
           showPrefsForm(data.prefs);
 
           if (userTier === 'premium') {
-            sectionsLinkRow.style.display = 'block';
+            sectionsSection.style.display = 'block';
           }
         } catch {
           loadingMsg.style.display = 'none';
@@ -292,7 +296,9 @@
         if (res.ok) {
           unsubMsg.textContent  = 'You\'ve been unsubscribed.';
           unsubMsg.className    = 'msg visible success';
-          prefsForm.style.display = 'none';
+          contentSection.style.display = 'none';
+          subscriptionSection.style.display = 'none';
+          sectionsSection.style.display = 'none';
           notSubNotice.style.display = 'block';
         } else {
           unsubMsg.textContent = 'Something went wrong. Please try again.';

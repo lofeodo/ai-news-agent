@@ -1080,3 +1080,63 @@ input[type="password"]:focus {
     gap: 6px 20px;
   }
 }
+
+/* ── Preferences page sections ───────────────────────────────────────────── */
+.prefs-section {
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border);
+}
+.prefs-section__header {
+  font-family: var(--label);
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+.prefs-section--danger .prefs-section__header {
+  color: color-mix(in srgb, var(--error) 55%, var(--muted));
+}
+
+/* ── Premium feature card ─────────────────────────────────────────────────── */
+.prefs-feature-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--border);
+  padding: 16px 18px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.18s;
+}
+.prefs-feature-card:hover {
+  border-color: var(--accent);
+}
+.prefs-feature-card__body {
+  flex: 1;
+}
+.prefs-feature-card__title {
+  font-size: 0.88rem;
+  color: var(--text);
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.prefs-feature-card__desc {
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.prefs-feature-card__arrow {
+  font-size: 1rem;
+  color: var(--muted);
+  flex-shrink: 0;
+  transition: color 0.18s, transform 0.18s;
+}
+.prefs-feature-card:hover .prefs-feature-card__arrow {
+  color: var(--accent);
+  transform: translateX(3px);
+}

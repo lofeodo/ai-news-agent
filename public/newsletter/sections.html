@@ -247,9 +247,6 @@
     function showLocked() {
       loadingMsg.style.display    = 'none';
       sectionsLocked.style.display = 'block';
-      document.getElementById('upgrade-btn').addEventListener('click', () => {
-        document.getElementById('upgrade-soon').classList.add('visible');
-      });
     }
 
     function showError(msg) {
@@ -260,6 +257,10 @@
     document.getElementById('signout-btn').addEventListener('click', async () => {
       await signOut(auth);
       location.href = '/';
+    });
+
+    document.getElementById('upgrade-btn').addEventListener('click', () => {
+      document.getElementById('upgrade-soon').classList.add('visible');
     });
 
     // ── Render ───────────────────────────────────────────────────────────────

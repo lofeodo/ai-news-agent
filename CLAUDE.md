@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Git Workflow
+
+Create incremental git commits with individual changes — one commit per meaningful unit (e.g., add CSS, update one page, create a new file), not one big commit at the end of a feature. Push after each commit.
+
 ## What This Project Does
 
 Weekly AI newsletter pipeline. Six agents fetch ArXiv papers + news, score/summarize them with Claude, compose an HTML email, and send it via SendGrid. A separate subscription service manages subscriber preferences.

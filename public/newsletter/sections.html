@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Latent SpaceMail — Newsletter Sections</title>
+  <title>Latent SpaceMail — Customize</title>
   <link rel="icon" type="image/svg+xml" href="/images/logo-mark.svg">
   <link rel="icon" type="image/png" href="/images/logo-email.png">
   <link rel="preload" href="/fonts/cormorant-garamond-600.woff2" as="font" type="font/woff2" crossorigin>
@@ -37,7 +37,7 @@
   </header>
 
   <div class="card">
-    <h1><span class="prompt">❯</span> Newsletter Sections</h1>
+    <h1><span class="prompt">❯</span> Customize newsletter</h1>
 
     <p class="subtitle" id="loading-msg">Loading your sections…</p>
 
@@ -49,20 +49,92 @@
       <button type="button" class="account-badge__signout" id="signout-btn">Sign out</button>
     </div>
 
-    <!-- Not signed in -->
+    <!-- Not signed in: preview + sign-in CTA -->
     <div id="signin-prompt" style="display:none">
-      <p class="note" style="margin-bottom:16px">Sign in to manage your newsletter sections.</p>
-      <a href="login.html?returnUrl=sections.html" style="display:block;background:var(--accent);color:var(--bg);font-family:var(--label);font-size:0.95rem;letter-spacing:0.18em;text-transform:uppercase;border:none;padding:14px 11px;cursor:pointer;text-align:center;text-decoration:none;transition:opacity 0.15s;">Sign in</a>
+      <p class="note" style="margin-bottom:18px">Reorder, enable, and customize the sections in your AI news digest.</p>
+      <div class="sections-preview" aria-hidden="true">
+        <div class="sections-preview-item">
+          <span class="sections-preview-drag">⠿</span>
+          <span class="sections-preview-name">Model &amp; Product Releases</span>
+          <span class="sections-preview-toggle"></span>
+        </div>
+        <div class="sections-preview-item">
+          <span class="sections-preview-drag">⠿</span>
+          <span class="sections-preview-name">Industry &amp; Business</span>
+          <span class="sections-preview-toggle"></span>
+        </div>
+        <div class="sections-preview-item">
+          <span class="sections-preview-drag">⠿</span>
+          <span class="sections-preview-name">Open Source &amp; Tools</span>
+          <span class="sections-preview-toggle"></span>
+        </div>
+        <div class="sections-preview-item">
+          <span class="sections-preview-drag">⠿</span>
+          <span class="sections-preview-name">Safety &amp; Alignment</span>
+          <span class="sections-preview-toggle"></span>
+        </div>
+        <div class="sections-preview-custom">+ Custom AI topics</div>
+      </div>
+      <a href="login.html?returnUrl=sections.html" class="btn-primary-action" style="margin-top:18px">Sign in →</a>
     </div>
 
-    <!-- Free-tier locked notice -->
+    <!-- Free-tier: preview + upgrade gate -->
     <div id="sections-locked" style="display:none">
-      <p class="note" style="margin-top:8px">Customize which sections appear in your newsletter — a <strong style="color:var(--accent);font-weight:normal">Premium</strong> feature.</p>
+      <p class="note" style="margin-bottom:18px">Reorder, enable, and customize the sections in your AI news digest.</p>
+      <div class="sections-preview" aria-hidden="true">
+        <div class="sections-preview-item">
+          <span class="sections-preview-drag">⠿</span>
+          <span class="sections-preview-name">Model &amp; Product Releases</span>
+          <span class="sections-preview-toggle"></span>
+        </div>
+        <div class="sections-preview-item">
+          <span class="sections-preview-drag">⠿</span>
+          <span class="sections-preview-name">Industry &amp; Business</span>
+          <span class="sections-preview-toggle"></span>
+        </div>
+        <div class="sections-preview-item">
+          <span class="sections-preview-drag">⠿</span>
+          <span class="sections-preview-name">Policy, Law &amp; Regulation</span>
+          <span class="sections-preview-toggle"></span>
+        </div>
+        <div class="sections-preview-item">
+          <span class="sections-preview-drag">⠿</span>
+          <span class="sections-preview-name">Open Source &amp; Tools</span>
+          <span class="sections-preview-toggle"></span>
+        </div>
+        <div class="sections-preview-item">
+          <span class="sections-preview-drag">⠿</span>
+          <span class="sections-preview-name">Safety &amp; Alignment</span>
+          <span class="sections-preview-toggle"></span>
+        </div>
+        <div class="sections-preview-item">
+          <span class="sections-preview-drag">⠿</span>
+          <span class="sections-preview-name">Society &amp; Culture</span>
+          <span class="sections-preview-toggle"></span>
+        </div>
+        <div class="sections-preview-item">
+          <span class="sections-preview-drag">⠿</span>
+          <span class="sections-preview-name">Research Spotlights</span>
+          <span class="sections-preview-toggle"></span>
+        </div>
+        <div class="sections-preview-custom">+ Custom AI topics</div>
+      </div>
+      <div class="upgrade-gate">
+        <div class="upgrade-gate__badge">◆ Premium</div>
+        <h2 class="upgrade-gate__headline">Customize your AI news digest</h2>
+        <ul class="upgrade-gate__benefits">
+          <li>Reorder sections by priority</li>
+          <li>Enable or disable specific topics</li>
+          <li>Add custom AI-refined coverage areas</li>
+        </ul>
+        <button type="button" class="upgrade-gate__btn" id="upgrade-btn">Upgrade to Premium →</button>
+        <p class="upgrade-gate__soon" id="upgrade-soon">Upgrade plans coming soon — stay tuned.</p>
+      </div>
     </div>
 
     <!-- Premium UI -->
     <div id="sections-premium" style="display:none">
-      <p class="note" style="margin-bottom:18px">Toggle sections on or off, and drag to reorder them.</p>
+      <p class="note" style="margin-bottom:18px">Drag to reorder, toggle to enable or disable, and add custom AI-refined topics.</p>
 
       <div id="default-sections-list"></div>
 
@@ -175,6 +247,9 @@
     function showLocked() {
       loadingMsg.style.display    = 'none';
       sectionsLocked.style.display = 'block';
+      document.getElementById('upgrade-btn').addEventListener('click', () => {
+        document.getElementById('upgrade-soon').classList.add('visible');
+      });
     }
 
     function showError(msg) {

@@ -84,18 +84,6 @@
       </form>
     </div>
 
-    <!-- Newsletter sections (premium, account flow only) -->
-    <div class="prefs-section" id="sections-section" style="display:none">
-      <div class="prefs-section__header">Newsletter Sections <span class="tier-badge" style="margin-left:6px;vertical-align:middle">◆ Premium</span></div>
-      <a href="/sections.html" class="prefs-feature-card">
-        <div class="prefs-feature-card__body">
-          <div class="prefs-feature-card__title">Customize your sections</div>
-          <div class="prefs-feature-card__desc">Reorder, enable, or disable default sections. Add custom topics and let AI refine them into focused coverage.</div>
-        </div>
-        <span class="prefs-feature-card__arrow">→</span>
-      </a>
-    </div>
-
     <!-- Subscription management (account flow only) -->
     <div class="prefs-section prefs-section--danger" id="subscription-section" style="display:none">
       <div class="prefs-section__header">Subscription</div>
@@ -151,7 +139,6 @@
     const newLinkSection     = document.getElementById('new-link-section');
     const signinPrompt       = document.getElementById('signin-prompt');
     const tierBadge          = document.getElementById('tier-badge');
-    const sectionsSection    = document.getElementById('sections-section');
 
     let authMode = false; // true = using Firebase Auth, false = token flow
     let userTier = 'free';
@@ -215,9 +202,6 @@
           subscriptionSection.style.display = 'block';
           showPrefsForm(data.prefs);
 
-          if (userTier === 'premium') {
-            sectionsSection.style.display = 'block';
-          }
         } catch {
           loadingMsg.style.display = 'none';
           invalidMsg.textContent   = 'Connection error. Please check your internet and try again.';
@@ -298,7 +282,6 @@
           unsubMsg.className    = 'msg visible success';
           contentSection.style.display = 'none';
           subscriptionSection.style.display = 'none';
-          sectionsSection.style.display = 'none';
           notSubNotice.style.display = 'block';
         } else {
           unsubMsg.textContent = 'Something went wrong. Please try again.';

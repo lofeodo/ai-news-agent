@@ -39,7 +39,8 @@
   <div class="card">
     <h1><span class="prompt">❯</span> Customize newsletter</h1>
 
-    <p class="subtitle" id="loading-msg">Loading your sections…</p>
+    <!-- Shown only while fetching sections for a signed-in user -->
+    <p class="subtitle" id="loading-msg" style="display:none">Loading your sections…</p>
 
     <!-- Account badge -->
     <div class="account-badge" id="account-badge" style="display:none">
@@ -49,8 +50,8 @@
       <button type="button" class="account-badge__signout" id="signout-btn">Sign out</button>
     </div>
 
-    <!-- Not signed in: preview + sign-in CTA -->
-    <div id="signin-prompt" style="display:none">
+    <!-- Not signed in: preview + sign-in CTA (shown immediately by default) -->
+    <div id="signin-prompt">
       <p class="note" style="margin-bottom:18px">Reorder, enable, and customize the sections in your AI news digest.</p>
       <div class="sections-preview" aria-hidden="true">
         <div class="sections-preview-item">
@@ -198,19 +199,22 @@
     let dragList        = null;  // 'default' | 'custom'
 
     // ── Auth gate ────────────────────────────────────────────────────────────
+    // signin-prompt is visible by default so content is instant.
+    // We only swap it out once we confirm the user is signed in.
 
     let resolved = false;
-    const timeout = setTimeout(() => {
-      if (!resolved) { resolved = true; showSignin(); }
-    }, 3000);
+    const timeout = setTimeout(() => { resolved = true; }, 2000);
 
     onAuthStateChanged(auth, async (user) => {
       if (resolved) return;
       resolved = true;
       clearTimeout(timeout);
 
-      if (!user || !user.emailVerified) { showSignin(); return; }
+      if (!user || !user.emailVerified) { return; } // signin-prompt already showing
 
+      // Confirmed signed-in: swap to loading state while we fetch sections
+      signinPrompt.style.display = 'none';
+      loadingMsg.style.display   = 'block';
       accountEmail.textContent   = user.email;
       accountBadge.style.display = 'flex';
 
@@ -223,7 +227,6 @@
           return;
         }
         const data = await res.json();
-        // 403 from /auth/me is handled above; if we got here we're premium
         tierBadge.style.display = 'inline-block';
         defaultSections = data.default_sections || [];
         const cfg = data.section_config;
@@ -234,24 +237,19 @@
         sectionsPrem.style.display = 'block';
         renderSections();
       } catch {
-        loadingMsg.style.display = 'none';
         showError('Connection error. Please check your internet and try again.');
       }
     });
 
-    function showSignin() {
-      loadingMsg.style.display   = 'none';
-      signinPrompt.style.display = 'block';
-    }
-
     function showLocked() {
-      loadingMsg.style.display    = 'none';
+      loadingMsg.style.display     = 'none';
       sectionsLocked.style.display = 'block';
     }
 
     function showError(msg) {
-      loadingMsg.textContent    = msg;
-      loadingMsg.style.color    = 'var(--error)';
+      loadingMsg.textContent   = msg;
+      loadingMsg.style.color   = 'var(--error)';
+      loadingMsg.style.display = 'block';
     }
 
     document.getElementById('signout-btn').addEventListener('click', async () => {

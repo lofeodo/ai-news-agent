@@ -412,13 +412,8 @@ def compose_html(
         "Canada & Montreal":        "🍁",
     }
 
-    _frontend_url = os.environ.get("FRONTEND_BASE_URL", "").rstrip("/")
-    # Always use the production URL for email logo — localhost URLs break in sent mail
-    _logo_base = (
-        _frontend_url
-        if _frontend_url and "localhost" not in _frontend_url
-        else "https://newsletter.lofeodo.com"
-    )
+    # Always use the canonical custom domain for email logos — absolute URL required for email clients
+    _logo_base = "https://newsletter.lofeodo.com"
     _LOGO_IMG = (
         f'<img src="{_logo_base}/images/logo-email.png" alt="{NEWSLETTER_NAME}" width="48" height="48"'
         f' style="display:block;border:0;margin-bottom:14px;">'

@@ -559,6 +559,12 @@ def newsletter_preview(request: Request):
     html = html.replace("{{UNSUBSCRIBE_URL}}", subscribe_url)
     html = html.replace("{{PREFERENCES_URL}}", subscribe_url)
 
+    # Normalize stale image base URLs from old pipeline runs to the canonical custom domain.
+    html = html.replace(
+        "https://latentspacemail.web.app/newsletter/images/",
+        "https://newsletter.lofeodo.com/images/",
+    )
+
     # Open article links in a new tab (external sites block iframe embedding).
     html = re.sub(
         r'(<a\b(?:(?!target=)[^>])*?)(href="https?://[^"]*")',

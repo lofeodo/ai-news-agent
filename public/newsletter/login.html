@@ -101,11 +101,27 @@
     import {
       signInWithEmailAndPassword,
       createUserWithEmailAndPassword,
-      sendEmailVerification,
       sendPasswordResetEmail,
       GoogleAuthProvider,
       signInWithPopup,
     } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+
+    const API_BASE = (() => {
+      const h = location.hostname;
+      if (h === 'localhost' || h === '127.0.0.1') return 'http://localhost:8000';
+      return 'https://agent-subscriptions-zozrn33sna-nn.a.run.app';
+    })();
+
+    async function sendVerificationEmail(firebaseUser) {
+      const token = await firebaseUser.getIdToken();
+      const res = await fetch(`${API_BASE}/auth/send-verification-email`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!res.ok && res.status !== 400) {
+        throw new Error('send_failed');
+      }
+    }
 
     const returnUrl = new URLSearchParams(location.search).get('returnUrl') || 'preferences.html';
 
@@ -248,10 +264,10 @@
     document.getElementById('resend-btn').addEventListener('click', async () => {
       if (!pendingUser) return;
       try {
-        await sendEmailVerification(pendingUser);
+        await sendVerificationEmail(pendingUser);
         verifyNotice.querySelector('p').textContent = 'Verification email resent. Check your inbox.';
       } catch {
-        showError('Could not resend. Try signing in and Firebase will prompt you.');
+        showError('Could not resend. Try again in a moment.');
       }
     });
 
@@ -284,7 +300,7 @@
           if (password !== confirm) { showError('Passwords do not match.'); return; }
           const cred = await createUserWithEmailAndPassword(auth, email, password);
           pendingUser = cred.user;
-          await sendEmailVerification(cred.user);
+          await sendVerificationEmail(cred.user);
           authForm.style.display      = 'none';
           verifyNotice.style.display  = 'block';
           googleBtn.style.display     = 'none';

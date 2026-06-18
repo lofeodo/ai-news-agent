@@ -212,15 +212,18 @@
 
       if (!user || !user.emailVerified) { return; } // signin-prompt already showing
 
-      // Confirmed signed-in: swap to loading state while we fetch sections
-      signinPrompt.style.display = 'none';
-      loadingMsg.style.display   = 'block';
+      // Confirmed signed-in: show account info but keep the preview visible
+      // while the API call is in flight — no blank loading state.
       accountEmail.textContent   = user.email;
       accountBadge.style.display = 'flex';
+      // Hide the "Sign in" CTA since the user is already authenticated.
+      const signInCta = signinPrompt.querySelector('a.btn-primary-action');
+      if (signInCta) signInCta.style.display = 'none';
 
       try {
-        const res  = await authFetch(`${API}/auth/sections`);
-        loadingMsg.style.display = 'none';
+        const res = await authFetch(`${API}/auth/sections`);
+        // API responded — now swap the preview for the real content.
+        signinPrompt.style.display = 'none';
         if (!res.ok) {
           if (res.status === 403) { showLocked(); return; }
           showError('Unable to load sections. Please try again.');
@@ -237,12 +240,12 @@
         sectionsPrem.style.display = 'block';
         renderSections();
       } catch {
+        signinPrompt.style.display = 'none';
         showError('Connection error. Please check your internet and try again.');
       }
     });
 
     function showLocked() {
-      loadingMsg.style.display     = 'none';
       sectionsLocked.style.display = 'block';
     }
 

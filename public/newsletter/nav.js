@@ -51,7 +51,7 @@ function showSignedIn(user, tier) {
   if (authEl)   authEl.style.display    = 'flex';
   if (emailEl)  emailEl.textContent     = user.email;
   if (tierEl && tier === 'premium') tierEl.style.display = 'inline-block';
-  if (sectionsEl && tier === 'premium') sectionsEl.style.display = 'block';
+  if (sectionsEl) sectionsEl.style.display = 'block';
 }
 
 if (signoutBtn) {

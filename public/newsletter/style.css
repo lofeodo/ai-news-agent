@@ -1140,3 +1140,140 @@ input[type="password"]:focus {
   color: var(--accent);
   transform: translateX(3px);
 }
+
+/* ── Sections page: preview for non-premium / non-auth ─────────────────────── */
+.sections-preview {
+  margin: 0 0 4px;
+  opacity: 0.32;
+  pointer-events: none;
+  user-select: none;
+}
+.sections-preview-item {
+  display: flex;
+  align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(42,42,42,0.7);
+  font-size: 0.88rem;
+  color: var(--text);
+}
+.sections-preview-item:last-child { border-bottom: none; }
+.sections-preview-drag {
+  color: var(--muted);
+  font-size: 1rem;
+  padding-right: 10px;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+.sections-preview-name {
+  flex: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text);
+  font-size: 0.88rem;
+}
+.sections-preview-toggle {
+  width: 32px;
+  height: 18px;
+  background: var(--accent);
+  border-radius: 9px;
+  flex-shrink: 0;
+  position: relative;
+  margin-left: 14px;
+}
+.sections-preview-toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 50%;
+}
+.sections-preview-custom {
+  margin-top: 14px;
+  padding: 8px 12px;
+  border: 1px dashed rgba(200,184,154,0.22);
+  font-size: 0.82rem;
+  color: var(--muted);
+  letter-spacing: 0.03em;
+}
+
+/* ── Upgrade gate card ────────────────────────────────────────────────────── */
+.upgrade-gate {
+  margin-top: 18px;
+  padding: 20px 18px 18px;
+  background: rgba(200,184,154,0.04);
+  border: 1px solid rgba(200,184,154,0.18);
+  border-left: 3px solid var(--accent);
+}
+.upgrade-gate__badge {
+  display: inline-block;
+  font-size: 0.58rem;
+  font-family: var(--label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #0f0f0f;
+  background: var(--accent);
+  padding: 2px 6px 1px;
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+.upgrade-gate__headline {
+  font-family: var(--display);
+  font-size: 1.12rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 10px;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+}
+.upgrade-gate__benefits {
+  list-style: none;
+  margin-bottom: 18px;
+}
+.upgrade-gate__benefits li {
+  font-size: 0.84rem;
+  color: var(--muted);
+  line-height: 1.65;
+  padding-left: 16px;
+  position: relative;
+  margin-bottom: 1px;
+}
+.upgrade-gate__benefits li::before {
+  content: '—';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  opacity: 0.65;
+}
+.upgrade-gate__btn {
+  display: block;
+  width: 100%;
+  background: var(--accent);
+  color: var(--bg);
+  font-family: var(--label);
+  font-size: 0.9rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  border: none;
+  padding: 12px 11px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: opacity 0.15s, box-shadow 0.2s;
+  position: relative;
+}
+.upgrade-gate__btn:hover {
+  opacity: 0.92;
+  box-shadow: 0 0 20px rgba(200,184,154,0.28);
+}
+.upgrade-gate__soon {
+  display: none;
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+.upgrade-gate__soon.visible { display: block; }

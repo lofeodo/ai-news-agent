@@ -16,6 +16,7 @@
 # Website-initiated endpoints ALWAYS return 200, whether or not the email
 # exists — otherwise the form becomes an oracle for checking who's subscribed.
 
+import logging
 import os
 import re
 import secrets
@@ -23,11 +24,14 @@ import sys
 from datetime import datetime, timezone, timedelta
 from typing import Annotated
 
+import anthropic
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+
+logger = logging.getLogger(__name__)
 
 from auth_middleware import get_current_user
 
@@ -148,6 +152,22 @@ def _get_sendgrid_api_key() -> str:
     key = os.environ.get("SENDGRID_API_KEY", "")
     if not key:
         raise RuntimeError("SENDGRID_API_KEY env var not set for local mode")
+    return key
+
+
+ANTHROPIC_SECRET_NAME = "anthropic-api-key"
+
+
+def _get_anthropic_api_key() -> str:
+    if USE_SECRET_MANAGER:
+        from google.cloud import secretmanager
+        client   = secretmanager.SecretManagerServiceClient()
+        name     = f"projects/{GCP_PROJECT_ID}/secrets/{ANTHROPIC_SECRET_NAME}/versions/latest"
+        response = client.access_secret_version(request={"name": name})
+        return response.payload.data.decode("utf-8").strip()
+    key = os.environ.get("ANTHROPIC_1ST_API_KEY", "")
+    if not key:
+        raise RuntimeError("ANTHROPIC_1ST_API_KEY env var not set")
     return key
 
 
@@ -955,10 +975,9 @@ async def auth_sections_refine(
     if _get_user_tier(email) != "premium":
         raise HTTPException(status_code=403, detail="premium_required")
 
-    import anthropic as _anthropic
-    client = _anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY", ""))
     raw = req.raw_topic.strip()
     try:
+        client = anthropic.Anthropic(api_key=_get_anthropic_api_key())
         message = client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=50,
@@ -974,6 +993,7 @@ async def auth_sections_refine(
         )
         refined = message.content[0].text.strip().strip("\"'")
     except Exception:
+        logger.exception("Refine endpoint error for user %s", user.get("uid"))
         raise HTTPException(status_code=503, detail="ai_unavailable")
 
     return {"refined_topic": refined}

@@ -580,8 +580,15 @@ def newsletter_preview(request: Request):
     html = html.replace("{{PREFERENCES_URL}}", subscribe_url)
 
     # Normalize stale image base URLs from old pipeline runs to the canonical custom domain.
+    # Old agent3 used FRONTEND_BASE_URL as the image base, producing two broken patterns:
+    #   latentspacemail.web.app/newsletter/images/ (when FRONTEND_BASE_URL was unset)
+    #   newsletter.lofeodo.com/newsletter/images/  (when FRONTEND_BASE_URL had no /newsletter suffix)
     html = html.replace(
         "https://latentspacemail.web.app/newsletter/images/",
+        "https://newsletter.lofeodo.com/images/",
+    )
+    html = html.replace(
+        "https://newsletter.lofeodo.com/newsletter/images/",
         "https://newsletter.lofeodo.com/images/",
     )
 

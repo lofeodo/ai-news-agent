@@ -128,6 +128,19 @@ def _variant_key(prefs: dict) -> str:
     return f"{fr}_{ca}"
 
 
+def _normalize_image_urls(html: str) -> str:
+    """Fix stale image base URLs from old pipeline runs that used FRONTEND_BASE_URL as the image root."""
+    html = html.replace(
+        "https://latentspacemail.web.app/newsletter/images/",
+        "https://newsletter.lofeodo.com/images/",
+    )
+    html = html.replace(
+        "https://newsletter.lofeodo.com/newsletter/images/",
+        "https://newsletter.lofeodo.com/images/",
+    )
+    return html
+
+
 def _load_latest_newsletter(db):
     """Return (variants, subject) for the most recent run with newsletter_html set.
 
@@ -151,6 +164,7 @@ def _load_latest_newsletter(db):
     variants = data.get("newsletter_variants")
     if not variants:
         variants = {"0_0": data.get("newsletter_html", "")}
+    variants = {k: _normalize_image_urls(v) for k, v in variants.items()}
     subject  = data.get("newsletter_subject") or f"{NEWSLETTER_NAME} — {datetime.now().strftime('%B %d, %Y')}"
     print(f"[agent4]  Loaded newsletter variants from Firestore "
           f"(run_id={data.get('run_id')}, keys={list(variants.keys())})", flush=True)

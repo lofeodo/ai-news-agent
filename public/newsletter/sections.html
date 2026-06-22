@@ -154,6 +154,7 @@
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <button type="button" class="btn-refine" id="refine-btn">Refine with AI →</button>
+            <button type="button" class="btn-action-outline" id="add-direct-btn">Add</button>
             <button type="button" class="btn-action-outline" id="cancel-refine-btn">Cancel</button>
           </div>
           <div id="refine-loading" style="display:none;margin-top:10px">
@@ -396,6 +397,12 @@
 
     document.getElementById('cancel-refine-btn').addEventListener('click', () => {
       document.getElementById('refine-panel').style.display = 'none';
+    });
+
+    document.getElementById('add-direct-btn').addEventListener('click', () => {
+      const rawTopic = document.getElementById('raw-topic-input').value.trim();
+      if (!rawTopic) { document.getElementById('raw-topic-input').focus(); return; }
+      addCustomSection(rawTopic, rawTopic);
     });
 
     async function doRefine() {

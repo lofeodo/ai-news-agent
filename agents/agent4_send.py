@@ -15,6 +15,7 @@
 
 import json
 import os
+import re
 import sys
 from datetime import datetime, timezone
 
@@ -55,6 +56,36 @@ TEST_RECIPIENT_EMAIL = os.environ.get("TEST_RECIPIENT_EMAIL", "")
 # send only to this address. Used for test-send jobs that must not reach
 # real subscribers.
 TEST_SEND_TO = os.environ.get("TEST_SEND_TO", "")
+
+# Keep in sync with DEFAULT_SECTIONS in agents/agent_subscriptions.py
+_DEFAULT_SECTIONS = [
+    "Model & Product Releases",
+    "Industry & Business",
+    "Policy, Law & Regulation",
+    "Open Source & Tools",
+    "Safety & Alignment",
+    "Society & Culture",
+    "Research Spotlights",
+]
+_DEFAULT_SECTIONS_SET = set(_DEFAULT_SECTIONS)
+
+# Regex to extract <!-- SECTION:Name -->...<!-- /SECTION:Name --> blocks
+_SECTION_RE = re.compile(
+    r'<!-- SECTION:(.+?) -->(.*?)<!-- /SECTION:\1 -->',
+    re.DOTALL,
+)
+
+# Matches the section-number span in section strips: <span style="...font-size:28px...letter-spacing:-1px...">01</span>
+_SECTION_NUM_RE = re.compile(
+    r'(<span\s+style="[^"]*?font-size:28px[^"]*?letter-spacing:-1px[^"]*?">\s*)\d{1,2}(\s*</span>)',
+)
+
+# Matches the <!-- TOC -->...<!-- /TOC --> wrapper around the inner TOC table
+_TOC_RE = re.compile(r'<!-- TOC -->(.*?)<!-- /TOC -->', re.DOTALL)
+
+_TOC_F     = "'Menlo','Cascadia Mono','Consolas','Courier New',monospace"
+_TOC_AMBER = "#c8b89a"
+_TOC_GRAY  = "#585858"
 
 
 # ---------------------------------------------------------------------------
@@ -138,6 +169,135 @@ def _normalize_image_urls(html: str) -> str:
         "https://newsletter.lofeodo.com/newsletter/images/",
         "https://newsletter.lofeodo.com/images/",
     )
+    return html
+
+
+# ---------------------------------------------------------------------------
+# Per-subscriber section customization
+# ---------------------------------------------------------------------------
+
+def _renumber_section(section_html: str, new_num: str) -> str:
+    """Replace the 2-digit section number in a section strip (font-size:28px span)."""
+    return _SECTION_NUM_RE.sub(rf'\g<1>{new_num}\2', section_html)
+
+
+def _short_label(name: str) -> str:
+    """Mirror agent3's TOC abbreviation logic: split on ' &' or ',' and uppercase."""
+    if name == "Research Spotlights":
+        return "RESEARCH"
+    return name.split(" &")[0].split(",")[0].upper()
+
+
+def _toc_cell(num: str, short: str) -> str:
+    return (
+        f'<td class="mob-toc-cell" style="width:25%;padding:0 0 6px 0;">'
+        f'<span style="font-family:{_TOC_F};font-size:11px;color:{_TOC_AMBER};font-weight:700;">{num}</span>'
+        f'<span style="font-family:{_TOC_F};font-size:11px;color:{_TOC_GRAY};">&thinsp;{short}</span>'
+        f'</td>'
+    )
+
+
+def _build_toc_html(entries: list) -> str:
+    """Build the inner TOC table rows from a list of (display_num, section_name) pairs."""
+    cells = [(_toc_cell(num, _short_label(name))) for num, name in entries]
+    # Pad to a multiple of 4 with empty cells
+    while len(cells) % 4 != 0:
+        cells.append(_toc_cell("", ""))
+    row1 = "".join(cells[:4])
+    row2 = "".join(cells[4:])
+    return f'<tr>{row1}</tr>\n<tr>{row2}</tr>'
+
+
+def _load_user_section_configs(db, subscribers: list) -> dict:
+    """Batch-load section_config from users/{uid} for all subscribers with a uid.
+
+    Returns uid -> section_config dict. Subscribers without a uid are excluded
+    and will receive the default full newsletter for their variant.
+    """
+    uids = [s["uid"] for s in subscribers if s.get("uid")]
+    if not uids:
+        return {}
+    refs = [db.collection("users").document(uid) for uid in uids]
+    result = {}
+    for snap in db.get_all(refs):
+        if snap.exists:
+            cfg = snap.to_dict().get("section_config")
+            if cfg:
+                result[snap.id] = cfg
+    return result
+
+
+def _apply_section_config(html: str, section_config: dict | None) -> str:
+    """Filter and reorder newsletter sections based on a premium subscriber's section_config.
+
+    Returns unchanged html when:
+    - section_config is None/empty
+    - enabled_sections is null (meaning all-on in default order)
+    - html has no section markers (old newsletter, backward-compatible fallback)
+    """
+    if not section_config:
+        return html
+
+    enabled = section_config.get("enabled_sections")
+    if enabled is None:
+        return html  # null = all sections in default order, nothing to do
+
+    # Validate and filter to known DEFAULT_SECTIONS only
+    desired = [s for s in enabled if s in _DEFAULT_SECTIONS_SET]
+
+    # Graceful fallback for newsletters generated before section markers were added
+    if not _SECTION_RE.search(html):
+        return html
+
+    # Extract all section blocks from HTML
+    sections = {m.group(1): m.group(0) for m in _SECTION_RE.finditer(html)}
+
+    # Build reordered/filtered section HTML
+    parts       = []
+    toc_entries = []
+    counter     = 1
+
+    for name in desired:
+        if name == "Research Spotlights":
+            continue  # always placed last
+        if name not in sections:
+            continue
+        new_num = f"{counter:02d}"
+        parts.append(_renumber_section(sections[name], new_num))
+        toc_entries.append((new_num, name))
+        counter += 1
+
+    # Canada & Montreal passes through unchanged — it is controlled by the
+    # include_canada pref, not section_config. Append after enabled news sections.
+    canada = sections.get("Canada & Montreal")
+    if canada:
+        canada_num = f"{counter:02d}"
+        parts.append(_renumber_section(canada, canada_num))
+        toc_entries.append((canada_num, "Canada & Montreal"))
+        counter += 1
+
+    # Research Spotlights: always last if the user has it enabled
+    if "Research Spotlights" in desired and "Research Spotlights" in sections:
+        parts.append(sections["Research Spotlights"])
+        toc_entries.append(("RES", "Research Spotlights"))
+
+    # Replace the entire section zone (first marker to last marker)
+    all_matches = list(_SECTION_RE.finditer(html))
+    zone_start  = all_matches[0].start()
+    zone_end    = all_matches[-1].end()
+    html = html[:zone_start] + "\n".join(parts) + html[zone_end:]
+
+    # Rebuild TOC to keep section numbers consistent with the reordered body
+    new_toc_rows = _build_toc_html(toc_entries)
+    toc_replacement = (
+        f'<!-- TOC -->\n'
+        f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">\n'
+        f'{new_toc_rows}\n'
+        f'</table>\n'
+        f'<!-- /TOC -->'
+    )
+    html = _TOC_RE.sub(toc_replacement, html, count=1)
+
     return html
 
 
@@ -238,6 +398,16 @@ def run(run_id: str):
         subscribers = _active_subscribers(db)
     print(f"[agent4]  {len(subscribers)} active subscriber(s)", flush=True)
 
+    # Batch-load section configs for premium subscribers (those with a uid).
+    # Legacy/token-only subscribers have uid=None and skip this step.
+    uid_section_configs: dict = {}
+    if not TEST_SEND_TO:
+        try:
+            uid_section_configs = _load_user_section_configs(db, subscribers)
+            print(f"[agent4]  Section configs loaded for {len(uid_section_configs)} user(s)", flush=True)
+        except Exception as e:
+            print(f"  [warn]  failed to load section configs: {e} — using defaults", flush=True)
+
     api_key = _get_sendgrid_api_key()
 
     sent     = 0
@@ -263,6 +433,14 @@ def run(run_id: str):
             failures.append({"email": email, "error": f"no HTML for variant {key}"})
             print(f"  [warn]  no HTML for variant {key}, skipping {email}", flush=True)
             continue
+
+        # Apply per-subscriber section customization for premium accounts
+        uid = sub.get("uid")
+        if uid and uid in uid_section_configs:
+            try:
+                html = _apply_section_config(html, uid_section_configs[uid])
+            except Exception as e:
+                print(f"  [warn]  section config failed for {email}: {e} — using default", flush=True)
 
         personalized = _personalize(html, token)
         try:

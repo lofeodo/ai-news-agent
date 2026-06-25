@@ -9,7 +9,13 @@ import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/fi
 
 const _r = await fetch('/__/firebase/init.json');
 if (!_r.ok) throw new Error('[auth.js] Firebase config not available. Run `firebase serve` locally.');
-const app = initializeApp(await _r.json());
+const _cfg = await _r.json();
+// init.json always returns the Firebase-assigned authDomain. Override it with
+// the actual hostname on production so Google's OAuth popup shows the custom
+// domain instead of "ai-news-letter-497720.firebaseapp.com".
+const _host = window.location.hostname;
+if (_host !== 'localhost' && _host !== '127.0.0.1') _cfg.authDomain = _host;
+const app = initializeApp(_cfg);
 
 export const auth = getAuth(app);
 export { onAuthStateChanged, signOut };

@@ -486,8 +486,6 @@ def compose_html(
         icon     = category_icons.get(category, "📌")
         articles = selected_by_category.get(category, [])
 
-        news_rows += _section_strip(num, icon, category)
-
         if articles:
             body = "".join(
                 render_article_card(a, is_last=(j == len(articles) - 1))
@@ -499,19 +497,25 @@ def compose_html(
                 f'font-style:italic;margin:0;">No notable releases this week.</p>'
             )
 
+        # Section markers enable per-subscriber filtering/reordering in agent4
         news_rows += (
-            f'<tr><td class="mob-pad" style="background:{_WHITE};padding:28px 40px;">\n'
-            f'{body}\n'
-            f'</td></tr>\n'
+            f'<!-- SECTION:{category} -->\n'
+            + _section_strip(num, icon, category)
+            + f'<tr><td class="mob-pad" style="background:{_WHITE};padding:28px 40px;">\n'
+              f'{body}\n'
+              f'</td></tr>\n'
+            + f'<!-- /SECTION:{category} -->\n'
         )
 
     # — research section —
     paper_cards   = "".join(render_paper_card(p) for p in papers)
     research_rows = (
-        _section_strip("RES", "🔬", "Research Spotlights") +
-        f'<tr><td class="mob-pad" style="background:{_D1};padding:20px 40px 32px;">\n'
-        f'{paper_cards}'
-        f'</td></tr>\n'
+        f'<!-- SECTION:Research Spotlights -->\n'
+        + _section_strip("RES", "🔬", "Research Spotlights")
+        + f'<tr><td class="mob-pad" style="background:{_D1};padding:20px 40px 32px;">\n'
+          f'{paper_cards}'
+          f'</td></tr>\n'
+        + f'<!-- /SECTION:Research Spotlights -->\n'
     )
 
     return f"""<!DOCTYPE html>
@@ -580,10 +584,12 @@ def compose_html(
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
              style="border-top:1px solid #181818;">
       <tr><td class="mob-pad" style="padding:12px 40px 14px;background:#0d0d0d;">
+        <!-- TOC -->
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
           <tr>{toc_row1}</tr>
           <tr>{toc_row2}</tr>
         </table>
+        <!-- /TOC -->
       </td></tr>
       </table>
     </td></tr>

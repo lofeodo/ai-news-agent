@@ -485,19 +485,22 @@
         .filter(r => r.querySelector('input[type="checkbox"]').checked)
         .map(r => r.dataset.name);
       const allOn = enabledNames.length === defaultSections.length;
+      // Only send null (meaning "all default") when sections are both fully enabled AND in default order.
+      // If the user reordered sections with all toggles on, we must send the ordered list to preserve it.
+      const allOnInDefaultOrder = allOn && orderedNames.every((name, i) => name === defaultSections[i]);
 
       try {
         const res = await authFetch(`${API}/auth/sections`, {
           method: 'POST',
           body: JSON.stringify({
             section_config: {
-              enabled_sections: allOn ? null : enabledNames,
+              enabled_sections: allOnInDefaultOrder ? null : enabledNames,
               custom_sections: pendingCustom,
             },
           }),
         });
         if (res.ok) {
-          pendingEnabled = allOn ? null : orderedNames;
+          pendingEnabled = allOnInDefaultOrder ? null : enabledNames;
           sectionsMsg.textContent   = 'Sections saved.';
           sectionsMsg.className     = 'msg visible success';
           sectionsMsg.style.display = 'block';

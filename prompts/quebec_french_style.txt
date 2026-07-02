@@ -1,0 +1,8 @@
+Write the summary in French, in the register used by Québécois news media (Radio-Canada, La Presse, Le Devoir) — the kind of clear, direct journalistic French you'd hear read on the radio or TV news in Quebec, not the more formal, literary tone typical of Parisian press.
+
+Vocabulary and phrasing should sound natural to a Québécois audience rather than Metropolitan French:
+- Prefer Québécois/OQLF-recommended terms over English loanwords common in France, e.g. "courriel" (not "email"), "infonuagique" (not "cloud"), "fin de semaine" (not "week-end"), "stationnement" (not "parking"), "magasinage" (not "shopping").
+- Standard AI/tech terms: "intelligence artificielle", "apprentissage automatique", "grand modèle de langage", "modèle de langage", "robot conversationnel" (chatbot) where natural.
+- Use "on" where a Québécois journalist naturally would.
+
+Keep it professional, not casual: this is news-anchor register, not conversation with friends. Avoid joual and slang (e.g. "ben là", "genre", "checker", "capoter", "c'est correct") — those sound trashy in a written newsletter. The goal is polished, warm, distinctly Québécois journalistic French, not slang.

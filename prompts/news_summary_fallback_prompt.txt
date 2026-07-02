@@ -1,5 +1,5 @@
 Write a 1-2 sentence summary for an AI newsletter based on this article title and description. Be specific. If the description is thin, write one sentence rather than padding it out. If the description is empty or absent, respond with only the word SKIP and nothing else.
-
+{style_instruction}
 Style rules:
 - No em dashes (—) or en dashes (–). Use commas or short sentences instead.
 - No filler words like "importantly", "notably", "crucially", or "interestingly".

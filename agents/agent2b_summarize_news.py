@@ -137,17 +137,18 @@ def claude_call_with_retry(client: anthropic.Anthropic, max_retries: int = 4, **
             time.sleep(wait)
 
 
-def summarize_article(article: dict, text: str | None, prompt_template: str, fallback_template: str, client: anthropic.Anthropic) -> dict:
+def summarize_article(article: dict, text: str | None, prompt_template: str, fallback_template: str, quebec_style: str, client: anthropic.Anthropic) -> dict:
     title         = article.get("title", "")
     description   = article.get("description", "") or ""
     used_fallback = text is None
+    style_instruction = f"\n{quebec_style}\n" if article.get("language") == "fr" else "\n"
 
     if used_fallback:
         if not description.strip():
             return {**article, "summary": None, "used_fallback": True, "summary_error": "no_content"}
-        prompt = fallback_template.format(title=title, description=description)
+        prompt = fallback_template.format(title=title, description=description, style_instruction=style_instruction)
     else:
-        prompt = prompt_template.format(title=title, text=text)
+        prompt = prompt_template.format(title=title, text=text, style_instruction=style_instruction)
 
     try:
         with _semaphore:
@@ -169,14 +170,14 @@ def summarize_article(article: dict, text: str | None, prompt_template: str, fal
 
 
 def process_article(args: tuple) -> dict:
-    client, article, prompt_template, fallback_template = args
+    client, article, prompt_template, fallback_template, quebec_style = args
     url = article.get("url", "")
 
     if _is_twitter_url(url):
         return {**article, "summary": None, "used_fallback": False, "summary_error": "twitter_no_content"}
 
     text = fetch_article_text(url) if url else None
-    return summarize_article(article, text, prompt_template, fallback_template, client)
+    return summarize_article(article, text, prompt_template, fallback_template, quebec_style, client)
 
 
 # ---------------------------------------------------------------------------
@@ -216,6 +217,9 @@ def run(run_id: str):
     with open("prompts/news_summary_fallback_prompt.txt", "r", encoding="utf-8") as f:
         fallback_template = f.read()
 
+    with open("prompts/quebec_french_style.txt", "r", encoding="utf-8") as f:
+        quebec_style = f.read()
+
     if USE_FIRESTORE:
         from google.cloud import firestore as _fs
         doc_snap = _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).get()
@@ -237,7 +241,7 @@ def run(run_id: str):
     print(f"Summarizing {len(all_articles)} articles across {len(by_category)} categories...\n")
 
     client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
-    tasks  = [(client, article, prompt_template, fallback_template) for article in all_articles]
+    tasks  = [(client, article, prompt_template, fallback_template, quebec_style) for article in all_articles]
 
     results_by_url: dict[str, dict] = {}
     done = 0

@@ -1,5 +1,5 @@
 Write a 1-2 sentence summary of the following news article for an AI newsletter. State what happened and the single most important implication. Be specific and cut anything that isn't essential.
-
+{style_instruction}
 Style rules:
 - No em dashes (—) or en dashes (–). Use commas or short sentences instead.
 - No filler words like "importantly", "notably", "crucially", or "interestingly".

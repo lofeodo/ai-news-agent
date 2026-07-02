@@ -113,7 +113,7 @@ def fetch_newsapi_query(query: str, from_time: str, api_key: str) -> list:
             "title":       item.get("title", "") or "",
             "description": item.get("description", "") or "",
             "url":         item.get("url", "") or "",
-            "language":    item.get("language", "en") or "en",
+            "language":    "en",  # placeholder — refined per-article by language_filter() below
             "hn_score":    None
         })
 
@@ -237,10 +237,10 @@ LANG_SNIPPET_WORDS = 30
 LANG_FILTER_PROMPT = """\
 You are a language detector. Below is a numbered list of short text samples from news articles.
 
-Your task: identify which articles are written in English or French.
-Return ONLY the indices of articles that are clearly English or French.
+Your task: classify each article as English ("en") or French ("fr") based on the language it is written in.
+Only include articles that are clearly English or French.
 Exclude articles in any other language (Spanish, Italian, Portuguese, German, Romanian, Dutch, Polish, Turkish, etc.).
-When in doubt, exclude.
+When in doubt whether an article is English/French at all, exclude it. When in doubt whether an included article is English vs. French, pick the more likely one.
 
 Use the filter_by_language tool to return your answer.
 
@@ -277,21 +277,23 @@ def language_filter_batch(batch: list, batch_index: int, client: anthropic.Anthr
     if not response.content:
         print(f"  [lang] Batch {batch_index}: empty Claude response — treating as empty")
         return []
-    tool_input   = response.content[0].input
-    keep_indices = tool_input.get("keep_indices", [])
+    tool_input = response.content[0].input
+    classified = tool_input.get("articles", [])
 
     if response.stop_reason == "max_tokens":
         print(f"  [lang] Batch {batch_index}: max_tokens hit — treating as empty")
         return []
 
-    print(f"  [lang] Batch {batch_index}: keeping {len(keep_indices)}/{len(batch)} articles")
+    print(f"  [lang] Batch {batch_index}: keeping {len(classified)}/{len(batch)} articles")
 
     results = []
-    for idx in keep_indices:
-        if 0 <= idx < len(batch):
-            results.append(batch[idx])
+    for item in classified:
+        idx      = item.get("index")
+        language = item.get("language")
+        if isinstance(idx, int) and 0 <= idx < len(batch) and language in ("en", "fr"):
+            results.append({**batch[idx], "language": language})
         else:
-            print(f"  [lang] Batch {batch_index}: out-of-range index {idx}, skipping")
+            print(f"  [lang] Batch {batch_index}: invalid entry {item}, skipping")
     return results
 
 

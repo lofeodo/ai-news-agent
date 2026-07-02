@@ -110,6 +110,8 @@
       sendPasswordResetEmail,
       GoogleAuthProvider,
       signInWithPopup,
+      signInWithRedirect,
+      getRedirectResult,
     } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 
     const API_BASE = (() => {
@@ -137,6 +139,18 @@
         location.href = returnUrl;
       }
     });
+
+    // Handle Google redirect result (mobile flow — fires on return from OAuth redirect).
+    getRedirectResult(auth).catch((err) => {
+      if (err.code !== 'auth/popup-closed-by-user') showError(friendlyError(err));
+    });
+
+    // iPadOS 13+ reports as macOS — detect via touch support.
+    function isMobile() {
+      if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) return true;
+      if (/Macintosh/i.test(navigator.userAgent) && navigator.maxTouchPoints > 1) return true;
+      return false;
+    }
 
     // ── Mode management ──────────────────────────────────────────────────────
     // mode: 'signin' | 'signup' | 'forgot'
@@ -245,13 +259,17 @@
       showPasswordBtn.textContent = isHidden ? 'hide' : 'show';
     });
 
-    // Google sign-in
+    // Google sign-in — popup on desktop, redirect on mobile (iOS/Android block popups).
     googleBtn.addEventListener('click', async () => {
       clearMessages();
+      const provider = new GoogleAuthProvider();
+      if (isMobile()) {
+        await signInWithRedirect(auth, provider);
+        return; // page navigates away
+      }
       googleBtn.disabled = true;
       googleBtn.textContent = 'Connecting…';
       try {
-        const provider = new GoogleAuthProvider();
         await signInWithPopup(auth, provider);
         // onAuthStateChanged handles redirect
       } catch (e) {

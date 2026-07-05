@@ -248,8 +248,8 @@
       showPasswordBtn.textContent = isHidden ? 'hide' : 'show';
     });
 
-    // Google sign-in — popup on all devices (new tab on iOS/Safari).
-    // auth.js falls back to redirect if the popup is blocked.
+    // Google sign-in — same-origin popup (new tab on iOS/Safari); redirect fallback if blocked.
+    // authDomain is set to the serving hostname so the handler is same-origin — required for Safari.
     googleBtn.addEventListener('click', async () => {
       clearMessages();
       googleBtn.disabled = true;

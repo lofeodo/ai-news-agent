@@ -117,6 +117,8 @@ In Firebase Console → Authentication → Sign-in method:
 
 `auth.js` loads the Firebase project config automatically from `/__/firebase/init.json`, which Firebase Hosting serves on all deployments. **No API key in source.** For local frontend development with auth, run `firebase serve --only hosting` instead of a plain HTTP server (plain servers don't serve that endpoint).
 
+**Important — authDomain override:** `auth.js` overrides `authDomain` to `window.location.hostname` on production. This is required for Safari: when `authDomain` is the default `latentspacemail.firebaseapp.com` (cross-origin from the app), Safari's third-party storage restrictions silently drop credentials after OAuth. Same-origin `authDomain` fixes this. `https://newsletter.lofeodo.com/__/auth/handler` **is already registered** in the Google OAuth 2.0 client's authorized redirect URIs — do not assume it is missing.
+
 For local development of the subscription service, Firebase Admin SDK uses Application Default Credentials: `gcloud auth application-default login`. On Cloud Run, ADC works automatically.
 
 ### Claude Tool Use Pattern

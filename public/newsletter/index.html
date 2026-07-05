@@ -120,8 +120,7 @@
       authError.style.display  = 'block';
     }
 
-    // Google sign-in — popup on all devices (new tab on iOS/Safari).
-    // auth.js falls back to redirect if the popup is blocked.
+    // Google sign-in — same-origin popup (new tab on iOS/Safari); redirect fallback if blocked.
     googleBtn.addEventListener('click', async () => {
       authError.style.display = 'none';
       googleBtn.disabled = true;

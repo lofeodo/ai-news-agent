@@ -103,11 +103,15 @@
   <script type="module" src="nav.js"></script>
   <script type="module">
     // auth.js already initializes Firebase — import auth from there to avoid duplicate-app error.
-    import { auth, onAuthStateChanged, signInWithGoogle, getRedirectResult } from './auth.js';
+    import { auth, onAuthStateChanged } from './auth.js';
     import {
       signInWithEmailAndPassword,
       createUserWithEmailAndPassword,
       sendPasswordResetEmail,
+      GoogleAuthProvider,
+      signInWithPopup,
+      signInWithRedirect,
+      getRedirectResult,
     } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 
     const API_BASE = (() => {
@@ -136,10 +140,17 @@
       }
     });
 
-    // Handle result when returning from the redirect fallback path.
+    // Handle Google redirect result (mobile flow — fires on return from OAuth redirect).
     getRedirectResult(auth).catch((err) => {
-      showError(friendlyError(err));
+      if (err.code !== 'auth/popup-closed-by-user') showError(friendlyError(err));
     });
+
+    // iPadOS 13+ reports as macOS — detect via touch support.
+    function isMobile() {
+      if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) return true;
+      if (/Macintosh/i.test(navigator.userAgent) && navigator.maxTouchPoints > 1) return true;
+      return false;
+    }
 
     // ── Mode management ──────────────────────────────────────────────────────
     // mode: 'signin' | 'signup' | 'forgot'
@@ -248,17 +259,21 @@
       showPasswordBtn.textContent = isHidden ? 'hide' : 'show';
     });
 
-    // Google sign-in — popup on all devices (new tab on iOS/Safari).
-    // auth.js falls back to redirect if the popup is blocked.
+    // Google sign-in — popup on desktop, redirect on mobile (iOS/Android block popups).
     googleBtn.addEventListener('click', async () => {
       clearMessages();
+      const provider = new GoogleAuthProvider();
+      if (isMobile()) {
+        await signInWithRedirect(auth, provider);
+        return; // page navigates away
+      }
       googleBtn.disabled = true;
       googleBtn.textContent = 'Connecting…';
       try {
-        await signInWithGoogle();
-        // onAuthStateChanged handles redirect to returnUrl
+        await signInWithPopup(auth, provider);
+        // onAuthStateChanged handles redirect
       } catch (e) {
-        if (e.code !== 'auth/popup-closed-by-user') showError(friendlyError(e));
+        showError(friendlyError(e));
         googleBtn.disabled = false;
         googleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>

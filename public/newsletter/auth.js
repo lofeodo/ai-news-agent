@@ -5,7 +5,15 @@
 // (plain HTTP servers don't serve that endpoint).
 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
-import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+import {
+  getAuth,
+  onAuthStateChanged,
+  signOut,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 
 const _r = await fetch('/__/firebase/init.json');
 if (!_r.ok) throw new Error('[auth.js] Firebase config not available. Run `firebase serve` locally.');
@@ -18,7 +26,25 @@ if (_host !== 'localhost' && _host !== '127.0.0.1') _cfg.authDomain = _host;
 const app = initializeApp(_cfg);
 
 export const auth = getAuth(app);
-export { onAuthStateChanged, signOut };
+export { onAuthStateChanged, signOut, getRedirectResult };
+
+const _googleProvider = new GoogleAuthProvider();
+
+// authDomain is set to the serving hostname above, so the popup/redirect handler
+// is same-origin with the app. This is required for Safari: when the handler is
+// cross-origin (e.g. latentspacemail.firebaseapp.com), Safari's third-party storage
+// restrictions silently drop the credential on return.
+export async function signInWithGoogle() {
+  try {
+    return await signInWithPopup(auth, _googleProvider);
+  } catch (e) {
+    if (e.code === 'auth/popup-blocked') {
+      await signInWithRedirect(auth, _googleProvider);
+      return; // page navigates away
+    }
+    throw e;
+  }
+}
 
 export async function getIdToken() {
   const user = auth.currentUser;

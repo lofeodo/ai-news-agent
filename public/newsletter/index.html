@@ -70,8 +70,8 @@
 
     <!-- Shown instead of sign-in buttons when already authenticated -->
     <div id="signed-in-ctas" style="display:none">
-      <a href="preferences.html" class="btn-primary-action">Manage preferences →</a>
-      <a href="latest.html" class="btn-secondary-link">View latest issue →</a>
+      <a href="preferences.html" class="btn-primary-action">Preferences →</a>
+      <a href="sections.html" class="btn-secondary-link">Customize →</a>
     </div>
   </div>
 
@@ -82,17 +82,30 @@
 
     const API = 'https://agent-subscriptions-zozrn33sna-nn.a.run.app';
 
+    function showSignedIn() {
+      document.getElementById('google-btn').style.display     = 'none';
+      document.querySelector('.auth-divider').style.display   = 'none';
+      document.querySelector('.btn-email-link').style.display = 'none';
+      document.getElementById('spots-remaining').style.display = 'none';
+      document.getElementById('signed-in-ctas').style.display = 'block';
+    }
+    function showSignedOut() {
+      document.getElementById('google-btn').style.display     = '';
+      document.querySelector('.auth-divider').style.display   = '';
+      document.querySelector('.btn-email-link').style.display = '';
+      document.getElementById('spots-remaining').style.display = '';
+      document.getElementById('signed-in-ctas').style.display = 'none';
+    }
+
+    // Instantly restore signed-in card from nav cache — prevents flash of sign-in buttons
+    try { if (JSON.parse(localStorage.getItem('lsm_nav_auth'))?.email) showSignedIn(); } catch {}
+
+    // Firebase is source of truth; corrects cache if stale
     onAuthStateChanged(auth, (user) => {
-      if (user && user.emailVerified) {
-        // Swap sign-in UI for account CTAs — no redirect so the page stays browsable
-        document.getElementById('google-btn').style.display       = 'none';
-        document.querySelector('.auth-divider').style.display     = 'none';
-        document.querySelector('.btn-email-link').style.display   = 'none';
-        document.getElementById('signed-in-ctas').style.display   = 'block';
-      }
+      if (user && user.emailVerified) showSignedIn(); else showSignedOut();
     });
 
-    // Handle result when returning from the redirect fallback path.
+    // Handle result when returning from the redirect flow.
     getRedirectResult(auth).catch((err) => {
       showError(err.message || 'Something went wrong. Please try again.');
     });
@@ -120,24 +133,22 @@
       authError.style.display  = 'block';
     }
 
-    // Google sign-in — same-origin popup (new tab on iOS/Safari); redirect fallback if blocked.
+    // Google sign-in via full-page redirect (works on mobile Safari / iOS).
     googleBtn.addEventListener('click', async () => {
       authError.style.display = 'none';
       googleBtn.disabled = true;
-      googleBtn.textContent = 'Connecting…';
+      googleBtn.textContent = 'Redirecting…';
       try {
         await signInWithGoogle();
-        // onAuthStateChanged handles UI update
+        // Page navigates away; onAuthStateChanged handles UI update on return.
       } catch (e) {
         const code = e?.code || '';
-        if (code !== 'auth/popup-closed-by-user') {
-          if (code === 'auth/unauthorized-domain') {
-            showError('Sign-in is not enabled for this domain. Contact the site owner.');
-          } else if (code === 'auth/network-request-failed') {
-            showError('Network error. Check your connection and try again.');
-          } else {
-            showError('Something went wrong. Please try again.');
-          }
+        if (code === 'auth/unauthorized-domain') {
+          showError('Sign-in is not enabled for this domain. Contact the site owner.');
+        } else if (code === 'auth/network-request-failed') {
+          showError('Network error. Check your connection and try again.');
+        } else {
+          showError('Something went wrong. Please try again.');
         }
         googleBtn.disabled = false;
         googleBtn.innerHTML = `${googleSvg} Continue with Google`;

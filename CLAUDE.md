@@ -119,11 +119,23 @@ In Firebase Console → Authentication → Sign-in method:
 
 **Important — authDomain override:** `auth.js` overrides `authDomain` to `window.location.hostname` on production. This is required for Safari: when `authDomain` is the default `latentspacemail.firebaseapp.com` (cross-origin from the app), Safari's third-party storage restrictions silently drop credentials after OAuth. Same-origin `authDomain` fixes this. `https://newsletter.lofeodo.com/__/auth/handler` **is already registered** in the Google OAuth 2.0 client's authorized redirect URIs — do not assume it is missing.
 
-**Important — auth initialization pattern:** `auth.js` uses `initializeAuth(app, { persistence: browserLocalPersistence, popupRedirectResolver: browserPopupRedirectResolver })` rather than `getAuth(app)` + `setPersistence`. Two reasons: (1) `initializeAuth` tells Firebase to use localStorage from the very first instruction, eliminating the `getAuth` → IndexedDB → `setPersistence` migration race that caused a spurious `null` from `onAuthStateChanged` on mobile Safari. (2) `initializeAuth` does **not** bundle a redirect resolver automatically (unlike `getAuth`) — omitting `browserPopupRedirectResolver` causes `signInWithRedirect` and `getRedirectResult` to throw `auth/argument-error` and sign-in silently fails. Do not revert to `getAuth + setPersistence`, and do not remove `browserPopupRedirectResolver` from `initializeAuth`.
+**⚠️ Google Sign-In on Mobile Safari is currently broken and unresolved.** Multiple approaches have been attempted. Do not spend more time on this without a fundamentally different strategy (e.g., server-side OAuth proxy). Email/password sign-in via `login.html` still works.
 
-**Important — Firebase SDK version:** Use `10.14.1` from the CDN. SDK 12.x has a runtime initialization error on iPadOS Safari that silently aborts the entire `<script type="module">` block (click handlers never attach). SDK 10.14.1 is the confirmed stable version for this project.
+**What has been tried (all failed or regressed on mobile Safari):**
+- `signInWithPopup` → silent failure on iOS: `window.open()` opens a new tab, `window.opener` is null, `postMessage` back is lost
+- `signInWithRedirect` + SDK 12.x → runtime crash on iPadOS Safari; entire `<script type="module">` aborts silently
+- `signInWithRedirect` + SDK 10.14.1 + `getAuth` + `setPersistence(browserLocalPersistence)` → appeared to work once on iPad but not reliably; `onAuthStateChanged` fires spurious null on protected pages
+- `signInWithRedirect` + `initializeAuth({ persistence: browserLocalPersistence })` without `popupRedirectResolver` → `signInWithRedirect` throws `auth/argument-error`, button resets immediately
+- `signInWithRedirect` + `initializeAuth({ persistence: browserLocalPersistence, popupRedirectResolver: browserPopupRedirectResolver })` → current state; still not working on mobile
 
-**Important — signInWithPopup is forbidden:** Use `signInWithRedirect` only. On iOS Safari, `window.open()` opens a new full tab where `window.opener` is null; the `postMessage` back to the original tab is lost and the popup promise silently resolves with nothing. `signInWithRedirect` avoids cross-tab postMessage entirely.
+**What is known:**
+- `initializeAuth` requires BOTH `persistence: browserLocalPersistence` AND `popupRedirectResolver: browserPopupRedirectResolver` — do not remove either
+- `initializeAuth` does not bundle a redirect resolver automatically (unlike `getAuth`)
+- SDK 12.x is broken on iPadOS Safari — do not upgrade past 10.14.1 without testing
+- `signInWithPopup` is forbidden on iOS — `window.opener` is null in new tabs
+- `authDomain` must be overridden to `window.location.hostname` on production (same-origin `/__/auth/handler`) — already registered in Google OAuth 2.0 client's authorized redirect URIs
+
+**Important — Firebase SDK version:** Use `10.14.1` from the CDN only.
 
 For local development of the subscription service, Firebase Admin SDK uses Application Default Credentials: `gcloud auth application-default login`. On Cloud Run, ADC works automatically.
 

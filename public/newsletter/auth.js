@@ -8,50 +8,43 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/fireba
 import {
   initializeAuth,
   browserLocalPersistence,
-  browserPopupRedirectResolver,
   onAuthStateChanged,
   signOut,
-  GoogleAuthProvider,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithCustomToken,
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 
 const _r = await fetch('/__/firebase/init.json');
 if (!_r.ok) throw new Error('[auth.js] Firebase config not available. Run `firebase serve` locally.');
 const _cfg = await _r.json();
-// Override authDomain with the serving hostname so the OAuth handler is same-origin.
-// Required for Safari ITP: cross-origin authDomain silently drops credentials on return.
+// Override authDomain with the serving hostname so Firebase's hosted auth
+// action pages (password reset / email verification links) are same-origin.
+// Required for Safari ITP: cross-origin authDomain silently drops credentials
+// on return from those flows.
 const _host = window.location.hostname;
 if (_host !== 'localhost' && _host !== '127.0.0.1') _cfg.authDomain = _host;
 const app = initializeApp(_cfg);
 
-// initializeAuth with explicit localStorage persistence and redirect resolver.
-// - browserLocalPersistence: tells Firebase to use localStorage from the start,
-//   eliminating the getAuth() → IndexedDB → setPersistence() migration race that
-//   caused a spurious null on mobile Safari before the real auth state was read.
-// - browserPopupRedirectResolver: required for signInWithRedirect and getRedirectResult;
-//   initializeAuth does NOT bundle it automatically (unlike getAuth).
+// browserLocalPersistence set explicitly from the start avoids the
+// getAuth() → IndexedDB → setPersistence() migration race that caused a
+// spurious null on mobile Safari before the real auth state was read.
+//
+// No popupRedirectResolver here: Google Sign-In no longer uses
+// signInWithPopup/signInWithRedirect/getRedirectResult at all (see
+// auth-callback.html) — it's a server-side OAuth Authorization Code flow, so
+// there's no popup/redirect operation left that would need a resolver.
 export const auth = initializeAuth(app, {
   persistence: browserLocalPersistence,
-  popupRedirectResolver: browserPopupRedirectResolver,
 });
 
-export { onAuthStateChanged, signOut, getRedirectResult };
+export { onAuthStateChanged, signOut, signInWithCustomToken };
 
-const _googleProvider = new GoogleAuthProvider();
-
-// authDomain is set to the serving hostname above, so the redirect handler is
-// same-origin with the app. This is required for Safari: when the handler is
-// cross-origin (e.g. latentspacemail.firebaseapp.com), Safari's ITP silently
-// drops the credential on return.
-//
-// signInWithPopup is NOT used: on iOS Safari, window.open() opens a new full
-// tab and window.opener is null, so the postMessage back to the app is lost and
-// the popup promise resolves with nothing — silent failure. signInWithRedirect
-// avoids the cross-tab postMessage entirely.
-export async function signInWithGoogle() {
-  await signInWithRedirect(auth, _googleProvider);
-  // Page navigates away. getRedirectResult() on the return trip handles the result.
+// return_to/returnUrl round-trips through the browser and Google's redirect,
+// so it's attacker-visible/craftable. Allowlist known pages instead of trying
+// to validate arbitrary relative-URL syntax (an easy place to get an open
+// redirect wrong) — shared by login.html and auth-callback.html.
+const ALLOWED_RETURN_PAGES = ['index.html', 'preferences.html', 'sections.html'];
+export function sanitizeReturnPage(value) {
+  return ALLOWED_RETURN_PAGES.includes(value) ? value : 'preferences.html';
 }
 
 export async function getIdToken() {

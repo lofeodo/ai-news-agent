@@ -7,7 +7,9 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   initializeAuth,
+  indexedDBLocalPersistence,
   browserLocalPersistence,
+  inMemoryPersistence,
   onAuthStateChanged,
   signOut,
   signInWithCustomToken,
@@ -24,16 +26,26 @@ const _host = window.location.hostname;
 if (_host !== 'localhost' && _host !== '127.0.0.1') _cfg.authDomain = _host;
 const app = initializeApp(_cfg);
 
-// browserLocalPersistence set explicitly from the start avoids the
-// getAuth() → IndexedDB → setPersistence() migration race that caused a
-// spurious null on mobile Safari before the real auth state was read.
+// Explicit persistence set from the start avoids the getAuth() → IndexedDB →
+// setPersistence() migration race that caused a spurious null on mobile
+// Safari before the real auth state was read.
+//
+// persistence is an ordered fallback list, not a single value: Safari Private
+// Browsing can throw when Firebase's persistence layer tries to write during
+// initializeAuth() -- and since this is a top-level module statement, an
+// uncaught throw here kills auth.js entirely, which kills every page that
+// imports it (no click handlers wired anywhere -- indistinguishable from
+// "the button does nothing"). inMemoryPersistence never touches storage, so
+// it can't fail the same way; it's the last resort so a private-browsing
+// session still gets a working (if not cross-reload-persistent) sign-in
+// rather than a dead page.
 //
 // No popupRedirectResolver here: Google Sign-In no longer uses
 // signInWithPopup/signInWithRedirect/getRedirectResult at all (see
 // auth-callback.html) — it's a server-side OAuth Authorization Code flow, so
 // there's no popup/redirect operation left that would need a resolver.
 export const auth = initializeAuth(app, {
-  persistence: browserLocalPersistence,
+  persistence: [indexedDBLocalPersistence, browserLocalPersistence, inMemoryPersistence],
 });
 
 export { onAuthStateChanged, signOut, signInWithCustomToken };

@@ -23,10 +23,12 @@ import secrets
 import sys
 from datetime import datetime, timezone, timedelta
 from typing import Annotated
+from urllib.parse import urlencode
 
 import anthropic
+import requests
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel, Field
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -72,6 +74,25 @@ PREMIUM_EMAILS = {
     for e in os.environ.get("PREMIUM_EMAILS", "").split(",")
     if e.strip()
 }
+
+# Google Sign-In (server-side OAuth Authorization Code flow — see CLAUDE.md).
+# Client ID is not secret (it's exposed in the browser redirect URL); the
+# secret follows the same USE_SECRET_MANAGER pattern as SendGrid/Anthropic.
+GOOGLE_OAUTH_CLIENT_ID   = os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "")
+GOOGLE_OAUTH_SECRET_NAME = "google-oauth-client-secret"
+
+OAUTH_STATE_TTL         = timedelta(minutes=10)
+OAUTH_EXCHANGE_CODE_TTL = timedelta(seconds=60)
+
+OAUTH_STATES_COLLECTION         = "oauth_states"
+OAUTH_EXCHANGE_CODES_COLLECTION = "oauth_exchange_codes"
+
+# return_to is attacker-visible/craftable (it round-trips through the browser
+# and Google's redirect) — allowlist known frontend pages rather than trying
+# to validate arbitrary relative-URL syntax, which is an easy place to get an
+# open redirect wrong.
+ALLOWED_RETURN_PAGES = {"index.html", "preferences.html", "sections.html"}
+DEFAULT_RETURN_PAGE  = "preferences.html"
 
 DEFAULT_SECTIONS = [
     "Model & Product Releases",
@@ -138,6 +159,36 @@ def _active_subscriber_count(db) -> int:
         return sum(1 for _ in col.where("active", "==", True).stream())
 
 
+def _consume_once(db, collection: str, doc_id: str) -> dict | None:
+    """Atomically read-and-delete a single-use doc. None if missing/expired.
+
+    Read-then-delete as two separate calls would let two concurrent requests
+    both read before either deletes, redeeming the same code twice — this
+    matters here (unlike _find_by_token above, which is intentionally
+    multi-use) because OAuth state/exchange codes must be single-use.
+    """
+    from google.cloud import firestore as _fs
+
+    ref = db.collection(collection).document(doc_id)
+
+    @_fs.transactional
+    def _txn(transaction):
+        snapshot = ref.get(transaction=transaction)
+        if not snapshot.exists:
+            return None
+        data = snapshot.to_dict()
+        transaction.delete(ref)
+        return data
+
+    data = _txn(db.transaction())
+    if data is None:
+        return None
+    expires_at = data.get("expires_at")
+    if getattr(expires_at, "tzinfo", None) is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    return data if datetime.now(timezone.utc) <= expires_at else None
+
+
 # ---------------------------------------------------------------------------
 # SendGrid (same Secret Manager pattern as agent4)
 # ---------------------------------------------------------------------------
@@ -169,6 +220,19 @@ def _get_anthropic_api_key() -> str:
     if not key:
         raise RuntimeError("ANTHROPIC_1ST_API_KEY env var not set")
     return key
+
+
+def _get_google_oauth_client_secret() -> str:
+    if USE_SECRET_MANAGER:
+        from google.cloud import secretmanager
+        client   = secretmanager.SecretManagerServiceClient()
+        name     = f"projects/{GCP_PROJECT_ID}/secrets/{GOOGLE_OAUTH_SECRET_NAME}/versions/latest"
+        response = client.access_secret_version(request={"name": name})
+        return response.payload.data.decode("utf-8").strip()
+    secret = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", "")
+    if not secret:
+        raise RuntimeError("GOOGLE_OAUTH_CLIENT_SECRET env var not set for local mode")
+    return secret
 
 
 def _send_email(to_email: str, subject: str, html_body: str) -> None:
@@ -485,6 +549,10 @@ class SectionConfig(BaseModel):
 
 class SectionConfigUpdate(BaseModel):
     section_config: SectionConfig
+
+
+class GoogleExchangeRequest(BaseModel):
+    exchange_code: Annotated[str, Field(max_length=128)]
 
 
 # ---------------------------------------------------------------------------
@@ -907,6 +975,183 @@ async def auth_unsubscribe(request: Request, user: dict = Depends(get_current_us
         ref.update({"active": False})
     print(f"[subscriptions]  account-based unsubscribe: {email}", flush=True)
     return {"status": "ok"}
+
+
+# ---------------------------------------------------------------------------
+# Google Sign-In — server-side OAuth Authorization Code flow.
+#
+# Google Sign-In on mobile Safari was broken across 9 client-side Firebase SDK
+# attempts (signInWithPopup, signInWithRedirect, various initializeAuth
+# configs — see CLAUDE.md history). The likely root cause is architectural:
+# Firebase's redirect flow depends on writing "a redirect is pending" state to
+# IndexedDB immediately before navigating to accounts.google.com and reading
+# it back via getRedirectResult() after the round trip — exactly the kind of
+# cross-site-navigation-adjacent storage Safari's ITP partitions/evicts.
+#
+# This flow avoids that entirely: the backend does the whole OAuth negotiation
+# server-to-server, and the only signal the frontend needs ("did sign-in
+# succeed") is a plain URL query parameter on a redirect — not storage of any
+# kind, so ITP's model doesn't apply to it.
+#
+#   GET  /auth/google/login    — redirect the browser to Google's consent screen
+#   GET  /auth/google/callback — Google redirects back here with a code
+#   POST /auth/google/exchange — frontend redeems a one-time code for a
+#                                 Firebase custom token
+# ---------------------------------------------------------------------------
+
+@router.get("/auth/google/login")
+@limiter.limit("10/minute")
+def auth_google_login(request: Request, return_to: Annotated[str, Query(max_length=128)] = "") -> RedirectResponse:
+    if not GOOGLE_OAUTH_CLIENT_ID or not SERVICE_BASE_URL:
+        return RedirectResponse(
+            f"{FRONTEND_BASE_URL}/login.html?auth_error=google_signin_unavailable", status_code=302
+        )
+
+    return_to = return_to if return_to in ALLOWED_RETURN_PAGES else DEFAULT_RETURN_PAGE
+    state = secrets.token_urlsafe(32)
+
+    db = _db()
+    db.collection(OAUTH_STATES_COLLECTION).document(state).set({
+        "return_to":  return_to,
+        "expires_at": datetime.now(timezone.utc) + OAUTH_STATE_TTL,
+    })
+
+    params = {
+        "client_id":     GOOGLE_OAUTH_CLIENT_ID,
+        "redirect_uri":  f"{SERVICE_BASE_URL}/auth/google/callback",
+        "response_type": "code",
+        "scope":         "openid email profile",
+        "state":         state,
+        "access_type":   "online",
+        "prompt":        "select_account",
+    }
+    resp = RedirectResponse(f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}", status_code=302)
+    # SameSite=Lax so the cookie rides along on the top-level GET navigation
+    # back from accounts.google.com. This is a first-party cookie throughout
+    # (this service sets it and reads it back) — never a cross-site cookie
+    # read, so it isn't subject to the third-party storage restrictions this
+    # whole rebuild exists to avoid. Checked in the callback below to bind the
+    # OAuth state to *this* browser, not just to "some" browser that started a
+    # flow (RFC 6749 §10.12 login-CSRF).
+    resp.set_cookie("oauth_state", state, max_age=600, httponly=True, secure=True, samesite="lax")
+    return resp
+
+
+@router.get("/auth/google/callback")
+@limiter.limit("10/minute")
+def auth_google_callback(
+    request: Request,
+    code: Annotated[str, Query(max_length=512)] = "",
+    state: Annotated[str, Query(max_length=128)] = "",
+    error: Annotated[str, Query(max_length=128)] = "",
+) -> RedirectResponse:
+    def _fail(reason: str, return_to: str = DEFAULT_RETURN_PAGE) -> RedirectResponse:
+        logger.warning("Google sign-in failed: %s", reason)
+        resp = RedirectResponse(
+            f"{FRONTEND_BASE_URL}/login.html?auth_error=google_signin_failed&returnUrl={return_to}",
+            status_code=302,
+        )
+        resp.delete_cookie("oauth_state")
+        return resp
+
+    db = _db()
+    state_data = _consume_once(db, OAUTH_STATES_COLLECTION, state) if state else None
+    return_to  = state_data.get("return_to", DEFAULT_RETURN_PAGE) if state_data else DEFAULT_RETURN_PAGE
+
+    if error or state_data is None or request.cookies.get("oauth_state") != state:
+        return _fail("state_invalid", return_to)
+
+    try:
+        token_res = requests.post(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "code":          code,
+                "client_id":     GOOGLE_OAUTH_CLIENT_ID,
+                "client_secret": _get_google_oauth_client_secret(),
+                "redirect_uri":  f"{SERVICE_BASE_URL}/auth/google/callback",
+                "grant_type":    "authorization_code",
+            },
+            timeout=10,
+        )
+        token_res.raise_for_status()
+
+        import google.oauth2.id_token
+        import google.auth.transport.requests as google_auth_requests
+        claims = google.oauth2.id_token.verify_oauth2_token(
+            token_res.json()["id_token"], google_auth_requests.Request(), audience=GOOGLE_OAUTH_CLIENT_ID,
+        )
+    except Exception:
+        logger.exception("Google OAuth code exchange/verification failed")
+        return _fail("exchange_failed", return_to)
+
+    email = (claims.get("email") or "").lower()
+    if not email or not claims.get("email_verified"):
+        return _fail("email_not_verified", return_to)
+
+    from auth_middleware import _ensure_firebase
+    _ensure_firebase()
+    from firebase_admin import auth as fb_auth
+
+    try:
+        fb_user = fb_auth.get_user_by_email(email)
+        if not fb_user.email_verified:
+            # Google just proved ownership of this address. An existing-but-
+            # unverified password account could be the real user (never
+            # clicked verify) or an attacker who pre-registered the victim's
+            # email with a password of their choosing ("pre-hijacking"). Either
+            # way, the old password must stop working: reset it to a random
+            # value and revoke existing sessions rather than trust it further.
+            fb_auth.update_user(fb_user.uid, email_verified=True, password=secrets.token_urlsafe(32))
+            fb_auth.revoke_refresh_tokens(fb_user.uid)
+    except fb_auth.UserNotFoundError:
+        try:
+            fb_user = fb_auth.create_user(
+                email=email, email_verified=True,
+                display_name=claims.get("name"), photo_url=claims.get("picture"),
+            )
+        except fb_auth.EmailAlreadyExistsError:
+            fb_user = fb_auth.get_user_by_email(email)  # lost a create race to a concurrent request
+
+    # Persistent custom claim — NOT create_custom_token's ephemeral
+    # developer_claims, which would silently disappear after Firebase's
+    # ~hourly background ID-token refresh.
+    fb_auth.set_custom_user_claims(fb_user.uid, {"provider": "google"})
+
+    exchange_code = secrets.token_urlsafe(32)
+    db.collection(OAUTH_EXCHANGE_CODES_COLLECTION).document(exchange_code).set({
+        "uid":        fb_user.uid,
+        "expires_at": datetime.now(timezone.utc) + OAUTH_EXCHANGE_CODE_TTL,
+    })
+
+    resp = RedirectResponse(
+        f"{FRONTEND_BASE_URL}/auth-callback.html?exchange_code={exchange_code}&return_to={return_to}",
+        status_code=302,
+    )
+    resp.delete_cookie("oauth_state")
+    return resp
+
+
+@router.post("/auth/google/exchange")
+@limiter.limit("10/minute")
+async def auth_google_exchange(request: Request, req: GoogleExchangeRequest) -> dict:
+    """Redeem a one-time exchange code (minted by /auth/google/callback) for a
+    Firebase custom token. This is the only step of the flow reached via
+    fetch() rather than a top-level navigation, so it's the only one that
+    needs CORS — already covered since it's just another route on `router`.
+    """
+    if not re.match(r'^[A-Za-z0-9_-]+$', req.exchange_code):
+        raise HTTPException(status_code=404, detail="invalid_or_expired_code")
+
+    db   = _db()
+    data = _consume_once(db, OAUTH_EXCHANGE_CODES_COLLECTION, req.exchange_code)
+    if data is None:
+        raise HTTPException(status_code=404, detail="invalid_or_expired_code")
+
+    from auth_middleware import _ensure_firebase
+    _ensure_firebase()
+    from firebase_admin import auth as fb_auth
+    custom_token = fb_auth.create_custom_token(data["uid"]).decode("utf-8")  # bytes -> str for JSON
+    return {"custom_token": custom_token}
 
 
 @router.post("/auth/send-verification-email")

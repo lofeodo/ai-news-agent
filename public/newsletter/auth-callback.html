@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Latent SpaceMail — Signing in…</title>
+  <link rel="icon" type="image/svg+xml" href="/images/logo-mark.svg">
+  <link rel="icon" type="image/png" href="/images/logo-email.png">
+  <link rel="preload" href="/__/firebase/init.json" as="fetch" crossorigin>
+  <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- No bg.js / nav.js here on purpose: this page unloads within about a
+       second, so the canvas animation and topbar widget are wasted work. -->
+  <div class="card">
+    <h1><span class="prompt">❯</span> Signing you in…</h1>
+    <p class="subtitle" id="status-text">Please wait a moment.</p>
+    <div class="msg error" id="auth-error" style="display:none;margin-bottom:18px;"></div>
+    <a href="login.html" class="btn-email-link" id="manual-link" style="display:none">Continue manually →</a>
+  </div>
+
+  <script type="module">
+    import { auth, signInWithCustomToken, sanitizeReturnPage } from './auth.js';
+
+    const API_BASE = (() => {
+      const h = location.hostname;
+      if (h === 'localhost' || h === '127.0.0.1') return 'http://localhost:8000';
+      return 'https://agent-subscriptions-zozrn33sna-nn.a.run.app';
+    })();
+
+    const params       = new URLSearchParams(location.search);
+    const exchangeCode = params.get('exchange_code');
+    const returnTo      = sanitizeReturnPage(params.get('return_to'));
+
+    const statusText  = document.getElementById('status-text');
+    const authError   = document.getElementById('auth-error');
+    const manualLink  = document.getElementById('manual-link');
+
+    function fail() {
+      statusText.textContent   = 'Something went wrong.';
+      authError.textContent    = 'Something went wrong signing in with Google. Please try again.';
+      authError.style.display  = 'block';
+      manualLink.style.display = 'block';
+      // Redirect automatically after a moment; the manual link above covers
+      // anyone who lands here with JS partially broken.
+      setTimeout(() => {
+        location.href = `login.html?auth_error=google_signin_failed&returnUrl=${returnTo}`;
+      }, 1500);
+    }
+
+    if (params.get('error') || !exchangeCode) {
+      fail();
+    } else {
+      try {
+        const res = await fetch(`${API_BASE}/auth/google/exchange`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ exchange_code: exchangeCode }),
+        });
+        if (!res.ok) throw new Error('exchange_failed');
+        const { custom_token } = await res.json();
+        await signInWithCustomToken(auth, custom_token);
+        location.href = returnTo;
+      } catch (e) {
+        fail();
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1166,8 +1166,22 @@ async def auth_send_verification_email(request: Request, user: dict = Depends(ge
     if not firebase_admin._apps:
         firebase_admin.initialize_app()
     from firebase_admin import auth as fb_auth
+    # Without action_code_settings, the emailed link drops the user on
+    # Firebase's generic hosted confirmation page with no way back into the
+    # app. handle_code_in_app stays False (the default) on purpose: this app
+    # never calls applyActionCode()/checkActionCode() client-side anywhere --
+    # the server-side OAuth rebuild (see CLAUDE.md) exists specifically to
+    # avoid client-side Firebase action-code/redirect machinery on Safari.
+    # `url` only sets the "Continue" link Firebase's hosted page shows after
+    # verification succeeds; the user still signs in again from there for
+    # onAuthStateChanged (and nav.js's auto-subscribe) to see a refreshed,
+    # verified token client-side.
+    action_code_settings = fb_auth.ActionCodeSettings(
+        url=f"{FRONTEND_BASE_URL}/login.html",
+        handle_code_in_app=False,
+    )
     try:
-        link = fb_auth.generate_email_verification_link(email)
+        link = fb_auth.generate_email_verification_link(email, action_code_settings=action_code_settings)
     except Exception as exc:
         print(f"[subscriptions]  generate_email_verification_link failed: {exc}", flush=True)
         raise HTTPException(status_code=503, detail="verification_link_failed")

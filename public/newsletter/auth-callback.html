@@ -11,6 +11,28 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- TEMPORARY diagnostic: surface any JS error directly on the page as
+       visible text (see login.html for the same snippet / rationale).
+       Remove once resolved. -->
+  <script>
+    (function () {
+      function report(text) {
+        var el = document.createElement('div');
+        el.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#c0392b;color:#fff;' +
+          'padding:10px;font:12px/1.4 monospace;z-index:99999;white-space:pre-wrap;word-break:break-word;';
+        el.textContent = text;
+        document.body.appendChild(el);
+      }
+      window.addEventListener('error', function (e) {
+        report('JS ERROR: ' + (e.message || 'unknown') + '\n' + (e.filename || '') + ':' + (e.lineno || '') + ':' + (e.colno || ''));
+      }, true);
+      window.addEventListener('unhandledrejection', function (e) {
+        var reason = e.reason;
+        var msg = (reason && (reason.stack || reason.message)) || String(reason);
+        report('UNHANDLED PROMISE REJECTION: ' + msg);
+      });
+    })();
+  </script>
   <!-- No bg.js / nav.js here on purpose: this page unloads within about a
        second, so the canvas animation and topbar widget are wasted work. -->
   <div class="card">
@@ -49,9 +71,15 @@
       }, 1500);
     }
 
-    if (params.get('error') || !exchangeCode) {
-      fail();
-    } else {
+    // Wrapped in a plain async function and invoked, rather than using
+    // top-level await directly in the module body -- see auth.js for why:
+    // top-level await gates module evaluation on ordering guarantees that
+    // have proven inconsistent on real mobile Safari.
+    async function completeSignIn() {
+      if (params.get('error') || !exchangeCode) {
+        fail();
+        return;
+      }
       try {
         const res = await fetch(`${API_BASE}/auth/google/exchange`, {
           method: 'POST',
@@ -66,6 +94,8 @@
         fail();
       }
     }
+
+    completeSignIn();
   </script>
 </body>
 </html>

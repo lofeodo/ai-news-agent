@@ -169,53 +169,61 @@
 
     // ── Firebase Auth flow ───────────────────────────────────────────────────
     // Priority 1: if user is signed in, use account-based auth.
-    // We wait briefly for onAuthStateChanged before falling back to token.
-
+    //
+    // auth.authStateReady() (Firebase JS SDK >= 10.1.0; pinned to 10.14.1,
+    // see CLAUDE.md -- confirmed present in that exact build) resolves
+    // exactly when Firebase finishes reading persisted auth state, however
+    // long that legitimately takes -- unlike a fixed setTimeout it can't
+    // mistake a slow-but-real signed-in user for signed-out. It and
+    // onAuthStateChanged key off the same underlying state, so in practice
+    // whichever settles first wins; the 8s setTimeout below is a last-resort
+    // safety net only, in case the SDK itself never settles, and should not
+    // fire under normal conditions.
     let authResolved = false;
-    const authTimeout = setTimeout(() => {
-      if (!authResolved) fallbackToToken();
-    }, 3000);
 
-    onAuthStateChanged(auth, async (user) => {
+    async function handleSignedIn(user) {
+      authMode = true;
+      accountEmail.textContent   = user.email;
+      accountBadge.style.display = 'flex';
+
+      try {
+        const res  = await authFetch(`${API}/auth/preferences`);
+        loadingMsg.style.display = 'none';
+        if (!res.ok) {
+          invalidMsg.textContent   = 'Unable to load preferences right now. Please try again in a moment.';
+          invalidMsg.style.display = 'block';
+          return;
+        }
+        const data = await res.json();
+
+        // Apply tier
+        userTier = data.tier || 'free';
+        if (userTier === 'premium') tierBadge.style.display = 'inline-block';
+
+        if (!data.subscribed) {
+          notSubNotice.style.display = 'block';
+          return;
+        }
+        subscriptionSection.style.display = 'block';
+        showPrefsForm(data.prefs);
+
+      } catch {
+        loadingMsg.style.display = 'none';
+        invalidMsg.textContent   = 'Connection error. Please check your internet and try again.';
+        invalidMsg.style.display = 'block';
+      }
+    }
+
+    function settleAuth(user) {
       if (authResolved) return;
       authResolved = true;
-      clearTimeout(authTimeout);
+      if (user) handleSignedIn(user);
+      else fallbackToToken();
+    }
 
-      if (user) {
-        authMode = true;
-        accountEmail.textContent   = user.email;
-        accountBadge.style.display = 'flex';
-
-        try {
-          const res  = await authFetch(`${API}/auth/preferences`);
-          loadingMsg.style.display = 'none';
-          if (!res.ok) {
-            invalidMsg.textContent   = 'Unable to load preferences right now. Please try again in a moment.';
-            invalidMsg.style.display = 'block';
-            return;
-          }
-          const data = await res.json();
-
-          // Apply tier
-          userTier = data.tier || 'free';
-          if (userTier === 'premium') tierBadge.style.display = 'inline-block';
-
-          if (!data.subscribed) {
-            notSubNotice.style.display = 'block';
-            return;
-          }
-          subscriptionSection.style.display = 'block';
-          showPrefsForm(data.prefs);
-
-        } catch {
-          loadingMsg.style.display = 'none';
-          invalidMsg.textContent   = 'Connection error. Please check your internet and try again.';
-          invalidMsg.style.display = 'block';
-        }
-      } else {
-        fallbackToToken();
-      }
-    });
+    onAuthStateChanged(auth, (user) => settleAuth(user));
+    auth.authStateReady().then(() => settleAuth(auth.currentUser));
+    setTimeout(() => settleAuth(null), 8000);
 
     function fallbackToToken() {
       if (!token) {

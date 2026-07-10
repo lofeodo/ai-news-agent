@@ -1,8 +1,21 @@
 // auth.js — shared Firebase Auth helpers loaded as an ES module on every page.
 //
-// Firebase Hosting automatically serves the project config at /__/firebase/init.json
-// so no API key is needed in source. Use `firebase serve` for local development
-// (plain HTTP servers don't serve that endpoint).
+// Config is hardcoded rather than fetched from /__/firebase/init.json at
+// module-load time -- deliberately. Firebase's client config (apiKey,
+// authDomain, etc.) is not a secret; Firebase's own security model relies on
+// server-side Auth/Firestore rules, not on hiding this object, so hardcoding
+// it is safe. This used to be `const _r = await fetch(...)`, a *top-level*
+// await in an ES module. Top-level await gates the importing module's own
+// evaluation on this module fully resolving first, which depends on
+// browsers implementing that ordering correctly -- a comparatively recent
+// module feature with a history of inconsistent behavior across WebKit
+// builds. On real mobile Safari (multiple physical devices, both Wi-Fi and
+// cellular, never reproduced in any emulator) this manifested as an
+// unhandled promise rejection inside completely unrelated, unthrowable
+// synchronous code (sanitizeReturnPage's Array.includes call) -- consistent
+// with the importing page's module executing before this one had actually
+// finished. Removing the top-level await removes the dependency on that
+// ordering guarantee entirely.
 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
@@ -15,9 +28,15 @@ import {
   signInWithCustomToken,
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 
-const _r = await fetch('/__/firebase/init.json');
-if (!_r.ok) throw new Error('[auth.js] Firebase config not available. Run `firebase serve` locally.');
-const _cfg = await _r.json();
+const _cfg = {
+  apiKey: 'AIzaSyD-Nx1nExmGPY7QFegBlZVAXOd56t2V0Wg',
+  authDomain: 'ai-news-letter-497720.firebaseapp.com',
+  projectId: 'ai-news-letter-497720',
+  storageBucket: 'ai-news-letter-497720.firebasestorage.app',
+  messagingSenderId: '26202086206',
+  appId: '1:26202086206:web:19cc12c87c252091dfaa6f',
+  measurementId: 'G-YEJM5TGS8L',
+};
 // Override authDomain with the serving hostname so Firebase's hosted auth
 // action pages (password reset / email verification links) are same-origin.
 // Required for Safari ITP: cross-origin authDomain silently drops credentials

@@ -128,7 +128,7 @@ In Firebase Console → Authentication → Sign-in method:
 2. Enable **Email/Password** (standard, not email link)
 3. Add authorized domains: `newsletter.lofeodo.com`, `latentspacemail.web.app`
 
-`auth.js` loads the Firebase project config automatically from `/__/firebase/init.json`, which Firebase Hosting serves on all deployments. **No API key in source.** For local frontend development with auth, run `firebase serve --only hosting` instead of a plain HTTP server (plain servers don't serve that endpoint).
+`auth.js` hardcodes the Firebase project config directly in source (see the comment at the top of that file — a prior version fetched it from `/__/firebase/init.json` via a top-level `await`, replaced after causing intermittent failures on real mobile Safari). Firebase's client config isn't a secret; its security model is server-side rules, not hiding this object. `firebase serve --only hosting` is still recommended for local frontend development, since Firebase Hosting's `/__/auth/action` pages (password reset / email verification continue links) are otherwise unavailable from a plain HTTP server.
 
 **Important — authDomain override:** `auth.js` overrides `authDomain` to `window.location.hostname` on production. This now matters only for Firebase's hosted `/__/auth/action` pages (password reset / email verification links — the email/password flow is still client-side Firebase Auth). `https://newsletter.lofeodo.com/__/auth/handler` remains registered in the Google OAuth 2.0 client's authorized redirect URIs from the old Google flow (see below); it's unused now but harmless to leave registered.
 

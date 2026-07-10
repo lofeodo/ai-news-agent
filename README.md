@@ -193,9 +193,11 @@ AGENT_NAME=agent_subscriptions uvicorn main:app --reload
 **Run the frontend locally with auth support:**
 ```bash
 firebase serve --only hosting
-# Serves public/newsletter/ at localhost:5000 and provides /__/firebase/init.json
-# Plain HTTP servers (python -m http.server, etc.) won't serve that endpoint,
-# so auth.js will fail to initialize on pages that use Firebase Auth.
+# Serves public/newsletter/ at localhost:5000. auth.js hardcodes its Firebase
+# config now (no longer fetches /__/firebase/init.json), but Firebase
+# Hosting's /__/auth/action pages (password reset / email verification
+# continue links) still require this emulator -- a plain HTTP server won't
+# serve those paths.
 ```
 
 ## Deployment

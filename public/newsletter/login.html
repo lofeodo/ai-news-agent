@@ -6,34 +6,11 @@
   <title>Latent SpaceMail — Sign in</title>
   <link rel="icon" type="image/svg+xml" href="/images/logo-mark.svg">
   <link rel="icon" type="image/png" href="/images/logo-email.png">
-  <link rel="preload" href="/__/firebase/init.json" as="fetch" crossorigin>
   <link rel="preload" href="/fonts/cormorant-garamond-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="fonts.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- TEMPORARY diagnostic: surface any JS error directly on the page as
-       visible text, since the failure being debugged prevents console
-       access on the reporting device. Remove once resolved. -->
-  <script>
-    (function () {
-      function report(text) {
-        var el = document.createElement('div');
-        el.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#c0392b;color:#fff;' +
-          'padding:10px;font:12px/1.4 monospace;z-index:99999;white-space:pre-wrap;word-break:break-word;';
-        el.textContent = text;
-        document.body.appendChild(el);
-      }
-      window.addEventListener('error', function (e) {
-        report('JS ERROR: ' + (e.message || 'unknown') + '\n' + (e.filename || '') + ':' + (e.lineno || '') + ':' + (e.colno || ''));
-      }, true);
-      window.addEventListener('unhandledrejection', function (e) {
-        var reason = e.reason;
-        var msg = (reason && (reason.stack || reason.message)) || String(reason);
-        report('UNHANDLED PROMISE REJECTION: ' + msg);
-      });
-    })();
-  </script>
   <canvas id="bg-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;will-change:transform;"></canvas>
 
   <header class="topbar">

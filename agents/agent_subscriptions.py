@@ -120,6 +120,15 @@ def _get_user_tier(email: str) -> str:
 
 def _db():
     from google.cloud import firestore as _fs
+    if not GCP_PROJECT_ID:
+        # google-cloud-firestore only guards against project=None, not "" --
+        # an empty string is silently accepted and only fails (or silently
+        # misdirects, if some other valid-but-wrong project id ends up here)
+        # on the first real RPC. Every route in this file calls _db() before
+        # touching Firestore, so failing here turns a misconfigured deploy
+        # into an immediate, obvious error instead of every /auth/* call
+        # quietly doing nothing.
+        raise RuntimeError("GCP_PROJECT_ID is not set; refusing to create a Firestore client")
     return _fs.Client(project=GCP_PROJECT_ID)
 
 

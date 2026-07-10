@@ -611,6 +611,7 @@ input[type="password"]:focus {
   gap: 10px;
   transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
   text-align: center;
+  text-decoration: none;
 }
 .btn-google:hover {
   background: rgba(255,255,255,0.08);

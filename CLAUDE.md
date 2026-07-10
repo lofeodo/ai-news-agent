@@ -2,6 +2,16 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Browser Testing
+
+After any UI change, test on all three environments:
+
+1. **Desktop** — use `playwright`
+2. **Android** — use `playwright-mobile-android` (Pixel 7 emulation)
+3. **iOS** — use `playwright-mobile-ios` (iPhone 15 emulation)
+
+Take a screenshot in each after changes. Flag any layout, overflow, or interaction issues specific to mobile viewports.
+
 ## Git Workflow
 
 **Never commit or push unless explicitly asked by the user.**
@@ -79,6 +89,9 @@ agent1b (news fetch)  ──┘                                    ├──> ag
 - `GET /auth/me` — return user info + subscription status + tier.
 - `POST /auth/subscribe` — subscribe instantly (email already verified; requires `email_verified: true`). Accepts `{"send_latest": bool}` body.
 - `POST /auth/unsubscribe` — deactivate subscription.
+- `GET /auth/google/login?return_to=` — start Google Sign-In (see "Google Sign-In" below).
+- `GET /auth/google/callback` — Google OAuth redirect target.
+- `POST /auth/google/exchange` — redeem a one-time exchange code for a Firebase custom token.
 - `GET /auth/preferences` — return prefs + tier.
 - `POST /auth/preferences` — update prefs.
 - `POST /auth/sections/refine` — **premium only**; takes `{"raw_topic": "SpaceX"}`, calls Claude Haiku, returns `{"refined_topic": "SpaceX product launches & mission updates"}`. Rate-limited 5/min.
@@ -87,7 +100,7 @@ agent1b (news fetch)  ──┘                                    ├──> ag
 
 **Subscriber doc fields:** `email`, `token`, `token_expires_at`, `active`, `subscribed_at`, `confirmed_at`, `prefs: {include_french, include_canada}`, `send_latest`, `latest_sent`, `uid` (Firebase UID, null for legacy subscribers). Token TTL: 48h for confirmation, 365d for action links.
 
-**Firestore collections:** `subscribers` (existing), `users` (doc ID = Firebase UID, fields: `email`, `display_name`, `provider`, `created_at`, `tier`, `section_config`).
+**Firestore collections:** `subscribers` (existing), `users` (doc ID = Firebase UID, fields: `email`, `display_name`, `provider`, `created_at`, `tier`, `section_config`), `oauth_states` (transient, ~10min TTL, Google Sign-In CSRF state), `oauth_exchange_codes` (transient, ~60s TTL, one-time Google Sign-In handoff — see below).
 
 ### Account Tiers
 
@@ -117,7 +130,25 @@ In Firebase Console → Authentication → Sign-in method:
 
 `auth.js` loads the Firebase project config automatically from `/__/firebase/init.json`, which Firebase Hosting serves on all deployments. **No API key in source.** For local frontend development with auth, run `firebase serve --only hosting` instead of a plain HTTP server (plain servers don't serve that endpoint).
 
-**Important — authDomain override:** `auth.js` overrides `authDomain` to `window.location.hostname` on production. This is required for Safari: when `authDomain` is the default `latentspacemail.firebaseapp.com` (cross-origin from the app), Safari's third-party storage restrictions silently drop credentials after OAuth. Same-origin `authDomain` fixes this. `https://newsletter.lofeodo.com/__/auth/handler` **is already registered** in the Google OAuth 2.0 client's authorized redirect URIs — do not assume it is missing.
+**Important — authDomain override:** `auth.js` overrides `authDomain` to `window.location.hostname` on production. This now matters only for Firebase's hosted `/__/auth/action` pages (password reset / email verification links — the email/password flow is still client-side Firebase Auth). `https://newsletter.lofeodo.com/__/auth/handler` remains registered in the Google OAuth 2.0 client's authorized redirect URIs from the old Google flow (see below); it's unused now but harmless to leave registered.
+
+**Google Sign-In: server-side OAuth Authorization Code flow.** Google Sign-In on mobile Safari was broken across 9 client-side Firebase SDK attempts spanning two branches (popup-first, redirect-only, UA-sniffed popup-vs-redirect, every combination of `initializeAuth`/`getAuth`/persistence/`popupRedirectResolver` — see `git log` on `fix/google-signin-authdomain` and `fix/safari-auth-initialize` for the full history). The likely root cause was architectural, not a config error: Firebase's redirect flow depends on writing "a redirect is pending" state to IndexedDB immediately before navigating to `accounts.google.com` and reading it back via `getRedirectResult()` after the round trip — exactly the kind of storage Safari's Intelligent Tracking Prevention (ITP) partitions/evicts around cross-site navigation bounces.
+
+The fix moves the entire OAuth negotiation server-side (`agents/agent_subscriptions.py`), and the client SDK never calls `signInWithPopup`/`signInWithRedirect`/`getRedirectResult` at all:
+1. `login.html`/`index.html`'s "Continue with Google" is a plain `<a href="{SERVICE_BASE_URL}/auth/google/login?return_to=...">` — a real navigation, not an SDK call, so there's no client-side error path for *starting* sign-in.
+2. `GET /auth/google/login` sets a CSRF `state` cookie + Firestore doc, redirects to Google's consent screen.
+3. `GET /auth/google/callback` — Google redirects back here. Verifies the `state` cookie, exchanges the code for tokens server-to-server (`requests` + `google.oauth2.id_token.verify_oauth2_token`), gets-or-creates the Firebase user via Admin SDK, and redirects to `auth-callback.html` with a short-lived (60s) single-use exchange code.
+4. `auth-callback.html` POSTs the exchange code to `POST /auth/google/exchange`, receives a Firebase custom token, and calls `signInWithCustomToken()`.
+
+**Important — `create_custom_token` needs a signing-capable identity, unlike everything else this app does with Firebase Admin.** `verify_id_token` (used by every other `/auth/*` route) works fine with plain Application Default Credentials. `create_custom_token` (step 3 above, the only caller in this codebase) additionally needs to *sign* a JWT, which ADC alone can't do:
+- **On Cloud Run**, the Admin SDK discovers the attached service account via the metadata server and signs remotely via the IAM Credentials API — but only if that service account has been granted `roles/iam.serviceAccountTokenCreator` **on itself**. This is not covered by `roles/editor`. One-time setup: `gcloud iam service-accounts add-iam-policy-binding <SA_EMAIL> --member="serviceAccount:<SA_EMAIL>" --role="roles/iam.serviceAccountTokenCreator"`. Without this, `/auth/google/exchange` 500s with `ValueError: Failed to determine service account`.
+- **Locally**, there's no metadata server at all, so `gcloud auth application-default login` isn't sufficient on its own — `create_custom_token` fails immediately. Fix: download a service account key JSON (`gcloud iam service-accounts keys create key.json --iam-account=<SA_EMAIL>`) and set `GOOGLE_APPLICATION_CREDENTIALS` to its path before starting the backend; the key's embedded private key signs locally with no IAM call needed. Keep the key out of git (already covered by the existing `.env`/`*.env` gitignore pattern if stored alongside it, but the key file itself is not a `.env` file — gitignore it explicitly too).
+
+The only "did sign-in succeed" signal the frontend relies on is a URL query parameter attached to an HTTP redirect — not IndexedDB, localStorage, cookies, or `window.name` — so ITP's storage-partitioning model doesn't apply to it. Every hop is either a same-tab top-level redirect or a same-origin `fetch`; there's no popup and no `window.opener` anywhere, so the original `signInWithPopup` failure mode is structurally impossible rather than merely avoided by configuration. `auth.js`'s `initializeAuth` no longer needs `popupRedirectResolver` — it was only required for `signInWithRedirect`/`signInWithPopup`/`getRedirectResult`, none of which remain in the app.
+
+Known accepted residual risk: a narrow replay window exists between step 3's redirect and step 4's (automatic, sub-second) redemption of the exchange code. Closing it would require binding that hop to a cookie too, but the frontend and backend are different sites (`newsletter.lofeodo.com` vs `*.a.run.app`), so that cookie would necessarily be cross-site — exactly the kind of storage Safari's ITP restricts, reintroducing the fragility this rebuild exists to eliminate. Judged not worth it for v1; revisit only if abuse is observed.
+
+**Important — Firebase SDK version:** Use `10.14.1` from the CDN only. SDK 12.x has a runtime initialization error on iPadOS Safari that silently aborts the entire `<script type="module">` block — this constraint governs the remaining email/password flow (`signInWithEmailAndPassword`, `signInWithCustomToken`, etc.) and hasn't been re-tested since it's orthogonal to the Google Sign-In rebuild.
 
 For local development of the subscription service, Firebase Admin SDK uses Application Default Credentials: `gcloud auth application-default login`. On Cloud Run, ADC works automatically.
 
@@ -148,6 +179,8 @@ All Claude calls use `claude-haiku-4-5-20251001` (configured in `config.py`).
 | `MAILING_ADDRESS` | Physical address in email footer (CASL compliance) |
 | `GOOGLE_APPLICATION_CREDENTIALS` | Local only: path to service account JSON for Firebase Admin SDK (alternative to `gcloud auth application-default login`) |
 | `PREMIUM_EMAILS` | Comma-separated emails that get `tier: "premium"` on login (e.g. `daniel.lofeodo@gmail.com`) |
+| `GOOGLE_OAUTH_CLIENT_ID` | Google OAuth 2.0 Web client ID for server-side Google Sign-In (not secret) |
+| `GOOGLE_OAUTH_CLIENT_SECRET` | Google OAuth 2.0 client secret (or use `USE_SECRET_MANAGER=true`, secret name `google-oauth-client-secret`) |
 
 ## Pub/Sub Topics (Cloud Mode)
 

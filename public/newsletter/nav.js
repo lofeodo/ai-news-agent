@@ -1,6 +1,10 @@
 import { auth, onAuthStateChanged, signOut, authFetch } from './auth.js';
 
-const API = 'https://agent-subscriptions-zozrn33sna-nn.a.run.app';
+const API = (() => {
+  const h = location.hostname;
+  if (h === 'localhost' || h === '127.0.0.1') return 'http://localhost:8000';
+  return 'https://agent-subscriptions-zozrn33sna-nn.a.run.app';
+})();
 const CACHE_KEY = 'lsm_nav_auth';
 
 // Mark the active nav link based on current path

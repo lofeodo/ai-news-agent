@@ -1,49 +1,81 @@
 // auth.js — shared Firebase Auth helpers loaded as an ES module on every page.
 //
-// Firebase Hosting automatically serves the project config at /__/firebase/init.json
-// so no API key is needed in source. Use `firebase serve` for local development
-// (plain HTTP servers don't serve that endpoint).
+// Config is hardcoded rather than fetched from /__/firebase/init.json at
+// module-load time -- deliberately. Firebase's client config (apiKey,
+// authDomain, etc.) is not a secret; Firebase's own security model relies on
+// server-side Auth/Firestore rules, not on hiding this object, so hardcoding
+// it is safe. This used to be `const _r = await fetch(...)`, a *top-level*
+// await in an ES module. Top-level await gates the importing module's own
+// evaluation on this module fully resolving first, which depends on
+// browsers implementing that ordering correctly -- a comparatively recent
+// module feature with a history of inconsistent behavior across WebKit
+// builds. On real mobile Safari (multiple physical devices, both Wi-Fi and
+// cellular, never reproduced in any emulator) this manifested as an
+// unhandled promise rejection inside completely unrelated, unthrowable
+// synchronous code (sanitizeReturnPage's Array.includes call) -- consistent
+// with the importing page's module executing before this one had actually
+// finished. Removing the top-level await removes the dependency on that
+// ordering guarantee entirely.
 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
-  getAuth,
+  initializeAuth,
+  indexedDBLocalPersistence,
+  browserLocalPersistence,
+  inMemoryPersistence,
   onAuthStateChanged,
   signOut,
-  GoogleAuthProvider,
-  signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithCustomToken,
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 
-const _r = await fetch('/__/firebase/init.json');
-if (!_r.ok) throw new Error('[auth.js] Firebase config not available. Run `firebase serve` locally.');
-const _cfg = await _r.json();
-// init.json always returns the Firebase-assigned authDomain. Override it with
-// the actual hostname on production so Google's OAuth popup shows the custom
-// domain instead of "ai-news-letter-497720.firebaseapp.com".
+const _cfg = {
+  apiKey: 'AIzaSyD-Nx1nExmGPY7QFegBlZVAXOd56t2V0Wg',
+  authDomain: 'ai-news-letter-497720.firebaseapp.com',
+  projectId: 'ai-news-letter-497720',
+  storageBucket: 'ai-news-letter-497720.firebasestorage.app',
+  messagingSenderId: '26202086206',
+  appId: '1:26202086206:web:19cc12c87c252091dfaa6f',
+  measurementId: 'G-YEJM5TGS8L',
+};
+// Override authDomain with the serving hostname so Firebase's hosted auth
+// action pages (password reset / email verification links) are same-origin.
+// Required for Safari ITP: cross-origin authDomain silently drops credentials
+// on return from those flows.
 const _host = window.location.hostname;
 if (_host !== 'localhost' && _host !== '127.0.0.1') _cfg.authDomain = _host;
 const app = initializeApp(_cfg);
 
-export const auth = getAuth(app);
-export { onAuthStateChanged, signOut, getRedirectResult };
+// Explicit persistence set from the start avoids the getAuth() → IndexedDB →
+// setPersistence() migration race that caused a spurious null on mobile
+// Safari before the real auth state was read.
+//
+// persistence is an ordered fallback list, not a single value: Safari Private
+// Browsing can throw when Firebase's persistence layer tries to write during
+// initializeAuth() -- and since this is a top-level module statement, an
+// uncaught throw here kills auth.js entirely, which kills every page that
+// imports it (no click handlers wired anywhere -- indistinguishable from
+// "the button does nothing"). inMemoryPersistence never touches storage, so
+// it can't fail the same way; it's the last resort so a private-browsing
+// session still gets a working (if not cross-reload-persistent) sign-in
+// rather than a dead page.
+//
+// No popupRedirectResolver here: Google Sign-In no longer uses
+// signInWithPopup/signInWithRedirect/getRedirectResult at all (see
+// auth-callback.html) — it's a server-side OAuth Authorization Code flow, so
+// there's no popup/redirect operation left that would need a resolver.
+export const auth = initializeAuth(app, {
+  persistence: [indexedDBLocalPersistence, browserLocalPersistence, inMemoryPersistence],
+});
 
-const _googleProvider = new GoogleAuthProvider();
+export { onAuthStateChanged, signOut, signInWithCustomToken };
 
-// authDomain is set to the serving hostname above, so the popup/redirect handler
-// is same-origin with the app. This is required for Safari: when the handler is
-// cross-origin (e.g. latentspacemail.firebaseapp.com), Safari's third-party storage
-// restrictions silently drop the credential on return.
-export async function signInWithGoogle() {
-  try {
-    return await signInWithPopup(auth, _googleProvider);
-  } catch (e) {
-    if (e.code === 'auth/popup-blocked') {
-      await signInWithRedirect(auth, _googleProvider);
-      return; // page navigates away
-    }
-    throw e;
-  }
+// return_to/returnUrl round-trips through the browser and Google's redirect,
+// so it's attacker-visible/craftable. Allowlist known pages instead of trying
+// to validate arbitrary relative-URL syntax (an easy place to get an open
+// redirect wrong) — shared by login.html and auth-callback.html.
+const ALLOWED_RETURN_PAGES = ['index.html', 'preferences.html', 'sections.html'];
+export function sanitizeReturnPage(value) {
+  return ALLOWED_RETURN_PAGES.includes(value) ? value : 'preferences.html';
 }
 
 export async function getIdToken() {

@@ -120,6 +120,15 @@ def _get_user_tier(email: str) -> str:
 
 def _db():
     from google.cloud import firestore as _fs
+    if not GCP_PROJECT_ID:
+        # google-cloud-firestore only guards against project=None, not "" --
+        # an empty string is silently accepted and only fails (or silently
+        # misdirects, if some other valid-but-wrong project id ends up here)
+        # on the first real RPC. Every route in this file calls _db() before
+        # touching Firestore, so failing here turns a misconfigured deploy
+        # into an immediate, obvious error instead of every /auth/* call
+        # quietly doing nothing.
+        raise RuntimeError("GCP_PROJECT_ID is not set; refusing to create a Firestore client")
     return _fs.Client(project=GCP_PROJECT_ID)
 
 
@@ -1166,8 +1175,22 @@ async def auth_send_verification_email(request: Request, user: dict = Depends(ge
     if not firebase_admin._apps:
         firebase_admin.initialize_app()
     from firebase_admin import auth as fb_auth
+    # Without action_code_settings, the emailed link drops the user on
+    # Firebase's generic hosted confirmation page with no way back into the
+    # app. handle_code_in_app stays False (the default) on purpose: this app
+    # never calls applyActionCode()/checkActionCode() client-side anywhere --
+    # the server-side OAuth rebuild (see CLAUDE.md) exists specifically to
+    # avoid client-side Firebase action-code/redirect machinery on Safari.
+    # `url` only sets the "Continue" link Firebase's hosted page shows after
+    # verification succeeds; the user still signs in again from there for
+    # onAuthStateChanged (and nav.js's auto-subscribe) to see a refreshed,
+    # verified token client-side.
+    action_code_settings = fb_auth.ActionCodeSettings(
+        url=f"{FRONTEND_BASE_URL}/login.html",
+        handle_code_in_app=False,
+    )
     try:
-        link = fb_auth.generate_email_verification_link(email)
+        link = fb_auth.generate_email_verification_link(email, action_code_settings=action_code_settings)
     except Exception as exc:
         print(f"[subscriptions]  generate_email_verification_link failed: {exc}", flush=True)
         raise HTTPException(status_code=503, detail="verification_link_failed")

@@ -6,7 +6,6 @@
   <title>Latent SpaceMail</title>
   <link rel="icon" type="image/svg+xml" href="/images/logo-mark.svg">
   <link rel="icon" type="image/png" href="/images/logo-email.png">
-  <link rel="preload" href="/__/firebase/init.json" as="fetch" crossorigin>
   <link rel="preload" href="/fonts/cormorant-garamond-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="fonts.css">
   <link rel="stylesheet" href="style.css?v=4">
@@ -125,7 +124,7 @@
 
     // Google sign-in is a plain navigation to the backend — see auth.js /
     // auth-callback.html for why (server-side OAuth Authorization Code flow).
-    document.getElementById('google-btn').href = `${API_BASE}/auth/google/login?return_to=index.html`;
+    document.getElementById('google-btn').href = `${API_BASE}/auth/google/login?return_to=preferences.html`;
   </script>
 </body>
 </html>

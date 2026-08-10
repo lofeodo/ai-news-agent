@@ -90,3 +90,7 @@ SUBSCRIBERS_COLLECTION = "subscribers"
 
 # Subscriber cap (SendGrid free tier: 100 emails/day)
 MAX_SUBSCRIBERS = int(os.environ.get("MAX_SUBSCRIBERS", "100"))
+
+# Health check alerting — where agent_healthcheck sends a problem report.
+# Never used for subscriber-facing sends.
+ALERT_EMAIL = os.environ.get("ALERT_EMAIL", "")

@@ -82,8 +82,15 @@ def _diagnose(doc: dict) -> list[str]:
 
 def _alert(message: str) -> None:
     """Best-effort single email to ALERT_EMAIL. Never touches subscriber-facing code."""
+    # Logged unconditionally, before the SendGrid attempt below — this is the
+    # fallback signal a Cloud Monitoring log-based alert watches for, so a
+    # SendGrid outage (which would break the send below) can't also silence
+    # the fact that something is wrong. Do not change this prefix without
+    # updating the matching log-based metric filter in Cloud Monitoring.
+    print(f"[healthcheck] PROBLEM_DETECTED: {message}", flush=True)
+
     if not ALERT_EMAIL:
-        print(f"[healthcheck]  ALERT_EMAIL not set — cannot send alert. Message was:\n{message}", flush=True)
+        print(f"[healthcheck]  ALERT_EMAIL not set — cannot send alert email.", flush=True)
         return
 
     subject   = f"{NEWSLETTER_NAME} pipeline health check — problem detected"

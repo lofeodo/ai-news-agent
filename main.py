@@ -11,6 +11,7 @@
 #   agent3       → agents/agent3_compose.py
 #   agent4       → agents/agent4_send.py
 #   orchestrator → orchestrator.py
+#   healthcheck  → agents/agent_healthcheck.py
 #
 #   agent_subscriptions → agents/agent_subscriptions.py
 #     Special case: NOT in AGENT_REGISTRY because it has no run(run_id).
@@ -59,6 +60,7 @@ AGENT_REGISTRY = {
     "agent3":       "agent3_compose",
     "agent4":       "agent4_send",
     "orchestrator": "orchestrator",
+    "healthcheck":  "agent_healthcheck",
 }
 
 # ── Subscription service ─────────────────────────────────────────────────────

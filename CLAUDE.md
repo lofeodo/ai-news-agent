@@ -20,7 +20,7 @@ When asked to commit: create incremental commits with individual changes — one
 
 ## What This Project Does
 
-Weekly AI newsletter pipeline. Six agents fetch ArXiv papers + news, score/summarize them with Claude, compose an HTML email, and send it via SendGrid. A separate subscription service manages subscriber preferences.
+Weekly AI newsletter pipeline. Six agents fetch ArXiv papers + news, score/summarize them with Claude, compose an HTML email, and send it via SendGrid. A separate subscription service manages subscriber preferences, and a standalone health-check agent detects and alerts on stalled or failed pipeline runs.
 
 ## Running the Pipeline
 
@@ -49,6 +49,12 @@ AGENT_NAME=agent1a uvicorn main:app --reload
 docker build --build-arg AGENT_NAME=agent1a -t ai-news-agent-1a .
 ```
 
+**Build + push all services via Cloud Build:**
+```bash
+gcloud builds submit --config cloudbuild.yaml
+```
+Builds all 9 service images (agent1a/1b/2a/2b/3/4, orchestrator, agent_subscriptions, healthcheck) in parallel and pushes to Artifact Registry. Does **not** deploy to Cloud Run — that's always a separate manual `gcloud run deploy` per service (see README.md's Deployment section). `cloudbuild-partial.yaml` and `cloudbuild-subscriptions.yaml` build smaller subsets for faster iteration.
+
 ## Architecture
 
 ### Two Operating Modes
@@ -63,13 +69,32 @@ agent1a (ArXiv papers) ──┐
                           ├──> agent2a (summarize papers) ──┐
 agent1b (news fetch)  ──┘                                    ├──> agent3 (compose HTML) ──> agent4 (send)
                           └──> agent2b (summarize news)  ──┘
+
+agent_healthcheck — independent, Cloud Scheduler-triggered (7:03 AM Monday,
+not Pub/Sub). Not part of the chain above; reads pipeline_runs after the
+fact and alerts on failure.
 ```
 
 - **agent1a** – Fetches cs.AI/cs.LG papers from ArXiv (up to 500, last 7 days), randomly samples 35, scores with Claude using a 7-dimension 28-point rubric (`scoring_rubric.txt`), keeps top 3 (`PAPERS_IN_NEWSLETTER`). Max 5 concurrent Claude calls with exponential backoff (10s/20s/40s). PDF/API fetches route through a Squid proxy (`HTTPS_PROXY` / `HTTP_PROXY` env vars) because GCP IPs are throttled by ArXiv — both the `urllib` opener and the `arxiv` library session are patched.
 - **agent1b** – Fetches Hacker News + 10 NewsAPI queries (English global, French global, Canada/Montreal), filters paywalled/non-Latin in code, then Claude language-filters (EN/FR only) and categorizes into 7 categories (`filter_tool.py` schema). Max 5 concurrent Claude calls.
 - **agent2a/2b** – Summarize papers/articles in parallel threads; use Firestore atomic counter (`agent2_completions`) to sync before triggering agent3. The agent that increments the counter to 2 publishes `content-summarized`.
 - **agent3** – Runs two article-selection passes per category (all-language + English-only) to support subscriber preference variants. Claude selects the best 3-5 articles per category; HN ≥ 100 articles are always included. Writes the editor's intro, then renders **4 HTML variants** keyed by `{include_french}_{include_canada}` (`0_0`, `1_0`, `0_1`, `1_1`). Saves all variants to Firestore and copies `0_0` to `public/newsletter/latest.html` for the live preview.
-- **agent4** – Triggered by Cloud Scheduler at 7 AM Monday (pipeline runs at 6 AM). In cloud mode, loads all 4 newsletter variants from Firestore, queries active subscribers, picks each subscriber's variant by preference key, substitutes `{{UNSUBSCRIBE_URL}}` and `{{PREFERENCES_URL}}` per subscriber, and sends via SendGrid. In local mode, sends a single copy to `TEST_RECIPIENT_EMAIL`.
+- **agent4** – Triggered by Cloud Scheduler at 7 AM Monday (pipeline runs at 6 AM). In cloud mode, loads all 4 newsletter variants from Firestore, queries active subscribers, picks each subscriber's variant by preference key, substitutes `{{UNSUBSCRIBE_URL}}` and `{{PREFERENCES_URL}}` per subscriber, and sends via SendGrid. In local mode, sends a single copy to `TEST_RECIPIENT_EMAIL`. Writes its send summary (`sent`/`failed`/`failures` counts) to the run's `pipeline_runs` doc as `agent4_send_summary` + `agent4_completed_at`, in addition to the structured JSON it already logs to stdout — the Firestore write is what makes delivery success queryable by the health check, since Cloud Logging output isn't.
+- **agent_healthcheck** – See "Pipeline Failure Recording & Health Check" below.
+
+### Pipeline Failure Recording & Health Check
+
+Every pipeline agent's `run()` body (agent1a, agent1b, agent2a, agent2b, agent3, agent4) is wrapped in a top-level `try/except`. On an uncaught exception, a `_record_failure()` helper writes `{agent}_error` (the exception string) and `{agent}_failed_at` (UTC timestamp) to that run's `pipeline_runs/{run_id}` document before re-raising — `main.py`'s generic `_run_agent()` wrapper still catches the re-raised exception and logs a traceback to stderr as before, but now there's also a durable, queryable trace of *why* a run stalled, not just *that* it did. Without this, a failure only ever showed up in Cloud Logging, invisible to anything not actively tailing logs.
+
+`agents/agent_healthcheck.py` is a standalone agent (registered in `main.py`'s `AGENT_REGISTRY` as `healthcheck`) that reads that trail. It's triggered by its own Cloud Scheduler job (7:03 AM Monday, shortly after agent4's 7:00 AM send) rather than by Pub/Sub, so — unlike every other agent — it has no `run_id` for the pipeline run it's checking; it looks up the most recent `pipeline_runs` document itself, ordered by `started_at` descending. It then:
+1. Flags a **stale run** if the latest doc's `started_at` is more than `STALE_AFTER_HOURS` (4h) old — this catches the case where the pipeline never started at all this week (e.g. the orchestrator itself failed before creating a Firestore doc), which the per-agent error fields alone wouldn't catch.
+2. Flags any of the six `{agent}_error` fields present on the doc.
+3. Flags any `EXPECTED_STAGES` field missing (`scored_papers`, `news_filtered`, `paper_summaries`, `news_summaries`, `newsletter_composed`, `agent4_send_summary`).
+4. Flags `agent4_send_summary` showing `sent == 0` out of a nonzero `total` (delivery ran but everything failed).
+
+If anything is flagged, it emails a single alert to `ALERT_EMAIL`, reusing `agent4_send.send_email()` / `_get_sendgrid_api_key()` purely as a SendGrid call — it never imports or calls anything subscriber-related, and never queries the `subscribers` collection. If nothing is flagged, it logs `looks healthy` and exits silently — no email on the happy path.
+
+**Known limitation, observed live:** the alert path shares SendGrid with the real newsletter send. If SendGrid itself is down or unauthorized (e.g. an expired trial/API key — exactly what happened on 2026-08-10), the health check correctly detects the failure but then can't deliver the alert about it either, since both go through the same credential. A SendGrid-independent fallback (e.g. a Cloud Monitoring log-based alert watching for a stable log marker, notifying via Monitoring's own email channel rather than app-level SendGrid calls) was scoped and then deliberately reverted — judged not worth the added complexity for now. Revisit if this actually recurs.
 
 ### Subscription Service
 
@@ -85,10 +110,15 @@ agent1b (news fetch)  ──┘                                    ├──> ag
 - `GET /unsubscribe?token=` — deactivates subscription.
 - `GET/POST /preferences?token=` — read or update preferences.
 
+**Other (no subscriber-auth model):**
+- `GET /stats?token=` — admin-only (requires `ADMIN_TOKEN` as the query param, 403 otherwise); returns `{active, max}` subscriber counts.
+- `GET /preview` — public, rate-limited (30/min); returns the latest newsletter HTML for the `preview.html` iframe.
+
 **Account-based (Firebase Auth, `Authorization: Bearer <id_token>`):** Users sign in via Google or email+password through `login.html`. Firebase ID token verified in `agents/auth_middleware.py` using `firebase-admin`. No confirmation email needed — Firebase already verified the email. Creates a `users/{uid}` doc on first call.
 - `GET /auth/me` — return user info + subscription status + tier.
 - `POST /auth/subscribe` — subscribe instantly (email already verified; requires `email_verified: true`). Accepts `{"send_latest": bool}` body.
 - `POST /auth/unsubscribe` — deactivate subscription.
+- `POST /auth/send-verification-email` — rate-limited 5/min; sends a themed Firebase email-verification link for email+password accounts (no-op if already verified).
 - `GET /auth/google/login?return_to=` — start Google Sign-In (see "Google Sign-In" below).
 - `GET /auth/google/callback` — Google OAuth redirect target.
 - `POST /auth/google/exchange` — redeem a one-time exchange code for a Firebase custom token.
@@ -181,10 +211,11 @@ All Claude calls use `claude-haiku-4-5-20251001` (configured in `config.py`).
 | `PREMIUM_EMAILS` | Comma-separated emails that get `tier: "premium"` on login (e.g. `daniel.lofeodo@gmail.com`) |
 | `GOOGLE_OAUTH_CLIENT_ID` | Google OAuth 2.0 Web client ID for server-side Google Sign-In (not secret) |
 | `GOOGLE_OAUTH_CLIENT_SECRET` | Google OAuth 2.0 client secret (or use `USE_SECRET_MANAGER=true`, secret name `google-oauth-client-secret`) |
+| `ALERT_EMAIL` | Where `agent_healthcheck` sends a problem report; never used for subscriber-facing sends |
 
 ## Pub/Sub Topics (Cloud Mode)
 
-`pipeline-start` → `papers-scored` + `news-filtered` → `content-summarized` → (agent3 runs) → agent4 triggered separately by Cloud Scheduler.
+`pipeline-start` → `papers-scored` + `news-filtered` → `content-summarized` → (agent3 runs) → agent4 triggered separately by Cloud Scheduler. `agent_healthcheck` is triggered by its own separate Cloud Scheduler job (7:03 AM Monday) and is not part of this Pub/Sub chain at all.
 
 ## Prompts
 

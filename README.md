@@ -32,8 +32,16 @@ flowchart TB
     FAN ~~~ CS2
     CS2["☁️ Cloud Scheduler — 7 AM Monday"] --> A4["Agent 4\nLoad latest newsletter\npersonalize per subscriber\nsend via SendGrid"]
 
+    A1A -.->|"error on failure"| FSP
+    A1B -.->|"error on failure"| FSP
+    A2A -.->|"error on failure"| FSP
+    A2B -.->|"error on failure"| FSP
     A3 --> FSP[("Firestore\npipeline_runs")]
     A4 --> FSP
+
+    FAN ~~~ CS3
+    CS3["☁️ Cloud Scheduler — 7:03 AM Monday"] --> HC["Health Check\nFind latest run · diagnose\nemail alert if unhealthy"]
+    FSP --> HC
 ```
 
 ---
@@ -61,7 +69,10 @@ Both agent 2a and 2b atomically increment `agent2_completions` in the Firestore 
 Runs two article-selection passes per category (all languages, English-only) to support subscriber preference variants. Calls Claude to pick the best 3-5 articles per category (HN ≥ 100 = always included, named model releases always included). Writes a 2-3 sentence editor's note. Renders 4 HTML variants keyed by `{include_french}_{include_canada}`. Saves all variants to Firestore and copies `0_0` to `public/newsletter/latest.html` for the live preview.
 
 **Agent 4 — Send**
-Triggered separately by Cloud Scheduler at 7 AM. Loads the most recent run's newsletter variants from Firestore, queries active subscribers, picks each subscriber's variant by preference key, substitutes `{{UNSUBSCRIBE_URL}}` and `{{PREFERENCES_URL}}` placeholders with per-subscriber token links, and sends via SendGrid. Logs a structured JSON send summary to stdout for Cloud Logging.
+Triggered separately by Cloud Scheduler at 7 AM. Loads the most recent run's newsletter variants from Firestore, queries active subscribers, picks each subscriber's variant by preference key, substitutes `{{UNSUBSCRIBE_URL}}` and `{{PREFERENCES_URL}}` placeholders with per-subscriber token links, and sends via SendGrid. Logs a structured JSON send summary to stdout for Cloud Logging, and also writes it to the run's Firestore document (`agent4_send_summary`, `agent4_completed_at`) so delivery success is queryable, not just visible in logs.
+
+**Health check**
+A standalone agent, `agent_healthcheck.py`, triggered separately by Cloud Scheduler at 7:03 AM — shortly after agent 4's send — rather than by Pub/Sub, so it has no `run_id` handed to it; it looks up the most recent `pipeline_runs` document itself. It flags a stale run (started more than 4 hours ago with no completion), any recorded agent failure, or a missing pipeline stage, and emails a single alert if something's wrong — otherwise it stays silent. Never touches the subscribers collection. See `CLAUDE.md` for the full failure-recording and detection mechanics.
 
 ### Subscription system
 
@@ -81,7 +92,7 @@ Subscriber document fields: `email`, `token`, `token_expires_at`, `active`, `sub
 - **Compute:** Google Cloud Run (single Docker image, `AGENT_NAME` env var selects agent)
 - **Messaging:** Google Cloud Pub/Sub (push subscriptions, JSON `{run_id}` payload)
 - **State:** Google Cloud Firestore (`pipeline_runs`, `subscribers`, `users` collections)
-- **Scheduling:** Google Cloud Scheduler (two weekly cron jobs)
+- **Scheduling:** Google Cloud Scheduler (weekly cron jobs: pipeline start, newsletter send, post-send health check)
 - **Secrets:** Google Secret Manager
 - **Auth:** Firebase Authentication (Google OAuth + email/password; ID tokens verified server-side with `firebase-admin`)
 - **Frontend:** Firebase Hosting (static, custom domain via Cloudflare DNS; vanilla HTML/JS + Firebase Auth JS SDK)
@@ -104,6 +115,7 @@ Subscriber document fields: `email`, `token`, `token_expires_at`, `active`, `sub
 │   ├── agent2b_summarize_news.py   # Article fetch + Claude news summaries
 │   ├── agent3_compose.py           # Article selection, intro, HTML composition
 │   ├── agent4_send.py              # Per-subscriber personalization + SendGrid send
+│   ├── agent_healthcheck.py        # Standalone weekly pipeline health check + alert
 │   ├── agent_subscriptions.py      # Subscription FastAPI service (separate deployment)
 │   ├── auth_middleware.py          # Firebase ID token verification (FastAPI dependency)
 │   ├── filter_tool.py              # Claude tool schema for news categorization
@@ -115,20 +127,31 @@ Subscriber document fields: `email`, `token`, `token_expires_at`, `active`, `sub
 │   ├── news_summary_prompt.txt     # News article summary prompt
 │   ├── news_summary_fallback_prompt.txt
 │   ├── article_selection_prompt.txt
-│   └── intro_prompt.txt            # Editor's note prompt
+│   ├── intro_prompt.txt            # Editor's note prompt
+│   └── quebec_french_style.txt     # French-language style guide for news summaries
 ├── public/newsletter/              # Firebase Hosting frontend
 │   ├── index.html                  # Subscribe form (auth-aware nav)
 │   ├── login.html                  # Sign in / create account (Google + email+password)
 │   ├── preferences.html            # Preferences (account auth or token fallback)
 │   ├── unsubscribe.html            # Unsubscribe (one-click if signed in, email form otherwise)
 │   ├── preview.html                # Newsletter preview page
+│   ├── sections.html               # Premium newsletter-sections customization UI
+│   ├── auth-callback.html          # Google Sign-In exchange-code redemption landing page
 │   ├── auth.js                     # Shared Firebase Auth helper (ES module)
+│   ├── nav.js                      # Shared auth-aware navigation bar
+│   ├── bg.js                       # Shared background/decorative script
+│   ├── style.css / fonts.css       # Shared styling
+│   ├── fonts/, images/             # Static assets
 │   └── latest.html                 # Written by agent3 each run
 ├── orchestrator.py                 # Local sequential runner / cloud pipeline trigger
 ├── main.py                         # Cloud Run entrypoint (FastAPI, AGENT_NAME dispatch)
 ├── config.py                       # Shared constants and env var reads
 ├── Dockerfile                      # Single image, AGENT_NAME build arg
+├── cloudbuild.yaml                 # Cloud Build: build + push all 9 service images
+├── cloudbuild-partial.yaml         # Cloud Build: agent1b + agent3 + agent4 only (fast iteration)
+├── cloudbuild-subscriptions.yaml   # Cloud Build: agent_subscriptions only
 ├── firebase.json                   # Firebase Hosting config
+├── firestore.indexes.json          # Firestore composite index definitions
 └── requirements.txt
 ```
 
@@ -156,6 +179,7 @@ Secrets live in **Google Secret Manager** (cloud) or environment variables (loca
 | `MAILING_ADDRESS` | agent3 | Physical address in email footer (CASL compliance) |
 | `ADMIN_TOKEN` | agent_subscriptions | Token to access `/stats` endpoint |
 | `MAX_SUBSCRIBERS` | agent_subscriptions | Subscriber cap (default `50000`) |
+| `ALERT_EMAIL` | agent_healthcheck | Where the weekly pipeline health check sends a problem report; never used for subscriber-facing sends |
 | `GOOGLE_APPLICATION_CREDENTIALS` | agent_subscriptions (local) | Path to service account JSON for Firebase Admin SDK; alternative to `gcloud auth application-default login` |
 | `GOOGLE_OAUTH_CLIENT_ID` | agent_subscriptions | Google OAuth 2.0 Web client ID for server-side Google Sign-In (not secret) |
 | `GOOGLE_OAUTH_CLIENT_SECRET` | agent_subscriptions | Google OAuth 2.0 client secret (local mode; cloud uses Secret Manager, secret name `google-oauth-client-secret`) |
@@ -208,6 +232,12 @@ docker build --build-arg AGENT_NAME=agent1a -t REGION-docker.pkg.dev/PROJECT/REP
 docker push REGION-docker.pkg.dev/PROJECT/REPO/agent1a
 ```
 
+**Or build all services at once via Cloud Build:**
+```bash
+gcloud builds submit --config cloudbuild.yaml
+```
+Builds and pushes all 9 service images in parallel. `cloudbuild-partial.yaml` builds only agent1b/agent3/agent4 (a faster subset for iterating on the news→compose→send path); `cloudbuild-subscriptions.yaml` builds only agent_subscriptions. None of these three deploy to Cloud Run — that step is always the separate, manual `gcloud run deploy` below, on purpose: each service needs different env vars, and rolling out a new Cloud Run revision is a live-traffic change that's deliberately not automatic on every build.
+
 **Deploy to Cloud Run:**
 ```bash
 gcloud run deploy agent1a \
@@ -236,3 +266,5 @@ The subscription service and agent4 (sender) are synchronous and don't need `--n
 **Soft delete.** Unsubscribing sets `active: false`; the document is never deleted. This preserves the audit trail and allows re-subscription without losing history.
 
 **Subscriber variants.** Agent 3 generates four newsletter HTML variants keyed by `{include_french}_{include_canada}` (`0_0`, `1_0`, `0_1`, `1_1`). Agent 4 picks the correct variant per subscriber at send time, so no re-rendering is needed per send.
+
+**Failure recording over silent stalls.** Every pipeline agent's top-level exception is caught and recorded to its `pipeline_runs` document (`{agent}_error`, `{agent}_failed_at`) before re-raising, rather than only surfacing in Cloud Logging. Without this, one agent failing partway through leaves the run permanently incomplete with no durable trace of why — the standalone health check agent depends on these fields being present to report a specific cause rather than just "something didn't finish." See `CLAUDE.md` for the full mechanics, including a known limitation: the health check's own alert email shares SendGrid with the real newsletter send, so a SendGrid-specific outage can suppress the alert about the very failure it's meant to catch.

@@ -32,10 +32,6 @@ flowchart TB
     FAN ~~~ CS2
     CS2["☁️ Cloud Scheduler — 7 AM Monday"] --> A4["Agent 4\nLoad latest newsletter\npersonalize per subscriber\nsend via SendGrid"]
 
-    A1A -.->|"error on failure"| FSP
-    A1B -.->|"error on failure"| FSP
-    A2A -.->|"error on failure"| FSP
-    A2B -.->|"error on failure"| FSP
     A3 --> FSP[("Firestore\npipeline_runs")]
     A4 --> FSP
 

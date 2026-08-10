@@ -70,7 +70,7 @@ agent1a (ArXiv papers) ──┐
 agent1b (news fetch)  ──┘                                    ├──> agent3 (compose HTML) ──> agent4 (send)
                           └──> agent2b (summarize news)  ──┘
 
-agent_healthcheck — independent, Cloud Scheduler-triggered (7:03 AM Monday,
+agent_healthcheck — independent, Cloud Scheduler-triggered (7:10 AM Monday,
 not Pub/Sub). Not part of the chain above; reads pipeline_runs after the
 fact and alerts on failure.
 ```
@@ -86,7 +86,7 @@ fact and alerts on failure.
 
 Every pipeline agent's `run()` body (agent1a, agent1b, agent2a, agent2b, agent3, agent4) is wrapped in a top-level `try/except`. On an uncaught exception, a `_record_failure()` helper writes `{agent}_error` (the exception string) and `{agent}_failed_at` (UTC timestamp) to that run's `pipeline_runs/{run_id}` document before re-raising — `main.py`'s generic `_run_agent()` wrapper still catches the re-raised exception and logs a traceback to stderr as before, but now there's also a durable, queryable trace of *why* a run stalled, not just *that* it did. Without this, a failure only ever showed up in Cloud Logging, invisible to anything not actively tailing logs.
 
-`agents/agent_healthcheck.py` is a standalone agent (registered in `main.py`'s `AGENT_REGISTRY` as `healthcheck`) that reads that trail. It's triggered by its own Cloud Scheduler job (7:03 AM Monday, shortly after agent4's 7:00 AM send) rather than by Pub/Sub, so — unlike every other agent — it has no `run_id` for the pipeline run it's checking; it looks up the most recent `pipeline_runs` document itself, ordered by `started_at` descending. It then:
+`agents/agent_healthcheck.py` is a standalone agent (registered in `main.py`'s `AGENT_REGISTRY` as `healthcheck`) that reads that trail. It's triggered by its own Cloud Scheduler job (7:10 AM Monday, shortly after agent4's 7:00 AM send) rather than by Pub/Sub, so — unlike every other agent — it has no `run_id` for the pipeline run it's checking; it looks up the most recent `pipeline_runs` document itself, ordered by `started_at` descending. It then:
 1. Flags a **stale run** if the latest doc's `started_at` is more than `STALE_AFTER_HOURS` (4h) old — this catches the case where the pipeline never started at all this week (e.g. the orchestrator itself failed before creating a Firestore doc), which the per-agent error fields alone wouldn't catch.
 2. Flags any of the six `{agent}_error` fields present on the doc.
 3. Flags any `EXPECTED_STAGES` field missing (`scored_papers`, `news_filtered`, `paper_summaries`, `news_summaries`, `newsletter_composed`, `agent4_send_summary`).
@@ -215,7 +215,7 @@ All Claude calls use `claude-haiku-4-5-20251001` (configured in `config.py`).
 
 ## Pub/Sub Topics (Cloud Mode)
 
-`pipeline-start` → `papers-scored` + `news-filtered` → `content-summarized` → (agent3 runs) → agent4 triggered separately by Cloud Scheduler. `agent_healthcheck` is triggered by its own separate Cloud Scheduler job (7:03 AM Monday) and is not part of this Pub/Sub chain at all.
+`pipeline-start` → `papers-scored` + `news-filtered` → `content-summarized` → (agent3 runs) → agent4 triggered separately by Cloud Scheduler. `agent_healthcheck` is triggered by its own separate Cloud Scheduler job (7:10 AM Monday) and is not part of this Pub/Sub chain at all.
 
 ## Prompts
 

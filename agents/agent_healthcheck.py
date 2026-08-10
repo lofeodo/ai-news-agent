@@ -1,7 +1,7 @@
 # agents/agent_healthcheck.py
 #
 # Standalone check, independent of the fetch->summarize->compose->send chain.
-# Triggered by its own Cloud Scheduler job (7:03 AM Monday, shortly after
+# Triggered by its own Cloud Scheduler job (7:10 AM Monday, shortly after
 # agent4's 7:00 AM send) rather than by Pub/Sub, so it has no run_id for the
 # pipeline run it's checking — it looks that up itself, by most recent
 # started_at in the pipeline_runs collection.

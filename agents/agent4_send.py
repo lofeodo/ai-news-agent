@@ -497,6 +497,21 @@ def run(run_id: str):
     # Always exit 0 (no raise): a nonzero exit would just create Scheduler
     # noise with no useful retry behavior. Failures are logged loudly above.
 
+    # Record completion to Firestore — the stdout summary above is only
+    # visible in Cloud Logging, but a health check needs a queryable signal
+    # that the send actually ran (not just that composition succeeded).
+    try:
+        db.collection("pipeline_runs").document(run_id).set(
+            {
+                "agent4_send_summary": summary,
+                "agent4_completed_at": datetime.now(timezone.utc).isoformat(),
+            },
+            merge=True
+        )
+        print(f"[agent4]  Recorded send_summary to Firestore (run_id={run_id})", flush=True)
+    except Exception as e:
+        print(f"[agent4]  Failed to record send_summary to Firestore: {e}", flush=True)
+
 
 if __name__ == "__main__":
     run(run_id="local-debug")

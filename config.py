@@ -88,5 +88,9 @@ FIRESTORE_COLLECTION = "pipeline_runs"
 USE_FIRESTORE        = os.environ.get("USE_FIRESTORE", "false").lower() == "true"
 SUBSCRIBERS_COLLECTION = "subscribers"
 
-# Subscriber cap (SendGrid free tier: 100 emails/day)
-MAX_SUBSCRIBERS = int(os.environ.get("MAX_SUBSCRIBERS", "100"))
+# Subscriber cap
+MAX_SUBSCRIBERS = int(os.environ.get("MAX_SUBSCRIBERS", "50000"))
+
+# Health check alerting — where agent_healthcheck sends a problem report.
+# Never used for subscriber-facing sends.
+ALERT_EMAIL = os.environ.get("ALERT_EMAIL", "")

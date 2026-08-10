@@ -6,6 +6,8 @@
 # pipeline run it's checking — it looks that up itself, by most recent
 # started_at in the pipeline_runs collection.
 #
+# Sends exactly one email to ALERT_EMAIL every run, whether the pipeline
+# looks healthy or not -- a weekly heartbeat, not just a failure alert.
 # Never touches the subscribers collection or the subscriber send path. The
 # only email this can send goes to ALERT_EMAIL, via the same send_email()
 # helper agent4 uses for real sends — reused for the SendGrid call only.
@@ -80,22 +82,23 @@ def _diagnose(doc: dict) -> list[str]:
     return problems
 
 
-def _alert(message: str) -> None:
-    """Best-effort single email to ALERT_EMAIL. Never touches subscriber-facing code."""
+def _notify(message: str, healthy: bool) -> None:
+    """Best-effort single email to ALERT_EMAIL, sent every run. Never touches subscriber-facing code."""
     if not ALERT_EMAIL:
-        print(f"[healthcheck]  ALERT_EMAIL not set — cannot send alert. Message was:\n{message}", flush=True)
+        print(f"[healthcheck]  ALERT_EMAIL not set — cannot send report. Message was:\n{message}", flush=True)
         return
 
-    subject   = f"{NEWSLETTER_NAME} pipeline health check — problem detected"
+    status    = "all clear" if healthy else "problem detected"
+    subject   = f"{NEWSLETTER_NAME} pipeline health check — {status}"
     escaped   = message.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     html_body = f"<pre style=\"font-family:monospace;white-space:pre-wrap;\">{escaped}</pre>"
 
     try:
         api_key = agent4_send._get_sendgrid_api_key()
         agent4_send.send_email(api_key, ALERT_EMAIL, html_body, subject)
-        print(f"[healthcheck]  Alert sent to {ALERT_EMAIL}", flush=True)
+        print(f"[healthcheck]  Report sent to {ALERT_EMAIL} ({status})", flush=True)
     except Exception as e:
-        print(f"[healthcheck]  FAILED to send alert email: {e}", flush=True)
+        print(f"[healthcheck]  FAILED to send report email: {e}", flush=True)
 
 
 def run(run_id: str) -> None:
@@ -112,7 +115,7 @@ def run(run_id: str) -> None:
 
     checked_run_id, doc = _latest_run_doc(db)
     if doc is None:
-        _alert("No pipeline_runs document found at all — the pipeline may never have started this week.")
+        _notify("No pipeline_runs document found at all — the pipeline may never have started this week.", healthy=False)
         return
 
     started_at_raw = doc.get("started_at")
@@ -120,22 +123,24 @@ def run(run_id: str) -> None:
         started_at = datetime.fromisoformat(started_at_raw.replace("Z", "+00:00"))
         age_hours = (datetime.now(timezone.utc) - started_at).total_seconds() / 3600
         if age_hours > STALE_AFTER_HOURS:
-            _alert(
+            _notify(
                 f"No recent pipeline run found — the most recent pipeline_runs document "
                 f"(run_id={checked_run_id}) started {age_hours:.1f}h ago, at {started_at_raw}. "
-                f"Expected a run to have started within the last {STALE_AFTER_HOURS}h."
+                f"Expected a run to have started within the last {STALE_AFTER_HOURS}h.",
+                healthy=False,
             )
             return
 
     problems = _diagnose(doc)
 
     if not problems:
-        print(f"[healthcheck]  run_id={checked_run_id} looks healthy — no alert sent.", flush=True)
+        print(f"[healthcheck]  run_id={checked_run_id} looks healthy.", flush=True)
+        _notify(f"Pipeline run {checked_run_id} (started {started_at_raw}) completed successfully. No problems detected.", healthy=True)
         return
 
     body_lines = [f"Pipeline run {checked_run_id} (started {started_at_raw}) has problems:", ""]
     body_lines += [f"- {p}" for p in problems]
-    _alert("\n".join(body_lines))
+    _notify("\n".join(body_lines), healthy=False)
 
 
 if __name__ == "__main__":

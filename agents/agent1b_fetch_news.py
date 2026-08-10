@@ -407,68 +407,90 @@ def filter_and_categorize(articles: list) -> list:
 # Main
 # ---------------------------------------------------------------------------
 
+def _record_failure(run_id: str, agent_name: str, error: Exception) -> None:
+    """Best-effort write of a top-level run failure to Firestore, for health checks."""
+    if not USE_FIRESTORE:
+        return
+    try:
+        from google.cloud import firestore
+        firestore.Client(project=GCP_PROJECT_ID).collection("pipeline_runs").document(run_id).set(
+            {
+                f"{agent_name}_error": str(error),
+                f"{agent_name}_failed_at": datetime.now(timezone.utc).isoformat(),
+            },
+            merge=True
+        )
+        print(f"[{agent_name}]  Recorded failure to Firestore (run_id={run_id})", flush=True)
+    except Exception as record_error:
+        print(f"[{agent_name}]  Failed to record failure to Firestore: {record_error}", flush=True)
+
+
 def run(run_id: str):
     """Main agent logic. Called by main.py (Cloud Run) or orchestrator.py."""
     start_time = datetime.now()
 
-    hn_articles   = fetch_hn_articles()
-    news_articles = fetch_newsapi_articles()
+    try:
+        hn_articles   = fetch_hn_articles()
+        news_articles = fetch_newsapi_articles()
 
-    all_articles = hn_articles + news_articles
-    print(f"\nMerged: {len(all_articles)} articles total")
+        all_articles = hn_articles + news_articles
+        print(f"\nMerged: {len(all_articles)} articles total")
 
-    print("Pre-filtering...")
-    all_articles = prefilter(all_articles)
+        print("Pre-filtering...")
+        all_articles = prefilter(all_articles)
 
-    all_articles = language_filter(all_articles)
-    filtered     = filter_and_categorize(all_articles)
+        all_articles = language_filter(all_articles)
+        filtered     = filter_and_categorize(all_articles)
 
-    elapsed = (datetime.now() - start_time).total_seconds()
-    print(f"\n--- Done in {elapsed:.1f}s ---")
-    print(f"Selected {len(filtered)} articles across categories\n")
+        elapsed = (datetime.now() - start_time).total_seconds()
+        print(f"\n--- Done in {elapsed:.1f}s ---")
+        print(f"Selected {len(filtered)} articles across categories\n")
 
-    by_category = {}
-    for article in filtered:
-        cat = article["category"]
-        by_category.setdefault(cat, []).append(article)
+        by_category = {}
+        for article in filtered:
+            cat = article["category"]
+            by_category.setdefault(cat, []).append(article)
 
-    print("=== FILTERED ARTICLES BY CATEGORY ===")
-    for category, articles in sorted(by_category.items()):
-        print(f"\n{category} ({len(articles)})")
-        for article in articles:
-            print(f"  [{article['source']}] {article['title']}")
-            print(f"  {article['url']}")
+        print("=== FILTERED ARTICLES BY CATEGORY ===")
+        for category, articles in sorted(by_category.items()):
+            print(f"\n{category} ({len(articles)})")
+            for article in articles:
+                print(f"  [{article['source']}] {article['title']}")
+                print(f"  {article['url']}")
 
-    os.makedirs(DATA_DIR, exist_ok=True)
-    out_path = os.path.join(DATA_DIR, "news_filtered.json")
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump({
-            "run_at":          start_time.isoformat(),
-            "elapsed_seconds": elapsed,
-            "total_fetched":   len(all_articles),
-            "total_selected":  len(filtered),
-            "by_category":     {cat: articles for cat, articles in by_category.items()},
-            "articles":        filtered
-        }, f, indent=2, ensure_ascii=False)
+        os.makedirs(DATA_DIR, exist_ok=True)
+        out_path = os.path.join(DATA_DIR, "news_filtered.json")
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump({
+                "run_at":          start_time.isoformat(),
+                "elapsed_seconds": elapsed,
+                "total_fetched":   len(all_articles),
+                "total_selected":  len(filtered),
+                "by_category":     {cat: articles for cat, articles in by_category.items()},
+                "articles":        filtered
+            }, f, indent=2, ensure_ascii=False)
 
-    print(f"\nSaved results to {out_path}")
+        print(f"\nSaved results to {out_path}")
 
-    if USE_FIRESTORE:
-        from google.cloud import firestore, pubsub_v1
-        db  = firestore.Client(project=GCP_PROJECT_ID)
-        db.collection("pipeline_runs").document(run_id).set({
-            "news_filtered": {
-                "by_category": {cat: articles for cat, articles in by_category.items()},
-                "articles":    filtered,
-            }
-        }, merge=True)
-        print(f"[agent1b]  Saved news_filtered to Firestore (run_id={run_id})")
+        if USE_FIRESTORE:
+            from google.cloud import firestore, pubsub_v1
+            db  = firestore.Client(project=GCP_PROJECT_ID)
+            db.collection("pipeline_runs").document(run_id).set({
+                "news_filtered": {
+                    "by_category": {cat: articles for cat, articles in by_category.items()},
+                    "articles":    filtered,
+                }
+            }, merge=True)
+            print(f"[agent1b]  Saved news_filtered to Firestore (run_id={run_id})")
 
-        publisher  = pubsub_v1.PublisherClient()
-        topic_path = publisher.topic_path(GCP_PROJECT_ID, TOPIC_NEWS_FILTERED)
-        data       = json.dumps({"run_id": run_id}).encode("utf-8")
-        publisher.publish(topic_path, data).result(timeout=30)
-        print(f"[agent1b]  Published to {TOPIC_NEWS_FILTERED} (run_id={run_id})")
+            publisher  = pubsub_v1.PublisherClient()
+            topic_path = publisher.topic_path(GCP_PROJECT_ID, TOPIC_NEWS_FILTERED)
+            data       = json.dumps({"run_id": run_id}).encode("utf-8")
+            publisher.publish(topic_path, data).result(timeout=30)
+            print(f"[agent1b]  Published to {TOPIC_NEWS_FILTERED} (run_id={run_id})")
+    except Exception as e:
+        _record_failure(run_id, "agent1b", e)
+        raise
 
 
 if __name__ == "__main__":

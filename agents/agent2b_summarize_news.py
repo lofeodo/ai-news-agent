@@ -10,7 +10,7 @@ import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime
+from datetime import datetime, timezone
 from urllib.parse import urlparse
 
 from newspaper import Article
@@ -207,113 +207,135 @@ def increment_and_check(run_id: str) -> bool:
     return count >= 2
 
 
+def _record_failure(run_id: str, agent_name: str, error: Exception) -> None:
+    """Best-effort write of a top-level run failure to Firestore, for health checks."""
+    if not USE_FIRESTORE:
+        return
+    try:
+        from google.cloud import firestore
+        firestore.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).set(
+            {
+                f"{agent_name}_error": str(error),
+                f"{agent_name}_failed_at": datetime.now(timezone.utc).isoformat(),
+            },
+            merge=True
+        )
+        print(f"[{agent_name}]  Recorded failure to Firestore (run_id={run_id})", flush=True)
+    except Exception as record_error:
+        print(f"[{agent_name}]  Failed to record failure to Firestore: {record_error}", flush=True)
+
+
 def run(run_id: str):
     """Main agent logic. Called by main.py (Cloud Run) or orchestrator.py."""
     start_time = datetime.now()
 
-    with open("prompts/news_summary_prompt.txt", "r", encoding="utf-8") as f:
-        prompt_template = f.read()
+    try:
+        with open("prompts/news_summary_prompt.txt", "r", encoding="utf-8") as f:
+            prompt_template = f.read()
 
-    with open("prompts/news_summary_fallback_prompt.txt", "r", encoding="utf-8") as f:
-        fallback_template = f.read()
+        with open("prompts/news_summary_fallback_prompt.txt", "r", encoding="utf-8") as f:
+            fallback_template = f.read()
 
-    with open("prompts/quebec_french_style.txt", "r", encoding="utf-8") as f:
-        quebec_style = f.read()
+        with open("prompts/quebec_french_style.txt", "r", encoding="utf-8") as f:
+            quebec_style = f.read()
 
-    if USE_FIRESTORE:
-        from google.cloud import firestore as _fs
-        doc_snap = _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).get()
-        doc      = doc_snap.to_dict()
-        if not doc:
-            raise RuntimeError(f"[agent2b] Firestore document not found for run_id={run_id}")
-        filtered = doc.get("news_filtered")
-        if filtered is None:
-            raise RuntimeError(f"[agent2b] 'news_filtered' missing from Firestore document run_id={run_id}")
-        print(f"[agent2b]  Loaded news_filtered from Firestore")
-    else:
-        in_path = os.path.join(DATA_DIR, "news_filtered.json")
-        with open(in_path, "r", encoding="utf-8") as f:
-            filtered = json.load(f)
-
-    by_category: dict = filtered.get("by_category", {})
-    all_articles: list = filtered.get("articles", [])
-
-    print(f"Summarizing {len(all_articles)} articles across {len(by_category)} categories...\n")
-
-    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
-    tasks  = [(client, article, prompt_template, fallback_template, quebec_style) for article in all_articles]
-
-    results_by_url: dict[str, dict] = {}
-    done = 0
-
-    with ThreadPoolExecutor(max_workers=MAX_FETCH_WORKERS) as executor:
-        future_to_article = {executor.submit(process_article, t): t[1] for t in tasks}
-        for future in as_completed(future_to_article):
-            result = future.result()
-            url    = result.get("url", "")
-            results_by_url[url] = result
-            done += 1
-            if done % 50 == 0 or done == len(tasks):
-                failed_so_far   = sum(1 for r in results_by_url.values() if not r.get("summary"))
-                fallback_so_far = sum(1 for r in results_by_url.values() if r.get("used_fallback"))
-                print(f"  [{done}/{len(tasks)}] failed={failed_so_far} fallback={fallback_so_far}")
-
-    summarized_by_category: dict[str, list] = {}
-    for category, articles in by_category.items():
-        summarized_by_category[category] = [
-            results_by_url.get(a.get("url", ""), {
-                **a,
-                "summary":       None,
-                "used_fallback": False,
-                "summary_error": "not processed",
-            })
-            for a in articles
-        ]
-
-    all_summarized   = list(results_by_url.values())
-    total_summarized = sum(1 for a in all_summarized if a.get("summary"))
-    total_fallback   = sum(1 for a in all_summarized if a.get("used_fallback"))
-    total_failed     = sum(1 for a in all_summarized if not a.get("summary"))
-
-    elapsed = (datetime.now() - start_time).total_seconds()
-    print(f"\n--- Done in {elapsed:.1f}s ---")
-    print(f"Summarized:      {total_summarized}/{len(all_articles)}")
-    print(f"Used fallback:   {total_fallback}")
-    print(f"Failed entirely: {total_failed}")
-
-    if USE_FIRESTORE:
-        from google.cloud import firestore as _fs
-        _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).update({
-            "news_summaries": summarized_by_category
-        })
-        print(f"[agent2b]  Saved news_summaries to Firestore (run_id={run_id})")
-    else:
-        os.makedirs(DATA_DIR, exist_ok=True)
-        out_path = os.path.join(DATA_DIR, "news_summaries.json")
-        with open(out_path, "w", encoding="utf-8") as f:
-            json.dump({
-                "run_at":              start_time.isoformat(),
-                "elapsed_seconds":     elapsed,
-                "total_articles":      len(all_articles),
-                "total_summarized":    total_summarized,
-                "total_used_fallback": total_fallback,
-                "total_failed":        total_failed,
-                "by_category":         summarized_by_category,
-                "articles":            all_summarized,
-            }, f, indent=2, ensure_ascii=False)
-        print(f"Saved to {out_path}")
-
-    if USE_FIRESTORE:
-        should_trigger = increment_and_check(run_id)
-        if should_trigger:
-            from google.cloud import pubsub_v1
-            publisher  = pubsub_v1.PublisherClient()
-            topic_path = publisher.topic_path(GCP_PROJECT_ID, TOPIC_CONTENT_SUMMARIZED)
-            data       = json.dumps({"run_id": run_id}).encode("utf-8")
-            publisher.publish(topic_path, data).result(timeout=30)
-            print(f"[agent2b]  Both agent2s done — published to {TOPIC_CONTENT_SUMMARIZED} (run_id={run_id})")
+        if USE_FIRESTORE:
+            from google.cloud import firestore as _fs
+            doc_snap = _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).get()
+            doc      = doc_snap.to_dict()
+            if not doc:
+                raise RuntimeError(f"[agent2b] Firestore document not found for run_id={run_id}")
+            filtered = doc.get("news_filtered")
+            if filtered is None:
+                raise RuntimeError(f"[agent2b] 'news_filtered' missing from Firestore document run_id={run_id}")
+            print(f"[agent2b]  Loaded news_filtered from Firestore")
         else:
-            print(f"[agent2b]  Waiting for agent2a to finish before triggering agent3")
+            in_path = os.path.join(DATA_DIR, "news_filtered.json")
+            with open(in_path, "r", encoding="utf-8") as f:
+                filtered = json.load(f)
+
+        by_category: dict = filtered.get("by_category", {})
+        all_articles: list = filtered.get("articles", [])
+
+        print(f"Summarizing {len(all_articles)} articles across {len(by_category)} categories...\n")
+
+        client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
+        tasks  = [(client, article, prompt_template, fallback_template, quebec_style) for article in all_articles]
+
+        results_by_url: dict[str, dict] = {}
+        done = 0
+
+        with ThreadPoolExecutor(max_workers=MAX_FETCH_WORKERS) as executor:
+            future_to_article = {executor.submit(process_article, t): t[1] for t in tasks}
+            for future in as_completed(future_to_article):
+                result = future.result()
+                url    = result.get("url", "")
+                results_by_url[url] = result
+                done += 1
+                if done % 50 == 0 or done == len(tasks):
+                    failed_so_far   = sum(1 for r in results_by_url.values() if not r.get("summary"))
+                    fallback_so_far = sum(1 for r in results_by_url.values() if r.get("used_fallback"))
+                    print(f"  [{done}/{len(tasks)}] failed={failed_so_far} fallback={fallback_so_far}")
+
+        summarized_by_category: dict[str, list] = {}
+        for category, articles in by_category.items():
+            summarized_by_category[category] = [
+                results_by_url.get(a.get("url", ""), {
+                    **a,
+                    "summary":       None,
+                    "used_fallback": False,
+                    "summary_error": "not processed",
+                })
+                for a in articles
+            ]
+
+        all_summarized   = list(results_by_url.values())
+        total_summarized = sum(1 for a in all_summarized if a.get("summary"))
+        total_fallback   = sum(1 for a in all_summarized if a.get("used_fallback"))
+        total_failed     = sum(1 for a in all_summarized if not a.get("summary"))
+
+        elapsed = (datetime.now() - start_time).total_seconds()
+        print(f"\n--- Done in {elapsed:.1f}s ---")
+        print(f"Summarized:      {total_summarized}/{len(all_articles)}")
+        print(f"Used fallback:   {total_fallback}")
+        print(f"Failed entirely: {total_failed}")
+
+        if USE_FIRESTORE:
+            from google.cloud import firestore as _fs
+            _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).update({
+                "news_summaries": summarized_by_category
+            })
+            print(f"[agent2b]  Saved news_summaries to Firestore (run_id={run_id})")
+        else:
+            os.makedirs(DATA_DIR, exist_ok=True)
+            out_path = os.path.join(DATA_DIR, "news_summaries.json")
+            with open(out_path, "w", encoding="utf-8") as f:
+                json.dump({
+                    "run_at":              start_time.isoformat(),
+                    "elapsed_seconds":     elapsed,
+                    "total_articles":      len(all_articles),
+                    "total_summarized":    total_summarized,
+                    "total_used_fallback": total_fallback,
+                    "total_failed":        total_failed,
+                    "by_category":         summarized_by_category,
+                    "articles":            all_summarized,
+                }, f, indent=2, ensure_ascii=False)
+            print(f"Saved to {out_path}")
+
+        if USE_FIRESTORE:
+            should_trigger = increment_and_check(run_id)
+            if should_trigger:
+                from google.cloud import pubsub_v1
+                publisher  = pubsub_v1.PublisherClient()
+                topic_path = publisher.topic_path(GCP_PROJECT_ID, TOPIC_CONTENT_SUMMARIZED)
+                data       = json.dumps({"run_id": run_id}).encode("utf-8")
+                publisher.publish(topic_path, data).result(timeout=30)
+                print(f"[agent2b]  Both agent2s done — published to {TOPIC_CONTENT_SUMMARIZED} (run_id={run_id})")
+            else:
+                print(f"[agent2b]  Waiting for agent2a to finish before triggering agent3")
+    except Exception as e:
+        _record_failure(run_id, "agent2b", e)
+        raise
 
 
 if __name__ == "__main__":

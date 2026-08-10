@@ -8,7 +8,7 @@ import requests
 import sys
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pypdf
 
@@ -132,108 +132,130 @@ def increment_and_check(run_id: str) -> bool:
     return count >= 2
 
 
+def _record_failure(run_id: str, agent_name: str, error: Exception) -> None:
+    """Best-effort write of a top-level run failure to Firestore, for health checks."""
+    if not USE_FIRESTORE:
+        return
+    try:
+        from google.cloud import firestore
+        firestore.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).set(
+            {
+                f"{agent_name}_error": str(error),
+                f"{agent_name}_failed_at": datetime.now(timezone.utc).isoformat(),
+            },
+            merge=True
+        )
+        print(f"[{agent_name}]  Recorded failure to Firestore (run_id={run_id})", flush=True)
+    except Exception as record_error:
+        print(f"[{agent_name}]  Failed to record failure to Firestore: {record_error}", flush=True)
+
+
 def run(run_id: str):
     """Main agent logic. Called by main.py (Cloud Run) or orchestrator.py."""
     start_time = datetime.now()
 
-    with open("prompts/paper_summary_prompt.txt", "r", encoding="utf-8") as f:
-        prompt_template = f.read()
+    try:
+        with open("prompts/paper_summary_prompt.txt", "r", encoding="utf-8") as f:
+            prompt_template = f.read()
 
-    if USE_FIRESTORE:
-        from google.cloud import firestore as _fs
-        doc_snap = _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).get()
-        doc      = doc_snap.to_dict()
-        if not doc:
-            raise RuntimeError(f"[agent2a] Firestore document not found for run_id={run_id}")
-        papers   = doc.get("scored_papers")
-        if papers is None:
-            raise RuntimeError(f"[agent2a] 'scored_papers' missing from Firestore document run_id={run_id}")
-        print(f"[agent2a]  Loaded {len(papers)} papers from Firestore")
-    else:
-        in_path = os.path.join(DATA_DIR, "scored_papers.json")
-        with open(in_path, "r", encoding="utf-8") as f:
-            scored = json.load(f)
-        papers = scored["top_papers"]
-    print(f"Summarizing {len(papers)} papers...\n")
-
-    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
-    results = []
-
-    for i, paper in enumerate(papers, 1):
-        paper_id = paper["id"].split("/")[-1]
-        print(f"[{i}/{len(papers)}] {paper['title'][:80]}...")
-
-        text = download_and_extract(paper["pdf_url"], paper_id)
-        used_fallback = text is None
-        if used_fallback:
-            print(f"  [pdf]      using abstract+reasoning fallback")
-            text = fallback_text(paper)
-
-        try:
-            summary = summarize_paper(paper, text, prompt_template, client)
-        except Exception as e:
-            print(f"  [error]    {paper_id}: {e}")
-            results.append({**paper, "summary": None, "used_fallback": used_fallback, "summary_error": str(e)})
-            continue
-
-        validate_summary(summary, paper_id)
-
-        status = "fallback" if used_fallback else "full PDF"
-        print(f"  [done]     ({status})")
-
-        results.append({
-            "id":            paper["id"],
-            "title":         paper["title"],
-            "authors":       paper["authors"],
-            "published":     paper["published"],
-            "pdf_url":       paper["pdf_url"],
-            "categories":    paper["categories"],
-            "scores":        paper["scores"],
-            "summary":       summary,
-            "used_fallback": used_fallback,
-            "summary_error": None,
-        })
-
-    elapsed = (datetime.now() - start_time).total_seconds()
-    successful = [r for r in results if r["summary"]]
-    failed     = [r for r in results if not r["summary"]]
-
-    print(f"\n--- Done in {elapsed:.1f}s ---")
-    print(f"Summarized: {len(successful)}/{len(papers)} papers")
-    if failed:
-        print(f"Failed: {len(failed)} papers")
-
-    if USE_FIRESTORE:
-        from google.cloud import firestore as _fs
-        _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).update({
-            "paper_summaries": results
-        })
-        print(f"[agent2a]  Saved paper_summaries to Firestore (run_id={run_id})")
-    else:
-        os.makedirs(DATA_DIR, exist_ok=True)
-        out_path = os.path.join(DATA_DIR, "paper_summaries.json")
-        with open(out_path, "w", encoding="utf-8") as f:
-            json.dump({
-                "run_at":           start_time.isoformat(),
-                "elapsed_seconds":  elapsed,
-                "total_papers":     len(papers),
-                "total_summarized": len(successful),
-                "total_failed":     len(failed),
-                "papers":           results,
-            }, f, indent=2, ensure_ascii=False)
-        print(f"Saved to {out_path}")
-
-    if USE_FIRESTORE:
-        should_trigger = increment_and_check(run_id)
-        if should_trigger:
-            from google.cloud import pubsub_v1
-            publisher  = pubsub_v1.PublisherClient()
-            topic_path = publisher.topic_path(GCP_PROJECT_ID, TOPIC_CONTENT_SUMMARIZED)
-            data       = json.dumps({"run_id": run_id}).encode("utf-8")
-            publisher.publish(topic_path, data).result(timeout=30)
-            print(f"[agent2a]  Both agent2s done — published to {TOPIC_CONTENT_SUMMARIZED} (run_id={run_id})")
+        if USE_FIRESTORE:
+            from google.cloud import firestore as _fs
+            doc_snap = _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).get()
+            doc      = doc_snap.to_dict()
+            if not doc:
+                raise RuntimeError(f"[agent2a] Firestore document not found for run_id={run_id}")
+            papers   = doc.get("scored_papers")
+            if papers is None:
+                raise RuntimeError(f"[agent2a] 'scored_papers' missing from Firestore document run_id={run_id}")
+            print(f"[agent2a]  Loaded {len(papers)} papers from Firestore")
         else:
-            print(f"[agent2a]  Waiting for agent2b to finish before triggering agent3")
+            in_path = os.path.join(DATA_DIR, "scored_papers.json")
+            with open(in_path, "r", encoding="utf-8") as f:
+                scored = json.load(f)
+            papers = scored["top_papers"]
+        print(f"Summarizing {len(papers)} papers...\n")
+
+        client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
+        results = []
+
+        for i, paper in enumerate(papers, 1):
+            paper_id = paper["id"].split("/")[-1]
+            print(f"[{i}/{len(papers)}] {paper['title'][:80]}...")
+
+            text = download_and_extract(paper["pdf_url"], paper_id)
+            used_fallback = text is None
+            if used_fallback:
+                print(f"  [pdf]      using abstract+reasoning fallback")
+                text = fallback_text(paper)
+
+            try:
+                summary = summarize_paper(paper, text, prompt_template, client)
+            except Exception as e:
+                print(f"  [error]    {paper_id}: {e}")
+                results.append({**paper, "summary": None, "used_fallback": used_fallback, "summary_error": str(e)})
+                continue
+
+            validate_summary(summary, paper_id)
+
+            status = "fallback" if used_fallback else "full PDF"
+            print(f"  [done]     ({status})")
+
+            results.append({
+                "id":            paper["id"],
+                "title":         paper["title"],
+                "authors":       paper["authors"],
+                "published":     paper["published"],
+                "pdf_url":       paper["pdf_url"],
+                "categories":    paper["categories"],
+                "scores":        paper["scores"],
+                "summary":       summary,
+                "used_fallback": used_fallback,
+                "summary_error": None,
+            })
+
+        elapsed = (datetime.now() - start_time).total_seconds()
+        successful = [r for r in results if r["summary"]]
+        failed     = [r for r in results if not r["summary"]]
+
+        print(f"\n--- Done in {elapsed:.1f}s ---")
+        print(f"Summarized: {len(successful)}/{len(papers)} papers")
+        if failed:
+            print(f"Failed: {len(failed)} papers")
+
+        if USE_FIRESTORE:
+            from google.cloud import firestore as _fs
+            _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).update({
+                "paper_summaries": results
+            })
+            print(f"[agent2a]  Saved paper_summaries to Firestore (run_id={run_id})")
+        else:
+            os.makedirs(DATA_DIR, exist_ok=True)
+            out_path = os.path.join(DATA_DIR, "paper_summaries.json")
+            with open(out_path, "w", encoding="utf-8") as f:
+                json.dump({
+                    "run_at":           start_time.isoformat(),
+                    "elapsed_seconds":  elapsed,
+                    "total_papers":     len(papers),
+                    "total_summarized": len(successful),
+                    "total_failed":     len(failed),
+                    "papers":           results,
+                }, f, indent=2, ensure_ascii=False)
+            print(f"Saved to {out_path}")
+
+        if USE_FIRESTORE:
+            should_trigger = increment_and_check(run_id)
+            if should_trigger:
+                from google.cloud import pubsub_v1
+                publisher  = pubsub_v1.PublisherClient()
+                topic_path = publisher.topic_path(GCP_PROJECT_ID, TOPIC_CONTENT_SUMMARIZED)
+                data       = json.dumps({"run_id": run_id}).encode("utf-8")
+                publisher.publish(topic_path, data).result(timeout=30)
+                print(f"[agent2a]  Both agent2s done — published to {TOPIC_CONTENT_SUMMARIZED} (run_id={run_id})")
+            else:
+                print(f"[agent2a]  Waiting for agent2b to finish before triggering agent3")
+    except Exception as e:
+        _record_failure(run_id, "agent2a", e)
+        raise
 
 
 if __name__ == "__main__":

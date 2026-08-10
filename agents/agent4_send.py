@@ -346,6 +346,24 @@ def _active_subscribers(db) -> list[dict]:
 # Main
 # ---------------------------------------------------------------------------
 
+def _record_failure(run_id: str, agent_name: str, error: Exception) -> None:
+    """Best-effort write of a top-level run failure to Firestore, for health checks."""
+    if not USE_FIRESTORE:
+        return
+    try:
+        from google.cloud import firestore
+        firestore.Client(project=GCP_PROJECT_ID).collection("pipeline_runs").document(run_id).set(
+            {
+                f"{agent_name}_error": str(error),
+                f"{agent_name}_failed_at": datetime.now(timezone.utc).isoformat(),
+            },
+            merge=True
+        )
+        print(f"[{agent_name}]  Recorded failure to Firestore (run_id={run_id})", flush=True)
+    except Exception as record_error:
+        print(f"[{agent_name}]  Failed to record failure to Firestore: {record_error}", flush=True)
+
+
 def run(run_id: str):
     """Read newsletter HTML and send via SendGrid.
 
@@ -389,14 +407,18 @@ def run(run_id: str):
     from google.cloud import firestore as _fs
     db = _fs.Client(project=GCP_PROJECT_ID)
 
-    variants, subject = _load_latest_newsletter(db)
+    try:
+        variants, subject = _load_latest_newsletter(db)
 
-    if TEST_SEND_TO:
-        print(f"[agent4]  TEST_SEND_TO override — sending only to {TEST_SEND_TO}", flush=True)
-        subscribers = [{"email": TEST_SEND_TO, "token": "TEST-SEND"}]
-    else:
-        subscribers = _active_subscribers(db)
-    print(f"[agent4]  {len(subscribers)} active subscriber(s)", flush=True)
+        if TEST_SEND_TO:
+            print(f"[agent4]  TEST_SEND_TO override — sending only to {TEST_SEND_TO}", flush=True)
+            subscribers = [{"email": TEST_SEND_TO, "token": "TEST-SEND"}]
+        else:
+            subscribers = _active_subscribers(db)
+        print(f"[agent4]  {len(subscribers)} active subscriber(s)", flush=True)
+    except Exception as e:
+        _record_failure(run_id, "agent4", e)
+        raise
 
     # Batch-load section configs for premium subscribers (those with a uid).
     # Legacy/token-only subscribers have uid=None and skip this step.

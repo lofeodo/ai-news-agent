@@ -7,7 +7,7 @@ import os
 import re
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import DATA_DIR, SCORING_MODEL, GCP_PROJECT_ID, USE_FIRESTORE, FIRESTORE_COLLECTION
@@ -639,116 +639,138 @@ def compose_html(
 # Main
 # ---------------------------------------------------------------------------
 
+def _record_failure(run_id: str, agent_name: str, error: Exception) -> None:
+    """Best-effort write of a top-level run failure to Firestore, for health checks."""
+    if not USE_FIRESTORE:
+        return
+    try:
+        from google.cloud import firestore
+        firestore.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).set(
+            {
+                f"{agent_name}_error": str(error),
+                f"{agent_name}_failed_at": datetime.now(timezone.utc).isoformat(),
+            },
+            merge=True
+        )
+        print(f"[{agent_name}]  Recorded failure to Firestore (run_id={run_id})", flush=True)
+    except Exception as record_error:
+        print(f"[{agent_name}]  Failed to record failure to Firestore: {record_error}", flush=True)
+
+
 def run(run_id: str):
     """Main agent logic. Called by main.py (Cloud Run) or orchestrator.py."""
     start_time = datetime.now()
 
-    with open("prompts/article_selection_prompt.txt", "r", encoding="utf-8") as f:
-        selection_prompt = f.read()
-    with open("prompts/intro_prompt.txt", "r", encoding="utf-8") as f:
-        intro_prompt = f.read()
+    try:
+        with open("prompts/article_selection_prompt.txt", "r", encoding="utf-8") as f:
+            selection_prompt = f.read()
+        with open("prompts/intro_prompt.txt", "r", encoding="utf-8") as f:
+            intro_prompt = f.read()
 
-    if USE_FIRESTORE:
-        from google.cloud import firestore as _fs
-        doc_snap    = _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).get()
-        doc         = doc_snap.to_dict()
-        if not doc:
-            raise RuntimeError(f"[agent3] Firestore document not found for run_id={run_id}")
-        papers      = doc.get("paper_summaries")
-        by_category = doc.get("news_summaries")
-        if papers is None or by_category is None:
-            raise RuntimeError(f"[agent3] 'paper_summaries' or 'news_summaries' missing from Firestore document run_id={run_id}")
-        print(f"[agent3]  Loaded paper_summaries and news_summaries from Firestore")
-    else:
-        with open(os.path.join(DATA_DIR, "paper_summaries.json"), "r", encoding="utf-8") as f:
-            paper_data = json.load(f)
-        with open(os.path.join(DATA_DIR, "news_summaries.json"), "r", encoding="utf-8") as f:
-            news_data = json.load(f)
-        papers      = paper_data["papers"]
-        by_category = news_data["by_category"]
-
-    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
-
-    print("\n=== Selecting articles per category ===")
-    # Two selection passes per category:
-    #   selected_all — full pool (French + English), used when include_french=True
-    #   selected_en  — English-only pool, used when include_french=False
-    # The second pass is skipped when the category has no French articles.
-    selected_all: dict[str, list] = {}
-    selected_en:  dict[str, list] = {}
-
-    for category in NEWS_CATEGORIES:
-        articles = by_category.get(category, [])
-        print(f"  [{category}] {len(articles)} articles available", end="")
-
-        if not articles:
-            print(" → no articles, using fallback")
-            selected_all[category] = []
-            selected_en[category]  = []
-            continue
-
-        full_selected = select_articles_for_category(category, articles, selection_prompt, client)
-        selected_all[category] = full_selected
-
-        en_articles = [a for a in articles if a.get("language") != "fr"]
-        if len(en_articles) < len(articles):
-            print(f" → selected {len(full_selected)} (re-running English-only)", end="")
-            selected_en[category] = select_articles_for_category(category, en_articles, selection_prompt, client)
+        if USE_FIRESTORE:
+            from google.cloud import firestore as _fs
+            doc_snap    = _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).get()
+            doc         = doc_snap.to_dict()
+            if not doc:
+                raise RuntimeError(f"[agent3] Firestore document not found for run_id={run_id}")
+            papers      = doc.get("paper_summaries")
+            by_category = doc.get("news_summaries")
+            if papers is None or by_category is None:
+                raise RuntimeError(f"[agent3] 'paper_summaries' or 'news_summaries' missing from Firestore document run_id={run_id}")
+            print(f"[agent3]  Loaded paper_summaries and news_summaries from Firestore")
         else:
-            selected_en[category] = full_selected
+            with open(os.path.join(DATA_DIR, "paper_summaries.json"), "r", encoding="utf-8") as f:
+                paper_data = json.load(f)
+            with open(os.path.join(DATA_DIR, "news_summaries.json"), "r", encoding="utf-8") as f:
+                news_data = json.load(f)
+            papers      = paper_data["papers"]
+            by_category = news_data["by_category"]
 
-        print(f" → {len(full_selected)} (all) / {len(selected_en[category])} (en)")
+        client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
 
-    print("\n=== Writing intro paragraph ===")
-    intro = write_intro(papers, selected_all, intro_prompt, client)
-    print(f"  Intro: {intro[:100]}...")
+        print("\n=== Selecting articles per category ===")
+        # Two selection passes per category:
+        #   selected_all — full pool (French + English), used when include_french=True
+        #   selected_en  — English-only pool, used when include_french=False
+        # The second pass is skipped when the category has no French articles.
+        selected_all: dict[str, list] = {}
+        selected_en:  dict[str, list] = {}
 
-    print("\n=== Composing HTML variants ===")
-    week_of = datetime.now().strftime("%B %d, %Y")
-    newsletter_variants: dict[str, str] = {}
-    for key, prefs in NEWSLETTER_VARIANTS.items():
-        selection = selected_all if prefs["include_french"] else selected_en
-        html = compose_html(intro, papers, selection, week_of, include_canada=prefs["include_canada"])
-        newsletter_variants[key] = html
-        print(f"  Variant {key}: {len(html):,} chars")
+        for category in NEWS_CATEGORIES:
+            articles = by_category.get(category, [])
+            print(f"  [{category}] {len(articles)} articles available", end="")
 
-    print("\n=== Saving newsletter HTML ===")
-    os.makedirs(DATA_DIR, exist_ok=True)
-    for key, html in newsletter_variants.items():
-        path = os.path.join(DATA_DIR, f"newsletter_{key}.html")
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(html)
-        print(f"  Saved {path}")
-    legacy_path = os.path.join(DATA_DIR, "newsletter.html")
-    with open(legacy_path, "w", encoding="utf-8") as f:
-        f.write(newsletter_variants["0_0"])
-    print(f"  Saved {legacy_path} (legacy alias for 0_0)")
+            if not articles:
+                print(" → no articles, using fallback")
+                selected_all[category] = []
+                selected_en[category]  = []
+                continue
 
-    # Copy to public dir so Firebase Hosting serves it as the live preview
-    public_preview = os.path.join(
-        os.path.dirname(__file__), "..", "public", "newsletter", "latest.html"
-    )
-    with open(public_preview, "w", encoding="utf-8") as f:
-        f.write(newsletter_variants["0_0"])
-    print(f"  Saved {public_preview} (public preview)")
+            full_selected = select_articles_for_category(category, articles, selection_prompt, client)
+            selected_all[category] = full_selected
 
-    if USE_FIRESTORE:
-        from google.cloud import firestore as _fs
-        _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).update({
-            "newsletter_variants":  newsletter_variants,
-            "newsletter_html":      newsletter_variants["0_0"],
-            "newsletter_subject":   f"{NEWSLETTER_NAME} — {week_of}",
-            "newsletter_composed":  True,
-        })
-        print(f"  Written newsletter_variants + newsletter_html (0_0) to Firestore")
+            en_articles = [a for a in articles if a.get("language") != "fr"]
+            if len(en_articles) < len(articles):
+                print(f" → selected {len(full_selected)} (re-running English-only)", end="")
+                selected_en[category] = select_articles_for_category(category, en_articles, selection_prompt, client)
+            else:
+                selected_en[category] = full_selected
 
-    elapsed = (datetime.now() - start_time).total_seconds()
-    print(f"\n--- Done in {elapsed:.1f}s ---")
+            print(f" → {len(full_selected)} (all) / {len(selected_en[category])} (en)")
 
-    total_selected = sum(len(v) for v in selected_all.values())
-    print(f"Papers:   {len(papers)}")
-    print(f"Articles: {total_selected} selected across {len(NEWS_CATEGORIES)} categories")
-    print(f"Variants: {list(newsletter_variants.keys())}")
+        print("\n=== Writing intro paragraph ===")
+        intro = write_intro(papers, selected_all, intro_prompt, client)
+        print(f"  Intro: {intro[:100]}...")
+
+        print("\n=== Composing HTML variants ===")
+        week_of = datetime.now().strftime("%B %d, %Y")
+        newsletter_variants: dict[str, str] = {}
+        for key, prefs in NEWSLETTER_VARIANTS.items():
+            selection = selected_all if prefs["include_french"] else selected_en
+            html = compose_html(intro, papers, selection, week_of, include_canada=prefs["include_canada"])
+            newsletter_variants[key] = html
+            print(f"  Variant {key}: {len(html):,} chars")
+
+        print("\n=== Saving newsletter HTML ===")
+        os.makedirs(DATA_DIR, exist_ok=True)
+        for key, html in newsletter_variants.items():
+            path = os.path.join(DATA_DIR, f"newsletter_{key}.html")
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(html)
+            print(f"  Saved {path}")
+        legacy_path = os.path.join(DATA_DIR, "newsletter.html")
+        with open(legacy_path, "w", encoding="utf-8") as f:
+            f.write(newsletter_variants["0_0"])
+        print(f"  Saved {legacy_path} (legacy alias for 0_0)")
+
+        # Copy to public dir so Firebase Hosting serves it as the live preview
+        public_preview = os.path.join(
+            os.path.dirname(__file__), "..", "public", "newsletter", "latest.html"
+        )
+        with open(public_preview, "w", encoding="utf-8") as f:
+            f.write(newsletter_variants["0_0"])
+        print(f"  Saved {public_preview} (public preview)")
+
+        if USE_FIRESTORE:
+            from google.cloud import firestore as _fs
+            _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).update({
+                "newsletter_variants":  newsletter_variants,
+                "newsletter_html":      newsletter_variants["0_0"],
+                "newsletter_subject":   f"{NEWSLETTER_NAME} — {week_of}",
+                "newsletter_composed":  True,
+            })
+            print(f"  Written newsletter_variants + newsletter_html (0_0) to Firestore")
+
+        elapsed = (datetime.now() - start_time).total_seconds()
+        print(f"\n--- Done in {elapsed:.1f}s ---")
+
+        total_selected = sum(len(v) for v in selected_all.values())
+        print(f"Papers:   {len(papers)}")
+        print(f"Articles: {total_selected} selected across {len(NEWS_CATEGORIES)} categories")
+        print(f"Variants: {list(newsletter_variants.keys())}")
+    except Exception as e:
+        _record_failure(run_id, "agent3", e)
+        raise
 
 
 if __name__ == "__main__":

@@ -193,59 +193,81 @@ def score_all_papers(papers: list) -> list:
     return results
 
 
+def _record_failure(run_id: str, agent_name: str, error: Exception) -> None:
+    """Best-effort write of a top-level run failure to Firestore, for health checks."""
+    if not USE_FIRESTORE:
+        return
+    try:
+        from google.cloud import firestore
+        firestore.Client(project=GCP_PROJECT_ID).collection("pipeline_runs").document(run_id).set(
+            {
+                f"{agent_name}_error": str(error),
+                f"{agent_name}_failed_at": datetime.now(timezone.utc).isoformat(),
+            },
+            merge=True
+        )
+        print(f"[{agent_name}]  Recorded failure to Firestore (run_id={run_id})", flush=True)
+    except Exception as record_error:
+        print(f"[{agent_name}]  Failed to record failure to Firestore: {record_error}", flush=True)
+
+
 def run(run_id: str):
     """Main agent logic. Called by main.py (Cloud Run) or orchestrator.py."""
     start_time = datetime.now()
 
-    papers = fetch_papers()
-    sampled = sample_papers(papers)
-    scored = score_all_papers(sampled)
+    try:
+        papers = fetch_papers()
+        sampled = sample_papers(papers)
+        scored = score_all_papers(sampled)
 
-    successful = [r for r in scored if r["scores"] is not None]
-    failed = [r for r in scored if r["scores"] is None]
-    top_papers = successful[:PAPERS_IN_NEWSLETTER]
+        successful = [r for r in scored if r["scores"] is not None]
+        failed = [r for r in scored if r["scores"] is None]
+        top_papers = successful[:PAPERS_IN_NEWSLETTER]
 
-    elapsed = (datetime.now() - start_time).total_seconds()
-    print(f"\n--- Done in {elapsed:.1f}s ---")
-    print(f"Scored: {len(successful)}/{len(sampled)} papers successfully")
-    if failed:
-        print(f"Failed: {len(failed)} papers")
+        elapsed = (datetime.now() - start_time).total_seconds()
+        print(f"\n--- Done in {elapsed:.1f}s ---")
+        print(f"Scored: {len(successful)}/{len(sampled)} papers successfully")
+        if failed:
+            print(f"Failed: {len(failed)} papers")
 
-    print(f"\n=== TOP {PAPERS_IN_NEWSLETTER} PAPERS ===")
-    for i, paper in enumerate(top_papers, 1):
-        scores = paper.get("scores") or {}
-        print(f"{i}. [{scores.get('total', '?')}/28] {paper['title']}")
-        print(f"   {scores.get('reasoning', '')}\n")
+        print(f"\n=== TOP {PAPERS_IN_NEWSLETTER} PAPERS ===")
+        for i, paper in enumerate(top_papers, 1):
+            scores = paper.get("scores") or {}
+            print(f"{i}. [{scores.get('total', '?')}/28] {paper['title']}")
+            print(f"   {scores.get('reasoning', '')}\n")
 
-    os.makedirs(DATA_DIR, exist_ok=True)
-    out_path = os.path.join(DATA_DIR, "scored_papers.json")
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump({
-            "run_at": start_time.isoformat(),
-            "elapsed_seconds": elapsed,
-            "total_sampled": len(sampled),
-            "total_scored": len(successful),
-            "total_failed": len(failed),
-            "top_papers": top_papers,
-            "all_scored": scored
-        }, f, indent=2, ensure_ascii=False)
+        os.makedirs(DATA_DIR, exist_ok=True)
+        out_path = os.path.join(DATA_DIR, "scored_papers.json")
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump({
+                "run_at": start_time.isoformat(),
+                "elapsed_seconds": elapsed,
+                "total_sampled": len(sampled),
+                "total_scored": len(successful),
+                "total_failed": len(failed),
+                "top_papers": top_papers,
+                "all_scored": scored
+            }, f, indent=2, ensure_ascii=False)
 
-    print(f"Saved full results to {out_path}")
+        print(f"Saved full results to {out_path}")
 
-    if USE_FIRESTORE:
-        from google.cloud import firestore, pubsub_v1
-        db  = firestore.Client(project=GCP_PROJECT_ID)
-        db.collection("pipeline_runs").document(run_id).set(
-            {"scored_papers": top_papers, "started_at": start_time.isoformat(), "run_id": run_id},
-            merge=True
-        )
-        print(f"[agent1a]  Saved scored_papers to Firestore (run_id={run_id})")
+        if USE_FIRESTORE:
+            from google.cloud import firestore, pubsub_v1
+            db  = firestore.Client(project=GCP_PROJECT_ID)
+            db.collection("pipeline_runs").document(run_id).set(
+                {"scored_papers": top_papers, "started_at": start_time.isoformat(), "run_id": run_id},
+                merge=True
+            )
+            print(f"[agent1a]  Saved scored_papers to Firestore (run_id={run_id})")
 
-        publisher  = pubsub_v1.PublisherClient()
-        topic_path = publisher.topic_path(GCP_PROJECT_ID, TOPIC_PAPERS_SCORED)
-        data       = json.dumps({"run_id": run_id}).encode("utf-8")
-        publisher.publish(topic_path, data).result(timeout=30)
-        print(f"[agent1a]  Published to {TOPIC_PAPERS_SCORED} (run_id={run_id})")
+            publisher  = pubsub_v1.PublisherClient()
+            topic_path = publisher.topic_path(GCP_PROJECT_ID, TOPIC_PAPERS_SCORED)
+            data       = json.dumps({"run_id": run_id}).encode("utf-8")
+            publisher.publish(topic_path, data).result(timeout=30)
+            print(f"[agent1a]  Published to {TOPIC_PAPERS_SCORED} (run_id={run_id})")
+    except Exception as e:
+        _record_failure(run_id, "agent1a", e)
+        raise
 
 
 if __name__ == "__main__":

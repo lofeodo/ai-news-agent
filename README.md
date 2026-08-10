@@ -155,7 +155,7 @@ Secrets live in **Google Secret Manager** (cloud) or environment variables (loca
 | `ALLOWED_ORIGINS` | main.py (subscriptions) | Comma-separated CORS origins; required in production |
 | `MAILING_ADDRESS` | agent3 | Physical address in email footer (CASL compliance) |
 | `ADMIN_TOKEN` | agent_subscriptions | Token to access `/stats` endpoint |
-| `MAX_SUBSCRIBERS` | agent_subscriptions | Subscriber cap (default `100`, SendGrid free tier) |
+| `MAX_SUBSCRIBERS` | agent_subscriptions | Subscriber cap (default `50000`) |
 | `GOOGLE_APPLICATION_CREDENTIALS` | agent_subscriptions (local) | Path to service account JSON for Firebase Admin SDK; alternative to `gcloud auth application-default login` |
 | `GOOGLE_OAUTH_CLIENT_ID` | agent_subscriptions | Google OAuth 2.0 Web client ID for server-side Google Sign-In (not secret) |
 | `GOOGLE_OAUTH_CLIENT_SECRET` | agent_subscriptions | Google OAuth 2.0 client secret (local mode; cloud uses Secret Manager, secret name `google-oauth-client-secret`) |

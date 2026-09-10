@@ -27,6 +27,20 @@ NEWSLETTER_NAME = "Latent SpaceMail"
 # run happened this week" rather than evaluating its (old) completion state.
 STALE_AFTER_HOURS = 4
 
+
+def _parse_started_at(raw: str) -> datetime:
+    """Parse a pipeline_runs `started_at` string to an aware UTC datetime.
+
+    The field is written by whichever agent creates the run doc, and not all
+    of them write an offset: orchestrator.py uses datetime.now(timezone.utc)
+    (offset-aware), but agent1a writes datetime.now().isoformat() (naive). A
+    naive value here is assumed to be UTC — Cloud Run containers run in UTC.
+    """
+    dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt
+
 # (Firestore field, human label) — checked in pipeline order.
 EXPECTED_STAGES = [
     ("scored_papers",        "agent1a (fetch + score papers)"),
@@ -103,7 +117,28 @@ def _notify(message: str, healthy: bool) -> None:
 
 def run(run_id: str) -> None:
     """Entry point. `run_id` is this health check's OWN invocation id — the
-    pipeline run being checked is looked up separately below."""
+    pipeline run being checked is looked up separately below.
+
+    Any unexpected error in the check itself is turned into a "problem
+    detected" email rather than an uncaught exception — otherwise a bug in
+    the health check silently suppresses the weekly heartbeat entirely, which
+    is exactly how it failed before (a naive `started_at` crashed the age
+    check every week for a month with no email either way)."""
+    try:
+        _run(run_id)
+    except Exception as e:
+        import traceback
+        tb = traceback.format_exc()
+        print(f"[healthcheck]  check itself failed: {tb}", flush=True)
+        _notify(
+            f"The health check itself failed with an unexpected error — the pipeline "
+            f"status could not be evaluated this run:\n\n{tb}",
+            healthy=False,
+        )
+        raise
+
+
+def _run(run_id: str) -> None:
     print(f"[healthcheck]  Starting check (invocation run_id={run_id})", flush=True)
 
     if not USE_FIRESTORE:
@@ -120,7 +155,7 @@ def run(run_id: str) -> None:
 
     started_at_raw = doc.get("started_at")
     if started_at_raw:
-        started_at = datetime.fromisoformat(started_at_raw.replace("Z", "+00:00"))
+        started_at = _parse_started_at(started_at_raw)
         age_hours = (datetime.now(timezone.utc) - started_at).total_seconds() / 3600
         if age_hours > STALE_AFTER_HOURS:
             _notify(

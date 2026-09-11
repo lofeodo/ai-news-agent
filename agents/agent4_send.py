@@ -26,6 +26,7 @@ from config import (
     USE_FIRESTORE,
     FIRESTORE_COLLECTION,
     SUBSCRIBERS_COLLECTION,
+    parse_started_at,
 )
 
 # ---------------------------------------------------------------------------
@@ -56,6 +57,34 @@ TEST_RECIPIENT_EMAIL = os.environ.get("TEST_RECIPIENT_EMAIL", "")
 # send only to this address. Used for test-send jobs that must not reach
 # real subscribers.
 TEST_SEND_TO = os.environ.get("TEST_SEND_TO", "")
+
+# How old the newsletter agent4 found is allowed to be before agent4 refuses
+# to send it. _load_latest_newsletter() queries for the most recent
+# newsletter_composed==True doc with no check that it's from *this week's*
+# run — if the current week's pipeline stalls before agent3 (any cause: a
+# crash, a hang, an API failure), that query silently falls back to an older
+# successful run and ships it as if current. 24h safely covers a normal
+# Monday run (composed within ~1h of the 06:00 start) while clearly
+# rejecting anything from a prior week (>= 144h old).
+MAX_NEWSLETTER_AGE_HOURS = 24
+
+
+class StaleNewsletterError(RuntimeError):
+    """Raised when the only available composed newsletter is too old to send.
+
+    Carries the stale run's own run_id so the caller can record the failure
+    against *that* pipeline_runs doc (what the health check inspects) rather
+    than agent4's own invocation run_id.
+    """
+
+    def __init__(self, run_id: str, age_hours: float):
+        self.run_id = run_id
+        self.age_hours = age_hours
+        super().__init__(
+            f"Latest composed newsletter (run_id={run_id}) is {age_hours:.1f}h old — "
+            f"exceeds MAX_NEWSLETTER_AGE_HOURS ({MAX_NEWSLETTER_AGE_HOURS}h). "
+            f"Refusing to send stale content instead of silently shipping an old run."
+        )
 
 # Keep in sync with DEFAULT_SECTIONS in agents/agent_subscriptions.py
 _DEFAULT_SECTIONS = [
@@ -320,7 +349,14 @@ def _load_latest_newsletter(db):
     docs = list(results)
     if not docs:
         raise RuntimeError("[agent4]  No Firestore document found with newsletter_html set")
-    data     = docs[0].to_dict()
+    data = docs[0].to_dict()
+
+    started_at_raw = data.get("started_at")
+    if started_at_raw:
+        age_hours = (datetime.now(timezone.utc) - parse_started_at(started_at_raw)).total_seconds() / 3600
+        if age_hours > MAX_NEWSLETTER_AGE_HOURS:
+            raise StaleNewsletterError(run_id=data.get("run_id"), age_hours=age_hours)
+
     variants = data.get("newsletter_variants")
     if not variants:
         variants = {"0_0": data.get("newsletter_html", "")}
@@ -416,6 +452,12 @@ def run(run_id: str):
         else:
             subscribers = _active_subscribers(db)
         print(f"[agent4]  {len(subscribers)} active subscriber(s)", flush=True)
+    except StaleNewsletterError as e:
+        # Record against the stale run's own doc (what the health check
+        # inspects), not agent4's invocation run_id — see StaleNewsletterError.
+        print(f"[agent4]  {e}", flush=True)
+        _record_failure(e.run_id, "agent4", e)
+        raise
     except Exception as e:
         _record_failure(run_id, "agent4", e)
         raise

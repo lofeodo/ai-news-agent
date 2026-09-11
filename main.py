@@ -28,7 +28,13 @@ import os
 import sys
 import threading
 import traceback
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+
+try:
+    from zoneinfo import ZoneInfo
+    _CUTOFF_TZ = ZoneInfo("America/Toronto")
+except Exception:  # pragma: no cover - zoneinfo/tzdata missing
+    _CUTOFF_TZ = timezone(timedelta(hours=-5))  # fallback: fixed EST offset
 
 from fastapi import FastAPI, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -99,8 +105,79 @@ if os.environ.get("AGENT_NAME", "").strip() == "agent_subscriptions":
     app.include_router(subscriptions_router)
 
 
-def _run_agent(module_name: str, run_id: str) -> None:
-    """Import the agent module and call its run(run_id) function."""
+# ── Hard runtime limits ──────────────────────────────────────────────────────
+# No agent may run forever. Two ceilings, whichever comes first:
+#   1. MAX_RUNTIME_SECONDS after the agent starts (a flat 1-hour cap).
+#   2. The daily 07:30 America/Toronto cutoff — but only for a run that starts
+#      before it. The scheduled pipeline (06:00) and send (07:00) must be
+#      settled before subscribers are awake. A run started AFTER 07:30 (a
+#      manual daytime re-run / recovery) is bounded only by ceiling 1.
+# On expiry the watchdog records {agent}_error to the run's Firestore doc
+# (so status doesn't stay "running" and the health check can name a cause)
+# and hard-exits the process — os._exit works even if the agent thread is
+# wedged in a C extension, which a Python-level timeout would not survive.
+MAX_RUNTIME_SECONDS = 3600
+_HARD_CUTOFF_HOUR = 7
+_HARD_CUTOFF_MINUTE = 30
+
+
+def _deadline_seconds() -> float:
+    """Seconds from now until this agent must be dead."""
+    now = datetime.now(timezone.utc)
+    deadline = now + timedelta(seconds=MAX_RUNTIME_SECONDS)
+
+    now_local = now.astimezone(_CUTOFF_TZ)
+    cutoff_local = now_local.replace(
+        hour=_HARD_CUTOFF_HOUR, minute=_HARD_CUTOFF_MINUTE, second=0, microsecond=0
+    )
+    if now_local < cutoff_local:
+        deadline = min(deadline, cutoff_local.astimezone(timezone.utc))
+
+    return max(1.0, (deadline - now).total_seconds())
+
+
+def _record_timeout(agent_name: str, run_id: str, detail: str) -> None:
+    """Best-effort mark-the-run-failed in Firestore before the hard exit."""
+    if os.environ.get("USE_FIRESTORE", "false").lower() != "true":
+        return
+    try:
+        from google.cloud import firestore
+        from config import GCP_PROJECT_ID, FIRESTORE_COLLECTION
+
+        firestore.Client(project=GCP_PROJECT_ID).collection(
+            FIRESTORE_COLLECTION
+        ).document(run_id).set(
+            {
+                f"{agent_name}_error": f"hard timeout — {detail}",
+                f"{agent_name}_failed_at": datetime.now(timezone.utc).isoformat(),
+            },
+            merge=True,
+        )
+    except Exception:
+        sys.stderr.write("[main]  watchdog: failed to record timeout to Firestore:\n")
+        traceback.print_exc(file=sys.stderr)
+        sys.stderr.flush()
+
+
+def _run_agent(agent_name: str, module_name: str, run_id: str) -> None:
+    """Import the agent module and call its run(run_id) function, under a
+    wall-clock watchdog that hard-exits the process if it overruns."""
+    timeout = _deadline_seconds()
+
+    def _fire() -> None:
+        detail = f"{agent_name} exceeded its deadline ({timeout:.0f}s from start)"
+        try:
+            sys.stderr.write(f"[main]  HARD TIMEOUT — {detail}. Forcing process exit.\n")
+            sys.stderr.flush()
+            _record_timeout(agent_name, run_id, detail)
+        finally:
+            os._exit(124)
+
+    watchdog = threading.Timer(timeout, _fire)
+    watchdog.daemon = True
+    watchdog.start()
+    print(f"[main]  Watchdog armed: {agent_name} must finish within {timeout:.0f}s", flush=True)
+
     try:
         print(f"[main]  Thread started for {module_name} (run_id={run_id})", flush=True)
         import importlib
@@ -112,6 +189,8 @@ def _run_agent(module_name: str, run_id: str) -> None:
         sys.stderr.write(f"[main]  ERROR in {module_name} (run_id={run_id}):\n")
         traceback.print_exc(file=sys.stderr)
         sys.stderr.flush()
+    finally:
+        watchdog.cancel()
 
 
 @app.post("/")
@@ -147,7 +226,7 @@ async def trigger(request: Request):
         print(f"[main]  No run_id in request body — generated: {run_id}", flush=True)
 
     print(f"[main]  Starting {agent_name} in background thread (run_id={run_id})...", flush=True)
-    thread = threading.Thread(target=_run_agent, args=(module_name, run_id), daemon=True)
+    thread = threading.Thread(target=_run_agent, args=(agent_name, module_name, run_id), daemon=True)
     thread.start()
 
     return {"status": "started", "agent": agent_name, "run_id": run_id}

@@ -1,6 +1,7 @@
 # config.py
 
 import os
+from datetime import datetime, timezone
 
 # ArXiv fetching
 MAX_FETCH = 500              # safety ceiling for ArXiv API
@@ -94,3 +95,20 @@ MAX_SUBSCRIBERS = int(os.environ.get("MAX_SUBSCRIBERS", "50000"))
 # Health check alerting — where agent_healthcheck sends a problem report.
 # Never used for subscriber-facing sends.
 ALERT_EMAIL = os.environ.get("ALERT_EMAIL", "")
+
+
+def parse_started_at(raw: str) -> datetime:
+    """Parse a pipeline_runs `started_at` string to an aware UTC datetime.
+
+    Not every writer includes an offset: orchestrator.py uses
+    datetime.now(timezone.utc) (aware), but agent1a_fetch_papers.py used to
+    write datetime.now().isoformat() (naive) — and old Firestore docs still
+    have that shape. A naive value is assumed to be UTC (Cloud Run containers
+    run in UTC). Shared here so every consumer (agent_healthcheck.py,
+    agent4_send.py, ...) stays consistent rather than each reimplementing
+    this and risking one of them drifting out of tolerance again.
+    """
+    dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt

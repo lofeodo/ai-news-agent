@@ -17,7 +17,7 @@ import sys
 from datetime import datetime, timezone
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import GCP_PROJECT_ID, FIRESTORE_COLLECTION, USE_FIRESTORE, ALERT_EMAIL
+from config import GCP_PROJECT_ID, FIRESTORE_COLLECTION, USE_FIRESTORE, ALERT_EMAIL, parse_started_at
 
 import agent4_send  # reuse send_email() / _get_sendgrid_api_key() only
 
@@ -26,20 +26,6 @@ NEWSLETTER_NAME = "Latent SpaceMail"
 # How stale the latest pipeline_runs doc can be before we treat it as "no
 # run happened this week" rather than evaluating its (old) completion state.
 STALE_AFTER_HOURS = 4
-
-
-def _parse_started_at(raw: str) -> datetime:
-    """Parse a pipeline_runs `started_at` string to an aware UTC datetime.
-
-    The field is written by whichever agent creates the run doc, and not all
-    of them write an offset: orchestrator.py uses datetime.now(timezone.utc)
-    (offset-aware), but agent1a writes datetime.now().isoformat() (naive). A
-    naive value here is assumed to be UTC — Cloud Run containers run in UTC.
-    """
-    dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    return dt
 
 # (Firestore field, human label) — checked in pipeline order.
 EXPECTED_STAGES = [
@@ -155,7 +141,7 @@ def _run(run_id: str) -> None:
 
     started_at_raw = doc.get("started_at")
     if started_at_raw:
-        started_at = _parse_started_at(started_at_raw)
+        started_at = parse_started_at(started_at_raw)
         age_hours = (datetime.now(timezone.utc) - started_at).total_seconds() / 3600
         if age_hours > STALE_AFTER_HOURS:
             _notify(

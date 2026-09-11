@@ -255,7 +255,16 @@ def run(run_id: str):
             from google.cloud import firestore, pubsub_v1
             db  = firestore.Client(project=GCP_PROJECT_ID)
             db.collection("pipeline_runs").document(run_id).set(
-                {"scored_papers": top_papers, "started_at": start_time.isoformat(), "run_id": run_id},
+                {
+                    "scored_papers": top_papers,
+                    # Aware UTC, not start_time.isoformat() — start_time is a
+                    # naive local() timestamp used for elapsed-time math below;
+                    # writing it here used to overwrite the orchestrator's
+                    # aware started_at with a naive one, which crashed
+                    # agent_healthcheck's age check every week.
+                    "started_at": datetime.now(timezone.utc).isoformat(),
+                    "run_id": run_id,
+                },
                 merge=True
             )
             print(f"[agent1a]  Saved scored_papers to Firestore (run_id={run_id})")

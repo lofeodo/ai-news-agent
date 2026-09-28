@@ -26,6 +26,13 @@ MAX_CONCURRENT_CLAUDE_CALLS = 3
 MAX_FETCH_WORKERS = 20
 _semaphore = threading.Semaphore(MAX_CONCURRENT_CLAUDE_CALLS)
 
+# newspaper3k's parse() runs lxml/libxml2 (and, with fetch_images on, Pillow)
+# C code that isn't safe to run from many threads at once — concurrent parses
+# are the prime suspect for the free()/munmap_chunk() SIGABRTs that killed this
+# agent on 2026-09-07 and 2026-09-28. Downloads stay parallel; parsing is
+# CPU-bound under the GIL anyway, so serializing it costs little.
+_parse_lock = threading.Lock()
+
 FETCH_TIMEOUT    = 10
 MIN_ARTICLE_WORDS = 100
 
@@ -106,8 +113,10 @@ def fetch_article_text(url: str) -> str | None:
     try:
         article = Article(url, request_timeout=FETCH_TIMEOUT)
         article.config.browser_user_agent = USER_AGENT
+        article.config.fetch_images = False  # summaries never use images
         article.download()
-        article.parse()
+        with _parse_lock:
+            article.parse()
         text = article.text.strip()
         if not text:
             return None

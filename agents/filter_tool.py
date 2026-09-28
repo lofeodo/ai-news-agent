@@ -1,12 +1,12 @@
 LANGUAGE_FILTER_TOOL = {
     "name": "filter_by_language",
-    "description": "Classify each article as English or French based on a short text sample; omit articles in any other language",
+    "description": "Classify the language of every article as English, French, or other",
     "input_schema": {
         "type": "object",
         "properties": {
             "articles": {
                 "type": "array",
-                "description": "Articles that are written in English or French",
+                "description": "One entry for every input article, in input order",
                 "items": {
                     "type": "object",
                     "properties": {
@@ -16,8 +16,8 @@ LANGUAGE_FILTER_TOOL = {
                         },
                         "language": {
                             "type": "string",
-                            "enum": ["en", "fr"],
-                            "description": "Detected language of the article"
+                            "enum": ["en", "fr", "other"],
+                            "description": "Language the article is written in; \"other\" for any language that is not English or French"
                         }
                     },
                     "required": ["index", "language"]

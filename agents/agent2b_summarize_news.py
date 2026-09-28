@@ -26,6 +26,13 @@ MAX_CONCURRENT_CLAUDE_CALLS = 3
 MAX_FETCH_WORKERS = 20
 _semaphore = threading.Semaphore(MAX_CONCURRENT_CLAUDE_CALLS)
 
+# newspaper3k's parse() runs lxml/libxml2 (and, with fetch_images on, Pillow)
+# C code that isn't safe to run from many threads at once — concurrent parses
+# are the prime suspect for the free()/munmap_chunk() SIGABRTs that killed this
+# agent on 2026-09-07 and 2026-09-28. Downloads stay parallel; parsing is
+# CPU-bound under the GIL anyway, so serializing it costs little.
+_parse_lock = threading.Lock()
+
 FETCH_TIMEOUT    = 10
 MIN_ARTICLE_WORDS = 100
 
@@ -106,8 +113,10 @@ def fetch_article_text(url: str) -> str | None:
     try:
         article = Article(url, request_timeout=FETCH_TIMEOUT)
         article.config.browser_user_agent = USER_AGENT
+        article.config.fetch_images = False  # summaries never use images
         article.download()
-        article.parse()
+        with _parse_lock:
+            article.parse()
         text = article.text.strip()
         if not text:
             return None
@@ -188,6 +197,10 @@ def increment_and_check(run_id: str) -> bool:
     """
     Atomically increment agent2_completions in Firestore using a transaction.
     Returns True if this agent pushed the count to 2 (both agent2a and agent2b done).
+
+    Idempotent: main.py may re-run agent2b after a crash, and an attempt that
+    dies after incrementing must not count twice — that would reach 2 before
+    agent2a finished and trigger agent3 without paper_summaries.
     """
     from google.cloud import firestore
 
@@ -198,8 +211,10 @@ def increment_and_check(run_id: str) -> bool:
     def _increment(transaction, ref):
         snapshot = ref.get(transaction=transaction)
         data     = snapshot.to_dict() or {}
+        if data.get("agent2b_counted"):
+            return data.get("agent2_completions", 0)
         new_val  = data.get("agent2_completions", 0) + 1
-        transaction.update(ref, {"agent2_completions": new_val})
+        transaction.update(ref, {"agent2_completions": new_val, "agent2b_counted": True})
         return new_val
 
     count = _increment(db.transaction(), ref)

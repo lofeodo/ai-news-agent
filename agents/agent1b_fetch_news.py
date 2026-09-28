@@ -23,10 +23,9 @@ from config import (
 )
 
 # --- Constants ---
-HN_TOP_STORIES_URL = "https://hacker-news.firebaseio.com/v0/topstories.json"
-HN_ITEM_URL        = "https://hacker-news.firebaseio.com/v0/item/{}.json"
-NEWSAPI_URL        = "https://newsapi.org/v2/everything"
-HN_MAX_WORKERS     = 20
+HN_SEARCH_URL = "https://hn.algolia.com/api/v1/search"
+HN_MAX_HITS   = 1000   # Algolia's per-request cap; a week's top 1000 reaches down to ~7 points
+NEWSAPI_URL   = "https://newsapi.org/v2/everything"
 
 # NewsAPI appends e.g. "… [+3456 chars]" to its truncated `content` field
 _TRUNCATION_MARKER = re.compile(r"\s*…?\s*\[\+\d+ chars\]\s*$")
@@ -40,56 +39,41 @@ _semaphore = threading.Semaphore(MAX_CONCURRENT_CLAUDE_CALLS)
 # Fetching
 # ---------------------------------------------------------------------------
 
-def fetch_hn_story(story_id: int, cutoff_timestamp: float) -> dict | None:
-    """Fetch a single HN story by ID. Returns None if not a valid article or too old."""
-    try:
-        response = requests.get(HN_ITEM_URL.format(story_id), timeout=10)
-        response.raise_for_status()
-        item = response.json()
-
-        if not item or item.get("type") != "story" or not item.get("url"):
-            return None
-
-        if item.get("time", 0) < cutoff_timestamp:
-            return None
-
-        return {
-            "source":      "hackernews",
-            "title":       item.get("title", ""),
-            "description": "",
-            "url":         item.get("url", ""),
-            "language":    "en",
-            "hn_score":    item.get("score", 0)
-        }
-    except Exception as e:
-        print(f"  [hn error] story {story_id}: {e}")
-        return None
-
-
 def fetch_hn_articles() -> list:
-    """Fetch top HN stories from the last LOOKBACK_HOURS."""
+    """Fetch the week's top HN stories (last LOOKBACK_HOURS) by points, via Algolia search.
+
+    Not the official topstories.json: that is the *current* front page, whose ranking
+    decays with age, so by Monday morning most of the week's biggest stories had
+    already fallen off it. No points floor — HN_MAX_HITS alone bounds the volume.
+    """
     print(f"Fetching Hacker News stories (last {LOOKBACK_HOURS}h)...")
 
-    cutoff_timestamp = (datetime.now(timezone.utc) - timedelta(hours=LOOKBACK_HOURS)).timestamp()
+    cutoff_timestamp = int((datetime.now(timezone.utc) - timedelta(hours=LOOKBACK_HOURS)).timestamp())
+    params = {
+        "tags":           "story",
+        "numericFilters": f"created_at_i>{cutoff_timestamp}",
+        "hitsPerPage":    HN_MAX_HITS,
+    }
 
-    response = requests.get(HN_TOP_STORIES_URL, timeout=10)
+    response = requests.get(HN_SEARCH_URL, params=params, timeout=30)
     response.raise_for_status()
-    story_ids = response.json()[:NEWS_FETCH_SIZE * 3]
 
-    print(f"  Fetching {len(story_ids)} story IDs in parallel...")
     articles = []
-
-    with ThreadPoolExecutor(max_workers=HN_MAX_WORKERS) as executor:
-        future_to_id = {executor.submit(fetch_hn_story, sid, cutoff_timestamp): sid for sid in story_ids}
-        for future in as_completed(future_to_id):
-            result = future.result()
-            if result:
-                articles.append(result)
-            if len(articles) >= NEWS_FETCH_SIZE:
-                break
+    for hit in response.json().get("hits", []):
+        # Ask HN / text-only posts have no external article to summarize
+        if not hit.get("url") or not hit.get("title"):
+            continue
+        articles.append({
+            "source":      "hackernews",
+            "title":       hit["title"],
+            "description": "",
+            "url":         hit["url"],
+            "language":    "en",
+            "hn_score":    hit.get("points") or 0,
+        })
 
     print(f"  Got {len(articles)} HN articles")
-    return articles[:NEWS_FETCH_SIZE]
+    return articles
 
 
 def fetch_newsapi_query(query: str, from_time: str, api_key: str) -> list:

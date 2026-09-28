@@ -136,8 +136,9 @@ def _deadline_seconds() -> float:
     return max(1.0, (deadline - now).total_seconds())
 
 
-def _record_timeout(agent_name: str, run_id: str, detail: str) -> None:
-    """Best-effort mark-the-run-failed in Firestore before the hard exit."""
+def _update_run_doc(run_id: str, fields_fn) -> None:
+    """Best-effort merge-write to the run's Firestore doc. fields_fn receives the
+    firestore module (for sentinels like DELETE_FIELD) and returns the fields."""
     if os.environ.get("USE_FIRESTORE", "false").lower() != "true":
         return
     try:
@@ -146,30 +147,110 @@ def _record_timeout(agent_name: str, run_id: str, detail: str) -> None:
 
         firestore.Client(project=GCP_PROJECT_ID).collection(
             FIRESTORE_COLLECTION
-        ).document(run_id).set(
-            {
-                f"{agent_name}_error": f"hard timeout — {detail}",
-                f"{agent_name}_failed_at": datetime.now(timezone.utc).isoformat(),
-            },
-            merge=True,
-        )
+        ).document(run_id).set(fields_fn(firestore), merge=True)
     except Exception:
-        sys.stderr.write("[main]  watchdog: failed to record timeout to Firestore:\n")
+        sys.stderr.write(f"[main]  failed to update run doc {run_id} in Firestore:\n")
         traceback.print_exc(file=sys.stderr)
         sys.stderr.flush()
+
+
+def _record_failure(agent_name: str, run_id: str, error: str) -> None:
+    _update_run_doc(run_id, lambda fs: {
+        f"{agent_name}_error": error,
+        f"{agent_name}_failed_at": datetime.now(timezone.utc).isoformat(),
+    })
+
+
+# ── Crash isolation + retry ──────────────────────────────────────────────────
+# Agents listed here run in a child process instead of the server's own thread,
+# and are re-run up to N more times if the child exits unsuccessfully. A child
+# process is the only way to survive a native abort: agent2b has twice died
+# with a heap-corruption SIGABRT inside C extension code (2026-09-07,
+# 2026-09-28), which kills the whole interpreter — no in-process try/except or
+# retry loop outlives it. The child's stdout/stderr are inherited, so its logs
+# land in Cloud Logging exactly as before. All attempts together stay under the
+# single watchdog deadline armed in _run_agent.
+_ISOLATED_RETRIES = {
+    "agent2b": 5,
+}
+_RETRY_DELAY_SECONDS = 5
+
+_CHILD_CODE = (
+    "import importlib, sys; sys.path.insert(0, sys.argv[1]); "
+    "importlib.import_module(sys.argv[2]).run(sys.argv[3])"
+)
+
+
+def _describe_exit(returncode: int) -> str:
+    if returncode < 0:
+        import signal
+        try:
+            name = signal.Signals(-returncode).name
+        except ValueError:
+            name = f"signal {-returncode}"
+        return f"killed by {name}"
+    return f"exit code {returncode}"
+
+
+def _run_isolated(agent_name: str, module_name: str, run_id: str, retries: int, current: dict) -> None:
+    import subprocess
+    import time
+
+    app_dir = os.path.dirname(os.path.abspath(__file__))
+    agents_dir = os.path.join(app_dir, "agents")
+    attempts = retries + 1
+
+    for attempt in range(1, attempts + 1):
+        print(f"[main]  {agent_name} attempt {attempt}/{attempts} (child process, run_id={run_id})", flush=True)
+        proc = subprocess.Popen(
+            [sys.executable, "-c", _CHILD_CODE, agents_dir, module_name, run_id],
+            cwd=app_dir,
+        )
+        current["proc"] = proc
+        returncode = proc.wait()
+        current["proc"] = None
+
+        if returncode == 0:
+            print(f"[main]  {module_name} completed successfully on attempt {attempt}/{attempts}", flush=True)
+            if attempt > 1:
+                # A failed earlier attempt may have written {agent}_error; clear
+                # it so the health check doesn't flag a run that recovered.
+                _update_run_doc(run_id, lambda fs: {
+                    f"{agent_name}_error": fs.DELETE_FIELD,
+                    f"{agent_name}_failed_at": fs.DELETE_FIELD,
+                    f"{agent_name}_attempts": attempt,
+                })
+            return
+
+        outcome = _describe_exit(returncode)
+        sys.stderr.write(f"[main]  {agent_name} attempt {attempt}/{attempts} failed ({outcome})\n")
+        sys.stderr.flush()
+        if attempt < attempts:
+            time.sleep(_RETRY_DELAY_SECONDS)
+
+    # A Python exception already recorded its own, more specific {agent}_error
+    # via the agent's _record_failure(); a native crash recorded nothing.
+    if returncode < 0:
+        _record_failure(agent_name, run_id, f"crashed ({outcome}) on all {attempts} attempts")
+    sys.stderr.write(f"[main]  {agent_name} gave up after {attempts} attempts (run_id={run_id})\n")
+    sys.stderr.flush()
 
 
 def _run_agent(agent_name: str, module_name: str, run_id: str) -> None:
     """Import the agent module and call its run(run_id) function, under a
     wall-clock watchdog that hard-exits the process if it overruns."""
     timeout = _deadline_seconds()
+    current = {"proc": None}  # child process, for agents in _ISOLATED_RETRIES
 
     def _fire() -> None:
         detail = f"{agent_name} exceeded its deadline ({timeout:.0f}s from start)"
         try:
             sys.stderr.write(f"[main]  HARD TIMEOUT — {detail}. Forcing process exit.\n")
             sys.stderr.flush()
-            _record_timeout(agent_name, run_id, detail)
+            proc = current["proc"]
+            if proc is not None:
+                proc.kill()
+            _record_failure(agent_name, run_id, f"hard timeout — {detail}")
         finally:
             os._exit(124)
 
@@ -180,6 +261,9 @@ def _run_agent(agent_name: str, module_name: str, run_id: str) -> None:
 
     try:
         print(f"[main]  Thread started for {module_name} (run_id={run_id})", flush=True)
+        if agent_name in _ISOLATED_RETRIES:
+            _run_isolated(agent_name, module_name, run_id, _ISOLATED_RETRIES[agent_name], current)
+            return
         import importlib
         module = importlib.import_module(module_name)
         print(f"[main]  Module imported successfully", flush=True)

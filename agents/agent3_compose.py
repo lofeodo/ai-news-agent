@@ -4,6 +4,7 @@ import anthropic
 import html as _html
 import json
 import os
+import random
 import re
 import sys
 import time
@@ -88,17 +89,9 @@ _MODEL_RELEASE_KEYWORDS: dict[str, list[str]] = {
 
 
 def _article_tag(article: dict, category: str) -> str:
-    """Tag each article so Claude knows whether it is mandatory or optional.
-
-    [REQUIRED]      — HN score ≥ 100: community-validated, always include.
-    [NAMED RELEASE] — Mentions a specific model release from a major AI lab
-                      (only applied for Model & Product Releases category).
-    [OPTIONAL]      — Everything else: include only if it adds value.
+    """Return "[NAMED RELEASE] " if the article mentions a specific model release from
+    a major AI lab (Model & Product Releases category only), else "".
     """
-    hn = article.get("hn_score")
-    if hn is not None and hn >= 100:
-        return "[REQUIRED]"
-
     if category == "Model & Product Releases":
         text = (
             (article.get("title") or "") + " " +
@@ -107,20 +100,34 @@ def _article_tag(article: dict, category: str) -> str:
         ).lower()
         for _lab, kws in _MODEL_RELEASE_KEYWORDS.items():
             if any(kw in text for kw in kws):
-                return "[NAMED RELEASE]"
+                return "[NAMED RELEASE] "
 
-    return "[OPTIONAL]"
+    return ""
+
+
+def _hn_label(article: dict, scores: list[int]) -> str:
+    """HN points plus rank among the section's HN-scored articles (ties share a rank).
+
+    Rank is shown because vote counts vary a lot by topic — a section's top story
+    may have far fewer points than another section's.
+    """
+    hn = article.get("hn_score")
+    if hn is None:
+        return "hn: unknown (not posted to HN)"
+    rank = 1 + sum(1 for s in scores if s > hn)
+    return f"hn: {hn} points (#{rank} of {len(scores)} HN stories in this section)"
 
 
 def format_articles_for_selection(articles: list, category: str = "") -> str:
+    hn_scores = [a["hn_score"] for a in articles if a.get("hn_score") is not None]
     lines = []
     for i, a in enumerate(articles):
-        hn = f"hn_score: {a['hn_score']}" if a.get("hn_score") is not None else "hn_score: null"
+        hn = _hn_label(a, hn_scores)
         tag = _article_tag(a, category)
         fallback_note = " [summary from description only]" if a.get("used_fallback") else ""
         lines.append(
             f"<article_{i}>\n"
-            f"[{i}] {tag} {a.get('title', 'No title')}\n"
+            f"[{i}] {tag}{a.get('title', 'No title')}\n"
             f"    {hn}{fallback_note}\n"
             f"    Summary: {(a.get('summary') or a.get('description') or '')[:300]}\n"
             f"</article_{i}>"
@@ -163,10 +170,13 @@ def select_articles_for_category(
     if not articles:
         return []
 
-    # Sort by HN score descending (null last) so Claude anchors on high-signal articles
-    sorted_articles = sorted(articles, key=lambda a: a.get("hn_score") or -1, reverse=True)
+    # Neutral order: list position must not carry a quality signal (sorting by HN put
+    # every HN article above every NewsAPI one). Sorting by URL first removes the
+    # thread-timing order inherited from agent1b, so the shuffle is reproducible.
+    ordered = sorted(articles, key=lambda a: a.get("url") or "")
+    random.Random(category).shuffle(ordered)
 
-    formatted = format_articles_for_selection(sorted_articles, category)
+    formatted = format_articles_for_selection(ordered, category)
     prompt    = prompt_template.format(category=category, articles=formatted)
 
     response = claude_call_with_retry(
@@ -179,40 +189,13 @@ def select_articles_for_category(
 
     if not response.content:
         raise RuntimeError(f"Empty Claude response for article selection in '{category}'")
-    indices = parse_indices(response.content[0].text, len(sorted_articles))
+    indices = parse_indices(response.content[0].text, len(ordered))
 
     if not indices:
         print(f"  [warn]   no valid indices for '{category}' — falling back to first 3")
-        indices = list(range(min(3, len(sorted_articles))))
+        indices = list(range(min(3, len(ordered))))
 
-    selected = [sorted_articles[i] for i in indices]
-
-    # Code-level safety net: guarantee all HN 100+ articles appear in the selection.
-    # Claude may miss them when pools are large (55+ articles). If a REQUIRED article
-    # was skipped, swap out the weakest OPTIONAL article to make room (up to MAX=5).
-    MAX_ARTICLES = 5
-    required_arts = [a for a in sorted_articles if (a.get("hn_score") or 0) >= 100]
-    selected_ids  = {id(a) for a in selected}
-    missing       = [r for r in required_arts if id(r) not in selected_ids]
-
-    if missing:
-        # Partition current selection into required and optional buckets
-        cur_req = [a for a in selected if (a.get("hn_score") or 0) >= 100]
-        cur_opt = [a for a in selected if (a.get("hn_score") or 0) < 100]
-
-        for req in missing:
-            if len(cur_req) + len(cur_opt) < MAX_ARTICLES:
-                cur_req.append(req)
-                print(f"  [force]  added missed REQUIRED HN={req['hn_score']}: {req['title'][:60]}")
-            elif cur_opt:
-                dropped = cur_opt.pop()
-                cur_req.append(req)
-                print(f"  [force]  swapped '{dropped['title'][:40]}' → HN={req['hn_score']} '{req['title'][:40]}'")
-            # If already at MAX with only REQUIRED articles, stop
-
-        selected = cur_req + cur_opt
-
-    return selected
+    return [ordered[i] for i in indices]
 
 
 # ---------------------------------------------------------------------------

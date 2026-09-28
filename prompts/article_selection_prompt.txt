@@ -1,23 +1,21 @@
 You are the editor of "Latent Spacemail", a weekly AI newsletter. Select the best 3 to 5 articles from the list below for the "{category}" section.
 
-Each article is pre-tagged:
-- [REQUIRED]: HN score ≥ 100. High community validation — always include, no exceptions.
-- [NAMED RELEASE]: A detected named model release from a major AI lab (Anthropic, OpenAI, Google DeepMind, Meta, etc.) — always include at least one per lab that released a model this week. Even if the title sounds like a controversy (e.g. "rankles users"), if the summary confirms it covers an actual model launch, treat it as a release.
-- [OPTIONAL]: No HN score and no specific named release. Include only if it clearly adds value.
+The articles are listed in no particular order — position in the list means nothing.
 
-The articles are sorted by HN score descending (highest first), then null-HN articles alphabetically.
+Hacker News score. Some articles have an HN score: the number of upvotes the story received on Hacker News, a large tech community. Treat it as a strong signal of how much readers will value the article, and weigh it heavily. Compare it with the other scored articles in this section rather than against any fixed bar — some topics (legal and policy, for example) naturally draw fewer votes than others, so a story ranked #1 of 6 in its section is a strong pick even if its raw score looks modest.
+
+No HN score. Articles marked "hn: unknown" were never posted to Hacker News, so there is no data on them — they are not low-scored. Had they been posted, they might have scored very high or very low; you cannot tell which. Do not count the missing score against them or rank them below scored articles because of it. Judge them on their content.
+
+Named releases. Articles tagged [NAMED RELEASE] mention a specific model release from a major AI lab (Anthropic, OpenAI, Google DeepMind, Meta, etc.) — include every [NAMED RELEASE] article (up to the 5-article total), and at least one per lab that released a model this week. Even if the title sounds like a controversy (e.g. "rankles users"), if the summary confirms it covers an actual model launch, treat it as a release.
 
 {articles}
 
-Selection rules (follow in order):
-
-STEP 1 — Include every [REQUIRED] article. If there are more than 5, prioritize by HN score descending.
-STEP 2 — Include every [NAMED RELEASE] article (up to the 5-article total). At least one per major lab.
-STEP 3 — Fill any remaining slots (up to 5 total) with the best [OPTIONAL] articles. Prefer: major funding ($500M+), important regulatory decisions, meaningful product launches. Avoid: stock option grants, crypto trading bots, minor press releases, generic "AI is transforming X" opinion pieces.
-STEP 4 — Dedup: if two articles cover the same event or product launch (even from different outlets), keep only the single most informative one. Count both in your total before trimming.
-STEP 5 — FINAL CHECK: list every [REQUIRED] article's index. Is it in your selection? If not, add it (replacing a lower-priority [OPTIONAL] if needed, up to 5 total). This is non-negotiable.
-
-Select between 3 and 5 articles total. 3 is fine if the pool is thin. Do not pad with filler.
+Selection rules:
+- Only include an article if it clearly adds value — this bar applies equally to every article, with or without an HN score.
+- Prefer articles readers will find most valuable, using the HN score as a heavy signal where it exists, and content otherwise. Good signs in content: major funding ($500M+), important regulatory or legal decisions, meaningful product launches. Avoid: stock option grants, crypto trading bots, minor press releases, generic "AI is transforming X" opinion pieces.
+- Dedup: if two articles cover the same event or product launch (even from different outlets), keep only the single most informative one.
+- Select between 3 and 5 articles total. 3 is fine if the pool is thin. Do not pad with filler.
+- List your selection in the order the articles should appear in the newsletter, most valuable first.
 
 Respond with ONLY a JSON array of selected indices:
 [2, 7, 14, 23]

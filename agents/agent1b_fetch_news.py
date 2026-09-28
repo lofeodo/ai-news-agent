@@ -3,6 +3,7 @@
 import anthropic
 import json
 import os
+import re
 import requests
 import sys
 import threading
@@ -26,6 +27,9 @@ HN_TOP_STORIES_URL = "https://hacker-news.firebaseio.com/v0/topstories.json"
 HN_ITEM_URL        = "https://hacker-news.firebaseio.com/v0/item/{}.json"
 NEWSAPI_URL        = "https://newsapi.org/v2/everything"
 HN_MAX_WORKERS     = 20
+
+# NewsAPI appends e.g. "… [+3456 chars]" to its truncated `content` field
+_TRUNCATION_MARKER = re.compile(r"\s*…?\s*\[\+\d+ chars\]\s*$")
 
 # --- Rate limiting (Claude calls) ---
 MAX_CONCURRENT_CLAUDE_CALLS = 5
@@ -114,7 +118,10 @@ def fetch_newsapi_query(query: str, from_time: str, api_key: str) -> list:
             "description": item.get("description", "") or "",
             "url":         item.get("url", "") or "",
             "language":    "en",  # placeholder — refined per-article by language_filter() below
-            "hn_score":    None
+            "hn_score":    None,
+            # First ~200 chars of the body (NewsAPI truncates it). Only used as
+            # extra evidence by language_filter(), which strips it afterwards.
+            "_lang_excerpt": _TRUNCATION_MARKER.sub("", item.get("content", "") or "").strip(),
         })
 
     return articles
@@ -232,31 +239,53 @@ def claude_call_with_retry(client: anthropic.Anthropic, max_retries: int = 4, **
 # Language filter
 # ---------------------------------------------------------------------------
 
-LANG_BATCH_SIZE    = 200
-LANG_SNIPPET_WORDS = 30
+# Small batches: at 200 per call, borderline articles (e.g. Italian body under an
+# English-looking headline) slipped through. Accuracy matters more than call count.
+LANG_BATCH_SIZE    = 25
+LANG_DESC_WORDS    = 80
+LANG_EXCERPT_WORDS = 60
 LANG_FILTER_PROMPT = """\
-You are a language detector. Below is a numbered list of short text samples from news articles.
+You are a language detector. Below is a numbered list of news articles. Each has a source domain, a title, and where available a description and an excerpt from the article body.
 
-Your task: classify each article as English ("en") or French ("fr") based on the language it is written in.
-Only include articles that are clearly English or French.
-Exclude articles in any other language (Spanish, Italian, Portuguese, German, Romanian, Dutch, Polish, Turkish, etc.).
-When in doubt whether an article is English/French at all, exclude it. When in doubt whether an included article is English vs. French, pick the more likely one.
+Your task: return one entry for EVERY article, labelling the language the article is written in:
+- "en" — English
+- "fr" — French
+- "other" — any other language (Italian, Spanish, Portuguese, German, Dutch, Polish, Turkish, Swedish, Danish, Czech, Greek, etc.)
+
+Rules:
+- When a description or excerpt is present, it decides. Non-English outlets often run English or English-looking headlines, so do not trust the title alone when there is more text.
+- When only a title is present, judge by the title.
+- Product names, company names and English tech loanwords ("AI", "chatbot", "startup", "cloud", "GPU") do not make a text English. Look at the function words (articles, prepositions, conjunctions): "il", "della", "che", "per", "sono" = Italian; "el", "los", "que", "para" = Spanish; "o", "da", "não", "para" = Portuguese; "der", "und", "mit" = German; "le", "des", "est", "pour", "une" = French.
+- The topic does not matter, only the language: an English article about Japan, Turkey or Italy is "en"; a French article from a Quebec or France outlet is "fr".
+- The domain is a weak hint only (e.g. .it, .es, .de, .br outlets usually publish in their own language); the text always wins.
+- If you cannot tell whether the text is English or French, pick the more likely of the two. Use "other" only when the text is clearly in some other language.
 
 Use the filter_by_language tool to return your answer.
 
-Samples:
+Articles:
 {samples}"""
 
 
+def _first_words(text: str, n: int) -> str:
+    return " ".join((text or "").split()[:n])
+
+
 def format_samples_for_lang_prompt(articles: list) -> str:
-    lines = []
+    blocks = []
     for i, article in enumerate(articles):
-        title   = article.get("title", "") or ""
-        desc    = article.get("description", "") or ""
-        snippet = " ".join(desc.split()[:LANG_SNIPPET_WORDS])
-        sample  = f"{title} — {snippet}" if snippet else title
-        lines.append(f"<article_{i}>\n[{i}] {sample}\n</article_{i}>")
-    return "\n".join(lines)
+        lines = [
+            f"[{i}]",
+            f"Domain: {urlparse(article.get('url', '')).hostname or 'unknown'}",
+            f"Title: {article.get('title', '') or ''}",
+        ]
+        desc    = _first_words(article.get("description", ""), LANG_DESC_WORDS)
+        excerpt = _first_words(article.get("_lang_excerpt", ""), LANG_EXCERPT_WORDS)
+        if desc:
+            lines.append(f"Description: {desc}")
+        if excerpt:
+            lines.append(f"Excerpt: {excerpt}")
+        blocks.append(f"<article_{i}>\n" + "\n".join(lines) + f"\n</article_{i}>")
+    return "\n".join(blocks)
 
 
 def language_filter_batch(batch: list, batch_index: int, client: anthropic.Anthropic) -> list:
@@ -284,16 +313,27 @@ def language_filter_batch(batch: list, batch_index: int, client: anthropic.Anthr
         print(f"  [lang] Batch {batch_index}: max_tokens hit — treating as empty")
         return []
 
-    print(f"  [lang] Batch {batch_index}: keeping {len(classified)}/{len(batch)} articles")
-
     results = []
+    labelled = set()
     for item in classified:
         idx      = item.get("index")
         language = item.get("language")
-        if isinstance(idx, int) and 0 <= idx < len(batch) and language in ("en", "fr"):
-            results.append({**batch[idx], "language": language})
-        else:
+        if not (isinstance(idx, int) and 0 <= idx < len(batch)) or language not in ("en", "fr", "other"):
             print(f"  [lang] Batch {batch_index}: invalid entry {item}, skipping")
+            continue
+        if idx in labelled:
+            continue
+        labelled.add(idx)
+        article = {k: v for k, v in batch[idx].items() if k != "_lang_excerpt"}
+        if language == "other":
+            print(f"  [lang] drop other: {urlparse(article['url']).hostname} | {article['title'][:70]}")
+            continue
+        results.append({**article, "language": language})
+
+    unlabelled = len(batch) - len(labelled)
+    if unlabelled:
+        print(f"  [lang] Batch {batch_index}: {unlabelled} article(s) left unlabelled — dropping them")
+    print(f"  [lang] Batch {batch_index}: keeping {len(results)}/{len(batch)} articles")
     return results
 
 

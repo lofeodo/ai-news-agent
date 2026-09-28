@@ -270,7 +270,7 @@ def run(run_id: str):
                 filtered = json.load(f)
 
         by_category: dict = filtered.get("by_category", {})
-        all_articles: list = filtered.get("articles", [])
+        all_articles: list = [a for arts in by_category.values() for a in arts]
 
         print(f"Summarizing {len(all_articles)} articles across {len(by_category)} categories...\n")
 

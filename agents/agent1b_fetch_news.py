@@ -357,7 +357,8 @@ def format_articles_for_prompt(articles: list) -> str:
     for i, article in enumerate(articles):
         title = article["title"] or "(no title)"
         desc  = article["description"] or "(no description)"
-        lines.append(f"<article_{i}>\n[{i}] {title}\n    {desc}\n</article_{i}>")
+        hn    = f" [HN: {article['hn_score']} points]" if article.get("hn_score") is not None else ""
+        lines.append(f"<article_{i}>\n[{i}]{hn} {title}\n    {desc}\n</article_{i}>")
     return "\n\n".join(lines)
 
 

@@ -14,9 +14,12 @@ Take a screenshot in each after changes. Flag any layout, overflow, or interacti
 
 ## Git Workflow
 
-**Never commit or push unless explicitly asked by the user.**
+**Commit iteratively as you work — do not wait to be asked.** After each small, self-contained, verified piece of work (e.g., add CSS, update one page, create a new file, extract one helper, add one test file), commit it right away on the current feature branch. One commit per meaningful unit, never one big commit at the end of a feature. Run the relevant tests before committing; don't commit code you know is broken.
 
-When asked to commit: create incremental commits with individual changes — one commit per meaningful unit (e.g., add CSS, update one page, create a new file), not one big commit at the end of a feature. Push only when explicitly asked.
+- Never commit directly to `main`; if on `main`, create a feature branch first.
+- Stage only the files that belong to the unit (`git add <paths>`), never `git add -A`, so unrelated changes and secrets stay out.
+- Write a short conventional-style message (`feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `build:`, `ci:`, `chore:`) describing the one change.
+- **Never push unless explicitly asked by the user.** Committing is automatic; pushing is not.
 
 ## What This Project Does
 

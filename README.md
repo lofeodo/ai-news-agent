@@ -128,7 +128,7 @@ Generated from `agents/agent1b_graph.py` (`python -c "import sys; sys.path.inser
 | `REVIEW_MAX_ARTICLES` | `30` | Per-run cap on reviewed articles (`0` disables review) |
 | `REVIEW_MAX_ITERATIONS` | `3` | Max LLM calls per reviewed article |
 | `REVIEW_FETCH_TIMEOUT` | `10` | Seconds per article fetch |
-| `LANGSMITH_TRACING` + `LANGSMITH_API_KEY` | unset | Opt-in LangSmith tracing (both required; otherwise a complete no-op). Token counts/cost per node. On Cloud Run, keep the key in Secret Manager and mount it: `gcloud run deploy agent1b --set-secrets LANGSMITH_API_KEY=langsmith-api-key:latest --set-env-vars LANGSMITH_TRACING=true` (not applied by this repo's build files). |
+| `LANGSMITH_TRACING` + `LANGSMITH_API_KEY` | unset | Opt-in LangSmith tracing (both required; otherwise a complete no-op). Token counts/cost per node. On Cloud Run, keep the key in Secret Manager and mount it: `gcloud run services update agent1b --update-secrets LANGSMITH_API_KEY=langsmith-api-key:latest --update-env-vars LANGSMITH_TRACING=true` — use `--update-*`, not `--set-*`, which would replace every existing secret/env var on the service` (not applied by this repo's build files). |
 
 ### Subscription system
 

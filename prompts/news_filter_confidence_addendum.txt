@@ -1,0 +1,9 @@
+Confidence:
+For every selected article also return a `confidence` (integer 1-5) for the category you assigned. Judge only the category choice, not whether the article is about AI.
+- 5: clearly belongs; no other category is plausible
+- 4: clear best fit, with minor overlap with another category
+- 3: two categories are about equally plausible, or the title/description is too thin to tell
+- 2: weak fit; you are mostly choosing between categories
+- 1: essentially a guess
+Use the full range. Do not default to 5.
+

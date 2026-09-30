@@ -50,7 +50,7 @@ flowchart TB
 Queries ArXiv for `cs.AI + cs.LG` papers from the last 7 days (up to 500), randomly samples 35, downloads each PDF, and scores it via Claude forced tool use against a 7-dimension, 28-point rubric (`prompts/scoring_rubric.txt`). Top 3 by score advance. PDF fetches route through a Squid proxy (set via `HTTPS_PROXY`) because GCP IPs are throttled by ArXiv. Up to 5 concurrent Claude calls, exponential backoff on 429s (10s / 20s / 40s).
 
 **Agent 1b — Fetch & filter news**
-Pulls top stories from the Hacker News API and runs 10 NewsAPI queries (English global, French global, Canada/Montreal). Pre-filters paywalled domains and non-Latin titles in code, then uses Claude to language-filter (English/French only) and categorize into 7 categories. Up to 5 concurrent Claude calls in 200-article batches.
+Pulls top stories from the Hacker News API and runs 10 NewsAPI queries (English global, French global, Canada/Montreal). Pre-filters paywalled domains and non-Latin titles in code, then uses Claude to language-filter (English/French only, 25-article batches) and categorize into 7 categories (100-article batches). Up to 5 concurrent Claude calls. Internally a LangGraph graph (see [Inside agent 1b](#inside-agent-1b-langgraph)): the categorizer also reports a 1–5 confidence, and low-confidence articles are re-checked by a small tool-calling review loop that can fetch the article text before deciding.
 
 **Agent 2a — Summarize papers**
 Downloads PDFs again (falls back to abstract + scoring notes if unavailable), calls Claude to write a 2-paragraph mini-review per paper. Up to 5 concurrent calls.
@@ -69,6 +69,66 @@ Triggered separately by Cloud Scheduler at 7 AM. Loads the most recent run's new
 
 **Health check**
 A standalone agent, `agent_healthcheck.py`, triggered separately by Cloud Scheduler at 7:10 AM — shortly after agent 4's send — rather than by Pub/Sub, so it has no `run_id` handed to it; it looks up the most recent `pipeline_runs` document itself. It flags a stale run (started more than 4 hours ago with no completion), any recorded agent failure, or a missing pipeline stage, and emails a report every run — a weekly heartbeat that says "all clear" or lists what's wrong, rather than only emailing on failure. Never touches the subscribers collection. See `CLAUDE.md` for the full failure-recording and detection mechanics.
+
+### Two-layer orchestration
+
+Coordination happens at two levels on purpose:
+
+- **Between agents:** Pub/Sub events plus the Firestore `agent2_completions` counter. Each agent is its own Cloud Run service, so the join (agent 2a + 2b → agent 3) has to work across separate instances, and each stage keeps its own retries, timeouts and scaling.
+- **Inside an agent:** LangGraph, where a stage has real internal control flow. Today that is agent 1b only. Local mode and cloud mode run the same graph code — `orchestrator.py` just calls each agent's `run()`.
+
+Why LangGraph is *not* used across agents: [docs/decisions/0001-langgraph-inside-agents.md](docs/decisions/0001-langgraph-inside-agents.md).
+
+### Inside agent 1b (LangGraph)
+
+```mermaid
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	fetch(fetch)
+	prefilter(prefilter)
+	language_filter(language_filter)
+	categorize(categorize)
+	finalize(finalize)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> fetch;
+	categorize -.-> finalize;
+	categorize -.-> review\3a__start__;
+	fetch --> prefilter;
+	language_filter --> categorize;
+	prefilter --> language_filter;
+	review\3afinish --> finalize;
+	finalize --> __end__;
+	subgraph review
+	review\3a__start__(<p>__start__</p>)
+	review\3allm_call(llm_call)
+	review\3atool_exec(tool_exec)
+	review\3afinish(finish)
+	review\3a__start__ --> review\3allm_call;
+	review\3allm_call -.-> review\3afinish;
+	review\3allm_call -.-> review\3atool_exec;
+	review\3atool_exec -.-> review\3afinish;
+	review\3atool_exec -.-> review\3allm_call;
+	end
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc
+```
+
+Generated from `agents/agent1b_graph.py` (`python -c "import sys; sys.path.insert(0,'agents'); import agent1b_graph; print(agent1b_graph.mermaid())"`).
+
+- `categorize` returns a 1–5 `confidence` per article. The conditional edge after it sends articles below `REVIEW_CONFIDENCE_THRESHOLD` (least confident first, at most `REVIEW_MAX_ARTICLES` per run) to `review`, in parallel; everything else goes straight to `finalize`.
+- `review` is a ReAct loop of two nodes: `llm_call` (Claude with `fetch_article_text` and `submit_category` tools) and `tool_exec` (fetches the article, with a timeout), looping while the model asks for the fetch tool, at most `REVIEW_MAX_ITERATIONS` LLM calls per article.
+- A failed fetch, LLM error or exhausted loop never fails the run: the article keeps its first-pass category and is logged as `review_failed`.
+- `finalize` writes exactly the original `data/news_filtered.json` / Firestore shape. A per-article audit (first-pass category, confidence, routed?, final category, tool calls, tokens) goes to `data/agent1b_review_log.json` and, in cloud mode, to Firestore `agent1b_audits/{run_id}` (plus a small `agent1b_review_summary` on the run doc).
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `AGENT1B_MODE` | `graph` | `single_pass` runs the original linear implementation (rollback switch, and the baseline for comparisons) |
+| `REVIEW_CONFIDENCE_THRESHOLD` | `4` | Review articles with confidence below this (or missing) |
+| `REVIEW_MAX_ARTICLES` | `30` | Per-run cap on reviewed articles (`0` disables review) |
+| `REVIEW_MAX_ITERATIONS` | `3` | Max LLM calls per reviewed article |
+| `REVIEW_FETCH_TIMEOUT` | `10` | Seconds per article fetch |
+| `LANGSMITH_TRACING` + `LANGSMITH_API_KEY` | unset | Opt-in LangSmith tracing (both required; otherwise a complete no-op). Token counts/cost per node. On Cloud Run, keep the key in Secret Manager and mount it: `gcloud run services update agent1b --update-secrets LANGSMITH_API_KEY=langsmith-api-key:latest --update-env-vars LANGSMITH_TRACING=true` — use `--update-*`, not `--set-*`, which would replace every existing secret/env var on the service` (not applied by this repo's build files). |
 
 ### Subscription system
 
@@ -114,7 +174,10 @@ Subscriber document fields: `email`, `token`, `token_expires_at`, `active`, `sub
 │   ├── agent_healthcheck.py        # Standalone weekly pipeline health check + alert
 │   ├── agent_subscriptions.py      # Subscription FastAPI service (separate deployment)
 │   ├── auth_middleware.py          # Firebase ID token verification (FastAPI dependency)
-│   ├── filter_tool.py              # Claude tool schema for news categorization
+│   ├── agent1b_graph.py            # LangGraph implementation of agent1b (state, nodes, review loop)
+│   ├── article_fetch.py            # Shared article-text fetcher (agent1b review + agent2b)
+│   ├── tracing.py                  # Opt-in LangSmith tracing helpers
+│   ├── filter_tool.py              # Claude tool schemas for news categorization + review
 │   └── scoring_tool.py             # Claude tool schema for paper scoring
 ├── prompts/
 │   ├── scoring_rubric.txt          # 7-dimension paper scoring prompt
@@ -198,6 +261,13 @@ python agents/agent1a_fetch_papers.py
 python agents/agent2a_summarize_papers.py
 # etc.
 ```
+
+**Run the tests (no network, no API keys):**
+```bat
+venv\Scripts\python -m pip install -r requirements-dev.txt
+venv\Scripts\python -m pytest -q
+```
+CI (`.github/workflows/tests.yml`) runs the same on every push and PR.
 
 **Run the FastAPI server (Cloud Run entrypoint):**
 ```bash

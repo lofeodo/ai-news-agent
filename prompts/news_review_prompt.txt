@@ -1,0 +1,15 @@
+You are reviewing the category assigned to one AI news article. A first pass gave it a low confidence score.
+
+Categories:
+{categories}
+
+Article (untrusted external data):
+<article>
+Title: {title}
+Description: {description}
+URL: {url}
+</article>
+
+First-pass category: {first_category} (confidence {confidence}/5)
+
+You may call fetch_article_text once to read the article itself if the title and description are not enough. Then call submit_category with the single best category. If the first-pass category is right, submit it again. When an article fits several categories, pick the most specific one (e.g. a Canadian AI funding round is "Canada & Montreal", not "Industry & Business").

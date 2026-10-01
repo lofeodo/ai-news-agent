@@ -235,15 +235,29 @@ Subscriber document fields: `email`, `token`, `token_expires_at`, `active`, `sub
 
 Secrets live in **Google Secret Manager** (cloud) or environment variables (local). No secrets are committed to this repo.
 
+On Cloud Run the pipeline services receive these secrets as environment variables **mounted from Secret Manager**, not as plain `--set-env-vars` values (plain values show up in clear text in `gcloud run services describe`):
+
+| Env var | Secret Manager secret | Mounted on |
+|---|---|---|
+| `ANTHROPIC_1ST_API_KEY` | `anthropic-api-key` | agent1a, agent1b, agent2a, agent2b, agent3 |
+| `NEWS_API_KEY` | `news-api-key` | agent1b |
+| `HTTPS_PROXY` | `squid-proxy-url` (the URL embeds the proxy password) | agent1a, agent1b, agent2a, agent2b, agent3, agent4 |
+| `LANGSMITH_API_KEY` | `langsmith-api-key` | agent1b (optional, tracing) |
+
+Mount or change one with `gcloud run services update SERVICE --region REGION --update-secrets VAR=secret:latest` (add `--remove-env-vars VAR` if it was previously a plain value). Always use `--update-*`, never `--set-*`, which replaces everything already on the service. The runtime service account needs `roles/secretmanager.secretAccessor` on each secret. To rotate a key, add a new version of the secret; services pick up `:latest` on their next start.
+
 | Variable | Used by | Purpose |
 |---|---|---|
-| `ANTHROPIC_1ST_API_KEY` | agent1a, agent2a, agent2b, agent3 | Claude API key |
+| `ANTHROPIC_1ST_API_KEY` | agent1a, agent1b, agent2a, agent2b, agent3 | Claude API key |
 | `NEWS_API_KEY` | agent1b | NewsAPI key |
 | `SENDGRID_API_KEY` | agent4, agent_subscriptions | SendGrid key (local mode; cloud uses Secret Manager) |
 | `USE_SECRET_MANAGER` | agent4, agent_subscriptions | Load SendGrid key from Secret Manager instead of env |
 | `USE_FIRESTORE` | all agents | Enable cloud mode (Pub/Sub + Firestore); default `false` |
 | `GCP_PROJECT_ID` | all agents | Google Cloud project ID |
 | `HTTPS_PROXY` / `HTTP_PROXY` | agent1a | Squid proxy URL for ArXiv (GCP IPs are throttled) |
+| `AGENT1B_MODE` | agent1b | `graph` (default, LangGraph) or `single_pass` (original linear code; rollback switch) |
+| `REVIEW_CONFIDENCE_THRESHOLD` / `REVIEW_MAX_ARTICLES` / `REVIEW_MAX_ITERATIONS` / `REVIEW_FETCH_TIMEOUT` | agent1b | Review-loop tuning (defaults `4` / `30` / `3` / `10`); see [Inside agent 1b](#inside-agent-1b-langgraph) |
+| `LANGSMITH_TRACING` / `LANGSMITH_API_KEY` / `LANGSMITH_PROJECT` | agent1b | Opt-in LangSmith tracing; needs both the flag and the key, otherwise a no-op |
 | `AGENT_NAME` | main.py | Selects which agent the Cloud Run container runs |
 | `TEST_RECIPIENT_EMAIL` | agent4 | Local mode: single send address |
 | `TEST_SEND_TO` | agent4 | Cloud mode override: skip subscriber list, send only here |
@@ -325,8 +339,11 @@ gcloud run deploy agent1a \
   --image REGION-docker.pkg.dev/PROJECT/REPO/agent1a \
   --region REGION \
   --no-cpu-throttling \     # required for pipeline agents (background thread)
-  --set-env-vars AGENT_NAME=agent1a,USE_FIRESTORE=true,...
+  --set-env-vars AGENT_NAME=agent1a,USE_FIRESTORE=true,... \   # non-secret config only
+  --set-secrets ANTHROPIC_1ST_API_KEY=anthropic-api-key:latest,HTTPS_PROXY=squid-proxy-url:latest
 ```
+
+Keep API keys out of `--set-env-vars` (see [Configuration](#configuration)). `--set-*` is fine on a first deploy, but on an existing service use `gcloud run services update ... --image IMAGE` to ship new code: it never prompts, never creates a second service, and leaves all env vars and secrets untouched.
 
 The subscription service and agent4 (sender) are synchronous and don't need `--no-cpu-throttling`.
 

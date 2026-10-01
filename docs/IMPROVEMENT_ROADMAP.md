@@ -23,8 +23,8 @@ Purpose: make Latent SpaceMail defensible in technical interviews for LLM system
 
 ## Step sequence
 
-- [ ] Step 0: Roadmap doc (this file)
-- [ ] Step 1: Cleanup and repo hygiene
+- [x] Step 0: Roadmap doc (this file)
+- [x] Step 1: Cleanup and repo hygiene
 - [ ] Step 2: Eval foundations and labeling templates
 - [ ] Step 3: Review-step evaluation (single_pass vs graph)
 - [ ] Step 4: Prompt-injection tests
@@ -43,7 +43,7 @@ Purpose: make Latent SpaceMail defensible in technical interviews for LLM system
 - Each step gets its own branch, named `feat/<step-name>` (or `docs/`, `chore/`, `test/` as fitting).
 - Commit freely on the step branch in small, continual commits. Do not push or open a PR until I say the step is ready. I merge PRs myself.
 - Update this file's checklist and Step detail as work progresses, not only at step boundaries.
-- When a step is finished and I have merged it, mark it complete and describe it thoroughly under "Completed steps": what was built, files touched, key decisions, deviations from the plan, how to run it, results with caveats.
+- The step's own PR must include its roadmap update: before declaring the step ready, tick its checklist box and describe it thoroughly under "Completed steps" (what was built, files touched, key decisions, deviations from the plan, how to run it, results with caveats), all on the step branch. Never leave this for an after-the-fact edit once the PR is merged.
 - Tell me explicitly when a step is fully complete before starting the next step's plan.
 - If the code contradicts anything in this document, say so and propose a fix to the doc before proceeding.
 
@@ -120,4 +120,10 @@ The `docker-build` job only blocks merges if the branch ruleset requires it.
 
 ## Completed steps
 
-(Each completed step is described here after its PR is merged.)
+(Each completed step is described here, written on the step's own branch before its PR is declared ready.)
+
+### Step 0: Roadmap doc
+This file, added via PR before any other work.
+
+### Step 1: Cleanup and repo hygiene
+Merged in PR #53 (branch `chore/repo-hygiene`). Removed the zero-byte tracked `[internal]` file and the stray `[internal]` line in `.dockerignore`; deleted the empty `tests/test_fetch.py` (covered by `tests/test_article_fetch.py`); pinned the unpinned tail of `requirements.txt` and `requirements-dev.txt`, resolved on `python:3.11-slim` to match Docker and CI; removed the redundant `pip install fastapi uvicorn` from the dockerfile; added a build-only `docker-build` job to `.github/workflows/tests.yml`. Verification and the repin procedure are recorded in the Step 1 plan above. Deviation from the roadmap: none beyond the extra findings listed in that plan. Caveat: the `docker-build` job only blocks merges if the branch ruleset requires it.

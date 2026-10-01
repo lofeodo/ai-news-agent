@@ -3,7 +3,7 @@
 Tracked output (`evals/fixtures/`): ids, urls, titles, short snippets, categories.
 Full text re-fetched by script goes under `evals/fixtures/private/` (gitignored).
 
-CMD:  python -m evals.snapshot            (writes evals\fixtures\articles_frozen.json from data\)
+CMD:  python -m evals.snapshot   (reads data/, writes evals/fixtures/articles_frozen.json)
 """
 import hashlib
 import json

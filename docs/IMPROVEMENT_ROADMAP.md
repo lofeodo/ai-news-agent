@@ -102,6 +102,22 @@ Fetch, summarize, verify against the source, retry once, else fall back to an ex
 
 (Plans are appended here, one per step, when that step starts.)
 
+### Step 1 plan (branch `chore/repo-hygiene`, approved)
+
+Code vs. roadmap: all claims held, plus these differences.
+- `.dockerignore` also carried a stray `[internal]` first line (removed).
+- The local venv is Python 3.14 but Docker and CI use 3.11, so the new pins come from a `python:3.11-slim` resolve, not the venv.
+- The dockerfile's separate `pip install fastapi uvicorn` was redundant with requirements.txt (removed).
+- `tests/test_fetch.py` was 3 bytes, untouched since the initial commit, and unreferenced (deleted; `tests/test_article_fetch.py` covers the fetcher).
+
+Work done: removed `[internal]` and the `.dockerignore` line; deleted `tests/test_fetch.py`; pinned the 8 unpinned packages plus their transitive deps in requirements.txt and pytest (with its deps) in requirements-dev.txt; added a `docker-build` job (build only, no push) to `.github/workflows/tests.yml`.
+
+Verification: 25 tests pass locally (3.14) and in the 3.11 image; `pip check` is clean; imports of `main`, the subscription, healthcheck and send agents succeed in the image (imports only, no cloud calls); images build for `agent1b` and `agent_subscriptions`.
+
+To repin later: install `requirements.txt` plus pytest in a `python:3.11-slim` container, run `pip freeze`, and update the files from that output.
+
+The `docker-build` job only blocks merges if the branch ruleset requires it.
+
 ## Completed steps
 
 (Each completed step is described here after its PR is merged.)

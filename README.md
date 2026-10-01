@@ -296,7 +296,7 @@ python agents/agent2a_summarize_papers.py
 venv\Scripts\python -m pip install -r requirements-dev.txt
 venv\Scripts\python -m pytest -q
 ```
-CI (`.github/workflows/tests.yml`) runs the same on every push and PR.
+CI (`.github/workflows/tests.yml`) runs the same on every push and PR. `pytest.ini` limits collection to `tests/`: the root-level `selection_test.py` is a manual script that makes real Claude calls when imported, so it must never be collected. Whether CI blocks a merge is a GitHub branch-ruleset setting ("Require status checks to pass" with the `pytest` check), not something this repo's files enforce.
 
 **Run the FastAPI server (Cloud Run entrypoint):**
 ```bash

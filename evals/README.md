@@ -35,3 +35,12 @@ Gold labels are written by hand by the repo owner; the generators never fill or 
 Known limits worth remembering when reading results:
 - The articles template shows the pipeline's first-pass category next to each article, which can anchor the labeler.
 - `agent1b_review_log.json` only covers articles that survived selection, so category accuracy can be measured but selection recall cannot.
+
+## Labeling the articles template
+
+`labels/agent1b_articles_template.csv`: fill `gold_category` with exactly one of the categories
+agent1b can assign (`agents/filter_tool.py`):
+Model & Product Releases, Industry & Business, Policy, Law & Regulation, Open Source & Tools,
+Safety & Alignment, Society & Culture, Canada & Montreal.
+`snippet` is often empty for Hacker News items (they have no description); use the title and url.
+Ignore the `sample_stratum` column; it exists so the eval can report low- and high-confidence rows separately.

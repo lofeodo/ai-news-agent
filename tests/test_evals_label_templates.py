@@ -40,3 +40,44 @@ def test_csv_written_with_blank_label_column(tmp_path):
         rows = list(reader)
     assert reader.fieldnames == ARTICLE_COLUMNS
     assert len(rows) == 20 and all(r["gold_category"] == "" for r in rows)
+
+
+def _news(n=40):
+    items = []
+    for i in range(n):
+        items.append({"url": f"https://n.test/{i}", "title": f"N{i}", "description": f"desc {i}",
+                      "summary": f"sum {i}", "used_fallback": i % 5 == 0})
+    items.append({"url": "https://twitter.com/x/1", "title": "tw", "description": "d", "summary": "s", "used_fallback": False})
+    items.append({"url": "https://n.test/nosummary", "title": "ns", "description": "d", "summary": None, "used_fallback": False})
+    return items
+
+
+def _papers(n=15):
+    return [{"id": f"p{i}", "title": f"P{i}", "pdf_url": f"https://p.test/{i}", "summary": f"ps {i}", "used_fallback": False}
+            for i in range(n)]
+
+
+def test_summary_template_sources_blank_label_and_private_text(tmp_path):
+    from evals.make_label_templates import build_summary_template
+    rows, skipped = build_summary_template(
+        _news(), _papers(), lambda url: f"article text of {url}", lambda url, pid: f"pdf text {pid}",
+        n_full=10, n_fallback=3, n_papers=4, seed=1, private_dir=tmp_path)
+    assert len(rows) == 17 and skipped == 0
+    assert all(r["supported"] == "" for r in rows)
+    assert sum(r["kind"] == "paper" for r in rows) == 4
+    assert sum(r["used_fallback"] for r in rows) == 3
+    assert all(not r["url"].startswith("https://twitter.com") for r in rows)
+    for r in rows:
+        assert (tmp_path / "summary_sources" / f"{r['id']}.txt").exists()
+    assert "article text" not in "".join(r["generated_summary"] + r["title"] for r in rows)
+
+
+def test_summary_template_skips_failed_fetches_and_is_deterministic(tmp_path):
+    from evals.make_label_templates import build_summary_template
+    flaky = lambda url: None if url.endswith(("1", "2", "3")) else "text"
+    args = (_news(), _papers(), flaky, lambda url, pid: None)
+    a, skipped = build_summary_template(*args, n_full=10, n_fallback=2, n_papers=3, seed=3, private_dir=tmp_path)
+    b, _ = build_summary_template(*args, n_full=10, n_fallback=2, n_papers=3, seed=3, private_dir=tmp_path)
+    assert a == b and skipped > 0
+    assert sum(r["kind"] == "news" and not r["used_fallback"] for r in a) == 10
+    assert not any(r["kind"] == "paper" for r in a)

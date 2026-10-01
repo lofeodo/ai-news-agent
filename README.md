@@ -156,7 +156,10 @@ Subscriber document fields: `email`, `token`, `token_expires_at`, `active`, `sub
 - **AI:** Anthropic Claude (`claude-haiku-4-5-20251001`) — scoring, filtering, summarization, composition
 - **External APIs:** ArXiv (via DigitalOcean Squid proxy), Hacker News API, NewsAPI, GitHub API
 - **HTTP framework:** FastAPI + uvicorn
-- **Key libraries:** `arxiv`, `pypdf`, `newspaper3k`, `slowapi`, `firebase-admin`
+- **Agent graph:** LangGraph (inside agent 1b only — see [Inside agent 1b](#inside-agent-1b-langgraph)); the Anthropic SDK is used directly, no langchain
+- **Observability:** LangSmith tracing (opt-in, agent 1b)
+- **Testing / CI:** pytest (stubbed Claude client and fetcher, no network) run by GitHub Actions
+- **Key libraries:** `arxiv`, `pypdf`, `newspaper3k`, `slowapi`, `firebase-admin`, `langgraph`, `langsmith`
 
 ---
 
@@ -183,6 +186,8 @@ Subscriber document fields: `email`, `token`, `token_expires_at`, `active`, `sub
 │   ├── scoring_rubric.txt          # 7-dimension paper scoring prompt
 │   ├── paper_summary_prompt.txt    # Paper mini-review prompt
 │   ├── news_filter_prompt.txt      # News categorization prompt
+│   ├── news_filter_confidence_addendum.txt  # Adds the 1-5 confidence rubric (graph mode)
+│   ├── news_review_prompt.txt      # Agent 1b review-loop prompt
 │   ├── news_summary_prompt.txt     # News article summary prompt
 │   ├── news_summary_fallback_prompt.txt
 │   ├── article_selection_prompt.txt
@@ -202,6 +207,15 @@ Subscriber document fields: `email`, `token`, `token_expires_at`, `active`, `sub
 │   ├── style.css / fonts.css       # Shared styling
 │   ├── fonts/, images/             # Static assets
 │   └── latest.html                 # Written by agent3 each run
+├── tests/                          # pytest suite (stubbed Claude client + fetcher; no network or keys)
+│   ├── conftest.py / fakes.py      # Path setup; scripted fake Anthropic client and fetcher
+│   └── test_*.py                   # agent1b graph, shared fetcher, tracing
+├── docs/
+│   ├── plans/                      # Implementation plans (e.g. langgraph-agent1b.md)
+│   └── decisions/                  # Architecture decision records (ADRs)
+├── .github/workflows/tests.yml     # CI: pytest on push and pull request (no secrets)
+├── selection_test.py               # Manual script (real Claude calls) — NOT collected by pytest
+├── pytest.ini                      # Restricts pytest to tests/
 ├── orchestrator.py                 # Local sequential runner / cloud pipeline trigger
 ├── main.py                         # Cloud Run entrypoint (FastAPI, AGENT_NAME dispatch)
 ├── config.py                       # Shared constants and env var reads
@@ -211,7 +225,8 @@ Subscriber document fields: `email`, `token`, `token_expires_at`, `active`, `sub
 ├── cloudbuild-subscriptions.yaml   # Cloud Build: agent_subscriptions only
 ├── firebase.json                   # Firebase Hosting config
 ├── firestore.indexes.json          # Firestore composite index definitions
-└── requirements.txt
+├── requirements.txt
+└── requirements-dev.txt            # requirements.txt + pytest
 ```
 
 ---
@@ -220,15 +235,29 @@ Subscriber document fields: `email`, `token`, `token_expires_at`, `active`, `sub
 
 Secrets live in **Google Secret Manager** (cloud) or environment variables (local). No secrets are committed to this repo.
 
+On Cloud Run the pipeline services receive these secrets as environment variables **mounted from Secret Manager**, not as plain `--set-env-vars` values (plain values show up in clear text in `gcloud run services describe`):
+
+| Env var | Secret Manager secret | Mounted on |
+|---|---|---|
+| `ANTHROPIC_1ST_API_KEY` | `anthropic-api-key` | agent1a, agent1b, agent2a, agent2b, agent3 |
+| `NEWS_API_KEY` | `news-api-key` | agent1b |
+| `HTTPS_PROXY` | `squid-proxy-url` (the URL embeds the proxy password) | agent1a, agent1b, agent2a, agent2b, agent3, agent4 |
+| `LANGSMITH_API_KEY` | `langsmith-api-key` | agent1b (optional, tracing) |
+
+Mount or change one with `gcloud run services update SERVICE --region REGION --update-secrets VAR=secret:latest` (add `--remove-env-vars VAR` if it was previously a plain value). Always use `--update-*`, never `--set-*`, which replaces everything already on the service. The runtime service account needs `roles/secretmanager.secretAccessor` on each secret. To rotate a key, add a new version of the secret; services pick up `:latest` on their next start.
+
 | Variable | Used by | Purpose |
 |---|---|---|
-| `ANTHROPIC_1ST_API_KEY` | agent1a, agent2a, agent2b, agent3 | Claude API key |
+| `ANTHROPIC_1ST_API_KEY` | agent1a, agent1b, agent2a, agent2b, agent3 | Claude API key |
 | `NEWS_API_KEY` | agent1b | NewsAPI key |
 | `SENDGRID_API_KEY` | agent4, agent_subscriptions | SendGrid key (local mode; cloud uses Secret Manager) |
 | `USE_SECRET_MANAGER` | agent4, agent_subscriptions | Load SendGrid key from Secret Manager instead of env |
 | `USE_FIRESTORE` | all agents | Enable cloud mode (Pub/Sub + Firestore); default `false` |
 | `GCP_PROJECT_ID` | all agents | Google Cloud project ID |
 | `HTTPS_PROXY` / `HTTP_PROXY` | agent1a | Squid proxy URL for ArXiv (GCP IPs are throttled) |
+| `AGENT1B_MODE` | agent1b | `graph` (default, LangGraph) or `single_pass` (original linear code; rollback switch) |
+| `REVIEW_CONFIDENCE_THRESHOLD` / `REVIEW_MAX_ARTICLES` / `REVIEW_MAX_ITERATIONS` / `REVIEW_FETCH_TIMEOUT` | agent1b | Review-loop tuning (defaults `4` / `30` / `3` / `10`); see [Inside agent 1b](#inside-agent-1b-langgraph) |
+| `LANGSMITH_TRACING` / `LANGSMITH_API_KEY` / `LANGSMITH_PROJECT` | agent1b | Opt-in LangSmith tracing; needs both the flag and the key, otherwise a no-op |
 | `AGENT_NAME` | main.py | Selects which agent the Cloud Run container runs |
 | `TEST_RECIPIENT_EMAIL` | agent4 | Local mode: single send address |
 | `TEST_SEND_TO` | agent4 | Cloud mode override: skip subscriber list, send only here |
@@ -267,7 +296,7 @@ python agents/agent2a_summarize_papers.py
 venv\Scripts\python -m pip install -r requirements-dev.txt
 venv\Scripts\python -m pytest -q
 ```
-CI (`.github/workflows/tests.yml`) runs the same on every push and PR.
+CI (`.github/workflows/tests.yml`) runs the same on every push and PR. `pytest.ini` limits collection to `tests/`: the root-level `selection_test.py` is a manual script that makes real Claude calls when imported, so it must never be collected. Whether CI blocks a merge is a GitHub branch-ruleset setting ("Require status checks to pass" with the `pytest` check), not something this repo's files enforce.
 
 **Run the FastAPI server (Cloud Run entrypoint):**
 ```bash
@@ -310,8 +339,11 @@ gcloud run deploy agent1a \
   --image REGION-docker.pkg.dev/PROJECT/REPO/agent1a \
   --region REGION \
   --no-cpu-throttling \     # required for pipeline agents (background thread)
-  --set-env-vars AGENT_NAME=agent1a,USE_FIRESTORE=true,...
+  --set-env-vars AGENT_NAME=agent1a,USE_FIRESTORE=true,... \   # non-secret config only
+  --set-secrets ANTHROPIC_1ST_API_KEY=anthropic-api-key:latest,HTTPS_PROXY=squid-proxy-url:latest
 ```
+
+Keep API keys out of `--set-env-vars` (see [Configuration](#configuration)). `--set-*` is fine on a first deploy, but on an existing service use `gcloud run services update ... --image IMAGE` to ship new code: it never prompts, never creates a second service, and leaves all env vars and secrets untouched.
 
 The subscription service and agent4 (sender) are synchronous and don't need `--no-cpu-throttling`.
 

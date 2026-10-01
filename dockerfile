@@ -36,10 +36,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Also install FastAPI + uvicorn (our HTTP server) — not in requirements.txt
-# since they're only needed for Cloud Run, not local runs.
-RUN pip install --no-cache-dir fastapi uvicorn
-
 # ── Application code ──────────────────────────────────────────────────────────
 # Copy everything else after deps. Changes to .py files won't invalidate
 # the expensive pip install layer above.

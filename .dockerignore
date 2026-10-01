@@ -1,4 +1,3 @@
-[internal]
 dockerfile
 data/
 token.json

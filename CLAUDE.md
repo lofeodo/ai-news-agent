@@ -47,6 +47,7 @@ python agents/agent1b_fetch_news.py
 venv\Scripts\python -m pip install -r requirements-dev.txt
 venv\Scripts\python -m pytest -q
 ```
+`pytest.ini` restricts collection to `tests/`. The root-level `selection_test.py` is a manual script that makes **real Claude calls at import time** — never let pytest collect it (without `pytest.ini`, it did, silently spending API credits on every local run and failing CI, which has no key). CI (`.github/workflows/tests.yml`) runs pytest on push and PR; it only *blocks* merges if the GitHub branch ruleset requires the `pytest` check. The suite covers agent1b's graph, the shared fetcher and tracing only — green CI does not mean the rest of the app works.
 
 **Run agent1b in the original single-pass mode (CMD):** `set AGENT1B_MODE=single_pass` then `python agents\agent1b_fetch_news.py`.
 
@@ -203,7 +204,7 @@ For local development of the subscription service, Firebase Admin SDK uses Appli
 
 Structured outputs use tool use instead of parsing free text:
 - `scoring_tool.py` – `score_paper` tool with 7-dimension schema
-- `filter_tool.py` – `filter_articles` and `filter_by_language` tools
+- `filter_tool.py` – `filter_articles` and `filter_by_language` tools. Graph mode (agent1b) uses `FILTER_TOOL_WITH_CONFIDENCE` (same tool name plus a required 1–5 `confidence` per article; the original `FILTER_TOOL` is untouched for `single_pass`), and the review loop uses `fetch_article_text` (executed by the `tool_exec` node) and `submit_category` (the model's structured final answer, handled in `llm_call`).
 
 All Claude calls use `claude-haiku-4-5-20251001` (configured in `config.py`).
 
@@ -229,6 +230,11 @@ All Claude calls use `claude-haiku-4-5-20251001` (configured in `config.py`).
 | `GOOGLE_OAUTH_CLIENT_ID` | Google OAuth 2.0 Web client ID for server-side Google Sign-In (not secret) |
 | `GOOGLE_OAUTH_CLIENT_SECRET` | Google OAuth 2.0 client secret (or use `USE_SECRET_MANAGER=true`, secret name `google-oauth-client-secret`) |
 | `ALERT_EMAIL` | Where `agent_healthcheck` sends a problem report; never used for subscriber-facing sends |
+| `AGENT1B_MODE` | agent1b: `graph` (default, LangGraph) or `single_pass` (original code; no-redeploy rollback) |
+| `REVIEW_CONFIDENCE_THRESHOLD` / `REVIEW_MAX_ARTICLES` / `REVIEW_MAX_ITERATIONS` / `REVIEW_FETCH_TIMEOUT` | agent1b review loop (defaults `4` / `30` / `3` / `10`; `REVIEW_MAX_ARTICLES=0` disables review) |
+| `LANGSMITH_TRACING` / `LANGSMITH_API_KEY` / `LANGSMITH_PROJECT` | agent1b opt-in tracing; both the flag and the key are required, otherwise a no-op. Production project: `latent-spacemail-prod` |
+
+**Secrets on Cloud Run.** API keys are *not* plain env vars: they're mounted from Secret Manager under the same variable names, so agent code is unchanged and `gcloud run services describe` doesn't print them. Secrets: `anthropic-api-key` (agent1a/1b/2a/2b/3), `news-api-key` (agent1b), `squid-proxy-url` (agent1a/1b/2a/2b/3/4 — the URL embeds the proxy password), `langsmith-api-key` (agent1b). (The orchestrator doesn't call Claude and has no key.) Change one with `gcloud run services update SERVICE --region REGION --update-secrets VAR=secret:latest [--remove-env-vars VAR]`; use `--update-*`, never `--set-*` (which replaces everything on the service), and ship new code to an existing service with `gcloud run services update SERVICE --image IMAGE` (no prompts, no second service). Rotate by adding a new secret version. Never paste unredacted `describe` output anywhere.
 
 ## Pub/Sub Topics (Cloud Mode)
 

@@ -156,7 +156,10 @@ Subscriber document fields: `email`, `token`, `token_expires_at`, `active`, `sub
 - **AI:** Anthropic Claude (`claude-haiku-4-5-20251001`) — scoring, filtering, summarization, composition
 - **External APIs:** ArXiv (via DigitalOcean Squid proxy), Hacker News API, NewsAPI, GitHub API
 - **HTTP framework:** FastAPI + uvicorn
-- **Key libraries:** `arxiv`, `pypdf`, `newspaper3k`, `slowapi`, `firebase-admin`
+- **Agent graph:** LangGraph (inside agent 1b only — see [Inside agent 1b](#inside-agent-1b-langgraph)); the Anthropic SDK is used directly, no langchain
+- **Observability:** LangSmith tracing (opt-in, agent 1b)
+- **Testing / CI:** pytest (stubbed Claude client and fetcher, no network) run by GitHub Actions
+- **Key libraries:** `arxiv`, `pypdf`, `newspaper3k`, `slowapi`, `firebase-admin`, `langgraph`, `langsmith`
 
 ---
 
@@ -183,6 +186,8 @@ Subscriber document fields: `email`, `token`, `token_expires_at`, `active`, `sub
 │   ├── scoring_rubric.txt          # 7-dimension paper scoring prompt
 │   ├── paper_summary_prompt.txt    # Paper mini-review prompt
 │   ├── news_filter_prompt.txt      # News categorization prompt
+│   ├── news_filter_confidence_addendum.txt  # Adds the 1-5 confidence rubric (graph mode)
+│   ├── news_review_prompt.txt      # Agent 1b review-loop prompt
 │   ├── news_summary_prompt.txt     # News article summary prompt
 │   ├── news_summary_fallback_prompt.txt
 │   ├── article_selection_prompt.txt
@@ -202,6 +207,15 @@ Subscriber document fields: `email`, `token`, `token_expires_at`, `active`, `sub
 │   ├── style.css / fonts.css       # Shared styling
 │   ├── fonts/, images/             # Static assets
 │   └── latest.html                 # Written by agent3 each run
+├── tests/                          # pytest suite (stubbed Claude client + fetcher; no network or keys)
+│   ├── conftest.py / fakes.py      # Path setup; scripted fake Anthropic client and fetcher
+│   └── test_*.py                   # agent1b graph, shared fetcher, tracing
+├── docs/
+│   ├── plans/                      # Implementation plans (e.g. langgraph-agent1b.md)
+│   └── decisions/                  # Architecture decision records (ADRs)
+├── .github/workflows/tests.yml     # CI: pytest on push and pull request (no secrets)
+├── selection_test.py               # Manual script (real Claude calls) — NOT collected by pytest
+├── pytest.ini                      # Restricts pytest to tests/
 ├── orchestrator.py                 # Local sequential runner / cloud pipeline trigger
 ├── main.py                         # Cloud Run entrypoint (FastAPI, AGENT_NAME dispatch)
 ├── config.py                       # Shared constants and env var reads
@@ -211,7 +225,8 @@ Subscriber document fields: `email`, `token`, `token_expires_at`, `active`, `sub
 ├── cloudbuild-subscriptions.yaml   # Cloud Build: agent_subscriptions only
 ├── firebase.json                   # Firebase Hosting config
 ├── firestore.indexes.json          # Firestore composite index definitions
-└── requirements.txt
+├── requirements.txt
+└── requirements-dev.txt            # requirements.txt + pytest
 ```
 
 ---

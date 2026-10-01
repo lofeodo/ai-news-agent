@@ -19,3 +19,19 @@ jobs:
       - run: pip install -r requirements-dev.txt
       # No secrets: tests use a stubbed Anthropic client and fetcher.
       - run: python -m pytest -q
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      # Build only (no push): catches requirements that no longer install on
+      # the Docker base image's Python, and dockerfile breakage.
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: dockerfile
+          push: false
+          build-args: AGENT_NAME=agent1b
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

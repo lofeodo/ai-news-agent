@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "name": "usage_drift_simulation",
+  "created_at": "2026-10-05T20:26:30.709089+00:00",
+  "git_sha": "95e79fa",
+  "model": "none",
+  "cost_usd": 0.0,
+  "notes": "Simulated weekly total tokens centred on 447,502 (the token_usage of one real agent1b run). Each simulated week is judged against 4 simulated prior weeks. Noise is ASSUMED (normal, coefficient of variation shown in each metric name) because no real week-to-week variation exists yet; this is not a measured production false-alarm rate. Rule: flag at >=50% from the prior median and >=100,000 tokens / $0.10. Total tokens and cost move together in this simulation, so any flag counts once.",
+  "metrics": {
+    "null_false_alarm_noise_5pct": {
+      "value": 0.0,
+      "n": 2000,
+      "ci_low": 0.0,
+      "ci_high": 0.0019170472812529344
+    },
+    "null_false_alarm_noise_10pct": {
+      "value": 0.0,
+      "n": 2000,
+      "ci_low": 0.0,
+      "ci_high": 0.0019170472812529344
+    },
+    "null_false_alarm_noise_20pct": {
+      "value": 0.037,
+      "n": 2000,
+      "ci_low": 0.02957530482962914,
+      "ci_high": 0.04619988095281108
+    },
+    "null_false_alarm_noise_30pct": {
+      "value": 0.157,
+      "n": 2000,
+      "ci_low": 0.14171529226202795,
+      "ci_high": 0.1735998021729116
+    },
+    "planted_30pct_jump_detected_at_noise_10pct": {
+      "value": 0.1015,
+      "n": 2000,
+      "ci_low": 0.0890195479939982,
+      "ci_high": 0.11550833868916041
+    },
+    "planted_60pct_jump_detected_at_noise_10pct": {
+      "value": 0.7285,
+      "n": 2000,
+      "ci_low": 0.7085847795393794,
+      "ci_high": 0.7475391298530882
+    },
+    "planted_100pct_jump_detected_at_noise_10pct": {
+      "value": 0.99,
+      "n": 2000,
+      "ci_low": 0.984604061540925,
+      "ci_high": 0.9935172321234474
+    }
+  }
+}

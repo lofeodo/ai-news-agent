@@ -37,6 +37,19 @@ def run_summary(db, run_id: str, doc: dict) -> dict | None:
     }
 
 
+def recent_runs(db, current_run_id: str, n: int) -> list[tuple[str, dict]]:
+    """(run_id, doc) for up to `n` runs started before the current one, newest first."""
+    from google.cloud import firestore
+
+    docs = (
+        db.collection(FIRESTORE_COLLECTION)
+        .order_by("started_at", direction=firestore.Query.DESCENDING)
+        .limit(n + 1)
+        .stream()
+    )
+    return [(d.id, d.to_dict() or {}) for d in docs if d.id != current_run_id][:n]
+
+
 def load_baseline(db, current_run_id: str, n_baseline: int) -> list[dict]:
     """Up to `n_baseline` usable summaries from the runs started before the current one."""
     from google.cloud import firestore

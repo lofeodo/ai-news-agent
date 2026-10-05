@@ -29,3 +29,9 @@ def test_guard_blocks_over_limit_without_approval():
 
 def test_guard_passes_with_approval():
     assert CostGuard(approved=True).check(50.0) == 50.0
+
+
+def test_cache_tokens_are_priced_separately():
+    # 1M cache-read tokens at 10% of the $1 input price; 1M cache-write tokens at 125%.
+    assert estimate_cost(0, 0, cache_read_tokens=1_000_000) == pytest.approx(0.10)
+    assert estimate_cost(0, 0, cache_creation_tokens=1_000_000) == pytest.approx(1.25)

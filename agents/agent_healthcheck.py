@@ -18,6 +18,7 @@ from datetime import datetime, timezone
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import config
+import pricing
 from config import GCP_PROJECT_ID, FIRESTORE_COLLECTION, USE_FIRESTORE, ALERT_EMAIL, parse_started_at
 
 import agent4_send  # reuse send_email() / _get_sendgrid_api_key() only
@@ -129,6 +130,65 @@ def _drift_section(db, run_id: str, doc: dict) -> str:
         return f"Drift check: failed ({type(e).__name__}: {e}). This does not affect the pipeline status above."
 
 
+def _usd(x) -> str:
+    return f"${x:,.2f}" if x is not None else "n/a"
+
+
+def _format_usage(cur: dict, result: dict) -> str:
+    ls = _usd(cur["langsmith_cost"]) if cur["langsmith_cost"] is not None else "n/a (not every call priced)"
+    lines = [
+        f"LLM usage this run: {cur['tokens']:,} tokens ({cur['input']:,} in / {cur['output']:,} out, {cur['calls']} calls)",
+        f"  cost: LangSmith {ls} | list-price estimate {_usd(cur['table_cost'])} (Haiku list price as of {pricing.PRICES_AS_OF})",
+    ]
+    lines += [f"  - {name}: {a['tokens']:,} tokens (~{_usd(a['table_cost'])})" for name, a in sorted(cur["agents"].items())]
+    if result["status"] == "insufficient_history":
+        lines.append(f"Usage drift: not enough history yet ({result['baseline_runs']} archived prior runs, "
+                     f"need {config.DRIFT_MIN_BASELINE_RUNS}).")
+        return "\n".join(lines)
+    lines.append(f"Usage drift vs prior {result['baseline_runs']} runs (median): "
+                 f"{'DRIFT FLAGGED' if result['status'] == 'drift' else 'no drift'}")
+    for r in result["results"]:
+        if r["status"] != "ok" and r["status"] != "drift":
+            continue
+        ratio = f"{r['ratio']:+.0%}" if r["ratio"] is not None else "n/a"
+        fmt = _usd if "cost" in r["metric"] else (lambda v: f"{v:,.0f}")
+        lines.append(f"  - {r['metric']}: {'DRIFT' if r['status'] == 'drift' else 'ok'} "
+                     f"({fmt(r['current'])} vs median {fmt(r['median'])}, {ratio})")
+    lines.append("  (Informational: a flag never marks the pipeline as failed.)")
+    return "\n".join(lines)
+
+
+def _usage_section(db, run_id: str, doc: dict) -> str:
+    """Token and cost report. Archives this run's LangSmith usage to Firestore first (LangSmith
+    only keeps 14 days), then compares with the archived prior runs. Never raises, never changes
+    the pipeline's health status, never suppresses the heartbeat."""
+    try:
+        import drift
+        import drift_history
+        import usage_archive
+
+        if not os.environ.get("LANGSMITH_API_KEY"):
+            return "Usage check: skipped (LANGSMITH_API_KEY is not set on the healthcheck service)."
+        from langsmith import Client
+
+        ls = Client()
+        prior = usage_archive.catch_up(db, ls, drift_history.recent_runs(db, run_id, config.DRIFT_BASELINE_RUNS))
+        current_raw = usage_archive.archive_run(db, ls, run_id, doc)
+        if current_raw is None:
+            return ("Usage check: no traced Claude calls found in LangSmith for this run "
+                    "(tracing may not be enabled on every agent yet).")
+        current = drift.usage_totals(current_raw)
+        result = drift.evaluate_usage(
+            current, [drift.usage_totals(u) for u in prior.values() if u],
+            min_runs=config.DRIFT_MIN_BASELINE_RUNS, min_ratio=config.DRIFT_USAGE_MIN_RATIO,
+            min_tokens=config.DRIFT_USAGE_MIN_TOKENS, min_usd=config.DRIFT_USAGE_MIN_USD,
+        )
+        return _format_usage(current, result)
+    except Exception as e:
+        print(f"[healthcheck]  usage check failed (ignored): {e}", flush=True)
+        return f"Usage check: failed ({type(e).__name__}: {e}). This does not affect the pipeline status above."
+
+
 def _notify(message: str, healthy: bool) -> None:
     """Best-effort single email to ALERT_EMAIL, sent every run. Never touches subscriber-facing code."""
     if not ALERT_EMAIL:
@@ -200,7 +260,7 @@ def _run(run_id: str) -> None:
             return
 
     problems = _diagnose(doc)
-    drift_text = _drift_section(db, checked_run_id, doc)
+    drift_text = f"{_drift_section(db, checked_run_id, doc)}\n\n{_usage_section(db, checked_run_id, doc)}"
 
     if not problems:
         print(f"[healthcheck]  run_id={checked_run_id} looks healthy.", flush=True)

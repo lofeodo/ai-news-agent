@@ -142,3 +142,65 @@ def evaluate(current: dict, baseline_runs: list[dict], *, min_runs: int, p_thres
     ]
     status = "drift" if any(r["status"] == "drift" for r in results) else "ok"
     return {"status": status, "baseline_runs": len(baseline_runs), "results": results}
+
+
+# --- Token and cost drift -------------------------------------------------------------------
+
+def usage_totals(usage: dict) -> dict:
+    """Tokens and costs from an archived `llm_usage` dict (see agents/usage_archive.py).
+
+    `langsmith_cost` is None unless LangSmith priced every call; `table_cost` is our list-price
+    estimate from the token counts (agents/pricing.py). `cost` is what drift tests use: LangSmith's
+    figure when complete, otherwise the estimate.
+    """
+    import pricing
+
+    agents = {}
+    for name, a in (usage.get("agents") or {}).items():
+        agents[name] = {
+            "tokens": a.get("input", 0) + a.get("output", 0),
+            "table_cost": pricing.estimate_cost(a.get("input", 0), a.get("output", 0)),
+        }
+    total = usage.get("total") or {}
+    complete = total.get("calls", 0) > 0 and total.get("calls_without_cost", 0) == 0
+    ls_cost = total.get("cost") if complete else None
+    table_cost = sum(a["table_cost"] for a in agents.values())
+    return {
+        "tokens": total.get("input", 0) + total.get("output", 0),
+        "input": total.get("input", 0), "output": total.get("output", 0), "calls": total.get("calls", 0),
+        "langsmith_cost": ls_cost, "table_cost": table_cost,
+        "cost": ls_cost if ls_cost is not None else table_cost,
+        "agents": agents,
+    }
+
+
+def usage_ratio_test(name: str, current: float, baseline: list[float], min_ratio: float, min_abs: float) -> dict:
+    """Flag `current` if it is at least `min_ratio` away from the baseline median and the absolute
+    change is at least `min_abs`. Medians resist one odd prior week; no p-value (too few weeks)."""
+    import statistics
+
+    if not baseline:
+        return {"metric": name, "status": "insufficient_data"}
+    median = statistics.median(baseline)
+    change = current - median
+    ratio = (change / median) if median else None
+    drift = abs(change) >= min_abs and (ratio is None or abs(ratio) >= min_ratio)
+    return {"metric": name, "status": "drift" if drift else "ok",
+            "current": current, "median": median, "ratio": ratio}
+
+
+def evaluate_usage(current: dict, baseline_usages: list[dict], *, min_runs: int, min_ratio: float,
+                   min_tokens: float, min_usd: float) -> dict:
+    """Compare this run's usage with prior runs. Inputs are `usage_totals()` dicts."""
+    if len(baseline_usages) < min_runs:
+        return {"status": "insufficient_history", "baseline_runs": len(baseline_usages), "results": []}
+    results = [
+        usage_ratio_test("total tokens", current["tokens"], [b["tokens"] for b in baseline_usages], min_ratio, min_tokens),
+        usage_ratio_test("total cost", current["cost"], [b["cost"] for b in baseline_usages], min_ratio, min_usd),
+    ]
+    for agent, a in sorted(current["agents"].items()):
+        prior = [b["agents"][agent]["tokens"] for b in baseline_usages if agent in b["agents"]]
+        if len(prior) >= min_runs:
+            results.append(usage_ratio_test(f"{agent} tokens", a["tokens"], prior, min_ratio, min_tokens))
+    status = "drift" if any(r["status"] == "drift" for r in results) else "ok"
+    return {"status": status, "baseline_runs": len(baseline_usages), "results": results}

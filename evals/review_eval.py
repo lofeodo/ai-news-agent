@@ -16,13 +16,13 @@ CONFIDENCE_BUCKETS = (1, 2, 3, 4, 5)
 
 
 def load_gold(path):
-    """{article id: {"gold": str, "stratum": str}} for rows the owner labelled; blank rows are skipped."""
+    """{article id: {"gold", "stratum", "url"}} for rows the owner labelled; blank rows are skipped."""
     gold = {}
     with open(Path(path), encoding="utf-8", newline="") as f:
         for r in csv.DictReader(f):
             label = (r.get("gold_category") or "").strip()
             if label:
-                gold[r["id"]] = {"gold": label, "stratum": r.get("sample_stratum", "")}
+                gold[r["id"]] = {"gold": label, "stratum": r.get("sample_stratum", ""), "url": r.get("url", "")}
     return gold
 
 

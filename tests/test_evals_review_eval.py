@@ -12,8 +12,9 @@ def _row(i, gold, single, first, conf, final=None, stratum="low_confidence", rou
 
 def test_load_gold_skips_blank_labels(tmp_path):
     p = tmp_path / "g.csv"
-    p.write_text("id,sample_stratum,gold_category\na,low_confidence,Policy\nb,high_confidence,\n", encoding="utf-8")
-    assert re_.load_gold(p) == {"a": {"gold": "Policy", "stratum": "low_confidence"}}
+    p.write_text("id,url,sample_stratum,gold_category\na,http://u/a,low_confidence,Policy\nb,http://u/b,high_confidence,\n",
+                 encoding="utf-8")
+    assert re_.load_gold(p) == {"a": {"gold": "Policy", "stratum": "low_confidence", "url": "http://u/a"}}
 
 
 def test_join_keeps_only_predicted_gold_rows():

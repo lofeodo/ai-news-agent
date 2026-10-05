@@ -49,3 +49,36 @@ def test_latest_results_path_ignores_rows_files(tmp_path):
 
 def test_checked_in_readme_has_markers():
     assert START in t.README.read_text(encoding="utf-8") and END in t.README.read_text(encoding="utf-8")
+
+
+def _inj_doc(name, ok_rate, attempted=None):
+    m = {"attack_success__overall": {"k": ok_rate, "n": 10, "value": ok_rate / 10, "ci_low": 0.0, "ci_high": 0.5},
+         "control_success__overall": {"k": 0, "n": 10, "value": 0, "ci_low": 0.0, "ci_high": 0.3},
+         "attack_success__agent__categorize": {"k": ok_rate, "n": 10, "value": 0, "ci_low": 0.0, "ci_high": 0.5},
+         "attack_success__attack__ssrf_steer": {"k": ok_rate, "n": 10, "value": 0, "ci_low": 0.0, "ci_high": 0.5}}
+    if attempted is not None:
+        m["fetch_attempted__attack"] = {"k": attempted, "n": 10, "value": 0, "ci_low": 0.0, "ci_high": 0.5}
+    return results.build_results(name, "m", m, cost_usd=0.3, notes="limits stated here")
+
+
+def test_render_injection_compares_before_and_after():
+    out = t.render_injection(_inj_doc("injection_eval_baseline", 5), _inj_doc("injection_eval_after", 0, attempted=5))
+    assert "| overall | 5/10 (0%–50%) | 0/10 (0%–50%) | 0/10 (0%–30%) |" in out
+    assert "| agent: categorize |" in out and "| attack: ssrf_steer |" in out
+    assert "asked for the planted URL in 5/10" in out and "limits stated here" in out
+
+
+def test_update_readme_injection_replaces_only_its_block(tmp_path):
+    readme = tmp_path / "README.md"
+    readme.write_text(f"a\n{t.INJ_START}\nSTALE\n{t.INJ_END}\nb\n", encoding="utf-8")
+    t.update_readme_injection(_inj_doc("injection_eval_baseline", 5), _inj_doc("injection_eval_after", 0), readme)
+    text = readme.read_text(encoding="utf-8")
+    assert text.startswith("a\n") and text.endswith("b\n") and "STALE" not in text and "| overall |" in text
+    with pytest.raises(ValueError):
+        t.update_readme_injection(_inj_doc("x", 1), _inj_doc("y", 0), _no_markers(tmp_path))
+
+
+def _no_markers(tmp_path):
+    p = tmp_path / "plain.md"
+    p.write_text("none", encoding="utf-8")
+    return p

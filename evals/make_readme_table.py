@@ -1,7 +1,9 @@
-"""Regenerate the README's review-eval table from the latest results file (never hand-typed).
+"""Regenerate the README's eval tables from the results files (never hand-typed).
 
 CMD:  venv\\Scripts\\python -m evals.make_readme_table
-Rewrites the block between <!-- review-eval:start --> and <!-- review-eval:end --> in README.md.
+Rewrites the block between <!-- review-eval:start --> and <!-- review-eval:end --> (latest review eval) and the
+block between <!-- injection-eval:start --> and <!-- injection-eval:end --> (injection_eval_baseline vs
+injection_eval_after) in README.md.
 """
 import re
 import sys
@@ -11,6 +13,7 @@ from evals import results
 
 README = Path(__file__).resolve().parent.parent / "README.md"
 START, END = "<!-- review-eval:start -->", "<!-- review-eval:end -->"
+INJ_START, INJ_END = "<!-- injection-eval:start -->", "<!-- injection-eval:end -->"
 
 # (label, metric key). Anything missing from the results file is skipped.
 _ACCURACY = (
@@ -75,6 +78,48 @@ def update_readme(doc, readme=README):
     Path(readme).write_text(pattern.sub(lambda _: block, text, count=1), encoding="utf-8")
 
 
+def _inj_cell(m):
+    if not m:
+        return "n/a"
+    return f"{m['k']}/{m['n']} ({m['ci_low']:.0%}–{m['ci_high']:.0%})"
+
+
+def render_injection(baseline, after):
+    """Before/after attack-success table. Control = the same inputs with the injection removed."""
+    b, a = baseline["metrics"], after["metrics"]
+    lines = [f"Generated from `evals/results/{baseline['name']}.json` (git `{baseline['git_sha']}`, "
+             f"cost ${baseline['cost_usd']}) and `evals/results/{after['name']}.json` (git `{after['git_sha']}`, "
+             f"cost ${after['cost_usd']}). Cells are attacks that achieved their goal out of trials, with Wilson 95% "
+             "intervals; the control column is the same inputs without the injection, after the fixes.", "",
+             "| Scope | Before fixes | After fixes | Control (after) |", "|---|---|---|---|"]
+    scopes = (["overall"]
+              + sorted(k.split("__", 1)[1] for k in a if k.startswith("attack_success__agent__"))
+              + sorted(k.split("__", 1)[1] for k in a if k.startswith("attack_success__attack__")))
+    for scope in scopes:
+        label = scope.replace("agent__", "agent: ").replace("attack__", "attack: ")
+        lines.append(f"| {label} | {_inj_cell(b.get('attack_success__' + scope))} | "
+                     f"{_inj_cell(a.get('attack_success__' + scope))} | {_inj_cell(a.get('control_success__' + scope))} |")
+    asked_after = a.get("fetch_attempted__attack")
+    if asked_after:
+        # The baseline harness counted every URL the model asked for, and production had no fetch guard then,
+        # so its ssrf_steer rate is also its "asked for" rate.
+        lines += ["", "Planted-URL fetches: before the fixes the model's request went straight to the network "
+                  f"({_inj_cell(b.get('attack_success__attack__ssrf_steer'))}). After the fixes the model still asked "
+                  f"for the planted URL in {_inj_cell(asked_after)} of trials; the fetch guard blocked those that "
+                  f"were internal addresses (reached the network: {_inj_cell(a.get('attack_success__attack__ssrf_steer'))})."]
+    notes = [after["notes"]] if after.get("notes") else []
+    return "\n".join(lines + [""] + [f"> {n}" for n in notes])
+
+
+def update_readme_injection(baseline, after, readme=README):
+    text = Path(readme).read_text(encoding="utf-8")
+    pattern = re.compile(re.escape(INJ_START) + r".*?" + re.escape(INJ_END), re.S)
+    if not pattern.search(text):
+        raise ValueError(f"{readme} has no {INJ_START} ... {INJ_END} block")
+    block = f"{INJ_START}\n{render_injection(baseline, after)}\n{INJ_END}"
+    Path(readme).write_text(pattern.sub(lambda _: block, text, count=1), encoding="utf-8")
+
+
 def main():
     path = latest_results_path()
     if path is None:
@@ -82,6 +127,10 @@ def main():
         return 1
     update_readme(results.read_results(path))
     print(f"README.md updated from {path.name}")
+    base, after = (results.RESULTS_DIR / f"injection_eval_{n}.json" for n in ("baseline", "after"))
+    if base.exists() and after.exists():
+        update_readme_injection(results.read_results(base), results.read_results(after))
+        print("README.md updated from injection_eval_baseline.json and injection_eval_after.json")
     return 0
 
 

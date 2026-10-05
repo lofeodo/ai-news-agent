@@ -31,12 +31,36 @@ def configure() -> bool:
     return False
 
 
-def make_client() -> anthropic.Anthropic:
-    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
+def usage_tags(agent: str | None, run_id: str | None) -> list[str]:
+    """Tags stamped on every traced Claude call so usage can be aggregated per run and agent.
+
+    agents/usage_archive.py filters on exactly these strings (LangSmith's documented
+    `has(tags, "...")` filter); keep the two in sync.
+    """
+    tags = []
+    if agent:
+        tags.append(f"agent:{agent}")
+    if run_id:
+        tags.append(f"run:{run_id}")
+    return tags
+
+
+def make_client(agent: str | None = None, run_id: str | None = None, **client_kwargs) -> anthropic.Anthropic:
+    """Anthropic client, wrapped for LangSmith when tracing is on.
+
+    `agent` / `run_id` become tags and metadata on every call's trace. `client_kwargs`
+    (e.g. timeout) go to the Anthropic constructor.
+    """
+    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"), **client_kwargs)
     if tracing_enabled():
         try:
             from langsmith.wrappers import wrap_anthropic
-            client = wrap_anthropic(client)
+            extra = {}
+            tags = usage_tags(agent, run_id)
+            if tags:
+                extra["tags"] = tags
+                extra["metadata"] = {k: v for k, v in (("agent", agent), ("run_id", run_id)) if v}
+            client = wrap_anthropic(client, tracing_extra=extra or None)
         except Exception as e:  # tracing must never break the run
             print(f"  [tracing] could not wrap Anthropic client: {e}")
     return client

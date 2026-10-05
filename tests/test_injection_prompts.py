@@ -177,7 +177,6 @@ def test_selection_ignores_out_of_range_and_non_int_indices():
     assert a3.select_articles_for_category(CATS[1], arts, "{category}{articles}", client) == arts
 
 
-@pytest.mark.xfail(strict=True, reason="filter_batch trusts category/index from the tool input")
 def test_categorize_drops_unknown_category_and_non_int_index():
     client = SimpleNamespace(messages=None)
     client.messages = client

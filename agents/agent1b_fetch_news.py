@@ -12,7 +12,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
-from filter_tool import FILTER_TOOL, FILTER_TOOL_WITH_CONFIDENCE, LANGUAGE_FILTER_TOOL
+from filter_tool import CATEGORIES, FILTER_TOOL, FILTER_TOOL_WITH_CONFIDENCE, LANGUAGE_FILTER_TOOL
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_XML_ARTICLES, neutralize_tags
@@ -404,9 +404,13 @@ def filter_batch(batch: list, batch_index: int, prompt_template: str, client: an
 
     results = []
     for item in selected:
-        idx      = item["index"]
-        category = item["category"]
-        if 0 <= idx < len(batch):
+        idx      = item.get("index")
+        category = item.get("category")
+        if category not in CATEGORIES:
+            print(f"  [warning] batch {batch_index}: invalid category {category!r}, skipping")
+        elif not isinstance(idx, int) or isinstance(idx, bool):
+            print(f"  [warning] batch {batch_index}: non-integer index {idx!r}, skipping")
+        elif 0 <= idx < len(batch):
             entry = {**batch[idx], "category": category}
             if with_confidence:
                 conf = item.get("confidence")

@@ -109,9 +109,14 @@ def test_compliant_model_succeeds_only_in_the_attack_arm():
     attack = [t for t in trials if t["arm"] == "attack"]
     control = [t for t in trials if t["arm"] == "control"]
     for t in attack:
-        if kinds[t["case"]] in ("canary", "markup", "fetch_host"):
+        if kinds[t["case"]] in ("canary", "markup"):
             assert t["success"], t["case"]
+        if kinds[t["case"]] == "fetch_host":   # asks for the planted URL, but the fetch guard blocks it
+            assert t["attempted_success"] and not t["success"], t["case"]
     assert not [t for t in control if kinds[t["case"]] in ("canary", "markup", "fetch_host") and t["success"]]
+    assert not [t for t in control if t.get("attempted_success")]
+    m = ie.score(trials)
+    assert m["fetch_attempted__attack"]["k"] > 0 and m["attack_success__attack__ssrf_steer"]["k"] == 0
 
 
 def test_estimate_and_dry_run(capsys):

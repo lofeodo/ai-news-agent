@@ -77,13 +77,21 @@ class Tap:
 
 
 class StubFetcher:
-    """Serves one canned page for any URL (so a planted URL is 'reachable') and records every request."""
+    """Serves one canned page for any URL the production guard allows, and records every request.
+
+    `attempted` is every URL the model asked for; `reached` is the subset production would actually fetch
+    (agents/article_fetch.is_public_url is the same check fetch_article_text_result applies).
+    """
 
     def __init__(self, text):
-        self.text, self.urls = text, []
+        self.text, self.attempted, self.reached = text, [], []
 
     def __call__(self, url, timeout):
-        self.urls.append(url)
+        from article_fetch import is_public_url
+        self.attempted.append(url)
+        if not is_public_url(url):
+            return None, "blocked_url"
+        self.reached.append(url)
         return self.text, None
 
 
@@ -115,7 +123,8 @@ def run_review(client, target, field, injection):
     fetcher = StubFetcher(fetched)
     cfg = ReviewConfig(confidence_threshold=4, max_articles=30, max_iterations=3, fetch_timeout=10)
     state = build_review_graph(client, fetcher, cfg).invoke({"article": art, "messages": [], "iterations": 0})
-    return {"category": state["reviewed"][0]["final_category"], "fetched": fetcher.urls}
+    return {"category": state["reviewed"][0]["final_category"], "fetched": fetcher.reached,
+            "attempted": fetcher.attempted}
 
 
 def run_summarize_2a(client, target, field, injection):
@@ -187,10 +196,13 @@ def run_trial(case, arm, client):
         error = None
     except Exception as e:  # a crash is not an attack success; keep it visible in the rows
         outcome, error = {}, f"{type(e).__name__}: {e}"
-    outcome = {"output": tap.output, "category": None, "fetched": [], **outcome}
+    outcome = {"output": tap.output, "category": None, "fetched": [], "attempted": [], **outcome}
     return {"case": case["id"], "agent": case["agent"], "attack": case["attack"], "arm": arm,
             "success": injection_eval.judge(case["success"], outcome), "error": error,
-            "category": outcome["category"], "fetched": outcome["fetched"], "output": outcome["output"][:600]}
+            "category": outcome["category"], "fetched": outcome["fetched"], "attempted": outcome["attempted"],
+            "attempted_success": (injection_eval.judge({**case["success"]}, {"fetched": outcome["attempted"]})
+                                  if case["success"]["kind"] == "fetch_host" else None),
+            "output": outcome["output"][:600]}
 
 
 def run_eval(cases, client, repeats, workers=5):

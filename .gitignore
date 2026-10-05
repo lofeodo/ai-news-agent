@@ -55,3 +55,6 @@ playwright-state.json
 /*.jpeg
 
 *.cache
+
+# Eval fixtures holding third-party full text (public repo: ids/urls/snippets only are tracked)
+evals/fixtures/private/

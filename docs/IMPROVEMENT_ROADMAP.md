@@ -23,9 +23,9 @@ Purpose: make Latent SpaceMail defensible in technical interviews for LLM system
 
 ## Step sequence
 
-- [ ] Step 0: Roadmap doc (this file)
-- [ ] Step 1: Cleanup and repo hygiene
-- [ ] Step 2: Eval foundations and labeling templates
+- [x] Step 0: Roadmap doc (this file)
+- [x] Step 1: Cleanup and repo hygiene
+- [x] Step 2: Eval foundations and labeling templates
 - [ ] Step 3: Review-step evaluation (single_pass vs graph)
 - [ ] Step 4: Prompt-injection tests
 - [ ] Step 5: Drift monitoring
@@ -43,7 +43,7 @@ Purpose: make Latent SpaceMail defensible in technical interviews for LLM system
 - Each step gets its own branch, named `feat/<step-name>` (or `docs/`, `chore/`, `test/` as fitting).
 - Commit freely on the step branch in small, continual commits. Do not push or open a PR until I say the step is ready. I merge PRs myself.
 - Update this file's checklist and Step detail as work progresses, not only at step boundaries.
-- When a step is finished and I have merged it, mark it complete and describe it thoroughly under "Completed steps": what was built, files touched, key decisions, deviations from the plan, how to run it, results with caveats.
+- The step's own PR must include its roadmap update: before declaring the step ready, tick its checklist box and describe it thoroughly under "Completed steps" (what was built, files touched, key decisions, deviations from the plan, how to run it, results with caveats), all on the step branch. Never leave this for an after-the-fact edit once the PR is merged.
 - Tell me explicitly when a step is fully complete before starting the next step's plan.
 - If the code contradicts anything in this document, say so and propose a fix to the doc before proceeding.
 
@@ -118,6 +118,45 @@ To repin later: install `requirements.txt` plus pytest in a `python:3.11-slim` c
 
 The `docker-build` job only blocks merges if the branch ruleset requires it.
 
+### Step 2 plan (branch `test/eval-foundations`, approved)
+
+Code vs. roadmap: summaries have no stored source text (agent2b fetches live, capped at 1500 words; agent2a uses PDF text capped at 5000 words), so the template generator re-fetches it; `agent1b_review_log.json` has no titles (joined to `news_filtered.json` by url) and only covers articles that survived selection, so category accuracy is measurable but selection recall is not; only 3 papers are summarized per run; no stats or cost helpers existed.
+
+Decisions: use `scipy` (Wilson) and `scikit-learn` (kappa) as dev-only dependencies rather than hand-rolled maths; article labels from the 2026-09-30 local run (agent3 prunes Firestore's `news_filtered` and the audit docs have no titles); news summaries from the existing local `data/news_summaries.json` (read-only, dated 2026-06-13) and papers from Firestore `pipeline_runs`; no LLM calls, so the run cost 0 USD.
+
 ## Completed steps
 
-(Each completed step is described here after its PR is merged.)
+(Each completed step is described here, written on the step's own branch before its PR is declared ready.)
+
+### Step 0: Roadmap doc
+This file, added via PR before any other work.
+
+### Step 1: Cleanup and repo hygiene
+Merged in PR #53 (branch `chore/repo-hygiene`). Removed the zero-byte tracked `[internal]` file and the stray `[internal]` line in `.dockerignore`; deleted the empty `tests/test_fetch.py` (covered by `tests/test_article_fetch.py`); pinned the unpinned tail of `requirements.txt` and `requirements-dev.txt`, resolved on `python:3.11-slim` to match Docker and CI; removed the redundant `pip install fastapi uvicorn` from the dockerfile; added a build-only `docker-build` job to `.github/workflows/tests.yml`. Verification and the repin procedure are recorded in the Step 1 plan above. Deviation from the roadmap: none beyond the extra findings listed in that plan. Caveat: the `docker-build` job only blocks merges if the branch ruleset requires it.
+
+### Step 2: Eval foundations and labeling templates
+Branch `test/eval-foundations`.
+
+Built:
+- `evals/stats.py`: `wilson_interval`, `rate_with_ci`, `cohens_kappa`, `paired_wins_losses` (scipy / scikit-learn wrappers).
+- `evals/cost.py`: `estimate_cost` (price table keyed off `config.SCORING_MODEL`, extendable with `register_price`) and `CostGuard` (refuses estimates over 2 USD without explicit approval). The Haiku price in the table is list price from memory and should be checked against current pricing before a paid run relies on it.
+- `evals/results.py`: results-file schema (`schema_version`, `name`, `created_at`, `git_sha`, `model`, `cost_usd`, `notes`, `metrics` where each metric must carry `value`, `n`, `ci_low`, `ci_high`) with writer, reader and validator. Results go in `evals/results/`.
+- `evals/snapshot.py`: freezes the 2026-09-30 run's 500 articles joined with their audit rows into `evals/fixtures/articles_frozen.json` (ids, urls, titles, 300-character snippets, categories, confidence; no full text).
+- `evals/make_label_templates.py`: seeded, deterministic generators for the two templates, which never fill the label columns.
+- `evals/README.md`: conventions, layout and labeling instructions; `.gitignore` excludes `evals/fixtures/private/` (full text).
+- Tests: `tests/test_evals_*.py` (27 new, stubbed, no network or keys). Total suite: 52 passing.
+- `requirements-dev.txt`: `scipy`, `scikit-learn` and their dependencies, pinned from a `python:3.11-slim` resolve.
+
+Templates (labels are written by hand by the repo owner):
+- `evals/labels/agent1b_articles_template.csv`: 100 articles, 40 low-confidence (below 4) and 60 high-confidence, shuffled; fill `gold_category`.
+- `evals/labels/summaries_template.csv`: 40 summaries (25 news written from full text, 5 news written from the description only, 10 papers); fill `supported`. Source text for each row is under the gitignored `evals/fixtures/private/summary_sources/` and is rebuilt by the script.
+
+How to run (CMD): `venv\Scripts\python -m evals.snapshot`, then `venv\Scripts\python -m evals.make_label_templates articles`. For summaries, `set GCP_PROJECT_ID=<project>` after `gcloud auth application-default login`, then `venv\Scripts\python -m evals.make_label_templates summaries` (network fetches only, no LLM calls).
+
+Deviations and caveats:
+- The news summaries come from the June local file, so they reflect the prompt of that time and 5 candidates were skipped as unreachable (link rot); this set measures that prompt's faithfulness, not the current one's.
+- The summaries file has no source text, so what the labeler sees was re-fetched now and may differ slightly from what agent2b saw.
+- Many Hacker News articles have an empty snippet; label those from the title and url.
+- The first-pass category is shown next to each article (per the roadmap), which can anchor the labeler.
+- Selection recall cannot be evaluated, because the audit log only covers articles that survived selection.
+- No eval results exist yet; nothing in this step produces a metric.

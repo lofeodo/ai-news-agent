@@ -1,0 +1,205 @@
+{
+  "schema_version": 1,
+  "name": "review_eval_2026-10-05",
+  "created_at": "2026-10-05T17:52:24.540854+00:00",
+  "git_sha": "755f987",
+  "model": "claude-haiku-4-5-20251001",
+  "cost_usd": 0.3189,
+  "notes": "Verbalized confidence does NOT clearly predict errors: first-pass accuracy 17/32 below threshold 4 vs 36/58 at or above, and the Wilson 95% intervals overlap. Review threshold: confidence < 4; production cap (30) lifted. Frozen snippets are truncated to 300 chars, so both arms see less text than production. Gold labels may be anchored by the first-pass category shown to the labeler.",
+  "metrics": {
+    "accuracy_single_pass": {
+      "value": 0.6222222222222222,
+      "n": 90,
+      "ci_low": 0.5189976405818348,
+      "ci_high": 0.715440317613552
+    },
+    "accuracy_single_pass__high_confidence": {
+      "value": 0.6785714285714286,
+      "n": 56,
+      "ci_low": 0.5482263990973854,
+      "ci_high": 0.7859900520744848
+    },
+    "accuracy_single_pass__low_confidence": {
+      "value": 0.5294117647058824,
+      "n": 34,
+      "ci_low": 0.3673671298006892,
+      "ci_high": 0.6854849552491152
+    },
+    "accuracy_graph_first_pass": {
+      "value": 0.5888888888888889,
+      "n": 90,
+      "ci_low": 0.4856323734714556,
+      "ci_high": 0.684867959761553
+    },
+    "accuracy_graph_first_pass__high_confidence": {
+      "value": 0.625,
+      "n": 56,
+      "ci_low": 0.4940536590850181,
+      "ci_high": 0.7398978567352911
+    },
+    "accuracy_graph_first_pass__low_confidence": {
+      "value": 0.5294117647058824,
+      "n": 34,
+      "ci_low": 0.3673671298006892,
+      "ci_high": 0.6854849552491152
+    },
+    "accuracy_graph_final": {
+      "value": 0.6,
+      "n": 90,
+      "ci_low": 0.4967030736405094,
+      "ci_high": 0.6951098012466252
+    },
+    "accuracy_graph_final__high_confidence": {
+      "value": 0.625,
+      "n": 56,
+      "ci_low": 0.4940536590850181,
+      "ci_high": 0.7398978567352911
+    },
+    "accuracy_graph_final__low_confidence": {
+      "value": 0.5588235294117647,
+      "n": 34,
+      "ci_low": 0.39453899256203057,
+      "ci_high": 0.7111651775375782
+    },
+    "calibration_first_pass__conf_2": {
+      "value": 0.3333333333333333,
+      "n": 3,
+      "ci_low": 0.06149194472039626,
+      "ci_high": 0.7923403991979523
+    },
+    "calibration_first_pass__conf_3": {
+      "value": 0.5517241379310345,
+      "n": 29,
+      "ci_low": 0.3754796321097092,
+      "ci_high": 0.7158683197696281
+    },
+    "calibration_first_pass__conf_4": {
+      "value": 0.6071428571428571,
+      "n": 56,
+      "ci_low": 0.47633402800422714,
+      "ci_high": 0.7241958426988949
+    },
+    "calibration_first_pass__conf_5": {
+      "value": 1.0,
+      "n": 2,
+      "ci_low": 0.34238022750665303,
+      "ci_high": 1.0
+    },
+    "confidence_correctness_spearman": {
+      "value": 0.11683343665183632,
+      "n": 90,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "share_routed_to_review": {
+      "value": 0.35555555555555557,
+      "n": 90,
+      "ci_low": 0.26443868959648187,
+      "ci_high": 0.4584982688998792
+    },
+    "mean_tool_calls_per_reviewed": {
+      "value": 1.0,
+      "n": 32,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "review_input_tokens_per_reviewed": {
+      "value": 3653.15625,
+      "n": 32,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "review_output_tokens_per_reviewed": {
+      "value": 146.09375,
+      "n": 32,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "review_degraded_share": {
+      "value": 0.1875,
+      "n": 32,
+      "ci_low": 0.08889544689565956,
+      "ci_high": 0.3530915520137595
+    },
+    "paired_graph_final_vs_single_pass": {
+      "value": 0.4166666666666667,
+      "n": 12,
+      "ci_low": 0.1932603136587566,
+      "ci_high": 0.6804886874504502,
+      "wins": 5,
+      "losses": 7,
+      "ties": 78,
+      "items": 90
+    },
+    "paired_review_effect": {
+      "value": 0.5454545454545454,
+      "n": 11,
+      "ci_low": 0.280091537409322,
+      "ci_high": 0.7872872837754024,
+      "wins": 6,
+      "losses": 5,
+      "ties": 79,
+      "items": 90
+    },
+    "coverage_scored_by_both_arms": {
+      "value": 0.9,
+      "n": 100,
+      "ci_low": 0.8256343384950865,
+      "ci_high": 0.9447708629393249
+    },
+    "tokens_input__single_pass": {
+      "value": 41300,
+      "n": 100,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "tokens_output__single_pass": {
+      "value": 7894,
+      "n": 100,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "seconds__single_pass": {
+      "value": 9.41,
+      "n": 100,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "tokens_input__graph_categorize": {
+      "value": 42250,
+      "n": 100,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "tokens_output__graph_categorize": {
+      "value": 10735,
+      "n": 100,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "seconds__graph_categorize": {
+      "value": 14.98,
+      "n": 100,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "tokens_input__review": {
+      "value": 118269,
+      "n": 33,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "tokens_output__review": {
+      "value": 4780,
+      "n": 33,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "seconds__review": {
+      "value": 20.43,
+      "n": 33,
+      "ci_low": null,
+      "ci_high": null
+    }
+  }
+}

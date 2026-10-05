@@ -26,7 +26,7 @@ Purpose: make Latent SpaceMail defensible in technical interviews for LLM system
 - [x] Step 0: Roadmap doc (this file)
 - [x] Step 1: Cleanup and repo hygiene
 - [x] Step 2: Eval foundations and labeling templates
-- [ ] Step 3: Review-step evaluation (single_pass vs graph)
+- [x] Step 3: Review-step evaluation (single_pass vs graph)
 - [ ] Step 4: Prompt-injection tests
 - [ ] Step 5: Drift monitoring
 - [ ] Step 6: Online judge (calibrated weekly scoring and alerting)
@@ -124,6 +124,18 @@ Code vs. roadmap: summaries have no stored source text (agent2b fetches live, ca
 
 Decisions: use `scipy` (Wilson) and `scikit-learn` (kappa) as dev-only dependencies rather than hand-rolled maths; article labels from the 2026-09-30 local run (agent3 prunes Firestore's `news_filtered` and the audit docs have no titles); news summaries from the existing local `data/news_summaries.json` (read-only, dated 2026-06-13) and papers from Firestore `pipeline_runs`; no LLM calls, so the run cost 0 USD.
 
+### Step 3 plan (branch `feat/review-eval`, approved)
+
+Code vs. roadmap: `build_graph` and `collect_and_categorize_single_pass()` start from a live fetch, but the seam for frozen inputs already exists: `agent1b_fetch_news.filter_and_categorize(articles, client, with_confidence)` and the injectable `build_review_graph(client, fetcher, cfg)`. The runner calls those directly on `evals/fixtures/articles_frozen.json`; no production code changes.
+
+Design:
+- `evals/review_eval.py` (pure, stub-tested): gold loading and join; Wilson-interval accuracy overall and per stratum for single_pass, graph first pass and graph final; calibration per confidence bucket with an explicit verdict if confidence does not predict errors; share routed to review, tool calls, extra tokens, cost and latency; paired wins and losses; one alternative routing signal only if confidence proves uninformative.
+- `evals/run_review_eval.py` (on demand, real API, `--dry-run`, guarded by `CostGuard`): categorizes all 500 frozen articles in production-sized batches so batch context matches, scores the 100 labeled ones, and runs the review loop for labeled articles below the confidence threshold with the production cap lifted. Categorization is re-run fresh so accuracy is not circular with the first-pass column the labeler saw. Fetched text is cached under gitignored `evals/fixtures/private/` so reruns are reproducible despite link rot.
+- `evals/make_readme_table.py`: regenerates a marked README block from the latest results file.
+- All default tests use stubs and need no network.
+
+Verification: pytest green; `--dry-run` prints the cost estimate; the paid run only after the owner approves the estimate. Intervals are wide at n=100 (n=40 low-confidence) and results are reported plainly, including a null result.
+
 ## Completed steps
 
 (Each completed step is described here, written on the step's own branch before its PR is declared ready.)
@@ -160,3 +172,14 @@ Deviations and caveats:
 - The first-pass category is shown next to each article (per the roadmap), which can anchor the labeler.
 - Selection recall cannot be evaluated, because the audit log only covers articles that survived selection.
 - No eval results exist yet; nothing in this step produces a metric.
+
+### Step 3: Review-step evaluation
+Branch `feat/review-eval`. Built: `evals/review_eval.py` (scoring: accuracy per variant and stratum, calibration per confidence bucket, routing/cost, paired wins and losses), `evals/run_review_eval.py` (on-demand runner with `--dry-run`/`--approve`, `CostGuard`, gitignored fetch cache), `evals/make_readme_table.py` (regenerates the marked README block), with stub tests for each. No production code changed. The runner calls `filter_and_categorize` and `build_review_graph` directly on `evals/fixtures/articles_frozen.json`, with the production review cap lifted. Both arms categorize all 500 frozen articles; only the 100 gold-labelled ones are scored.
+
+Run: `venv\Scripts\python -m evals.run_review_eval` (add `--dry-run` first), then `venv\Scripts\python -m evals.make_readme_table`. Results: `evals/results/review_eval_2026-10-05.json` (+ `_rows.json`), cost $0.32.
+
+Results (n=90 scored by both arms; Wilson 95% intervals, see the README table): single-pass 62% (52-72%), graph first pass 59% (49-68%), graph after review 60% (50-70%). Graph final vs single-pass: 5 wins, 7 losses, 78 ties. Review vs graph first pass: 6 wins, 5 losses, 79 ties. Conclusion: the review loop does not measurably help on this sample; every difference is inside the noise. Verbalized confidence barely predicts errors (first-pass accuracy 17/32 below threshold vs 36/58 at or above, overlapping intervals; Spearman 0.12). 36% of labeled articles were routed to review at 1.0 tool calls each; 19% of reviews degraded to first pass (fetch failures).
+
+Caveats: 10 of 100 gold articles were not re-selected by one of the arms and are excluded (coverage 90/100); n is small (34 low-confidence); frozen snippets are truncated to 300 chars, so both arms see less text than production; the labeler saw the first-pass category (possible anchoring); review fetches live pages. Two gold ids in the labels CSV were mangled by Excel and are re-matched by URL in memory (the file is unedited).
+
+Deviation: the roadmap's alternative routing signal (evaluated when confidence is uninformative) was deliberately not done; the owner chose to report Step 3 as a null result. A candidate for later is single-pass vs graph first-pass disagreement, which `_rows.json` already supports without new API calls.

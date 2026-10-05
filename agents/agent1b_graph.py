@@ -307,10 +307,11 @@ def build_review_graph(client, fetcher: Callable, cfg: ReviewConfig):
     return g.compile()
 
 
-def build_graph(client=None, fetcher: Callable | None = None, cfg: ReviewConfig | None = None):
+def build_graph(client=None, fetcher: Callable | None = None, cfg: ReviewConfig | None = None,
+                run_id: str | None = None):
     """Compile the agent1b graph. client/fetcher are injectable for tests."""
     cfg     = cfg or ReviewConfig.from_env()
-    client  = client or tracing.make_client()
+    client  = client or tracing.make_client("agent1b", run_id)
     if fetcher is None:
         from article_fetch import fetch_article_text_result
         fetcher = fetch_article_text_result
@@ -397,7 +398,7 @@ def build_graph(client=None, fetcher: Callable | None = None, cfg: ReviewConfig 
 def run_graph(run_id: str, client=None, fetcher: Callable | None = None, cfg: ReviewConfig | None = None) -> dict:
     """Run the graph; returns the final state (articles, final, audit, token_usage, ...)."""
     tracing.configure()
-    graph = build_graph(client=client, fetcher=fetcher, cfg=cfg)
+    graph = build_graph(client=client, fetcher=fetcher, cfg=cfg, run_id=run_id)
     return graph.invoke(
         {"run_id": run_id, "reviewed": [], "tool_call_counts": {}, "token_usage": {}},
         config={"run_name": "agent1b", "tags": ["agent1b"], "metadata": {"run_id": run_id},

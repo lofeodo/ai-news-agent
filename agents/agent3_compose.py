@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_XML_TAGS, neutralize_tags
+import tracing
 from config import DATA_DIR, SCORING_MODEL, GCP_PROJECT_ID, USE_FIRESTORE, FIRESTORE_COLLECTION
 
 # ---------------------------------------------------------------------------
@@ -676,7 +677,7 @@ def run(run_id: str):
             papers      = paper_data["papers"]
             by_category = news_data["by_category"]
 
-        client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
+        client = tracing.make_client("agent3", run_id)
 
         print("\n=== Selecting articles per category ===")
         # Two selection passes per category:
@@ -780,6 +781,8 @@ def run(run_id: str):
     except Exception as e:
         _record_failure(run_id, "agent3", e)
         raise
+    finally:
+        tracing.flush()
 
 
 if __name__ == "__main__":

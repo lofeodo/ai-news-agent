@@ -14,6 +14,7 @@ import pypdf
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_PAPER_SUMMARY
+import tracing
 from config import (
     DATA_DIR, SCORING_MODEL, PAPER_SUMMARY_MAX_TOKENS, WORD_CUTOFF,
     GCP_PROJECT_ID, TOPIC_CONTENT_SUMMARIZED, FIRESTORE_COLLECTION, USE_FIRESTORE,
@@ -176,7 +177,7 @@ def run(run_id: str):
             papers = scored["top_papers"]
         print(f"Summarizing {len(papers)} papers...\n")
 
-        client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
+        client = tracing.make_client("agent2a", run_id)
         results = []
 
         for i, paper in enumerate(papers, 1):
@@ -257,6 +258,8 @@ def run(run_id: str):
     except Exception as e:
         _record_failure(run_id, "agent2a", e)
         raise
+    finally:
+        tracing.flush()
 
 
 if __name__ == "__main__":

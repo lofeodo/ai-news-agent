@@ -167,7 +167,7 @@ def test_unexpected_error_is_recorded_and_reraised(monkeypatch):
         raise RuntimeError("hn down")
 
     monkeypatch.setattr(a1b, "fetch_hn_articles", boom)
-    monkeypatch.setattr(tracing, "make_client", lambda: FakeClient(CONF))
+    monkeypatch.setattr(tracing, "make_client", lambda *a, **k: FakeClient(CONF))
     with pytest.raises(RuntimeError, match="hn down"):
         a1b.run("run-x")
     assert recorded == [("run-x", "agent1b", "hn down")]

@@ -17,6 +17,7 @@ from scoring_tool import SCORING_TOOL
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_PAPER_SCORING
+import tracing
 from config import (
     MAX_FETCH, SAMPLE_SIZE, LOOKBACK_HOURS, DATA_DIR, SCORING_MODEL, MAX_TOKENS, WORD_CUTOFF,
     GCP_PROJECT_ID, TOPIC_PAPERS_SCORED, USE_FIRESTORE, PAPERS_IN_NEWSLETTER,
@@ -25,6 +26,9 @@ from config import (
 # --- Rate limiting ---
 MAX_CONCURRENT_CLAUDE_CALLS = 5
 _semaphore = threading.Semaphore(MAX_CONCURRENT_CLAUDE_CALLS)
+
+# Set by run() so traced Claude calls carry the pipeline run id (see tracing.usage_tags).
+_TRACE_RUN_ID = None
 
 
 
@@ -127,7 +131,7 @@ def score_paper(paper: dict, full_text: str) -> dict:
         full_text=truncated_text
     )
 
-    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"), timeout=60.0)
+    client = tracing.make_client("agent1a", _TRACE_RUN_ID, timeout=60.0)
 
     print(f"  [api-call-start] {paper['title'][:40]}", flush=True)
     response = client.messages.create(
@@ -214,6 +218,8 @@ def _record_failure(run_id: str, agent_name: str, error: Exception) -> None:
 
 def run(run_id: str):
     """Main agent logic. Called by main.py (Cloud Run) or orchestrator.py."""
+    global _TRACE_RUN_ID
+    _TRACE_RUN_ID = run_id
     start_time = datetime.now()
 
     try:
@@ -278,6 +284,8 @@ def run(run_id: str):
     except Exception as e:
         _record_failure(run_id, "agent1a", e)
         raise
+    finally:
+        tracing.flush()
 
 
 if __name__ == "__main__":

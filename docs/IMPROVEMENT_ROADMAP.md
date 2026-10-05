@@ -182,4 +182,4 @@ Results (n=90 scored by both arms; Wilson 95% intervals, see the README table): 
 
 Caveats: 10 of 100 gold articles were not re-selected by one of the arms and are excluded (coverage 90/100); n is small (34 low-confidence); frozen snippets are truncated to 300 chars, so both arms see less text than production; the labeler saw the first-pass category (possible anchoring); review fetches live pages. Two gold ids in the labels CSV were mangled by Excel and are re-matched by URL in memory (the file is unedited).
 
-Deviation: the alternative routing signal the roadmap asks for when confidence is uninformative is **not** evaluated yet; the data now says confidence is weak, so it is a follow-up (candidate: single-pass vs graph first-pass disagreement, which the rows file already supports).
+Deviation: the roadmap's alternative routing signal (evaluated when confidence is uninformative) was deliberately not done; the owner chose to report Step 3 as a null result. A candidate for later is single-pass vs graph first-pass disagreement, which `_rows.json` already supports without new API calls.

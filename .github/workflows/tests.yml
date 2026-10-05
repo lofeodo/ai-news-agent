@@ -33,5 +33,7 @@ jobs:
           file: dockerfile
           push: false
           build-args: AGENT_NAME=agent1b
+          # ignore-error: a concurrent run saving the same cache key makes the export fail
+          # ("failed to reserve cache") even though the build succeeded.
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=max,ignore-error=true

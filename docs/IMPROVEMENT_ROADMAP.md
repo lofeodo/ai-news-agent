@@ -29,7 +29,7 @@ Purpose: make Latent SpaceMail defensible in technical interviews for LLM system
 - [x] Step 3: Review-step evaluation (single_pass vs graph)
 - [x] Step 4: Prompt-injection tests
 - [x] Step 5: Drift monitoring
-- [ ] Step 5b: Token and cost monitoring (LangSmith, weekly summary and drift alert)
+- [x] Step 5b: Token and cost monitoring (LangSmith, weekly summary and drift alert)
 - [ ] Step 6: Online judge (calibrated weekly scoring and alerting)
 - [ ] Step 7: Click-through signal (SendGrid)
 - [ ] Step 8: Postmortems and runbook
@@ -154,6 +154,10 @@ Code vs. roadmap: agent1a persists only the top 3 papers (survivorship-biased, n
 
 Design: (1) additive `confidence_hist` and `category_counts` in `agent1b_review_summary`, computed in `_write_review_audit`; (2) pure `agents/drift.py` (KS on confidence, chi-square or seeded permutation on category mix, Fisher exact on review rate); a flag needs p < 0.01 and an effect-size floor, and fewer than 3 prior runs gives `insufficient_history`; (3) `agents/drift_history.py` loads the latest runs, falling back to audit docs for older runs; (4) drift is its own section in the healthcheck email, built inside its own `try/except`, and never changes the all clear or problem status or suppresses the heartbeat; (5) on-demand `evals/backfill_drift_summary.py` (`--dry-run` default, no LLM calls). Thresholds live in `config.py`. Small weekly samples make this a tripwire, not a guarantee.
 
+### Step 5b plan (branch `feat/cost-monitoring`, approved)
+
+Code vs. roadmap: only agent1b graph mode read `response.usage` and only agent1b was traced in LangSmith (opt-in, `agents/tracing.py`, set up 2026-09-30; the `langsmith-api-key` secret and `LANGSMITH_*` vars already exist on the agent1b service). LangSmith's free Developer plan has 5k base traces a month, shared across the account, and 14-day retention, so it cannot hold the 4 prior weeks a drift baseline needs. The owner's idea, adopted: have the healthcheck copy each run's LangSmith totals into Firestore every week (`pipeline_runs/{run_id}.llm_usage`), so history accumulates while LangSmith only keeps recent traces. The owner also chose to show both LangSmith's cost and a list-price estimate from our own table, and to flag drift in the email without changing the pipeline status (as in Step 5).
+
 ## Completed steps
 
 (Each completed step is described here, written on the step's own branch before its PR is declared ready.)
@@ -251,3 +255,28 @@ Deviations and caveats:
 - The check reports and never alerts: a drift flag does not change the email subject.
 - **Verified:** the healthcheck image builds on `python:3.11-slim` and `scipy`, `numpy`, `drift`, `drift_history` and `agent_healthcheck` import inside it (Python 3.11.16, scipy 1.17.1, numpy 2.4.6). A read-only backfill dry run against the real Firestore examined 38 runs: only 2 have graph-mode data (`2026-10-05T100004Z`, `2026-09-30T201701Z`); the other 36 predate the LangGraph change or never reached agent1b, and agent3 had pruned their per-article data. With 1 usable prior run, the drift section will report "not enough history" until about 3 more weekly runs carry the fields (roughly mid-November). The backfill cannot shorten that, because the older data no longer exists.
 - **Not done, by decision:** the backfill `--apply` was not run (it would add the fields to just those 2 production run docs; the owner chose to skip it), and the drift section has not been rendered from real run history, only from test fakes. New agent1b and healthcheck images are not deployed (a separate manual `gcloud run services update`); until agent1b is redeployed, new runs will not write the summary fields, but the healthcheck falls back to computing them from the audit docs.
+
+### Step 5b: Token and cost monitoring
+Branch `feat/cost-monitoring`.
+
+Built:
+- `agents/tracing.py`: `make_client(agent, run_id, **client_kwargs)` tags every traced Claude call with `agent:<name>` and `run:<run_id>` (plus metadata) via `wrap_anthropic(tracing_extra=...)`. Agents 1a, 1b (graph), 2a, 2b and 3 now build their client through it and call `tracing.flush()` in a `finally`. Still opt-in and a no-op without the key and flag.
+- `agents/usage_archive.py`: finds a run's LLM calls in LangSmith by the `run:<run_id>` tag, sums tokens and LangSmith's `total_cost` per agent, and writes `llm_usage` onto the run doc (idempotent, writes nothing if LangSmith has no calls so a later run can retry inside the 14-day window, one failed run does not stop the others).
+- `agents/drift.py`: `usage_totals` (tokens, LangSmith cost, list-price estimate) and `usage_ratio_test` / `evaluate_usage`: total tokens, total cost and per-agent tokens are flagged when they sit at least 50% from the median of the prior runs and the absolute change clears a floor (100k tokens, $0.10). No p-values: four baselines are too few. Needs 3 archived prior runs, otherwise "not enough history".
+- `agents/agent_healthcheck.py`: `_usage_section` archives this run, then shows tokens, LangSmith cost and the list-price estimate side by side, per agent, plus the drift verdict. It never raises, never changes the all-clear or problem status, and cannot suppress the heartbeat. Without `LANGSMITH_API_KEY` on the healthcheck service it reports "skipped".
+- `agents/pricing.py`: the price table moved out of `evals/cost.py` (which now imports it) and gained cache pricing. Haiku 4.5 verified against Anthropic's pricing page on 2026-10-05: $1 input, $5 output per million tokens. The email labels the estimate with that date.
+- `tests/conftest.py` now clears LangSmith env vars for every test. This was needed: the developer shell had `LANGSMITH_API_KEY` set and the new healthcheck tests would otherwise have reached the real LangSmith API (they hung instead of running). Suite: 204 passing (182 before this step).
+- `evals/run_usage_drift_sim.py` writes `evals/results/usage_drift_simulation.json`.
+
+Run (CMD): `venv\Scripts\python -m pytest -q`; `venv\Scripts\python -m evals.run_usage_drift_sim`.
+
+Results (simulation, 2000 simulated weeks per setting, Wilson 95% intervals): there is no history of real week-to-week variation yet, so noise is assumed (normal, centred on the token count of the one real agent1b run). False alarms: 0/2000 at 5% and at 10% weekly noise (0-0.2%), 3.7% at 20% noise (3.0-4.6%), 15.7% at 30% noise (14.2-17.4%). Detection at 10% noise: a +30% jump 10% of the time (9-12%), +60% 73% (71-75%), +100% 99% (99-99%). The rule is built to catch large jumps; if real weeks vary by 30% it will cry wolf about one week in six, and the thresholds should then be loosened. This is a property of assumed noise, not a measured production rate.
+
+Deviations from the plan and caveats:
+- Usage is aggregated over LLM-type runs found by the tag filter (`has(tags, "run:<id>")`, the filter LangSmith's docs show), not over root traces or metadata, because tag propagation to root runs and the metadata filter grammar were not verifiable offline. It uses `Client.list_runs`, which the pinned `langsmith==0.14.2` documents as deprecated (removal after 2027-01-31); it sits behind one wrapper (`_list_llm_runs`) so it can be swapped for `Client.runs.query`, which needs a newer LangSmith backend.
+- The plan expected about 6 traces per weekly run (one root per agent). As built, agents 1a, 2a, 2b and 3 do not wrap their run in a root trace, so each Claude call is its own root trace: by my count of call sites, on the order of 100 per weekly run (a rough estimate, not measured), plus agent1b's graph run. That is still well under the 5k a month free allowance, but the allowance is shared with any other project on the same LangSmith account.
+- The LangSmith API was inspected offline and exercised only through fakes. Whether LangSmith fills `total_cost` and the token fields for the wrapped Anthropic calls, and whether its price list includes `claude-haiku-4-5-20251001`, is not confirmed until real traced runs exist. The email shows "n/a (not every call priced)" for LangSmith's cost if any call lacks a price, and the drift test then falls back to the list-price estimate.
+- Free-tier facts come from langchain.com/pricing and third-party summaries that disagree on whether usage is hard-capped until a card is added and on extended retention; confirm in LangSmith Settings > Billing.
+- agent1b `single_pass` mode (the rollback path) and the subscriptions refine endpoint are not traced.
+- History starts at the first run after deploy and secret mounting, so expect "not enough history" for about three weekly runs. Only agent1b's own `token_usage` on older run docs exists from before; it is not backfilled (LangSmith only holds 14 days and the other agents were never traced).
+- Not done here: the new code is not deployed (the Cloud Run images deployed after Step 5 predate it); `langsmith-api-key`, `LANGSMITH_TRACING=true` and `LANGSMITH_PROJECT` are not yet mounted on agents 1a/2a/2b/3 or the healthcheck, which needs the owner's approval; no traced run has been inspected in the LangSmith UI. Until the secrets are mounted, the usage section reports "skipped" or "no traced Claude calls found".

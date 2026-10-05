@@ -25,7 +25,7 @@ def test_render_contains_every_variant_and_paired_counts():
 
 def test_update_readme_replaces_only_the_marked_block(tmp_path):
     readme = tmp_path / "README.md"
-    readme.write_text(f"before\n{START}\nold\n{END}\nafter\n", encoding="utf-8")
+    readme.write_text(f"before\n{START}\nSTALE-TABLE\n{END}\nafter\n", encoding="utf-8")
     t.update_readme(_doc(), readme)
     text = readme.read_text(encoding="utf-8")
     assert text.startswith("before\n") and text.endswith("after\n") and "STALE-TABLE" not in text

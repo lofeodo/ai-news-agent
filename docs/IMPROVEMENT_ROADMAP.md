@@ -28,7 +28,7 @@ Purpose: make Latent SpaceMail defensible in technical interviews for LLM system
 - [x] Step 2: Eval foundations and labeling templates
 - [x] Step 3: Review-step evaluation (single_pass vs graph)
 - [x] Step 4: Prompt-injection tests
-- [ ] Step 5: Drift monitoring
+- [x] Step 5: Drift monitoring
 - [ ] Step 6: Online judge (calibrated weekly scoring and alerting)
 - [ ] Step 7: Click-through signal (SendGrid)
 - [ ] Step 8: Postmortems and runbook
@@ -220,3 +220,27 @@ Deviations from the plan and caveats:
 - `sections.html` was checked on desktop Chromium with a stubbed `auth.js`: a hostile name rendered as text, no script ran, no horizontal overflow. The Android and iOS Playwright browsers (Chromium for Android, WebKit) are not installed here, so those were checked only as Pixel 7 and iPhone 15 viewport sizes in desktop Chromium, not in real mobile engines.
 - Saved sections that already contain angle brackets would now fail validation when the config is next saved.
 - Not done by design: CLAUDE.md and the remaining README prose (Step 9).
+
+### Step 5: Drift monitoring
+Branch `feat/drift-monitoring`.
+
+Built:
+- `agents/agent1b_fetch_news.py`: `agent1b_review_summary` (already merge-written to the run doc) now also carries `confidence_hist` (counts for 1-5 and `none`) and `category_counts` (by final category), computed by `drift.summarize_audit`. Additive; `news_filtered.json` and the other Firestore shapes are unchanged.
+- `agents/drift.py` (pure, scipy imported lazily): KS on the 1-5 confidence distribution, chi-square on category mix (seeded permutation test when any expected count is under 5), Fisher exact on review rate, and `evaluate()`. A metric is flagged only if p < 0.01 **and** an effect floor is met (KS D >= 0.15, largest category share shift >= 10 points, review-rate change >= 10 points). Fewer than 3 usable prior runs gives `insufficient_history`. Thresholds are `DRIFT_*` constants in `config.py`.
+- `agents/drift_history.py`: loads the latest runs (read-only); old graph-mode runs without the new fields fall back to their `agent1b_audits/{run_id}` doc; single_pass runs and runs without agent1b data are skipped.
+- `agents/agent_healthcheck.py`: a drift section in the weekly email, built in its own `try/except`. It never changes the "all clear" / "problem detected" status and a failure inside it becomes a one-line note, so it cannot suppress the heartbeat. These are the healthcheck's first tests (`tests/test_healthcheck_drift.py`, with `tests/fakes_firestore.py`).
+- `evals/backfill_drift_summary.py`: on-demand backfill of the two summary fields onto older runs from their audit docs (dry run unless `--apply`, no LLM calls).
+- `evals/run_drift_null_sim.py` writes `evals/results/drift_null_simulation.json`.
+- `requirements.txt` now pins `numpy` and `scipy` (moved from the dev file; same versions that resolved on `python:3.11-slim` in Step 2), so the runtime image grows.
+
+Run (CMD): `venv\Scripts\python -m pytest -q`; `venv\Scripts\python -m evals.run_drift_null_sim`; backfill: `set GCP_PROJECT_ID=<project>`, `venv\Scripts\python -m evals.backfill_drift_summary` (dry run), then add `--apply`.
+
+Results (simulation, 500 simulated weeks, each judged against 4 simulated prior weeks; Wilson 95% intervals): false alarms 0/500 overall (0-0.8%) and for each metric alone. Planted category shift detected: 10% of articles relabeled into one category 48% (44-53%), 20% relabeled 500/500 (99-100%). The 10% case sits right at the effect floor, so about even odds there is expected: the check is built to catch large shifts, not small ones.
+
+Deviations and caveats:
+- agent1a score drift was dropped by owner decision (only the top 3 papers are persisted), so there is no paper-score monitoring.
+- The plan also mentioned `news_filtered.article_counts` as a fallback source for older runs; it was not used because it has no confidence data and would mix two definitions of "category mix". Backfill relies on `agent1b_audits` only, which exist for graph-mode runs only.
+- The null simulation bootstraps one real week (the 2026-09-30 audit rows), so it has no real week-to-week variation. The 0 false alarms are therefore a lower bound on production false alarms, and with only about 4 baseline weeks the real rate is unknown until the check has run for a while.
+- The confidence scale is discrete with heavy ties, so the KS p-value is approximate; the effect floor does the real work there.
+- The check reports and never alerts: a drift flag does not change the email subject.
+- **Not done here:** the backfill dry run and `--apply` against the real Firestore (no project id available in this session, and `--apply` writes to production data); a `docker build` of the healthcheck image (Docker Desktop was not running), so the added scipy/numpy runtime dependency is verified only by the local import under Python 3.14 and, once pushed, by the CI `docker-build` job; deploying the new agent1b and healthcheck images (a separate manual `gcloud run services update`). Until agent1b is redeployed, new runs will not write the summary fields, but the healthcheck still computes them from the audit docs.

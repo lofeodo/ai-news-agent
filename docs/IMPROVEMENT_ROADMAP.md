@@ -142,6 +142,12 @@ Code vs. roadmap: every Claude call except the subscriptions refine endpoint alr
 
 Design: (A) deterministic stub tests in CI, written first with `xfail(strict=True)` for each weakness so a fix flips them; (B) an on-demand harness (`evals/run_injection_eval.py`) driving the real agent functions with hand-written poisoned fixtures, each case run with and without the injection (attack and control arms), judged deterministically with no LLM judge; (C) run the harness for a baseline before touching production code, fix, re-run.
 
+### Step 5 plan (branch `feat/drift-monitoring`, approved)
+
+Code vs. roadmap: agent1a persists only the top 3 papers (survivorship-biased, no history), so agent1a score drift is dropped by owner decision. `agent1b_review_summary` has no confidence histogram or category mix, but `agent1b_audits/{run_id}` does (graph-mode runs only, not pruned) and is the backfill source; agent3 prunes `news_filtered` to per-category counts. The healthcheck read only the latest run doc and had no tests. scipy and numpy were dev-only, so they are added to `requirements.txt` (owner decision), which changes the runtime image.
+
+Design: (1) additive `confidence_hist` and `category_counts` in `agent1b_review_summary`, computed in `_write_review_audit`; (2) pure `agents/drift.py` (KS on confidence, chi-square or seeded permutation on category mix, Fisher exact on review rate); a flag needs p < 0.01 and an effect-size floor, and fewer than 3 prior runs gives `insufficient_history`; (3) `agents/drift_history.py` loads the latest runs, falling back to audit docs for older runs; (4) drift is its own section in the healthcheck email, built inside its own `try/except`, and never changes the all clear or problem status or suppresses the heartbeat; (5) on-demand `evals/backfill_drift_summary.py` (`--dry-run` default, no LLM calls). Thresholds live in `config.py`. Small weekly samples make this a tripwire, not a guarantee.
+
 ## Completed steps
 
 (Each completed step is described here, written on the step's own branch before its PR is declared ready.)

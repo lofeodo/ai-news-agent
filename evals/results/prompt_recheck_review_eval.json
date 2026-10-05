@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "name": "prompt_recheck_review_eval",
+  "created_at": "2026-10-05T18:58:07.611582+00:00",
+  "git_sha": "fb3f15f",
+  "model": "claude-haiku-4-5-20251001",
+  "cost_usd": 0.265,
+  "notes": "Verbalized confidence does NOT clearly predict errors: first-pass accuracy 12/21 below threshold 4 vs 40/63 at or above, and the Wilson 95% intervals overlap. Review threshold: confidence < 4; production cap (30) lifted. Frozen snippets are truncated to 300 chars, so both arms see less text than production. Gold labels may be anchored by the first-pass category shown to the labeler.",
+  "metrics": {
+    "accuracy_single_pass": {
+      "value": 0.6071428571428571,
+      "n": 84,
+      "ci_low": 0.5002180659007766,
+      "ci_high": 0.7046965637246533
+    },
+    "accuracy_single_pass__high_confidence": {
+      "value": 0.7169811320754716,
+      "n": 53,
+      "ci_low": 0.5842971358358298,
+      "ci_high": 0.8203370955366143
+    },
+    "accuracy_single_pass__low_confidence": {
+      "value": 0.41935483870967744,
+      "n": 31,
+      "ci_low": 0.2641554306731223,
+      "ci_high": 0.5923373750463028
+    },
+    "accuracy_graph_first_pass": {
+      "value": 0.6190476190476191,
+      "n": 84,
+      "ci_low": 0.5121544142609232,
+      "ci_high": 0.7155285075451102
+    },
+    "accuracy_graph_first_pass__high_confidence": {
+      "value": 0.6226415094339622,
+      "n": 53,
+      "ci_low": 0.4880689594175338,
+      "ci_high": 0.7406373452712389
+    },
+    "accuracy_graph_first_pass__low_confidence": {
+      "value": 0.6129032258064516,
+      "n": 31,
+      "ci_low": 0.4382410861966073,
+      "ci_high": 0.7626689857961975
+    },
+    "accuracy_graph_final": {
+      "value": 0.6071428571428571,
+      "n": 84,
+      "ci_low": 0.5002180659007766,
+      "ci_high": 0.7046965637246533
+    },
+    "accuracy_graph_final__high_confidence": {
+      "value": 0.660377358490566,
+      "n": 53,
+      "ci_low": 0.525947866375483,
+      "ci_high": 0.7731296089867582
+    },
+    "accuracy_graph_final__low_confidence": {
+      "value": 0.5161290322580645,
+      "n": 31,
+      "ci_low": 0.348403954480288,
+      "ci_high": 0.6802974843758269
+    },
+    "calibration_first_pass__conf_3": {
+      "value": 0.5714285714285714,
+      "n": 21,
+      "ci_low": 0.36546554369306716,
+      "ci_high": 0.7553003107462404
+    },
+    "calibration_first_pass__conf_4": {
+      "value": 0.6229508196721312,
+      "n": 61,
+      "ci_low": 0.49747857841819165,
+      "ci_high": 0.7338548966888299
+    },
+    "calibration_first_pass__conf_5": {
+      "value": 1.0,
+      "n": 2,
+      "ci_low": 0.34238022750665303,
+      "ci_high": 1.0
+    },
+    "confidence_correctness_spearman": {
+      "value": 0.08473546468216711,
+      "n": 84,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "share_routed_to_review": {
+      "value": 0.25,
+      "n": 84,
+      "ci_low": 0.16972312954861019,
+      "ci_high": 0.35214273465871976
+    },
+    "mean_tool_calls_per_reviewed": {
+      "value": 1.0,
+      "n": 21,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "review_input_tokens_per_reviewed": {
+      "value": 3419.095238095238,
+      "n": 21,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "review_output_tokens_per_reviewed": {
+      "value": 141.42857142857142,
+      "n": 21,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "review_degraded_share": {
+      "value": 0.19047619047619047,
+      "n": 21,
+      "ci_low": 0.07667565052761793,
+      "ci_high": 0.40000564690204926
+    },
+    "paired_graph_final_vs_single_pass": {
+      "value": 0.5,
+      "n": 14,
+      "ci_low": 0.2679920245241364,
+      "ci_high": 0.7320079754758636,
+      "wins": 7,
+      "losses": 7,
+      "ties": 70,
+      "items": 84
+    },
+    "paired_review_effect": {
+      "value": 0.45454545454545453,
+      "n": 11,
+      "ci_low": 0.21271271622459764,
+      "ci_high": 0.719908462590678,
+      "wins": 5,
+      "losses": 6,
+      "ties": 73,
+      "items": 84
+    },
+    "coverage_scored_by_both_arms": {
+      "value": 0.84,
+      "n": 100,
+      "ci_low": 0.7557973061072976,
+      "ci_high": 0.8990471151119521
+    },
+    "tokens_input__single_pass": {
+      "value": 41525,
+      "n": 100,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "tokens_output__single_pass": {
+      "value": 8510,
+      "n": 100,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "seconds__single_pass": {
+      "value": 12.08,
+      "n": 100,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "tokens_input__graph_categorize": {
+      "value": 42475,
+      "n": 100,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "tokens_output__graph_categorize": {
+      "value": 10369,
+      "n": 100,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "seconds__graph_categorize": {
+      "value": 16.19,
+      "n": 100,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "tokens_input__review": {
+      "value": 71801,
+      "n": 21,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "tokens_output__review": {
+      "value": 2970,
+      "n": 21,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "seconds__review": {
+      "value": 9.69,
+      "n": 21,
+      "ci_low": null,
+      "ci_high": null
+    }
+  }
+}

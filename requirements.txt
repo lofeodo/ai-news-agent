@@ -113,3 +113,5 @@ opentelemetry-semantic-conventions==0.66b0
 PyJWT==2.15.1
 starlette==1.7.0
 wrapt==2.5.0
+numpy==2.4.6
+scipy==1.17.1

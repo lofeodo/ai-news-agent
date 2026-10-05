@@ -96,6 +96,16 @@ MAX_SUBSCRIBERS = int(os.environ.get("MAX_SUBSCRIBERS", "50000"))
 # Never used for subscriber-facing sends.
 ALERT_EMAIL = os.environ.get("ALERT_EMAIL", "")
 
+# Drift monitoring (agents/drift.py). A metric is flagged only if its test is
+# significant AND the effect clears a floor: with ~500 articles a week, tiny shifts are
+# significant but not interesting, and weekly cadence means false alarms are costly.
+DRIFT_BASELINE_RUNS = 4        # prior weeks pooled as the baseline
+DRIFT_MIN_BASELINE_RUNS = 3    # fewer usable prior runs -> "insufficient history"
+DRIFT_P_THRESHOLD = 0.01
+DRIFT_KS_MIN_D = 0.15          # KS statistic on the confidence distribution
+DRIFT_MIN_SHARE_SHIFT = 0.10   # largest per-category share change (fraction of articles)
+DRIFT_MIN_RATE_SHIFT = 0.10    # review-rate change (fraction of articles)
+
 
 def parse_started_at(raw: str) -> datetime:
     """Parse a pipeline_runs `started_at` string to an aware UTC datetime.

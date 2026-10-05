@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "name": "drift_null_simulation",
+  "created_at": "2026-10-05T19:11:14.100521+00:00",
+  "git_sha": "1321a6a",
+  "model": "none",
+  "cost_usd": 0.0,
+  "notes": "Bootstrap of one real week (500 articles) used as the null for 500 simulated weeks, each judged against 4 simulated prior weeks. Real week-to-week variation is larger than a bootstrap of one week, so the false-alarm rates are a lower bound. Planted shifts: 10% and 20% of articles relabeled into 'Canada & Montreal' (the 10% case sits right at the 10% effect floor, so low power there is expected). Thresholds from config.py: p<0.01, KS D>=0.15, share shift>=0.1, rate shift>=0.1.",
+  "metrics": {
+    "null_false_alarm_confidence": {
+      "value": 0.0,
+      "n": 500,
+      "ci_low": 0.0,
+      "ci_high": 0.007624340461552241
+    },
+    "null_false_alarm_category_mix": {
+      "value": 0.0,
+      "n": 500,
+      "ci_low": 0.0,
+      "ci_high": 0.007624340461552241
+    },
+    "null_false_alarm_review_rate": {
+      "value": 0.0,
+      "n": 500,
+      "ci_low": 0.0,
+      "ci_high": 0.007624340461552241
+    },
+    "null_false_alarm_any": {
+      "value": 0.0,
+      "n": 500,
+      "ci_low": 0.0,
+      "ci_high": 0.007624340461552241
+    },
+    "planted_10pct_category_shift_detected": {
+      "value": 0.482,
+      "n": 500,
+      "ci_low": 0.43850658762453504,
+      "ci_high": 0.5257678886320809
+    },
+    "planted_20pct_category_shift_detected": {
+      "value": 1.0,
+      "n": 500,
+      "ci_low": 0.9923756595384479,
+      "ci_high": 1.0
+    }
+  }
+}

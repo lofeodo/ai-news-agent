@@ -17,6 +17,7 @@ import sys
 from datetime import datetime, timezone
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import config
 from config import GCP_PROJECT_ID, FIRESTORE_COLLECTION, USE_FIRESTORE, ALERT_EMAIL, parse_started_at
 
 import agent4_send  # reuse send_email() / _get_sendgrid_api_key() only
@@ -80,6 +81,52 @@ def _diagnose(doc: dict) -> list[str]:
             problems.append(f"agent4 had {failed}/{total} failed sends (informational, not necessarily a full failure)")
 
     return problems
+
+
+def _format_drift(result: dict) -> str:
+    if result["status"] == "insufficient_history":
+        return (f"Drift check: not enough history yet ({result['baseline_runs']} usable prior runs, "
+                f"need {config.DRIFT_MIN_BASELINE_RUNS}).")
+    lines = [f"Drift check vs prior {result['baseline_runs']} runs: "
+             f"{'DRIFT FLAGGED' if result['status'] == 'drift' else 'no drift'}"]
+    for r in result["results"]:
+        flag = {"drift": "DRIFT", "ok": "ok", "insufficient_data": "n/a"}[r["status"]]
+        if r["status"] == "insufficient_data":
+            detail = f"n={r['n_current']} vs {r['n_baseline']}"
+        elif r["metric"] == "confidence":
+            detail = f"mean {r['mean_current']:.2f} vs {r['mean_baseline']:.2f}, KS D={r['statistic']:.2f}, p={r['p_value']:.3g}"
+        elif r["metric"] == "category_mix":
+            detail = (f"largest shift {r['largest_shift_category']} {r['largest_shift']:+.1%}, "
+                      f"{r['method']} p={r['p_value']:.3g}")
+        else:
+            detail = f"{r['rate_current']:.1%} vs {r['rate_baseline']:.1%}, p={r['p_value']:.3g}"
+        lines.append(f"  - {r['metric']}: {flag} ({detail})")
+    lines.append("  (Informational: a drift flag never marks the pipeline as failed. Small weekly samples; "
+                 "a flag means look, not broken.)")
+    return "\n".join(lines)
+
+
+def _drift_section(db, run_id: str, doc: dict) -> str:
+    """Drift report text for the email. Never raises: a monitoring failure must not suppress
+    the heartbeat or change the pipeline's health status."""
+    try:
+        import drift
+        import drift_history
+
+        current = drift_history.run_summary(db, run_id, doc)
+        if current is None:
+            return "Drift check: skipped (this run has no graph-mode agent1b summary)."
+        baseline = drift_history.load_baseline(db, run_id, config.DRIFT_BASELINE_RUNS)
+        result = drift.evaluate(
+            current, baseline,
+            min_runs=config.DRIFT_MIN_BASELINE_RUNS, p_threshold=config.DRIFT_P_THRESHOLD,
+            min_ks_d=config.DRIFT_KS_MIN_D, min_share_shift=config.DRIFT_MIN_SHARE_SHIFT,
+            min_rate_shift=config.DRIFT_MIN_RATE_SHIFT,
+        )
+        return _format_drift(result)
+    except Exception as e:
+        print(f"[healthcheck]  drift check failed (ignored): {e}", flush=True)
+        return f"Drift check: failed ({type(e).__name__}: {e}). This does not affect the pipeline status above."
 
 
 def _notify(message: str, healthy: bool) -> None:
@@ -153,14 +200,17 @@ def _run(run_id: str) -> None:
             return
 
     problems = _diagnose(doc)
+    drift_text = _drift_section(db, checked_run_id, doc)
 
     if not problems:
         print(f"[healthcheck]  run_id={checked_run_id} looks healthy.", flush=True)
-        _notify(f"Pipeline run {checked_run_id} (started {started_at_raw}) completed successfully. No problems detected.", healthy=True)
+        _notify(f"Pipeline run {checked_run_id} (started {started_at_raw}) completed successfully. "
+                f"No problems detected.\n\n{drift_text}", healthy=True)
         return
 
     body_lines = [f"Pipeline run {checked_run_id} (started {started_at_raw}) has problems:", ""]
     body_lines += [f"- {p}" for p in problems]
+    body_lines += ["", drift_text]
     _notify("\n".join(body_lines), healthy=False)
 
 

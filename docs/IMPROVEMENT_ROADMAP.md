@@ -28,7 +28,8 @@ Purpose: make Latent SpaceMail defensible in technical interviews for LLM system
 - [x] Step 2: Eval foundations and labeling templates
 - [x] Step 3: Review-step evaluation (single_pass vs graph)
 - [x] Step 4: Prompt-injection tests
-- [ ] Step 5: Drift monitoring
+- [x] Step 5: Drift monitoring
+- [ ] Step 5b: Token and cost monitoring (LangSmith, weekly summary and drift alert)
 - [ ] Step 6: Online judge (calibrated weekly scoring and alerting)
 - [ ] Step 7: Click-through signal (SendGrid)
 - [ ] Step 8: Postmortems and runbook
@@ -73,6 +74,11 @@ Depends on: Step 2 (harness conventions).
 Goal: detect when the pipeline's behavior shifts, without needing labels.
 Scope: persist per-run distributions (Agent 1a rubric score distribution, Agent 1b confidence and category mix, review rate) in Firestore, ideally backfilled from existing run history. Add a drift test of this week against the prior 4 weeks (KS for scores, a suitable test for category mix). Acknowledge the small samples and weekly cadence, and choose thresholds that avoid false alarms. Surface results in the healthcheck's weekly email. A monitoring failure must never suppress the healthcheck heartbeat.
 Depends on: nothing from earlier steps except conventions.
+
+### Step 5b: Token and cost monitoring
+Goal: know what each weekly run costs, and notice when token use or cost drifts.
+Scope: use LangSmith as the source of per-run token counts and cost across the pipeline's Claude calls. Today LangSmith tracing is opt-in and covers agent1b only (project `latent-spacemail-prod`), and agent1b already stores a `token_usage` summary on the run doc, so the plan must decide whether to extend tracing to agents 1a, 2a, 2b, 3 and the subscriptions refine endpoint, or to persist per-agent usage in Firestore and use LangSmith for inspection, with reasoning. Add a token and cost summary (per agent and total, this week vs the prior weeks) to the healthcheck email, and a drift test on tokens and cost that reuses Step 5's drift helpers, thresholds approach and "a monitoring failure must never suppress the heartbeat" rule. Cost uses `evals/cost.py`'s price table, so the price source and its staleness are stated in the plan. Aggregate counts only: no article text, no subscriber data in traces or logs. If the healthcheck must call the LangSmith API, that adds a secret to the healthcheck service, which the plan must call out and get approved.
+Depends on: Step 5.
 
 ### Step 6: Online judge
 Goal: score the content readers actually see, weekly, with a validated judge.
@@ -141,6 +147,12 @@ Verification: pytest green; `--dry-run` prints the cost estimate; the paid run o
 Code vs. roadmap: every Claude call except the subscriptions refine endpoint already set a `system=` guard, but the wording was duplicated inline in 7 places (only agent3 had a constant) and nothing was tested; 1a, 2a and 2b wrap content in plain labels, not tags; `/auth/sections/refine` had no system prompt or tags; no test covered `_safe_url`, any `system=` string or agent3 rendering. Weaknesses found by reading the code: `_safe_url` did not escape quotes (attribute breakout in `href`); closing tags inside titles, descriptions or fetched text were not neutralised; the review loop fetched model-chosen URLs with no private-address check; `filter_batch` trusted `category` and `index` from the tool input; `sections.html` put `refined_topic` into `innerHTML` and `POST /auth/sections` stored any client string; `{{UNSUBSCRIBE_URL}}` literals in article text would be substituted by agent4.
 
 Design: (A) deterministic stub tests in CI, written first with `xfail(strict=True)` for each weakness so a fix flips them; (B) an on-demand harness (`evals/run_injection_eval.py`) driving the real agent functions with hand-written poisoned fixtures, each case run with and without the injection (attack and control arms), judged deterministically with no LLM judge; (C) run the harness for a baseline before touching production code, fix, re-run.
+
+### Step 5 plan (branch `feat/drift-monitoring`, approved)
+
+Code vs. roadmap: agent1a persists only the top 3 papers (survivorship-biased, no history), so agent1a score drift is dropped by owner decision. `agent1b_review_summary` has no confidence histogram or category mix, but `agent1b_audits/{run_id}` does (graph-mode runs only, not pruned) and is the backfill source; agent3 prunes `news_filtered` to per-category counts. The healthcheck read only the latest run doc and had no tests. scipy and numpy were dev-only, so they are added to `requirements.txt` (owner decision), which changes the runtime image.
+
+Design: (1) additive `confidence_hist` and `category_counts` in `agent1b_review_summary`, computed in `_write_review_audit`; (2) pure `agents/drift.py` (KS on confidence, chi-square or seeded permutation on category mix, Fisher exact on review rate); a flag needs p < 0.01 and an effect-size floor, and fewer than 3 prior runs gives `insufficient_history`; (3) `agents/drift_history.py` loads the latest runs, falling back to audit docs for older runs; (4) drift is its own section in the healthcheck email, built inside its own `try/except`, and never changes the all clear or problem status or suppresses the heartbeat; (5) on-demand `evals/backfill_drift_summary.py` (`--dry-run` default, no LLM calls). Thresholds live in `config.py`. Small weekly samples make this a tripwire, not a guarantee.
 
 ## Completed steps
 
@@ -214,3 +226,28 @@ Deviations from the plan and caveats:
 - `sections.html` was checked on desktop Chromium with a stubbed `auth.js`: a hostile name rendered as text, no script ran, no horizontal overflow. The Android and iOS Playwright browsers (Chromium for Android, WebKit) are not installed here, so those were checked only as Pixel 7 and iPhone 15 viewport sizes in desktop Chromium, not in real mobile engines.
 - Saved sections that already contain angle brackets would now fail validation when the config is next saved.
 - Not done by design: CLAUDE.md and the remaining README prose (Step 9).
+
+### Step 5: Drift monitoring
+Branch `feat/drift-monitoring`.
+
+Built:
+- `agents/agent1b_fetch_news.py`: `agent1b_review_summary` (already merge-written to the run doc) now also carries `confidence_hist` (counts for 1-5 and `none`) and `category_counts` (by final category), computed by `drift.summarize_audit`. Additive; `news_filtered.json` and the other Firestore shapes are unchanged.
+- `agents/drift.py` (pure, scipy imported lazily): KS on the 1-5 confidence distribution, chi-square on category mix (seeded permutation test when any expected count is under 5), Fisher exact on review rate, and `evaluate()`. A metric is flagged only if p < 0.01 **and** an effect floor is met (KS D >= 0.15, largest category share shift >= 10 points, review-rate change >= 10 points). Fewer than 3 usable prior runs gives `insufficient_history`. Thresholds are `DRIFT_*` constants in `config.py`.
+- `agents/drift_history.py`: loads the latest runs (read-only); old graph-mode runs without the new fields fall back to their `agent1b_audits/{run_id}` doc; single_pass runs and runs without agent1b data are skipped.
+- `agents/agent_healthcheck.py`: a drift section in the weekly email, built in its own `try/except`. It never changes the "all clear" / "problem detected" status and a failure inside it becomes a one-line note, so it cannot suppress the heartbeat. These are the healthcheck's first tests (`tests/test_healthcheck_drift.py`, with `tests/fakes_firestore.py`).
+- `evals/backfill_drift_summary.py`: on-demand backfill of the two summary fields onto older runs from their audit docs (dry run unless `--apply`, no LLM calls).
+- `evals/run_drift_null_sim.py` writes `evals/results/drift_null_simulation.json`.
+- `requirements.txt` now pins `numpy` and `scipy` (moved from the dev file; same versions that resolved on `python:3.11-slim` in Step 2), so the runtime image grows.
+
+Run (CMD): `venv\Scripts\python -m pytest -q`; `venv\Scripts\python -m evals.run_drift_null_sim`; backfill: `set GCP_PROJECT_ID=<project>`, `venv\Scripts\python -m evals.backfill_drift_summary` (dry run), then add `--apply`.
+
+Results (simulation, 500 simulated weeks, each judged against 4 simulated prior weeks; Wilson 95% intervals): false alarms 0/500 overall (0-0.8%) and for each metric alone. Planted category shift detected: 10% of articles relabeled into one category 48% (44-53%), 20% relabeled 500/500 (99-100%). The 10% case sits right at the effect floor, so about even odds there is expected: the check is built to catch large shifts, not small ones.
+
+Deviations and caveats:
+- agent1a score drift was dropped by owner decision (only the top 3 papers are persisted), so there is no paper-score monitoring.
+- The plan also mentioned `news_filtered.article_counts` as a fallback source for older runs; it was not used because it has no confidence data and would mix two definitions of "category mix". Backfill relies on `agent1b_audits` only, which exist for graph-mode runs only.
+- The null simulation bootstraps one real week (the 2026-09-30 audit rows), so it has no real week-to-week variation. The 0 false alarms are therefore a lower bound on production false alarms, and with only about 4 baseline weeks the real rate is unknown until the check has run for a while.
+- The confidence scale is discrete with heavy ties, so the KS p-value is approximate; the effect floor does the real work there.
+- The check reports and never alerts: a drift flag does not change the email subject.
+- **Verified:** the healthcheck image builds on `python:3.11-slim` and `scipy`, `numpy`, `drift`, `drift_history` and `agent_healthcheck` import inside it (Python 3.11.16, scipy 1.17.1, numpy 2.4.6). A read-only backfill dry run against the real Firestore examined 38 runs: only 2 have graph-mode data (`2026-10-05T100004Z`, `2026-09-30T201701Z`); the other 36 predate the LangGraph change or never reached agent1b, and agent3 had pruned their per-article data. With 1 usable prior run, the drift section will report "not enough history" until about 3 more weekly runs carry the fields (roughly mid-November). The backfill cannot shorten that, because the older data no longer exists.
+- **Not done, by decision:** the backfill `--apply` was not run (it would add the fields to just those 2 production run docs; the owner chose to skip it), and the drift section has not been rendered from real run history, only from test fakes. New agent1b and healthcheck images are not deployed (a separate manual `gcloud run services update`); until agent1b is redeployed, new runs will not write the summary fields, but the healthcheck falls back to computing them from the audit docs.

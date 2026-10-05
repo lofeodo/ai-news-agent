@@ -77,7 +77,6 @@ def test_compose_html_escapes_hostile_content_in_every_section(include_canada):
     assert "javascript:" not in html
 
 
-@pytest.mark.xfail(strict=True, reason="placeholder literals in article text are substituted by agent4")
 def test_article_text_cannot_inject_footer_placeholders():
     clean = a3.compose_html("intro", [_paper()], {c: [_article()] for c in a3.NEWS_CATEGORIES}, "wk")
     hostile = a3.compose_html(

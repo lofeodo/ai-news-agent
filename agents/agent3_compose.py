@@ -44,13 +44,19 @@ INTRO_MAX_TOKENS     = 300
 _PROMPT_INJECTION_GUARD = GUARD_XML_TAGS
 
 
+def _esc(text) -> str:
+    """HTML-escape text for the newsletter, and break up "{{" / "}}" so article text can never form the
+    {{UNSUBSCRIBE_URL}} / {{PREFERENCES_URL}} placeholders that agent4 substitutes per subscriber."""
+    return _html.escape(str(text)).replace("{{", "&#123;&#123;").replace("}}", "&#125;&#125;")
+
+
 def _safe_url(url: str | None) -> str:
     """Return url, HTML-escaped for use inside href="...", only if it uses http/https; else '#'.
 
     The scheme check stops javascript: URLs; the escaping stops a quote in the URL from ending the attribute.
     """
     if url and isinstance(url, str) and url.startswith(("https://", "http://")):
-        return _html.escape(url, quote=True)
+        return _esc(url)
     return "#"
 
 
@@ -279,15 +285,15 @@ def render_paper_card(paper: dict) -> str:
     scores       = paper.get("scores") or {}
     score        = scores.get("total", 0)
     authors_list = paper.get("authors", [])
-    authors      = _html.escape(", ".join(authors_list[:3]) + (" et al." if len(authors_list) > 3 else ""))
+    authors      = _esc(", ".join(authors_list[:3]) + (" et al." if len(authors_list) > 3 else ""))
     summary      = _strip_markdown_headers(paper.get("summary") or "")
     paragraphs   = [p.strip() for p in summary.split("\n\n") if p.strip()]
     pdf_url      = _safe_url(paper.get("pdf_url"))
-    title        = _html.escape(paper.get("title", ""))
+    title        = _esc(paper.get("title", ""))
 
     summary_rows = "".join(
         f'<tr><td style="padding:{"0" if i == 0 else "10px"} 0 0 0;'
-        f'font-family:{_F};font-size:14px;line-height:1.82;color:#8a8580;">{_html.escape(para)}</td></tr>\n'
+        f'font-family:{_F};font-size:14px;line-height:1.82;color:#8a8580;">{_esc(para)}</td></tr>\n'
         for i, para in enumerate(paragraphs)
     )
 
@@ -328,9 +334,9 @@ def render_paper_card(paper: dict) -> str:
 
 
 def render_article_card(article: dict, is_last: bool = False) -> str:
-    title   = _html.escape(article.get("title", "Untitled"))
+    title   = _esc(article.get("title", "Untitled"))
     url     = _safe_url(article.get("url"))
-    summary = _html.escape(article.get("summary") or article.get("description") or "")
+    summary = _esc(article.get("summary") or article.get("description") or "")
     hn      = article.get("hn_score")
 
     sep = "" if is_last else f"padding-bottom:24px;border-bottom:1px solid {_SEPR};"
@@ -407,7 +413,7 @@ def compose_html(
     _mailing_address = os.environ.get("MAILING_ADDRESS", "").strip()
     address_html = (
         f'<p style="margin:0 0 10px 0;font-family:{_F};font-size:12px;color:{_AMBER};">'
-        f'{_html.escape(_mailing_address)}</p>'
+        f'{_esc(_mailing_address)}</p>'
         if _mailing_address else ""
     )
 
@@ -583,7 +589,7 @@ def compose_html(
          ════════════════════════════════════════════ -->
     <tr><td class="mob-pad" style="background:{_CREAM};padding:28px 40px 26px;border-bottom:2px solid {_D2};">
       <p style="margin:0 0 10px 0;font-family:{_F};font-size:10px;color:#8a8070;letter-spacing:4px;">&gt;_ EDITOR&apos;S NOTE &nbsp;&middot;&middot;&middot;&nbsp; {week_of}</p>
-      <p style="margin:0 0 0 0;font-family:{_F};font-size:15px;line-height:1.88;color:{_INK};">{_html.escape(intro)}</p>
+      <p style="margin:0 0 0 0;font-family:{_F};font-size:15px;line-height:1.88;color:{_INK};">{_esc(intro)}</p>
     </td></tr>
 
     {news_rows}

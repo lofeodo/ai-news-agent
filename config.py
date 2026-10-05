@@ -122,3 +122,9 @@ def parse_started_at(raw: str) -> datetime:
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
     return dt
+# Token / cost drift (agents/drift.py usage_ratio_test). Four prior weeks are too few for p-values,
+# so a metric is flagged when it moves at least MIN_RATIO from the prior-run median AND the absolute
+# change clears a floor (so a tiny agent or a cheap week can't trip it).
+DRIFT_USAGE_MIN_RATIO  = 0.5     # +/-50% versus the median of prior runs
+DRIFT_USAGE_MIN_TOKENS = 100_000 # absolute token change floor
+DRIFT_USAGE_MIN_USD    = 0.10    # absolute cost change floor

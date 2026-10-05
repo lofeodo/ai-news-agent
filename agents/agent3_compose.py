@@ -45,9 +45,12 @@ _PROMPT_INJECTION_GUARD = GUARD_XML_TAGS
 
 
 def _safe_url(url: str | None) -> str:
-    """Return url only if it uses http/https; else return '#' to prevent javascript: injection."""
+    """Return url, HTML-escaped for use inside href="...", only if it uses http/https; else '#'.
+
+    The scheme check stops javascript: URLs; the escaping stops a quote in the URL from ending the attribute.
+    """
     if url and isinstance(url, str) and url.startswith(("https://", "http://")):
-        return url
+        return _html.escape(url, quote=True)
     return "#"
 
 

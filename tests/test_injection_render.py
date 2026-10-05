@@ -38,7 +38,6 @@ def test_safe_url_accepts_http(url):
     assert a3._safe_url(url) == url
 
 
-@pytest.mark.xfail(strict=True, reason="_safe_url does not escape quotes: attribute breakout")
 @pytest.mark.parametrize("url", ['https://x.example/a"onmouseover="alert(1)', "https://x.example/a'><script>"])
 def test_safe_url_result_cannot_break_out_of_attribute(url):
     out = a3._safe_url(url)
@@ -55,7 +54,6 @@ def test_article_card_blocks_javascript_url():
     assert "javascript:" not in html
 
 
-@pytest.mark.xfail(strict=True, reason="article url is interpolated into href unescaped")
 def test_article_card_url_cannot_break_out_of_href():
     html = a3.render_article_card(_article(url='https://x.example/a"onmouseover="alert(1)'))
     assert 'onmouseover="' not in html
@@ -66,7 +64,6 @@ def test_paper_card_escapes_text_fields():
     assert "<script" not in html and "<img src=x" not in html
 
 
-@pytest.mark.xfail(strict=True, reason="pdf url is interpolated into href unescaped")
 def test_paper_card_url_cannot_break_out_of_href():
     html = a3.render_paper_card(_paper(pdf_url='https://x.example/a"onmouseover="alert(1)'))
     assert 'onmouseover="' not in html

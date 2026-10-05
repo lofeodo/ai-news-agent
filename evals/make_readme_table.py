@@ -47,12 +47,13 @@ def render(doc):
             cells.append(f"{_pct(m)}, n={m['n']}" if m else "n/a")
         lines.append(f"| {label} | {cells[0]}, n={metrics[key]['n']} | {cells[1]} | {cells[2]} |")
 
+    lines.append("")
     for key, label in (("paired_graph_final_vs_single_pass", "Graph final vs single-pass"),
                        ("paired_review_effect", "Review vs graph first pass")):
         m = metrics.get(key)
         if m:
-            lines += ["", f"- **{label}** (paired, per article): {m['wins']} wins, {m['losses']} losses, "
-                          f"{m['ties']} ties out of {m['items']}."]
+            lines.append(f"- **{label}** (paired, per article): {m['wins']} wins, {m['losses']} losses, "
+                         f"{m['ties']} ties out of {m['items']}.")
     routed = metrics.get("share_routed_to_review")
     if routed:
         lines.append(f"- **Routed to review:** {_pct(routed)} of {routed['n']} labeled articles.")

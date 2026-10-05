@@ -33,9 +33,9 @@ Purpose: make Latent SpaceMail defensible in technical interviews for LLM system
 - [ ] Step 6: Online judge (calibrated weekly scoring and alerting)
 - [ ] Step 7: Click-through signal (SendGrid)
 - [ ] Step 8: Postmortems and runbook
-- [ ] Step 9: Results, README, CLAUDE.md, retire this doc
 - [ ] Optional A: Model card and privacy review (Law 25 / GDPR)
 - [ ] Optional B: Agent 2b verify loop (generate, verify, retry or fall back)
+- [ ] Step 9: Results, README, CLAUDE.md, retire this doc
 
 ## Workflow rules
 

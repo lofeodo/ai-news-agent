@@ -29,13 +29,14 @@ import anthropic
 import requests
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 logger = logging.getLogger(__name__)
 
 from auth_middleware import get_current_user
+from prompt_guard import GUARD_TOPIC_REFINE, neutralize_tags
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import GCP_PROJECT_ID, FIRESTORE_COLLECTION, SUBSCRIBERS_COLLECTION, MAX_SUBSCRIBERS
@@ -549,6 +550,15 @@ class CustomSectionItem(BaseModel):
     id:            Annotated[str, Field(max_length=64)]
     raw_input:     Annotated[str, Field(max_length=200)]
     refined_topic: Annotated[str, Field(max_length=200)]
+
+    @field_validator("raw_input", "refined_topic")
+    @classmethod
+    def _no_markup(cls, v: str) -> str:
+        # These strings are shown back to the user as section names. Titles never need angle brackets, and
+        # a client can post anything here without going through /auth/sections/refine.
+        if "<" in v or ">" in v:
+            raise ValueError("angle brackets are not allowed")
+        return v
 
 
 class SectionConfig(BaseModel):
@@ -1256,17 +1266,18 @@ async def auth_sections_refine(
         message = client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=50,
+            system=GUARD_TOPIC_REFINE,
             messages=[{
                 "role": "user",
                 "content": (
-                    f'A newsletter subscriber wants a custom section about: "{raw}"\n'
+                    f'A newsletter subscriber wants a custom section about: <topic>{neutralize_tags(raw)}</topic>\n'
                     "Return only a concise newsletter section title (4–8 words) that clearly captures "
                     "what they want covered — e.g. \"SpaceX product launches & mission updates\". "
                     "No explanation, just the title."
                 ),
             }],
         )
-        refined = message.content[0].text.strip().strip("\"'")
+        refined = re.sub(r"[<>]", "", message.content[0].text).strip().strip("\"'")
     except Exception:
         logger.exception("Refine endpoint error for user %s", user.get("uid"))
         raise HTTPException(status_code=503, detail="ai_unavailable")

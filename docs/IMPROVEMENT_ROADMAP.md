@@ -124,6 +124,18 @@ Code vs. roadmap: summaries have no stored source text (agent2b fetches live, ca
 
 Decisions: use `scipy` (Wilson) and `scikit-learn` (kappa) as dev-only dependencies rather than hand-rolled maths; article labels from the 2026-09-30 local run (agent3 prunes Firestore's `news_filtered` and the audit docs have no titles); news summaries from the existing local `data/news_summaries.json` (read-only, dated 2026-06-13) and papers from Firestore `pipeline_runs`; no LLM calls, so the run cost 0 USD.
 
+### Step 3 plan (branch `feat/review-eval`, approved)
+
+Code vs. roadmap: `build_graph` and `collect_and_categorize_single_pass()` start from a live fetch, but the seam for frozen inputs already exists: `agent1b_fetch_news.filter_and_categorize(articles, client, with_confidence)` and the injectable `build_review_graph(client, fetcher, cfg)`. The runner calls those directly on `evals/fixtures/articles_frozen.json`; no production code changes.
+
+Design:
+- `evals/review_eval.py` (pure, stub-tested): gold loading and join; Wilson-interval accuracy overall and per stratum for single_pass, graph first pass and graph final; calibration per confidence bucket with an explicit verdict if confidence does not predict errors; share routed to review, tool calls, extra tokens, cost and latency; paired wins and losses; one alternative routing signal only if confidence proves uninformative.
+- `evals/run_review_eval.py` (on demand, real API, `--dry-run`, guarded by `CostGuard`): categorizes all 500 frozen articles in production-sized batches so batch context matches, scores the 100 labeled ones, and runs the review loop for labeled articles below the confidence threshold with the production cap lifted. Categorization is re-run fresh so accuracy is not circular with the first-pass column the labeler saw. Fetched text is cached under gitignored `evals/fixtures/private/` so reruns are reproducible despite link rot.
+- `evals/make_readme_table.py`: regenerates a marked README block from the latest results file.
+- All default tests use stubs and need no network.
+
+Verification: pytest green; `--dry-run` prints the cost estimate; the paid run only after the owner approves the estimate. Intervals are wide at n=100 (n=40 low-confidence) and results are reported plainly, including a null result.
+
 ## Completed steps
 
 (Each completed step is described here, written on the step's own branch before its PR is declared ready.)

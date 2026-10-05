@@ -29,6 +29,7 @@ Purpose: make Latent SpaceMail defensible in technical interviews for LLM system
 - [x] Step 3: Review-step evaluation (single_pass vs graph)
 - [x] Step 4: Prompt-injection tests
 - [x] Step 5: Drift monitoring
+- [ ] Step 5b: Token and cost monitoring (LangSmith, weekly summary and drift alert)
 - [ ] Step 6: Online judge (calibrated weekly scoring and alerting)
 - [ ] Step 7: Click-through signal (SendGrid)
 - [ ] Step 8: Postmortems and runbook
@@ -73,6 +74,11 @@ Depends on: Step 2 (harness conventions).
 Goal: detect when the pipeline's behavior shifts, without needing labels.
 Scope: persist per-run distributions (Agent 1a rubric score distribution, Agent 1b confidence and category mix, review rate) in Firestore, ideally backfilled from existing run history. Add a drift test of this week against the prior 4 weeks (KS for scores, a suitable test for category mix). Acknowledge the small samples and weekly cadence, and choose thresholds that avoid false alarms. Surface results in the healthcheck's weekly email. A monitoring failure must never suppress the healthcheck heartbeat.
 Depends on: nothing from earlier steps except conventions.
+
+### Step 5b: Token and cost monitoring
+Goal: know what each weekly run costs, and notice when token use or cost drifts.
+Scope: use LangSmith as the source of per-run token counts and cost across the pipeline's Claude calls. Today LangSmith tracing is opt-in and covers agent1b only (project `latent-spacemail-prod`), and agent1b already stores a `token_usage` summary on the run doc, so the plan must decide whether to extend tracing to agents 1a, 2a, 2b, 3 and the subscriptions refine endpoint, or to persist per-agent usage in Firestore and use LangSmith for inspection, with reasoning. Add a token and cost summary (per agent and total, this week vs the prior weeks) to the healthcheck email, and a drift test on tokens and cost that reuses Step 5's drift helpers, thresholds approach and "a monitoring failure must never suppress the heartbeat" rule. Cost uses `evals/cost.py`'s price table, so the price source and its staleness are stated in the plan. Aggregate counts only: no article text, no subscriber data in traces or logs. If the healthcheck must call the LangSmith API, that adds a secret to the healthcheck service, which the plan must call out and get approved.
+Depends on: Step 5.
 
 ### Step 6: Online judge
 Goal: score the content readers actually see, weekly, with a validated judge.

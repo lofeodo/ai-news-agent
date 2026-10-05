@@ -4,8 +4,10 @@
 # Moved out of agent2b_summarize_news.py unchanged in behavior.
 
 import base64
+import ipaddress
 import os
 import re
+import socket
 import sys
 import threading
 from urllib.parse import urlparse
@@ -53,6 +55,34 @@ def _parse_github_repo(url: str) -> tuple[str, str] | None:
         return None
 
 
+def is_public_url(url: str) -> bool:
+    """False if the URL's host is, or resolves to, a loopback/private/link-local/reserved address.
+
+    The review loop fetches URLs the model picks, and article text can steer it (prompt injection), so
+    internal addresses (cloud metadata at 169.254.169.254, localhost, private ranges) must never be fetched.
+    A host that does not resolve is allowed: the fetch will simply fail. Limits: this checks the URL given,
+    not redirects or a DNS answer that changes between this check and the fetch.
+    """
+    try:
+        host = urlparse(url).hostname
+    except ValueError:
+        return False
+    if not host:
+        return False
+    host = host.rstrip(".").lower()
+    if host == "localhost" or host.endswith((".localhost", ".internal", ".local")):
+        return False
+    try:
+        addresses = {ai[4][0] for ai in socket.getaddrinfo(host, None)}
+    except (socket.gaierror, UnicodeError, OSError):
+        return True
+    for addr in addresses:
+        ip = ipaddress.ip_address(addr.split("%")[0])
+        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast or ip.is_unspecified:
+            return False
+    return True
+
+
 def _fetch_github_repo_text(url: str) -> str | None:
     """Fetch repo description + README via GitHub API (no auth needed for public repos)."""
     parsed = _parse_github_repo(url)
@@ -85,13 +115,15 @@ def _fetch_github_repo_text(url: str) -> str | None:
 def fetch_article_text_result(url: str, timeout: int = FETCH_TIMEOUT) -> tuple[str | None, str | None]:
     """Fetch article text. Returns (text, None) on success or (None, reason).
 
-    reason is one of: "invalid_url", "github_unavailable", "fetch_error",
+    reason is one of: "invalid_url", "blocked_url", "github_unavailable", "fetch_error",
     "empty", "too_short". Callers that only need the text use
     fetch_article_text(); the review loop uses the reason so the model can be
     told *why* there is no text.
     """
     if not url or not url.startswith(("https://", "http://")):
         return None, "invalid_url"
+    if not is_public_url(url):
+        return None, "blocked_url"
     if _parse_github_repo(url):
         text = _fetch_github_repo_text(url)
         return (text, None) if text else (None, "github_unavailable")

@@ -294,13 +294,19 @@
         row.draggable = true;
         row.dataset.index = i;
         row.dataset.name  = name;
+        // Static markup only; names go in via textContent/attributes so they can never be parsed as HTML.
         row.innerHTML = `
           <span class="drag-handle" aria-hidden="true">⠿</span>
-          <span class="section-row__name">${name}</span>
-          <label class="toggle-switch" aria-label="${name}">
-            <input type="checkbox" ${isOn ? 'checked' : ''} data-section="${name}" role="switch">
+          <span class="section-row__name"></span>
+          <label class="toggle-switch">
+            <input type="checkbox" role="switch">
             <span class="toggle-track"><span class="toggle-thumb"></span></span>
           </label>`;
+        row.querySelector('.section-row__name').textContent = name;
+        row.querySelector('.toggle-switch').setAttribute('aria-label', name);
+        const toggle = row.querySelector('input');
+        toggle.checked = isOn;
+        toggle.dataset.section = name;
         attachDragEvents(row, 'default');
         listEl.appendChild(row);
       }
@@ -321,10 +327,13 @@
         card.draggable   = true;
         card.dataset.index = i;
         card.dataset.id    = cs.id;
+        // refined_topic is user-supplied: text and attributes only, never innerHTML.
         card.innerHTML = `
           <span class="drag-handle" aria-hidden="true">⠿</span>
-          <span class="custom-section-card__name">${cs.refined_topic}</span>
-          <button type="button" class="custom-section-card__delete" aria-label="Remove ${cs.refined_topic}">✕</button>`;
+          <span class="custom-section-card__name"></span>
+          <button type="button" class="custom-section-card__delete">✕</button>`;
+        card.querySelector('.custom-section-card__name').textContent = cs.refined_topic;
+        card.querySelector('.custom-section-card__delete').setAttribute('aria-label', 'Remove ' + cs.refined_topic);
         card.querySelector('.custom-section-card__delete').addEventListener('click', () => {
           pendingCustom = pendingCustom.filter(c => c.id !== cs.id);
           renderCustomSections();

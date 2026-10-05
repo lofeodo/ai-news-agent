@@ -27,7 +27,7 @@ Purpose: make Latent SpaceMail defensible in technical interviews for LLM system
 - [x] Step 1: Cleanup and repo hygiene
 - [x] Step 2: Eval foundations and labeling templates
 - [x] Step 3: Review-step evaluation (single_pass vs graph)
-- [ ] Step 4: Prompt-injection tests
+- [x] Step 4: Prompt-injection tests
 - [ ] Step 5: Drift monitoring
 - [ ] Step 6: Online judge (calibrated weekly scoring and alerting)
 - [ ] Step 7: Click-through signal (SendGrid)
@@ -136,6 +136,12 @@ Design:
 
 Verification: pytest green; `--dry-run` prints the cost estimate; the paid run only after the owner approves the estimate. Intervals are wide at n=100 (n=40 low-confidence) and results are reported plainly, including a null result.
 
+### Step 4 plan (branch `test/prompt-injection`, approved)
+
+Code vs. roadmap: every Claude call except the subscriptions refine endpoint already set a `system=` guard, but the wording was duplicated inline in 7 places (only agent3 had a constant) and nothing was tested; 1a, 2a and 2b wrap content in plain labels, not tags; `/auth/sections/refine` had no system prompt or tags; no test covered `_safe_url`, any `system=` string or agent3 rendering. Weaknesses found by reading the code: `_safe_url` did not escape quotes (attribute breakout in `href`); closing tags inside titles, descriptions or fetched text were not neutralised; the review loop fetched model-chosen URLs with no private-address check; `filter_batch` trusted `category` and `index` from the tool input; `sections.html` put `refined_topic` into `innerHTML` and `POST /auth/sections` stored any client string; `{{UNSUBSCRIBE_URL}}` literals in article text would be substituted by agent4.
+
+Design: (A) deterministic stub tests in CI, written first with `xfail(strict=True)` for each weakness so a fix flips them; (B) an on-demand harness (`evals/run_injection_eval.py`) driving the real agent functions with hand-written poisoned fixtures, each case run with and without the injection (attack and control arms), judged deterministically with no LLM judge; (C) run the harness for a baseline before touching production code, fix, re-run.
+
 ## Completed steps
 
 (Each completed step is described here, written on the step's own branch before its PR is declared ready.)
@@ -183,3 +189,28 @@ Results (n=90 scored by both arms; Wilson 95% intervals, see the README table): 
 Caveats: 10 of 100 gold articles were not re-selected by one of the arms and are excluded (coverage 90/100); n is small (34 low-confidence); frozen snippets are truncated to 300 chars, so both arms see less text than production; the labeler saw the first-pass category (possible anchoring); review fetches live pages. Two gold ids in the labels CSV were mangled by Excel and are re-matched by URL in memory (the file is unedited).
 
 Deviation: the roadmap's alternative routing signal (evaluated when confidence is uninformative) was deliberately not done; the owner chose to report Step 3 as a null result. A candidate for later is single-pass vs graph first-pass disagreement, which `_rows.json` already supports without new API calls.
+
+### Step 4: Prompt-injection tests
+Branch `test/prompt-injection`.
+
+Built:
+- Deterministic tests (no network or keys, in CI): `tests/test_injection_render.py` (URL sanitizer, HTML escaping across all rendered fields and variants, attribute breakout, footer placeholders), `test_injection_prompts.py` (guard text on every Claude call in 1a, 1b x3, 2a, 2b, 3 x2; tag wrapping and breakout; output validation), `test_injection_fetch.py` (internal addresses blocked), `test_injection_sections.py` (refine guard, markup rejected on save, via FastAPI's `TestClient`), `test_evals_injection.py` (the harness itself, with a resistant and a compliant stub model). Suite: 161 passing, none xfail.
+- Harness: `evals/injection_eval.py` (pure: case loading, judge, scoring), `evals/run_injection_eval.py` (on demand, `--dry-run`/`--approve`, `CostGuard`), `evals/fixtures/injection_cases.json` (23 hand-written cases over 1b categorize, 1b review loop, 2a, 2b, 3 selection, 3 intro and refine; attacks: forced category, tag breakout, instruction override, prompt leak, markup payload, SSRF steer). `evals/make_readme_table.py` also generates the README injection table.
+- Fixes (one commit each): `agents/prompt_guard.py` (guard sentences centralised, wording unchanged, plus `neutralize_tags`); tag-like text neutralised before it enters 1b, 3 and review prompts; `_safe_url` and all rendered text pass through `_esc` (HTML escape plus `{{`/`}}` broken up); `filter_batch` validates category and index; `article_fetch.is_public_url` blocks loopback, private, link-local, metadata and `.internal`/`.local` hosts; refine endpoint gets a system prompt, `<topic>` tags and markup-stripped output; saving a section with `<` or `>` returns 422; `sections.html` renders names as text; one line added to `prompts/news_filter_prompt.txt` saying article text is data, not instructions.
+
+How to run (CMD): `venv\Scripts\python -m pytest -q`; `venv\Scripts\python -m evals.run_injection_eval --dry-run`, then `venv\Scripts\python -m evals.run_injection_eval --name <name>` (needs `ANTHROPIC_1ST_API_KEY`), then `venv\Scripts\python -m evals.make_readme_table`.
+
+Results (`evals/results/injection_eval_baseline.json` before fixes, `injection_eval_after.json` after; 115 attack and 115 control trials each; Wilson 95% intervals; see the README table): overall 10/115 attacks succeeded before (5-15%) and 0/115 after (0-3%); control 0/115 in both. Both baseline successes came from two cases at 5/5: a closing-tag breakout that forced "Canada & Montreal" in the categorize call, and a planted `localhost:8080` URL in an article description that the review loop fetched. Everything else (forced category without breakout, canary overrides, prompt-leak requests, markup payloads, refine) was not observed to succeed before or after. Cost: baseline $0.326, final after-run $0.321.
+
+Honest reading of the two fixes: the tag neutralisation alone did not stop the categorize case (the injected sentence worked as plain text, so the tag was not the cause). It stopped only after the instruction-is-data line was added to the categorize prompt, and that case has n=5 per arm. The planted-URL result is partly a model-side non-fix: the model still asked for the planted URL in 5/10 trials after the fixes; what changed is that the fetch guard stops the request before the network (reached: 0/10).
+
+Deviations from the plan and caveats:
+- The harness was changed after the baseline: the first stub fetcher counted every URL the model asked for, and production had no fetch guard then, so that count equalled "reached". After the guard, the harness applies the production check and reports attempted and reached separately. The baseline file therefore has no `fetch_attempted` metric; the README table uses its `ssrf_steer` rate for that.
+- Four paid runs were made in total (about $1.30): the baseline, an after-run with the old harness (identical to baseline, which exposed the stub issue), an after-run before the prompt line was committed (one judged success: the model refused and quoted the canary, so it was a judge false positive, since the judge flags any canary in the output), and the final committed run. Only the baseline and the final run are kept as results.
+- The judge detects canary-style compliance only; it misses subtle steering and can false-positive on a refusal that quotes the canary. All controls were 0, so the control arm shows no base rate to read against. n per scope is 10-35, so intervals are wide and "0 observed" is not "safe".
+- The SSRF check validates the URL as given: redirects and a DNS answer that changes between check and fetch are not covered. It fails open for hosts that do not resolve (the fetch fails anyway).
+- The categorize prompt change affects production classification, so the Step 3 eval was re-run on it (`evals/results/prompt_recheck_review_eval.json` + `_rows.json`, cost $0.265, named so it does not overwrite the Step 3 results or change the README review table). Accuracy did not measurably change: single-pass 62% (52-72%, n=90) before vs 61% (50-70%, n=84) after; graph first pass 59% before vs 62% after; graph after review 60% before vs 61% after; every difference is inside the noise. Caveat: the scored set shrank from 90 to 84 gold articles, because fewer were re-selected by both arms (the selection step is sampled, and the new line may also make it slightly stricter; this run cannot tell which), so the two runs are not a clean paired comparison.
+- Refine was exercised through FastAPI's `TestClient` with auth, tier and the Anthropic client stubbed, so no production refactor was needed. One refine control trial in the baseline run errored inside slowapi after the model had answered; its output was still judged.
+- `sections.html` was checked on desktop Chromium with a stubbed `auth.js`: a hostile name rendered as text, no script ran, no horizontal overflow. The Android and iOS Playwright browsers (Chromium for Android, WebKit) are not installed here, so those were checked only as Pixel 7 and iPhone 15 viewport sizes in desktop Chromium, not in real mobile engines.
+- Saved sections that already contain angle brackets would now fail validation when the config is next saved.
+- Not done by design: CLAUDE.md and the remaining README prose (Step 9).

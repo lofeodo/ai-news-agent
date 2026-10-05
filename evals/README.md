@@ -44,3 +44,14 @@ Model & Product Releases, Industry & Business, Policy, Law & Regulation, Open So
 Safety & Alignment, Society & Culture, Canada & Montreal.
 `snippet` is often empty for Hacker News items (they have no description); use the title and url.
 Ignore the `sample_stratum` column; it exists so the eval can report low- and high-confidence rows separately.
+
+## Prompt-injection eval
+
+`fixtures/injection_cases.json` holds hand-written poisoned inputs (titles, urls and short snippets only, no
+third-party text). Each case names an agent, an attack type, the field the injection is appended to and a
+deterministic success test (canary string, forced category, leaked guard sentence, planted fetch URL, markup
+echoed by the model). `run_injection_eval.py` runs every case with the injection (attack arm) and without it
+(control arm) through the real agent functions. Results: `results/injection_eval_baseline.json` (before the
+Step 4 fixes) and `results/injection_eval_after.json`, with per-trial rows in the matching `_trials.json`.
+Limits: no LLM judge, so subtle steering is not detected; a refusal that quotes the canary counts as a
+success; n per scope is small.

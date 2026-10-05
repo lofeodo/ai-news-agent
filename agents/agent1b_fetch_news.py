@@ -16,6 +16,7 @@ from filter_tool import CATEGORIES, FILTER_TOOL, FILTER_TOOL_WITH_CONFIDENCE, LA
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_XML_ARTICLES, neutralize_tags
+from drift import summarize_audit
 from config import (
     DATA_DIR, SCORING_MODEL, MAX_TOKENS, FILTER_MAX_TOKENS,
     NEWS_FETCH_SIZE, NEWSAPI_QUERIES,
@@ -519,6 +520,7 @@ def _write_review_audit(run_id: str, state: dict) -> None:
             "recategorized":    sum(1 for r in audit if r["final_category"] != r["first_pass_category"]),
             "tool_calls":       state.get("tool_call_counts", {}),
             "token_usage":      state.get("token_usage", {}),
+            **summarize_audit(audit),
         }
         os.makedirs(DATA_DIR, exist_ok=True)
         path = os.path.join(DATA_DIR, "agent1b_review_log.json")

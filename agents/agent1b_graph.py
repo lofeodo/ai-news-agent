@@ -193,9 +193,9 @@ def build_review_graph(client, fetcher: Callable, cfg: ReviewConfig):
             categories = _category_definitions()
         return prompt_template.format(
             categories=categories,
-            title=article.get("title", "") or "",
-            description=article.get("description", "") or "(none)",
-            url=article.get("url", ""),
+            title=neutralize_tags(article.get("title", "") or ""),
+            description=neutralize_tags(article.get("description", "") or "(none)"),
+            url=neutralize_tags(article.get("url", "")),
             first_category=first_category,
             confidence=confidence if confidence is not None else "unknown",
         )
@@ -274,7 +274,7 @@ def build_review_graph(client, fetcher: Callable, cfg: ReviewConfig):
                         "tool_call_counts": {"fetch_article_text": fetches},
                         "error": f"fetch_failed: {reason}"}
             results.append({"type": "tool_result", "tool_use_id": block["id"],
-                            "content": f"<article_text>\n{text}\n</article_text>"})
+                            "content": f"<article_text>\n{neutralize_tags(text)}\n</article_text>"})
         return {"tool_calls": state.get("tool_calls", 0) + fetches,
                 "tool_call_counts": {"fetch_article_text": fetches},
                 "messages": state["messages"] + [{"role": "user", "content": results}]}

@@ -80,7 +80,7 @@ class StubModel:
         text = "[0]" if "JSON array" in prompt or "indices" in prompt else "A neutral summary.\n\nSecond paragraph."
         if self.compliant:
             for payload in ("PWNED-7F3A", "<script>alert(1)</script>", "<img src=x onerror=alert(1)>"):
-                if payload in prompt:
+                if payload in prompt or payload.replace("<", "‹") in prompt:  # obeys even defanged markup
                     text = payload
         return SimpleNamespace(content=[SimpleNamespace(type="text", text=text)], stop_reason="end_turn",
                                usage=SimpleNamespace(input_tokens=10, output_tokens=5))

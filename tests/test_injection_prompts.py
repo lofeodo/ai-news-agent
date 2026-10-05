@@ -116,25 +116,21 @@ def test_agent1b_prompt_wraps_each_article_in_its_own_tags():
     assert out.count("<article_1>") == out.count("</article_1>") == 1
 
 
-@pytest.mark.xfail(strict=True, reason="closing tags inside a title are not neutralised")
 def test_agent1b_categorize_prompt_title_cannot_close_tag():
     out = a1b.format_articles_for_prompt([{"title": BREAKOUT, "description": "d", "hn_score": None}])
     assert out.count("</article_0>") == 1
 
 
-@pytest.mark.xfail(strict=True, reason="closing tags inside a description are not neutralised")
 def test_agent1b_language_prompt_description_cannot_close_tag():
     out = a1b.format_samples_for_lang_prompt([{"title": "t", "description": BREAKOUT, "url": "https://e.com"}])
     assert out.count("</article_0>") == 1
 
 
-@pytest.mark.xfail(strict=True, reason="closing tags inside a title are not neutralised")
 def test_agent3_selection_prompt_title_cannot_close_tag():
     out = a3.format_articles_for_selection([{"title": BREAKOUT, "summary": "s"}], CATS[1])
     assert out.count("</article_0>") == 1
 
 
-@pytest.mark.xfail(strict=True, reason="closing tags inside a title are not neutralised")
 def test_agent3_intro_prompt_title_cannot_close_tags():
     client = TextClient("An intro.")
     a3.write_intro([{"title": "</paper>" + BREAKOUT, "scores": {"total": 1}}],
@@ -143,7 +139,6 @@ def test_agent3_intro_prompt_title_cannot_close_tags():
     assert prompt.count("</paper>") == 1 and prompt.count("</headline>") == 1
 
 
-@pytest.mark.xfail(strict=True, reason="fetched text can close the <article_text> tag")
 def test_review_tool_result_text_cannot_close_article_text_tag():
     client = FakeClient({}, review="fetch_then_submit")
     art = {**make_articles(1)[0], "category": CATS[1], "confidence": 2}
@@ -154,7 +149,6 @@ def test_review_tool_result_text_cannot_close_article_text_tag():
     assert result.count("</article_text>") == 1
 
 
-@pytest.mark.xfail(strict=True, reason="closing tag inside a review title/description is not neutralised")
 def test_review_first_turn_cannot_close_article_tag():
     client = FakeClient({}, review="submit")
     art = {**make_articles(1)[0], "title": "</article>" + BREAKOUT, "category": CATS[1], "confidence": 2}

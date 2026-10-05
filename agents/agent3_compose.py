@@ -125,9 +125,9 @@ def format_articles_for_selection(articles: list, category: str = "") -> str:
         fallback_note = " [summary from description only]" if a.get("used_fallback") else ""
         lines.append(
             f"<article_{i}>\n"
-            f"[{i}] {tag}{a.get('title', 'No title')}\n"
+            f"[{i}] {tag}{neutralize_tags(a.get('title', 'No title'))}\n"
             f"    {hn}{fallback_note}\n"
-            f"    Summary: {(a.get('summary') or a.get('description') or '')[:300]}\n"
+            f"    Summary: {neutralize_tags((a.get('summary') or a.get('description') or '')[:300])}\n"
             f"</article_{i}>"
         )
     return "\n\n".join(lines)
@@ -207,7 +207,7 @@ def write_intro(
     client: anthropic.Anthropic,
 ) -> str:
     paper_lines = "\n".join(
-        f"<paper>- {p['title']} (score: {(p.get('scores') or {}).get('total', 0)}/28)</paper>"
+        f"<paper>- {neutralize_tags(p['title'])} (score: {(p.get('scores') or {}).get('total', 0)}/28)</paper>"
         for p in papers
     )
 
@@ -218,7 +218,7 @@ def write_intro(
         for a in arts[:2]:
             hn = a.get("hn_score")
             hn_str = f" [HN:{hn}]" if hn is not None else ""
-            all_headlines.append((hn or -1, f"<headline>- [{cat}]{hn_str} {a.get('title', '')}</headline>"))
+            all_headlines.append((hn or -1, f"<headline>- [{cat}]{hn_str} {neutralize_tags(a.get('title', ''))}</headline>"))
     all_headlines.sort(key=lambda x: x[0], reverse=True)
     headline_lines = [line for _, line in all_headlines]
 

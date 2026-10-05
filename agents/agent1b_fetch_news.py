@@ -272,14 +272,14 @@ def format_samples_for_lang_prompt(articles: list) -> str:
         lines = [
             f"[{i}]",
             f"Domain: {urlparse(article.get('url', '')).hostname or 'unknown'}",
-            f"Title: {article.get('title', '') or ''}",
+            f"Title: {neutralize_tags(article.get('title', '') or '')}",
         ]
         desc    = _first_words(article.get("description", ""), LANG_DESC_WORDS)
         excerpt = _first_words(article.get("_lang_excerpt", ""), LANG_EXCERPT_WORDS)
         if desc:
-            lines.append(f"Description: {desc}")
+            lines.append(f"Description: {neutralize_tags(desc)}")
         if excerpt:
-            lines.append(f"Excerpt: {excerpt}")
+            lines.append(f"Excerpt: {neutralize_tags(excerpt)}")
         blocks.append(f"<article_{i}>\n" + "\n".join(lines) + f"\n</article_{i}>")
     return "\n".join(blocks)
 
@@ -367,8 +367,8 @@ FILTER_BATCH_SIZE = 100
 def format_articles_for_prompt(articles: list) -> str:
     lines = []
     for i, article in enumerate(articles):
-        title = article["title"] or "(no title)"
-        desc  = article["description"] or "(no description)"
+        title = neutralize_tags(article["title"] or "(no title)")
+        desc  = neutralize_tags(article["description"] or "(no description)")
         hn    = f" [HN: {article['hn_score']} points]" if article.get("hn_score") is not None else ""
         lines.append(f"<article_{i}>\n[{i}]{hn} {title}\n    {desc}\n</article_{i}>")
     return "\n\n".join(lines)

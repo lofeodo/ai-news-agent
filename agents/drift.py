@@ -204,3 +204,33 @@ def evaluate_usage(current: dict, baseline_usages: list[dict], *, min_runs: int,
             results.append(usage_ratio_test(f"{agent} tokens", a["tokens"], prior, min_ratio, min_tokens))
     status = "drift" if any(r["status"] == "drift" for r in results) else "ok"
     return {"status": status, "baseline_runs": len(baseline_usages), "results": results}
+
+
+# --- Summary faithfulness (online judge) ----------------------------------------------------
+
+def judge_unsupported_test(cur_bad: int, cur_n: int, base_bad: int, base_n: int,
+                           p_threshold: float, min_shift: float) -> dict:
+    """Share of judged summaries flagged unsupported: Fisher exact, this week vs pooled baseline.
+
+    Weekly samples are about a dozen items, so only a large jump can be significant: a tripwire.
+    """
+    from scipy.stats import fisher_exact
+
+    if cur_n == 0 or base_n == 0:
+        return {"metric": "unsupported_rate", "status": "insufficient_data", "n_current": cur_n, "n_baseline": base_n}
+    p = float(fisher_exact([[cur_bad, cur_n - cur_bad], [base_bad, base_n - base_bad]])[1])
+    rc, rb = cur_bad / cur_n, base_bad / base_n
+    return {"metric": "unsupported_rate", "status": "drift" if p < p_threshold and rc - rb >= min_shift else "ok",
+            "p_value": p, "n_current": cur_n, "n_baseline": base_n, "rate_current": rc, "rate_baseline": rb}
+
+
+def evaluate_judge(current: dict, baseline_runs: list[dict], *, min_runs: int, p_threshold: float,
+                   min_shift: float) -> dict:
+    """Each run dict is a `judge_results` dict (`judged`, `unsupported`); runs without a verdict are skipped."""
+    baseline_runs = [b for b in baseline_runs if b.get("judged")]
+    if len(baseline_runs) < min_runs:
+        return {"status": "insufficient_history", "baseline_runs": len(baseline_runs), "results": []}
+    r = judge_unsupported_test(current.get("unsupported", 0), current.get("judged", 0),
+                               sum(b.get("unsupported", 0) for b in baseline_runs),
+                               sum(b.get("judged", 0) for b in baseline_runs), p_threshold, min_shift)
+    return {"status": "drift" if r["status"] == "drift" else "ok", "baseline_runs": len(baseline_runs), "results": [r]}

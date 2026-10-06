@@ -22,11 +22,8 @@ def test_parse_label_variants_and_errors():
 
 def test_load_gold_parses_labels_and_blanks(tmp_path):
     f = tmp_path / "labels.csv"
-    f.write_text("id,source_kind,supported
-a,full_text,yes
-b,full_text,No
-c,description,
-", encoding="utf-8")
+    rows = ["id,source_kind,supported", "a,full_text,yes", "b,full_text,No", "c,description,"]
+    f.write_text(chr(10).join(rows) + chr(10), encoding="utf-8")
     assert [r["gold"] for r in je.load_gold(f)] == [True, False, None]
 
 

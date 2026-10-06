@@ -150,3 +150,6 @@ SENDGRID_WEBHOOK_TOLERANCE_SECONDS = 600
 # filter only: corporate scanners also use ordinary browser agents, which is what the early-click bucket is for.
 CLICK_BOT_UA_MARKERS = ("bot", "spider", "crawler", "scanner", "preview", "proofpoint", "barracuda",
                         "mimecast", "safelinks", "python-requests", "curl/", "wget", "headlesschrome")
+# Clicks within this many seconds of agent4 starting its send are counted separately ("early"): mail
+# security scanners prefetch every link at delivery time, long before a person reads the email.
+CLICK_EARLY_SECONDS = 300

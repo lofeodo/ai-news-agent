@@ -189,6 +189,59 @@ def _usage_section(db, run_id: str, doc: dict) -> str:
         return f"Usage check: failed ({type(e).__name__}: {e}). This does not affect the pipeline status above."
 
 
+def _format_judge(res: dict, result: dict | None) -> str:
+    lines = [f"Summary faithfulness (judge {res.get('model')}, estimated ${res.get('estimated_usd', 0):.2f}, "
+             f"spent ${res.get('cost_usd', 0):.2f}):"]
+    if res.get("skipped") == "cost_cap":
+        lines.append(f"  - skipped: estimated cost ${res.get('estimated_usd', 0):.2f} is over the ${res.get('cap_usd', 0):.2f} weekly cap.")
+        return "\n".join(lines)
+    n = res.get("judged", 0)
+    if n == 0:
+        lines.append(f"  - nothing judged ({res.get('no_source', 0)} without stored source, {res.get('errors', 0)} errors).")
+        return "\n".join(lines)
+    lines.append(f"  - unsupported: {res['unsupported']}/{n} = {res['unsupported'] / n:.0%} "
+                 f"(95% CI {res['unsupported_ci_low']:.0%}-{res['unsupported_ci_high']:.0%}; "
+                 f"{res.get('no_source', 0)} no source, {res.get('errors', 0)} errors)")
+    if result is None or result["status"] == "insufficient_history":
+        lines.append(f"  - drift: not enough history yet ({(result or {}).get('baseline_runs', 0)} prior judged runs).")
+    else:
+        r = result["results"][0]
+        verdict = "DRIFT" if result["status"] == "drift" else "no drift"
+        if r["status"] == "insufficient_data":
+            verdict = "not enough data"
+        else:
+            verdict += f" ({r['rate_current']:.0%} vs {r['rate_baseline']:.0%} over {result['baseline_runs']} prior runs)"
+        lines.append(f"  - drift: {verdict}")
+    mode = "alerting on" if config.JUDGE_ALERTING_ENABLED else "informational until calibrated against human labels"
+    lines.append(f"  ({mode}. Small weekly sample: a flag means look, not broken. Same-family judge.)")
+    return "\n".join(lines)
+
+
+def _judge_section(db, run_id: str, doc: dict) -> tuple[str, bool]:
+    """Weekly summary-faithfulness report. Returns (text, flagged). Never raises: a failure here
+    must not suppress the heartbeat or change the pipeline's health status."""
+    try:
+        import drift
+        import drift_history
+        import online_judge
+        import tracing
+
+        if not os.environ.get("ANTHROPIC_1ST_API_KEY"):
+            return "Summary faithfulness: skipped (ANTHROPIC_1ST_API_KEY is not set on the healthcheck service).", False
+        res = online_judge.judge_run(db, tracing.make_client("judge", run_id), run_id, doc)
+        prior = [(d or {}).get("judge_results") or {} for _, d in
+                 drift_history.recent_runs(db, run_id, config.DRIFT_BASELINE_RUNS)]
+        result = None
+        if res.get("judged"):
+            result = drift.evaluate_judge(res, prior, min_runs=config.DRIFT_MIN_BASELINE_RUNS,
+                                          p_threshold=config.DRIFT_P_THRESHOLD,
+                                          min_shift=config.JUDGE_MIN_UNSUPPORTED_SHIFT)
+        return _format_judge(res, result), bool(result and result["status"] == "drift")
+    except Exception as e:
+        print(f"[healthcheck]  judge failed (ignored): {e}", flush=True)
+        return f"Summary faithfulness: failed ({type(e).__name__}: {e}). This does not affect the pipeline status above.", False
+
+
 def _notify(message: str, healthy: bool) -> None:
     """Best-effort single email to ALERT_EMAIL, sent every run. Never touches subscriber-facing code."""
     if not ALERT_EMAIL:
@@ -260,7 +313,11 @@ def _run(run_id: str) -> None:
             return
 
     problems = _diagnose(doc)
-    drift_text = f"{_drift_section(db, checked_run_id, doc)}\n\n{_usage_section(db, checked_run_id, doc)}"
+    judge_text, judge_flagged = _judge_section(db, checked_run_id, doc)
+    if judge_flagged and config.JUDGE_ALERTING_ENABLED:
+        problems.append("summary faithfulness dropped versus the prior weeks (see the judge section below)")
+    drift_text = (f"{_drift_section(db, checked_run_id, doc)}\n\n{_usage_section(db, checked_run_id, doc)}"
+                  f"\n\n{judge_text}")
 
     if not problems:
         print(f"[healthcheck]  run_id={checked_run_id} looks healthy.", flush=True)

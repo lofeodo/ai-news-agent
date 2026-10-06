@@ -20,8 +20,14 @@ def test_parse_label_variants_and_errors():
         je.parse_label("maybe")
 
 
-def test_load_gold_reads_template_blank_by_default():
-    assert all(r["gold"] is None for r in je.load_gold())
+def test_load_gold_parses_labels_and_blanks(tmp_path):
+    f = tmp_path / "labels.csv"
+    f.write_text("id,source_kind,supported
+a,full_text,yes
+b,full_text,No
+c,description,
+", encoding="utf-8")
+    assert [r["gold"] for r in je.load_gold(f)] == [True, False, None]
 
 
 def test_perfect_agreement():

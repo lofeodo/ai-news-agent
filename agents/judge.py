@@ -21,7 +21,7 @@ VERDICT_TOOL = {
     "input_schema": {
         "type": "object",
         "properties": {
-            "supported": {"type": "boolean", "description": "True only if every claim is supported by the source."},
+            "supported": {"type": "boolean", "description": "True if every factual claim is supported and no significance sentence adds an unsupported specific."},
             "unsupported_claims": {"type": "array", "items": {"type": "string"}},
         },
         "required": ["supported", "unsupported_claims"],

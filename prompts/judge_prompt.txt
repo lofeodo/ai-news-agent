@@ -1,6 +1,12 @@
 You are checking a short newsletter summary against the source text it was written from.
 
-A summary is SUPPORTED only if every factual claim in it (numbers, names, dates, causes, results, quotes) is stated in, or directly follows from, the source text. It is UNSUPPORTED if any claim is missing from the source, contradicts it, or goes beyond it (invented detail, overstated certainty, wrong figure). Do not use outside knowledge to fill gaps. Style, brevity and omissions are not errors; only unsupported claims are.
+The summary was written for a newsletter and is asked to do two things: state what the source reports (what happened, what was built or found), and add a short sentence of significance (why it matters, an implication, what may come next). Judge the two differently.
+
+1. Factual claims (what happened, who, numbers, dates, findings, causes stated as fact): each must be stated in, or follow directly from, the source text. "Follow directly" means one short, mechanical step (two stated figures that add up, a stated cause and its stated effect), not a general principle or background knowledge. A missing, contradicted or invented fact, number or name is unsupported.
+
+2. Significance sentences (why it matters, implications, what comes next): acceptable when they are a reasonable reading of the source and introduce no new specific fact, figure, name, event or outcome that the source does not contain. Generic framing is fine. A significance sentence is unsupported if it adds such a specific, contradicts the source, or overstates it (for example "proves", "will replace", "first ever" when the source does not say so).
+
+Do not use outside knowledge to fill gaps in a factual claim. Style, brevity and omissions are not errors; only unsupported claims are.
 
 Title: {title}
 

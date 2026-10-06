@@ -188,3 +188,30 @@ def test_agent2b_counter_increments_once_even_if_the_agent_is_retried(monkeypatc
 def test_agent2b_counter_reaches_two_when_agent2a_already_counted(monkeypatch):
     _counter(monkeypatch, {"agent2_completions": 1})
     assert a2b.increment_and_check("R1") is True
+
+
+# --- run doc size (Firestore 1 MiB cap, 2026-09-28) -------------------------------------------------
+
+def test_agent3_run_doc_update_stays_under_the_firestore_cap_and_keeps_health_check_fields():
+    import json
+    import agent3_compose as a3
+
+    cats = a3.NEWS_CATEGORIES
+    # ~500 articles with ~1.7 KB each (the size the 2026-09-28 run had), and four ~105 KB variants.
+    by_category = {c: [{"url": f"https://n.example/{c}/{i}", "title": "t" * 100, "summary": "s" * 1600}
+                       for i in range(500 // len(cats) + 1)] for c in cats}
+    selected_all = {c: by_category[c][:4] for c in cats}
+    selected_en = {c: by_category[c][2:6] for c in cats}  # overlaps selected_all by 2 per category
+    variants = {k: "<p>" + "x" * 105_000 + "</p>" for k in ("0_0", "1_0", "0_1", "1_1")}
+
+    unpruned = {"news_summaries": by_category, "news_filtered": by_category, "newsletter_variants": variants}
+    assert len(json.dumps(unpruned)) > 1_048_576  # the test data really reproduces the failure
+
+    update = a3.build_run_doc_update(variants, "Subject", selected_all, selected_en, by_category)
+    assert len(json.dumps(update)) < 1_048_576
+    assert update["newsletter_composed"] is True and update["newsletter_html"] == variants["0_0"]
+    assert update["news_summaries"] and update["news_filtered"]  # the health check tests these for presence
+    for arts in update["news_summaries"].values():  # shipped only, no duplicate across the two passes
+        urls = [a["url"] for a in arts]
+        assert len(urls) == len(set(urls)) == 6
+    assert update["news_filtered"]["article_counts"] == {c: len(a) for c, a in by_category.items()}

@@ -125,7 +125,7 @@ Both are deployed (2026-10-06) but have not yet run on a real weekly run; see "W
 
 ### Incidents and Operations
 
-Past incidents are written up in `docs/postmortems/` (index in its README). `docs/runbook.md` covers reading the health check email, re-running a stage, rollback switches and key rotation. Read the runbook before re-running agent 2a or 2b on an existing run: it can start agent 3 a second time.
+Past incidents are written up in `docs/postmortems/` (index in its README). `docs/runbook.md` covers reading the health check email, re-running a stage, rollback switches and key rotation.
 
 ### Subscription Service
 

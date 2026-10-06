@@ -52,7 +52,6 @@ Invoke-RestMethod -Method Post -Uri $url -Headers @{Authorization="Bearer $tok"}
 
 Rules of thumb (from the code, not from a test run):
 - Services: `agent1a`, `agent1b`, `agent2a`, `agent2b`, `agent3`, `agent4`, `orchestrator`, `healthcheck`.
-- agent 2a and 2b each increment `agent2_completions`, and whichever sees a count of 2 or more publishes `content-summarized`, which starts agent 3. agent 2b's increment is idempotent (`agent2b_counted`) but returns the existing count, so re-running 2b on a run whose count is already 2 still returns true and publishes again. agent 2a has no guard at all: a re-run raises the count to 3 and also publishes. Re-running either one after the run has passed this point therefore starts agent 3 a second time (read from `increment_and_check` in both files, not exercised). If agent 3 already succeeded, re-run agent 3 only, and only if needed.
 - To re-run agent 3 or later on an existing run, the earlier stages' outputs must already be on the run doc.
 - agent 4 selects its own newsletter (the newest `newsletter_composed` run) and takes no run id. It refuses anything older than 24 hours, so a re-send is only possible within a day of agent 3 finishing, and a refusal writes an error onto that run's doc. Do not trigger `agent4-test` between runs.
 - Test sends: `TEST_SEND_TO` on the service skips the subscriber list.

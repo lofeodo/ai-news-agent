@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_NEWS_SUMMARY
+import summary_sources
 import tracing
 from config import (
     DATA_DIR, SCORING_MODEL, NEWS_SUMMARY_MAX_TOKENS,
@@ -73,7 +74,9 @@ def summarize_article(article: dict, text: str | None, prompt_template: str, fal
         summary = response.content[0].text.strip()
         if summary.upper() == "SKIP":
             return {**article, "summary": None, "used_fallback": used_fallback, "summary_error": "no_content"}
-        return {**article, "summary": summary, "used_fallback": used_fallback, "summary_error": None}
+        # `_source` is popped by run() before anything is stored on the run doc.
+        return {**article, "summary": summary, "used_fallback": used_fallback, "summary_error": None,
+                "_source": description if used_fallback else text}
     except Exception as e:
         return {**article, "summary": None, "used_fallback": used_fallback, "summary_error": str(e)}
 
@@ -178,6 +181,7 @@ def run(run_id: str):
         tasks  = [(client, article, prompt_template, fallback_template, quebec_style) for article in all_articles]
 
         results_by_url: dict[str, dict] = {}
+        sources: list[dict] = []
         done = 0
 
         with ThreadPoolExecutor(max_workers=MAX_FETCH_WORKERS) as executor:
@@ -185,6 +189,10 @@ def run(run_id: str):
             for future in as_completed(future_to_article):
                 result = future.result()
                 url    = result.get("url", "")
+                src    = result.pop("_source", None)
+                if src:
+                    sources.append({"ident": url, "title": result.get("title", ""), "text": src,
+                                    "used_fallback": result.get("used_fallback")})
                 results_by_url[url] = result
                 done += 1
                 if done % 50 == 0 or done == len(tasks):
@@ -221,6 +229,8 @@ def run(run_id: str):
                 "news_summaries": summarized_by_category
             })
             print(f"[agent2b]  Saved news_summaries to Firestore (run_id={run_id})")
+            n_src = summary_sources.save_sources(_fs.Client(project=GCP_PROJECT_ID), run_id, "news", sources)
+            print(f"[agent2b]  Saved {n_src} summary sources for the judge")
         else:
             os.makedirs(DATA_DIR, exist_ok=True)
             out_path = os.path.join(DATA_DIR, "news_summaries.json")

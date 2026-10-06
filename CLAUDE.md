@@ -123,6 +123,10 @@ Both are deployed (2026-10-06) but have not yet run on a real weekly run; see "W
 - **Click signal.** With `CLICK_TRACKING=true`, agent4 stores `click_links/{run_id}` (the shipped articles, built from the run doc by `agents/click_links.py`) and sends each email with SendGrid click tracking on and `custom_args {run_id}` (never a subscriber id). SendGrid's signed Event Webhook posts to `POST /sendgrid/events` on agent-subscriptions: `agents/sendgrid_webhook.py` verifies the ECDSA signature on the raw body before parsing, then reduces each click event to run id, URL, timestamp and a bot flag, dropping email, IP, user agent and message ids (they must never be logged or stored). `agents/click_counts.py` increments `click_counts/{run_id}` buckets `clicks`, `early` (first 5 minutes after the send starts, mail scanners) and `bots`. The healthcheck email has an informational "Reader clicks" section (`agents/click_report.py`). Counts are rough: under 50 readers, not unique per reader, scanner noise. The rollback is `CLICK_TRACKING=false` on agent4.
 - **agent4 refuses newsletters older than 24h** (`StaleNewsletterError`), so a test send is only possible shortly after a pipeline run, and a refusal writes an error onto that run's doc. Don't trigger `agent4-test` between runs.
 
+### Incidents and Operations
+
+Past incidents are written up in `docs/postmortems/` (index in its README). `docs/runbook.md` covers reading the health check email, re-running a stage, rollback switches and key rotation.
+
 ### Subscription Service
 
 `agents/agent_subscriptions.py` is a standalone FastAPI app (no `run(run_id)` function). Deployed as a separate Cloud Run service. Firestore collection: `subscribers`.

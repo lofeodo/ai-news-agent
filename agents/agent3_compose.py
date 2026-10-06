@@ -630,6 +630,38 @@ def compose_html(
 # Main
 # ---------------------------------------------------------------------------
 
+def build_run_doc_update(newsletter_variants: dict, subject: str, selected_all: dict,
+                         selected_en: dict, by_category: dict) -> dict:
+    """Fields agent3 writes to the run doc when it finishes.
+
+    The doc must stay under Firestore's 1 MiB cap, and the full article pools
+    (~850 KB at ~500 articles) plus the variants (~420 KB) don't fit (2026-09-28).
+    Nothing reads the pools after this point, so shrink them in the same write:
+    news_summaries keeps only what shipped, news_filtered becomes counts.
+    Both must stay truthy: agent_healthcheck checks them for presence.
+    """
+    shipped_by_category = {}
+    for category in NEWS_CATEGORIES:
+        seen, shipped = set(), []
+        for a in selected_all.get(category, []) + selected_en.get(category, []):
+            if a.get("url") not in seen:
+                seen.add(a.get("url"))
+                shipped.append(a)
+        if shipped:
+            shipped_by_category[category] = shipped
+    return {
+        "newsletter_variants":  newsletter_variants,
+        "newsletter_html":      newsletter_variants["0_0"],
+        "newsletter_subject":   subject,
+        "newsletter_composed":  True,
+        "news_summaries":       shipped_by_category,
+        "news_filtered":        {
+            "pruned_by_agent3": True,
+            "article_counts":   {cat: len(arts) for cat, arts in by_category.items()},
+        },
+    }
+
+
 def _record_failure(run_id: str, agent_name: str, error: Exception) -> None:
     """Best-effort write of a top-level run failure to Firestore, for health checks."""
     if not USE_FIRESTORE:
@@ -744,31 +776,11 @@ def run(run_id: str):
 
         if USE_FIRESTORE:
             from google.cloud import firestore as _fs
-            # The run doc must stay under Firestore's 1 MiB cap, and the full article
-            # pools (~850 KB at ~500 articles) plus the variants (~420 KB) don't fit.
-            # Nothing reads the pools after this point, so shrink them in the same write:
-            # news_summaries keeps only what shipped, news_filtered becomes counts.
-            # Both must stay truthy — agent_healthcheck checks them for presence.
-            shipped_by_category = {}
-            for category in NEWS_CATEGORIES:
-                seen, shipped = set(), []
-                for a in selected_all.get(category, []) + selected_en.get(category, []):
-                    if a.get("url") not in seen:
-                        seen.add(a.get("url"))
-                        shipped.append(a)
-                if shipped:
-                    shipped_by_category[category] = shipped
-            _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).update({
-                "newsletter_variants":  newsletter_variants,
-                "newsletter_html":      newsletter_variants["0_0"],
-                "newsletter_subject":   f"{NEWSLETTER_NAME} — {week_of}",
-                "newsletter_composed":  True,
-                "news_summaries":       shipped_by_category,
-                "news_filtered":        {
-                    "pruned_by_agent3": True,
-                    "article_counts":   {cat: len(arts) for cat, arts in by_category.items()},
-                },
-            })
+            # The run doc must stay under Firestore's 1 MiB cap; see build_run_doc_update().
+            _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).update(
+                build_run_doc_update(newsletter_variants, f"{NEWSLETTER_NAME} — {week_of}",
+                                     selected_all, selected_en, by_category)
+            )
             print(f"  Written newsletter_variants + newsletter_html (0_0) to Firestore; pruned article pools")
 
         elapsed = (datetime.now() - start_time).total_seconds()

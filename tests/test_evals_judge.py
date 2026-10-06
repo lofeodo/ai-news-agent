@@ -100,6 +100,9 @@ def test_runner_scores_stub_judge(tmp_path, monkeypatch):
     assert details[1]["n_claims"] == 1
 
 
-def test_runner_refuses_real_run_with_unlabeled_rows(capsys):
+def test_runner_refuses_real_run_with_unlabeled_rows(capsys, monkeypatch):
+    # Never read the live label file here: once it is fully labeled, main() would call the real API.
+    monkeypatch.setattr(je, "load_gold", lambda: [{"id": "a", "gold": None, "source_text_ref": "x"}])
+    monkeypatch.setattr(rjc.judge_eval, "load_gold", lambda: [{"id": "a", "gold": None, "source_text_ref": "x"}])
     assert rjc.main([]) == 1
     assert "no `supported` label" in capsys.readouterr().out

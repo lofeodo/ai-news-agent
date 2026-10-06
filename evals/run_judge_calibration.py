@@ -96,6 +96,9 @@ def main(argv=None):
     import anthropic
     client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
     verdicts, details, usage = run_calibration(labeled, client)
+    errors = [d for d in details if d["error"]]
+    if errors:
+        print(f"{len(errors)} of {len(details)} judge calls errored; first: {errors[0]['error'][:300]}")
     metrics, detail = judge_eval.score(labeled, verdicts)
     actual = cost.estimate_cost(usage["input"], usage["output"], model=config.JUDGE_MODEL)
     reading = " ".join(judge_eval.verdict_lines(metrics, detail))

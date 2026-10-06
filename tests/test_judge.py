@@ -35,13 +35,14 @@ def test_unsupported_claims_returned():
     assert r["supported"] is False and r["unsupported_claims"] == ["revenue rose 40%"]
 
 
-def test_uses_configured_model_guard_and_forced_tool():
+def test_uses_configured_model_guard_and_auto_tool_choice():
     c = Stub([verdict(True)])
     judge.judge_summary(c, "T", "src", "sum")
     call = c.calls[0]
     assert call["model"] == JUDGE_MODEL
     assert "untrusted" in call["system"].lower()
-    assert call["tool_choice"] == {"type": "tool", "name": "record_verdict"}
+    # claude-sonnet-5-5 returns a 400 for tool_choice types "tool" and "any"; only auto is allowed.
+    assert call["tool_choice"] == {"type": "auto"}
 
 
 @pytest.mark.parametrize("blocks", [
@@ -72,3 +73,17 @@ def test_source_truncated_to_word_limit():
 def test_judge_model_has_a_registered_price():
     from pricing import estimate_cost
     assert estimate_cost(1_000_000, 1_000_000, model=JUDGE_MODEL) == 12.0
+
+
+def test_max_tokens_stop_is_an_error_even_with_a_verdict_block():
+    c = Stub([verdict(False)])
+    c.stop_reason = "max_tokens"
+    orig = c.create
+
+    def create(**kw):
+        r = orig(**kw)
+        r.stop_reason = "max_tokens"
+        return r
+    c.create = create
+    with pytest.raises(ValueError, match="max_tokens"):
+        judge.judge_summary(c, "T", "src", "sum")

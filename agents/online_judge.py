@@ -21,7 +21,7 @@ import summary_sources
 # than Haiku's ~1.3 per English word), plus fixed prompt/tool overhead and a generous output allowance.
 _TOKENS_PER_WORD = 1.7
 _OVERHEAD_IN = 900
-_EXPECTED_OUT = 200
+_EXPECTED_OUT = 700   # includes the model's thinking tokens
 
 
 def _shipped_items(doc: dict) -> tuple[list[dict], list[dict]]:

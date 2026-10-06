@@ -142,3 +142,18 @@ JUDGE_MAX_USD = 0.40            # hard weekly cap, checked on an estimate before
 # pipeline as "problem detected". Flip to True only after reading evals/results/judge_calibration.json.
 JUDGE_ALERTING_ENABLED = False
 JUDGE_MIN_UNSUPPORTED_SHIFT = 0.15   # unsupported-rate rise vs the prior weeks' pooled rate (fraction of items)
+
+# SendGrid click tracking (agents/sendgrid_webhook.py, agents/agent_subscriptions.py /sendgrid/events).
+# Signed webhook calls older (or newer) than this are rejected, which bounds replay of a captured request.
+SENDGRID_WEBHOOK_TOLERANCE_SECONDS = 600
+# Lower-case substrings of user agents counted as automated (link scanners and fetchers). A partial
+# filter only: corporate scanners also use ordinary browser agents, which is what the early-click bucket is for.
+CLICK_BOT_UA_MARKERS = ("bot", "spider", "crawler", "scanner", "preview", "proofpoint", "barracuda",
+                        "mimecast", "safelinks", "python-requests", "curl/", "wget", "headlesschrome")
+# Clicks within this many seconds of agent4 starting its send are counted separately ("early"): mail
+# security scanners prefetch every link at delivery time, long before a person reads the email.
+CLICK_EARLY_SECONDS = 300
+
+# agent4: turn on SendGrid click tracking and tag each email with the pipeline run id, so the Event Webhook
+# can count clicks per article. Unset = the newsletter is sent exactly as before (the rollback switch).
+CLICK_TRACKING = os.environ.get("CLICK_TRACKING", "false").lower() == "true"

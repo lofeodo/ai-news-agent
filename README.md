@@ -128,7 +128,7 @@ Generated from `agents/agent1b_graph.py` (`python -c "import sys; sys.path.inser
 | `REVIEW_MAX_ARTICLES` | `30` | Per-run cap on reviewed articles (`0` disables review) |
 | `REVIEW_MAX_ITERATIONS` | `3` | Max LLM calls per reviewed article |
 | `REVIEW_FETCH_TIMEOUT` | `10` | Seconds per article fetch |
-| `LANGSMITH_TRACING` + `LANGSMITH_API_KEY` | unset | Opt-in LangSmith tracing (both required; otherwise a complete no-op). Token counts/cost per node. On Cloud Run, keep the key in Secret Manager and mount it: `gcloud run services update agent1b --update-secrets LANGSMITH_API_KEY=langsmith-api-key:latest --update-env-vars LANGSMITH_TRACING=true` — use `--update-*`, not `--set-*`, which would replace every existing secret/env var on the service` (not applied by this repo's build files). |
+| `LANGSMITH_TRACING` | unset | Opt-in LangSmith tracing (needs an API key; otherwise a complete no-op). Token counts/cost per node. |
 
 #### Does the review loop help? (eval)
 
@@ -199,12 +199,11 @@ Subscriber document fields: `email`, `token`, `token_expires_at`, `active`, `sub
 - **Messaging:** Google Cloud Pub/Sub (push subscriptions, JSON `{run_id}` payload)
 - **State:** Google Cloud Firestore (`pipeline_runs`, `subscribers`, `users` collections)
 - **Scheduling:** Google Cloud Scheduler (weekly cron jobs: pipeline start, newsletter send, post-send health check)
-- **Secrets:** Google Secret Manager
 - **Auth:** Firebase Authentication (Google OAuth + email/password; ID tokens verified server-side with `firebase-admin`)
 - **Frontend:** Firebase Hosting (static, custom domain via Cloudflare DNS; vanilla HTML/JS + Firebase Auth JS SDK)
 - **Email:** SendGrid (custom domain `newsletter@lofeodo.com`, DKIM + SPF + DMARC)
 - **AI:** Anthropic Claude (`claude-haiku-4-5-20251001`) — scoring, filtering, summarization, composition
-- **External APIs:** ArXiv (via DigitalOcean Squid proxy), Hacker News API, NewsAPI, GitHub API
+- **External APIs:** ArXiv (via an HTTP proxy), Hacker News API, NewsAPI, GitHub API
 - **HTTP framework:** FastAPI + uvicorn
 - **Agent graph:** LangGraph (inside agent 1b only — see [Inside agent 1b](#inside-agent-1b-langgraph)); the Anthropic SDK is used directly, no langchain
 - **Observability:** LangSmith tracing (opt-in, agent 1b)
@@ -283,31 +282,15 @@ Subscriber document fields: `email`, `token`, `token_expires_at`, `active`, `sub
 
 ## Configuration
 
-Secrets live in **Google Secret Manager** (cloud) or environment variables (local). No secrets are committed to this repo.
-
-On Cloud Run the pipeline services receive these secrets as environment variables **mounted from Secret Manager**, not as plain `--set-env-vars` values (plain values show up in clear text in `gcloud run services describe`):
-
-| Env var | Secret Manager secret | Mounted on |
-|---|---|---|
-| `ANTHROPIC_1ST_API_KEY` | `anthropic-api-key` | agent1a, agent1b, agent2a, agent2b, agent3 |
-| `NEWS_API_KEY` | `news-api-key` | agent1b |
-| `HTTPS_PROXY` | `squid-proxy-url` (the URL embeds the proxy password) | agent1a, agent1b, agent2a, agent2b, agent3, agent4 |
-| `LANGSMITH_API_KEY` | `langsmith-api-key` | agent1b (optional, tracing) |
-
-Mount or change one with `gcloud run services update SERVICE --region REGION --update-secrets VAR=secret:latest` (add `--remove-env-vars VAR` if it was previously a plain value). Always use `--update-*`, never `--set-*`, which replaces everything already on the service. The runtime service account needs `roles/secretmanager.secretAccessor` on each secret. To rotate a key, add a new version of the secret; services pick up `:latest` on their next start.
+Credentials (API keys and similar) are supplied to the services at runtime and are never committed to this repo. The table below lists the non-secret configuration.
 
 | Variable | Used by | Purpose |
 |---|---|---|
-| `ANTHROPIC_1ST_API_KEY` | agent1a, agent1b, agent2a, agent2b, agent3 | Claude API key |
-| `NEWS_API_KEY` | agent1b | NewsAPI key |
-| `SENDGRID_API_KEY` | agent4, agent_subscriptions | SendGrid key (local mode; cloud uses Secret Manager) |
-| `USE_SECRET_MANAGER` | agent4, agent_subscriptions | Load SendGrid key from Secret Manager instead of env |
 | `USE_FIRESTORE` | all agents | Enable cloud mode (Pub/Sub + Firestore); default `false` |
 | `GCP_PROJECT_ID` | all agents | Google Cloud project ID |
-| `HTTPS_PROXY` / `HTTP_PROXY` | agent1a | Squid proxy URL for ArXiv (GCP IPs are throttled) |
 | `AGENT1B_MODE` | agent1b | `graph` (default, LangGraph) or `single_pass` (original linear code; rollback switch) |
 | `REVIEW_CONFIDENCE_THRESHOLD` / `REVIEW_MAX_ARTICLES` / `REVIEW_MAX_ITERATIONS` / `REVIEW_FETCH_TIMEOUT` | agent1b | Review-loop tuning (defaults `4` / `30` / `3` / `10`); see [Inside agent 1b](#inside-agent-1b-langgraph) |
-| `LANGSMITH_TRACING` / `LANGSMITH_API_KEY` / `LANGSMITH_PROJECT` | agent1b | Opt-in LangSmith tracing; needs both the flag and the key, otherwise a no-op |
+| `LANGSMITH_TRACING` / `LANGSMITH_PROJECT` | agent1b | Opt-in LangSmith tracing; a no-op without an API key |
 | `AGENT_NAME` | main.py | Selects which agent the Cloud Run container runs |
 | `TEST_RECIPIENT_EMAIL` | agent4 | Local mode: single send address |
 | `TEST_SEND_TO` | agent4 | Cloud mode override: skip subscriber list, send only here |
@@ -315,12 +298,9 @@ Mount or change one with `gcloud run services update SERVICE --region REGION --u
 | `FRONTEND_BASE_URL` | agent3, agent4, agent_subscriptions | Public URL of the Firebase Hosting frontend — must be `https://newsletter.lofeodo.com` on every service that sets it; a mismatch here silently breaks the `{{PREFERENCES_URL}}` link in every sent newsletter |
 | `ALLOWED_ORIGINS` | main.py (subscriptions) | Comma-separated CORS origins; required in production |
 | `MAILING_ADDRESS` | agent3 | Physical address in email footer (CASL compliance) |
-| `ADMIN_TOKEN` | agent_subscriptions | Token to access `/stats` endpoint |
 | `MAX_SUBSCRIBERS` | agent_subscriptions | Subscriber cap (default `50000`) |
 | `ALERT_EMAIL` | agent_healthcheck | Where the weekly pipeline health check sends a problem report; never used for subscriber-facing sends |
-| `GOOGLE_APPLICATION_CREDENTIALS` | agent_subscriptions (local) | Path to service account JSON for Firebase Admin SDK; alternative to `gcloud auth application-default login` |
 | `GOOGLE_OAUTH_CLIENT_ID` | agent_subscriptions | Google OAuth 2.0 Web client ID for server-side Google Sign-In (not secret) |
-| `GOOGLE_OAUTH_CLIENT_SECRET` | agent_subscriptions | Google OAuth 2.0 client secret (local mode; cloud uses Secret Manager, secret name `google-oauth-client-secret`) |
 
 ---
 
@@ -389,11 +369,10 @@ gcloud run deploy agent1a \
   --image REGION-docker.pkg.dev/PROJECT/REPO/agent1a \
   --region REGION \
   --no-cpu-throttling \     # required for pipeline agents (background thread)
-  --set-env-vars AGENT_NAME=agent1a,USE_FIRESTORE=true,... \   # non-secret config only
-  --set-secrets ANTHROPIC_1ST_API_KEY=anthropic-api-key:latest,HTTPS_PROXY=squid-proxy-url:latest
+  --set-env-vars AGENT_NAME=agent1a,USE_FIRESTORE=true,...    # non-secret config only
 ```
 
-Keep API keys out of `--set-env-vars` (see [Configuration](#configuration)). `--set-*` is fine on a first deploy, but on an existing service use `gcloud run services update ... --image IMAGE` to ship new code: it never prompts, never creates a second service, and leaves all env vars and secrets untouched.
+`--set-*` is fine on a first deploy, but on an existing service use `gcloud run services update ... --image IMAGE` to ship new code: it never prompts, never creates a second service, and leaves all env vars and secrets untouched.
 
 The subscription service and agent4 (sender) are synchronous and don't need `--no-cpu-throttling`.
 
@@ -403,7 +382,7 @@ The subscription service and agent4 (sender) are synchronous and don't need `--n
 
 **Event-driven fan-in.** Agents 2a and 2b run in parallel (both triggered by their respective Pub/Sub messages). A Firestore atomic transaction increments `agent2_completions`; the agent that pushes the count to 2 publishes `content-summarized`. This avoids a coordinator process and handles the race condition correctly under concurrent Cloud Run instances.
 
-**ArXiv proxy.** GCP datacenter IPs are rate-limited or blocked by ArXiv's CDN. A DigitalOcean-hosted Squid proxy is set via `HTTPS_PROXY`; both the `urllib` opener and the `arxiv` library's internal `requests.Session` are patched to use it.
+**ArXiv proxy.** GCP datacenter IPs are rate-limited or blocked by ArXiv's CDN. Requests go through an HTTP proxy configured with the standard proxy environment variables; both the `urllib` opener and the `arxiv` library's internal `requests.Session` are patched to use it.
 
 **No CPU throttling on pipeline agents.** Cloud Run's default "CPU only allocated during request" would pause the background thread immediately after the HTTP response is returned. Pipeline agents use `--no-cpu-throttling` so the thread runs to completion. Synchronous services (agent4, subscriptions) don't need this.
 

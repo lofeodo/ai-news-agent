@@ -17,10 +17,13 @@ import json
 import os
 import re
 import sys
+import time
 from datetime import datetime, timezone
+from typing import NamedTuple
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import (
+    CLICK_TRACKING,
     DATA_DIR,
     GCP_PROJECT_ID,
     USE_FIRESTORE,
@@ -136,15 +139,28 @@ def _get_sendgrid_api_key() -> str:
         return key
 
 
-def send_email(api_key: str, to_email: str, html_body: str, subject: str) -> None:
-    """Send one email. Raises on non-2xx (urllib raises on 4xx/5xx)."""
-    import urllib.request
-    payload = json.dumps({
-        "personalizations": [{"to": [{"email": to_email}]}],
+def build_payload(to_email: str, html_body: str, subject: str, click_run_id: str | None = None) -> dict:
+    """The SendGrid v3 mail/send body. With `click_run_id` it also turns on SendGrid click tracking for this
+    message and tags it with the pipeline run id, so the Event Webhook can count clicks per run. The tag is
+    the run, never a subscriber. Without it the payload is exactly what it was before click tracking existed.
+    """
+    personalization = {"to": [{"email": to_email}]}
+    payload = {
+        "personalizations": [personalization],
         "from":    {"email": SENDER_EMAIL, "name": SENDER_NAME},
         "subject": subject,
         "content": [{"type": "text/html", "value": html_body}],
-    }).encode("utf-8")
+    }
+    if click_run_id:
+        personalization["custom_args"] = {"run_id": click_run_id}
+        payload["tracking_settings"] = {"click_tracking": {"enable": True, "enable_text": False}}
+    return payload
+
+
+def send_email(api_key: str, to_email: str, html_body: str, subject: str, click_run_id: str | None = None) -> None:
+    """Send one email. Raises on non-2xx (urllib raises on 4xx/5xx)."""
+    import urllib.request
+    payload = json.dumps(build_payload(to_email, html_body, subject, click_run_id)).encode("utf-8")
 
     req = urllib.request.Request(
         "https://api.sendgrid.com/v3/mail/send",
@@ -330,8 +346,36 @@ def _apply_section_config(html: str, section_config: dict | None) -> str:
     return html
 
 
-def _load_latest_newsletter(db):
-    """Return (variants, subject) for the most recent run with newsletter_html set.
+class LoadedNewsletter(NamedTuple):
+    variants: dict
+    subject: str
+    run_id: str
+    doc: dict  # the run doc, used to build the click link map
+
+
+def _prepare_click_tracking(db, run_id: str, doc: dict) -> str | None:
+    """Store this run's click link map and return the run id to tag emails with, or None.
+
+    Never raises: tracking is optional, so any failure here means the newsletter is sent exactly as it
+    would be without tracking.
+    """
+    try:
+        import click_counts
+        import click_links
+        link_map = click_links.build_link_map(doc)
+        if not link_map:
+            print("[agent4]  click tracking skipped: no shipped articles found in the run doc", flush=True)
+            return None
+        click_counts.save_link_doc(db, run_id, link_map, int(time.time()))
+        print(f"[agent4]  click tracking on: {len(link_map)} links mapped for run {run_id}", flush=True)
+        return run_id
+    except Exception as e:
+        print(f"[agent4]  click tracking skipped ({type(e).__name__}: {e}); sending without it", flush=True)
+        return None
+
+
+def _load_latest_newsletter(db) -> LoadedNewsletter:
+    """Return the most recent run with newsletter_html set: its variants, subject, run id and doc.
 
     variants is a dict keyed by "0_0" / "1_0" / "0_1" / "1_1".
     Falls back to {"0_0": newsletter_html} for old runs that predate variants.
@@ -362,9 +406,10 @@ def _load_latest_newsletter(db):
         variants = {"0_0": data.get("newsletter_html", "")}
     variants = {k: _normalize_image_urls(v) for k, v in variants.items()}
     subject  = data.get("newsletter_subject") or f"{NEWSLETTER_NAME} — {datetime.now().strftime('%B %d, %Y')}"
+    run_id = docs[0].id  # the pipeline_runs doc id, which is what the healthcheck and click_counts key on
     print(f"[agent4]  Loaded newsletter variants from Firestore "
           f"(run_id={data.get('run_id')}, keys={list(variants.keys())})", flush=True)
-    return variants, subject
+    return LoadedNewsletter(variants, subject, run_id, data)
 
 
 def _active_subscribers(db) -> list[dict]:
@@ -444,7 +489,8 @@ def run(run_id: str):
     db = _fs.Client(project=GCP_PROJECT_ID)
 
     try:
-        variants, subject = _load_latest_newsletter(db)
+        loaded = _load_latest_newsletter(db)
+        variants, subject = loaded.variants, loaded.subject
 
         if TEST_SEND_TO:
             print(f"[agent4]  TEST_SEND_TO override — sending only to {TEST_SEND_TO}", flush=True)
@@ -473,6 +519,7 @@ def run(run_id: str):
             print(f"  [warn]  failed to load section configs: {e} — using defaults", flush=True)
 
     api_key = _get_sendgrid_api_key()
+    click_run_id = _prepare_click_tracking(db, loaded.run_id, loaded.doc) if CLICK_TRACKING else None
 
     sent     = 0
     failed   = 0
@@ -508,7 +555,7 @@ def run(run_id: str):
 
         personalized = _personalize(html, token)
         try:
-            send_email(api_key, email, personalized, subject)
+            send_email(api_key, email, personalized, subject, click_run_id=click_run_id)
             sent += 1
         except Exception as e:
             failed += 1

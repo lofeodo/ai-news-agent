@@ -31,7 +31,7 @@ Purpose: make Latent SpaceMail defensible in technical interviews for LLM system
 - [x] Step 5: Drift monitoring
 - [x] Step 5b: Token and cost monitoring (LangSmith, weekly summary and drift alert)
 - [x] Step 6: Online judge (calibrated weekly scoring and alerting). Built, calibrated and recorded; the judge did not validate against the owner's labels (kappa 0.04), so it ships report-only. Deploy still needs the owner's approvals
-- [ ] Step 7: Click-through signal (SendGrid). Depends only on Step 5
+- [~] Step 7: Click-through signal (SendGrid). Built and tested; not deployed, so no real click has been counted yet (see "Completed steps")
 - [ ] Step 8: Postmortems and runbook
 - [ ] Optional A: Model card and privacy review (Law 25 / GDPR)
 - [ ] Optional B: Agent 2b verify loop (generate, verify, retry or fall back)
@@ -163,6 +163,12 @@ Code vs. roadmap: only agent1b graph mode read `response.usage` and only agent1b
 Code vs. roadmap: summaries carry no source text (agent2b fetches live, agent2a reads the PDF) and the healthcheck has no ArXiv proxy, so the judge cannot rebuild a source later; agents 2a and 2b now persist the exact text they summarized to a new Firestore collection `summary_sources` (additive, one doc per item, TTL 21 days). agent3 prunes `news_summaries` to the shipped articles, so the weekly sample is drawn from what readers saw. Owner decisions: judge `claude-sonnet-5-5` (stronger, same family; bias documented as a limit), runs inside the healthcheck, owner labels the 40 summaries first.
 
 Design: pure `agents/judge.py` (tool-use verdict, guard text, tag neutralising); `agents/online_judge.py` (sample of at most `JUDGE_MAX_ITEMS`=12, papers first then a seeded news sample stratified by `used_fallback`; cost estimate checked against `JUDGE_MAX_USD`=0.25 before any call; results on the run doc as `judge_results`, counts and verdicts only; idempotent); `drift.evaluate_judge` (Fisher exact on the unsupported rate, p < 0.01 and a 15-point rise); a healthcheck section that is report-only until `JUDGE_ALERTING_ENABLED` is flipped after calibration; `evals/run_judge_calibration.py` (kappa against the 40 labels, on demand).
+
+### Step 7 plan (branch `feat/click-signal`, approved)
+
+Code vs. roadmap: SendGrid's Event Webhook click events carry the original target `url` and any `custom_args`, so per-article counts need no rewriting of our HTML; but every event also carries the recipient's email, IP and user agent, and the Stats API only gives totals. The owner first chose a first-party redirect for privacy, then reversed after review: the webhook handler that aggregates in memory and drops the personal fields satisfies the "aggregate counts only" rule, uses a tool the owner already pays for, and avoids making every newsletter link depend on our own service. Checked by the owner in the console: Click Tracking and Event Webhooks with Signature Verification are available on the Essentials 50k plan (2 webhooks allowed, this uses 1); link branding was skipped as too complex. Audience is under 50 active subscribers, so this is a rough signal (counts and n only, no tests).
+
+Design: agent4 builds a link map from the run doc (shipped articles and papers) and stores it as `click_links/{run_id}`, then sends each email with SendGrid click tracking on and `custom_args {run_id}` (behind `CLICK_TRACKING`, failing open); a signed `POST /sendgrid/events` route verifies the ECDSA signature before parsing, reduces events to `{run_id, url, timestamp, bot}`, and increments `click_counts/{run_id}`; the healthcheck email gets an informational click section.
 
 ## Completed steps
 
@@ -317,3 +323,26 @@ Still open (owner approvals needed, nothing deployed): (a) redeploy agents 2a an
 Rubric change (2026-10-06, before any labels were scored): the first judge prompt required every claim, including the "why it matters" sentence, to be in the source. The summarizer prompts explicitly ask for that significance sentence (`prompts/paper_summary_prompt.txt` paragraph 2, `prompts/news_summary_prompt.txt` "most important implication"), so the strict rule would have flagged most summaries. The judge prompt and the labeling instructions now treat factual claims strictly and significance sentences leniently (no new specific fact, no contradiction, no overstatement). The owner and the judge apply the same rule; borderline ids are kept on a side list.
 
 Caveats: n=40 labels, so kappa will have a wide interval; the judge is the same model family as the summarizer; the labeler saw the same source and summary; the template's sources were re-fetched when it was built, so they may differ slightly from what the summarizer saw; unsupported summaries are probably rare, so recall is very uncertain. The weekly sample is about a dozen items, so the drift check is a tripwire, not a guarantee. Sonnet 5.5 uses a newer tokenizer (about 30% more tokens per text than Haiku 4.5), so the cost estimate uses a rough tokens-per-word figure and the real cost is taken from reported usage.
+
+### Step 7: Click-through signal
+Branch `feat/click-signal`. Status: code written and tested (313 tests passing, all stubbed, no network); the image builds on `python:3.11-slim` and the new modules import in it; nothing is deployed and no real SendGrid event has been received. The checklist box is `[~]` until the deploy and an end-to-end test send are done.
+
+Built:
+- `agents/sendgrid_webhook.py`: `verify_signature` (ECDSA P-256 over timestamp + raw body, 10 minute window, runs before any parsing) and `reduce_events` (click events carrying our `run_id` only, reduced to `run_id`, `url`, `timestamp`, `bot`; email, IP, user agent, message and event ids are read only to flag bots and are never copied out). Uses `cryptography`, already pinned.
+- `agents/click_links.py`: URL normalisation and the link map built from `news_summaries` and `paper_summaries`; clicks on anything not shipped (footer, unsubscribe, preferences) are ignored.
+- `agents/click_counts.py`: `click_links/{run_id}` and `click_counts/{run_id}` storage, bucketing and atomic increments. Buckets: `clicks` (headline), `early` (within 5 minutes of the send start, when mail scanners prefetch links) and `bots` (automated user agents).
+- `agents/agent_subscriptions.py`: `POST /sendgrid/events`, rate limited, 403 on a bad or stale signature, 503 if the key is not configured, 400 on a body that is not a JSON array, and always 200 once verified (a counting error is logged by class name only) so SendGrid does not retry.
+- `agents/agent4_send.py`: `CLICK_TRACKING=true` stores the link map and sends each email with `tracking_settings.click_tracking` on and `custom_args {run_id}`; the tag is the run, never a subscriber. Flag unset gives the exact previous payload (the rollback). A failure while preparing tracking sends everything untracked. This was the first test coverage of agent4's send loop.
+- `agents/click_report.py` and the healthcheck: a "Reader clicks" section with this week so far, the last tracked weeks' totals, clicks per delivered email, the early and bot buckets, per-category split and the top 3 articles for the last tracked week. Built in its own `try/except`; informational, it never changes the all-clear status and cannot suppress the heartbeat.
+
+Run (CMD): `venv\Scripts\python -m pytest -q`. There is no paid or on-demand eval in this step.
+
+Deviations from the plan: bot clicks are counted in their own `bots` bucket instead of being dropped, so the email can show how much noise there is; the run id is the `pipeline_runs` document id (what the healthcheck keys on); `_load_latest_newsletter` now returns a `LoadedNewsletter` tuple (variants, subject, run id, doc) with one caller; agent4 had no tests, so the send loop got stubbed ones.
+
+Still open (owner approvals needed, nothing deployed):
+1. SendGrid console: Event Webhooks, Create new webhook, Post URL `<agent-subscriptions URL>/sendgrid/events`, tick only "Clicked", switch Signature Verification on and copy the public key.
+2. Store the key as a new secret `sendgrid-webhook-public-key` (Secret Manager; the subscriptions service's account needs access) and expose it to `agent-subscriptions` either through `USE_SECRET_MANAGER` (as the other keys) or as the `SENDGRID_WEBHOOK_PUBLIC_KEY` env var via `--update-secrets`, never `--set-*`.
+3. Redeploy `agent-subscriptions` (new route), `agent4` (with `CLICK_TRACKING=true` via `--update-env-vars`) and `healthcheck`, using `gcloud run services update --image`.
+4. One test send to `TEST_SEND_TO` with the flag on: click the links, confirm counts in `click_counts/{run_id}`, then check the next weekly email section. Until then the real shape of SendGrid's events (for example whether `url` arrives HTML-decoded, which `normalize_url` tolerates either way) is unverified.
+
+Caveats: under 50 readers makes this a rough signal; counts are not unique per reader (that would need per-subscriber state), and SendGrid can deliver an event more than once, so a click can occasionally be counted twice; scanner and bot clicks inflate counts and are only partly filtered; position and layout bias are not corrected; the webhook handler sees subscriber emails and IPs in memory by design, and the guarantee that none are stored or logged is enforced by tests (`tests/test_sendgrid_webhook.py`, `tests/test_click_endpoint.py`), not by SendGrid; link branding is not set up, so clicks go through SendGrid's default tracking domain, which can affect deliverability and how links look; Cloud Run's request logs still record caller IPs for the webhook route as they do for every route.

@@ -242,6 +242,30 @@ def _judge_section(db, run_id: str, doc: dict) -> tuple[str, bool]:
         return f"Summary faithfulness: failed ({type(e).__name__}: {e}). This does not affect the pipeline status above.", False
 
 
+def _click_section(db, run_id: str, doc: dict) -> str:
+    """Weekly reader-click report from the aggregate click_links / click_counts docs. Never raises: a failure
+    here must not suppress the heartbeat or change the pipeline's health status."""
+    try:
+        import click_counts
+        import click_report
+        import drift_history
+
+        def summary_for(rid, run_doc):
+            links = click_counts.load_link_doc(db, rid)
+            if not links:
+                return None
+            sent = (run_doc.get("agent4_send_summary") or {}).get("sent")
+            return click_report.summarize(rid, links, click_counts.load_counts(db, rid), sent)
+
+        current = summary_for(run_id, doc)
+        priors = [s for s in (summary_for(rid, d) for rid, d in
+                              drift_history.recent_runs(db, run_id, config.DRIFT_BASELINE_RUNS)) if s]
+        return click_report.format_section(current, priors)
+    except Exception as e:
+        print(f"[healthcheck]  click report failed (ignored): {e}", flush=True)
+        return f"Reader clicks: failed ({type(e).__name__}: {e}). This does not affect the pipeline status above."
+
+
 def _notify(message: str, healthy: bool) -> None:
     """Best-effort single email to ALERT_EMAIL, sent every run. Never touches subscriber-facing code."""
     if not ALERT_EMAIL:
@@ -317,7 +341,7 @@ def _run(run_id: str) -> None:
     if judge_flagged and config.JUDGE_ALERTING_ENABLED:
         problems.append("summary faithfulness dropped versus the prior weeks (see the judge section below)")
     drift_text = (f"{_drift_section(db, checked_run_id, doc)}\n\n{_usage_section(db, checked_run_id, doc)}"
-                  f"\n\n{judge_text}")
+                  f"\n\n{judge_text}\n\n{_click_section(db, checked_run_id, doc)}")
 
     if not problems:
         print(f"[healthcheck]  run_id={checked_run_id} looks healthy.", flush=True)

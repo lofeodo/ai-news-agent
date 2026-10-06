@@ -28,6 +28,7 @@ from urllib.parse import urlencode
 import anthropic
 import requests
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel, Field, field_validator
 from slowapi import Limiter
@@ -36,6 +37,8 @@ from slowapi.util import get_remote_address
 logger = logging.getLogger(__name__)
 
 from auth_middleware import get_current_user
+import click_counts
+import sendgrid_webhook
 from prompt_guard import GUARD_TOPIC_REFINE, neutralize_tags
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -243,6 +246,23 @@ def _get_google_oauth_client_secret() -> str:
     if not secret:
         raise RuntimeError("GOOGLE_OAUTH_CLIENT_SECRET env var not set for local mode")
     return secret
+
+
+SENDGRID_WEBHOOK_KEY_SECRET_NAME = "sendgrid-webhook-public-key"
+
+
+def _get_sendgrid_webhook_public_key() -> str:
+    """Base64 public key from the SendGrid console (Event Webhook > Signature Verification)."""
+    if USE_SECRET_MANAGER:
+        from google.cloud import secretmanager
+        client   = secretmanager.SecretManagerServiceClient()
+        name     = f"projects/{GCP_PROJECT_ID}/secrets/{SENDGRID_WEBHOOK_KEY_SECRET_NAME}/versions/latest"
+        response = client.access_secret_version(request={"name": name})
+        return response.payload.data.decode("utf-8").strip()
+    key = os.environ.get("SENDGRID_WEBHOOK_PUBLIC_KEY", "")
+    if not key:
+        raise RuntimeError("SENDGRID_WEBHOOK_PUBLIC_KEY env var not set for local mode")
+    return key
 
 
 def _send_email(to_email: str, subject: str, html_body: str) -> None:
@@ -585,6 +605,67 @@ def get_stats(token: Annotated[str, Query(max_length=128)] = ""):
     db = _db()
     count = _active_subscriber_count(db)
     return {"active": count, "max": MAX_SUBSCRIBERS}
+
+
+# ---------------------------------------------------------------------------
+# SendGrid Event Webhook: aggregate click counts (see agents/sendgrid_webhook.py, click_counts.py)
+# ---------------------------------------------------------------------------
+# Public route, so the ECDSA signature is the only gate and is checked on the raw bytes before anything is
+# parsed. Events carry subscriber emails, IPs and user agents: reduce_events() drops them before counting,
+# and nothing in this handler may log or store the body or an event. Counts only, per shipped article.
+
+_LINK_DOC_CACHE: dict = {}
+
+
+def _cached_link_doc(db, run_id: str):
+    """click_links doc for a run. Only hits are cached (agent4 writes the doc before any click can arrive)."""
+    if run_id in _LINK_DOC_CACHE:
+        return _LINK_DOC_CACHE[run_id]
+    doc = click_counts.load_link_doc(db, run_id)
+    if doc:
+        if len(_LINK_DOC_CACHE) >= 20:
+            _LINK_DOC_CACHE.clear()
+        _LINK_DOC_CACHE[run_id] = doc
+    return doc
+
+
+def _count_clicks(events: list) -> int:
+    db = _db()
+    return click_counts.apply_tallies(db, click_counts.tally(events, lambda rid: _cached_link_doc(db, rid)))
+
+
+@router.post("/sendgrid/events")
+@limiter.limit("120/minute")
+async def sendgrid_events(request: Request):
+    body = await request.body()
+    try:
+        public_key = _get_sendgrid_webhook_public_key()
+    except Exception:
+        logger.error("sendgrid events: webhook public key is not configured")
+        return JSONResponse(status_code=503, content={"error": "not_configured"})
+    try:
+        sendgrid_webhook.verify_signature(
+            public_key,
+            request.headers.get(sendgrid_webhook.SIGNATURE_HEADER),
+            request.headers.get(sendgrid_webhook.TIMESTAMP_HEADER),
+            body,
+        )
+    except sendgrid_webhook.SignatureError as e:
+        logger.warning("sendgrid events rejected: %s", e)  # message is generic by design
+        return JSONResponse(status_code=403, content={"error": "forbidden"})
+    try:
+        events = sendgrid_webhook.reduce_events(body)
+    except ValueError:
+        return JSONResponse(status_code=400, content={"error": "bad_request"})
+    counted = 0
+    if events:
+        try:
+            counted = await run_in_threadpool(_count_clicks, events)
+        except Exception as e:
+            # Still 200: SendGrid would otherwise retry the whole batch. Class name only, never event content.
+            logger.error("sendgrid events: counting failed (%s)", type(e).__name__)
+    logger.info("sendgrid events: %d click events, %d counted", len(events), counted)
+    return {"received": len(events), "counted": counted}
 
 
 # ---------------------------------------------------------------------------

@@ -20,7 +20,9 @@ CACHE_READ_MULT = 0.10
 # USD per million tokens as (input, output). Keyed off config so no model name is hardcoded here;
 # other models (e.g. a judge) register their price with register_price().
 # Claude Haiku 4.5: $1 input / $5 output per MTok, verified against PRICES_SOURCE on PRICES_AS_OF.
-_PRICES = {config.SCORING_MODEL: (1.0, 5.0)}
+# Claude Sonnet 5.5 (the summary judge): $2 input / $10 output per MTok, same check and date. It uses the
+# newer tokenizer (~30% more tokens per text than Haiku 4.5), so estimate from its own reported usage.
+_PRICES = {config.SCORING_MODEL: (1.0, 5.0), config.JUDGE_MODEL: (2.0, 10.0)}
 
 
 def register_price(model, input_per_mtok, output_per_mtok):

@@ -14,6 +14,7 @@ import pypdf
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_PAPER_SUMMARY
+import summary_sources
 import tracing
 from config import (
     DATA_DIR, SCORING_MODEL, PAPER_SUMMARY_MAX_TOKENS, WORD_CUTOFF,
@@ -179,6 +180,7 @@ def run(run_id: str):
 
         client = tracing.make_client("agent2a", run_id)
         results = []
+        sources = []
 
         for i, paper in enumerate(papers, 1):
             paper_id = paper["id"].split("/")[-1]
@@ -198,6 +200,8 @@ def run(run_id: str):
                 continue
 
             validate_summary(summary, paper_id)
+            sources.append({"ident": paper["id"], "title": paper["title"], "text": text,
+                            "used_fallback": used_fallback})
 
             status = "fallback" if used_fallback else "full PDF"
             print(f"  [done]     ({status})")
@@ -230,6 +234,8 @@ def run(run_id: str):
                 "paper_summaries": results
             })
             print(f"[agent2a]  Saved paper_summaries to Firestore (run_id={run_id})")
+            n_src = summary_sources.save_sources(_fs.Client(project=GCP_PROJECT_ID), run_id, "paper", sources)
+            print(f"[agent2a]  Saved {n_src} summary sources for the judge")
         else:
             os.makedirs(DATA_DIR, exist_ok=True)
             out_path = os.path.join(DATA_DIR, "paper_summaries.json")

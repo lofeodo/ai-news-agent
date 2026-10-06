@@ -128,3 +128,17 @@ def parse_started_at(raw: str) -> datetime:
 DRIFT_USAGE_MIN_RATIO  = 0.5     # +/-50% versus the median of prior runs
 DRIFT_USAGE_MIN_TOKENS = 100_000 # absolute token change floor
 DRIFT_USAGE_MIN_USD    = 0.10    # absolute cost change floor
+
+# Online summary judge (agents/judge.py, agents/online_judge.py). The judge must be a stronger
+# model than the Haiku that writes the summaries; it is same-family, so its bias is a documented limit.
+JUDGE_MODEL = "claude-sonnet-5-5"
+JUDGE_MAX_TOKENS = 600
+JUDGE_MAX_ITEMS = 12            # summaries judged per weekly run (all papers first, then seeded news sample)
+JUDGE_MAX_SOURCE_WORDS = 5000   # source text sent per item, matches WORD_CUTOFF
+JUDGE_MAX_USD = 0.25            # hard weekly cap, checked on an estimate before any call
+
+# Judge alerting. Until the calibration against the repo owner's 40 labels (evals/run_judge_calibration.py)
+# shows acceptable agreement, the weekly judge only reports: a flagged quality drop does not mark the
+# pipeline as "problem detected". Flip to True only after reading evals/results/judge_calibration.json.
+JUDGE_ALERTING_ENABLED = False
+JUDGE_MIN_UNSUPPORTED_SHIFT = 0.15   # unsupported-rate rise vs the prior weeks' pooled rate (fraction of items)

@@ -55,3 +55,16 @@ echoed by the model). `run_injection_eval.py` runs every case with the injection
 Step 4 fixes) and `results/injection_eval_after.json`, with per-trial rows in the matching `_trials.json`.
 Limits: no LLM judge, so subtle steering is not detected; a refusal that quotes the canary counts as a
 success; n per scope is small.
+
+## Labeling the summaries template and calibrating the judge
+
+`labels/summaries_template.csv`: fill `supported` with `yes` or `no` for each generated summary, judged against
+the source text in `source_text_ref` (under the gitignored `fixtures/private/summary_sources/`). `yes` means every
+factual claim (numbers, names, dates, causes, results) is stated in, or directly follows from, the source; `no`
+means at least one claim is missing from the source, contradicts it or goes beyond it. Style and brevity do not
+count against a summary. Use only the source; do not fill gaps from what you know. This is the same definition the
+judge prompt (`prompts/judge_prompt.txt`) uses, so the two can be compared.
+
+Once all 40 rows are labeled: `venv\Scripts\python -m evals.run_judge_calibration --dry-run`, then without
+`--dry-run`. It writes `results/judge_calibration.json` (agreement, kappa with a bootstrap interval, recall and
+precision for "unsupported", per-source-kind agreement) and `_rows.json` (ids, labels, verdicts; no text).

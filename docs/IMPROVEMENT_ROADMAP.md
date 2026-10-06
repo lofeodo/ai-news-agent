@@ -30,8 +30,8 @@ Purpose: make Latent SpaceMail defensible in technical interviews for LLM system
 - [x] Step 4: Prompt-injection tests
 - [x] Step 5: Drift monitoring
 - [x] Step 5b: Token and cost monitoring (LangSmith, weekly summary and drift alert)
-- [ ] Step 6: Online judge (calibrated weekly scoring and alerting)
-- [ ] Step 7: Click-through signal (SendGrid)
+- [~] Step 6: Online judge (calibrated weekly scoring and alerting). Tentatively complete: built, tested and image-checked; calibration, alert threshold and deploy wait on the 40 summary labels (see "Completed steps")
+- [ ] Step 7: Click-through signal (SendGrid). Depends only on Step 5, so it can start while Step 6 waits on labels
 - [ ] Step 8: Postmortems and runbook
 - [ ] Optional A: Model card and privacy review (Law 25 / GDPR)
 - [ ] Optional B: Agent 2b verify loop (generate, verify, retry or fall back)
@@ -158,6 +158,12 @@ Design: (1) additive `confidence_hist` and `category_counts` in `agent1b_review_
 
 Code vs. roadmap: only agent1b graph mode read `response.usage` and only agent1b was traced in LangSmith (opt-in, `agents/tracing.py`, set up 2026-09-30; the `langsmith-api-key` secret and `LANGSMITH_*` vars already exist on the agent1b service). LangSmith's free Developer plan has 5k base traces a month, shared across the account, and 14-day retention, so it cannot hold the 4 prior weeks a drift baseline needs. The owner's idea, adopted: have the healthcheck copy each run's LangSmith totals into Firestore every week (`pipeline_runs/{run_id}.llm_usage`), so history accumulates while LangSmith only keeps recent traces. The owner also chose to show both LangSmith's cost and a list-price estimate from our own table, and to flag drift in the email without changing the pipeline status (as in Step 5).
 
+### Step 6 plan (branch `feat/online-judge`, approved)
+
+Code vs. roadmap: summaries carry no source text (agent2b fetches live, agent2a reads the PDF) and the healthcheck has no ArXiv proxy, so the judge cannot rebuild a source later; agents 2a and 2b now persist the exact text they summarized to a new Firestore collection `summary_sources` (additive, one doc per item, TTL 21 days). agent3 prunes `news_summaries` to the shipped articles, so the weekly sample is drawn from what readers saw. Owner decisions: judge `claude-sonnet-5-5` (stronger, same family; bias documented as a limit), runs inside the healthcheck, owner labels the 40 summaries first.
+
+Design: pure `agents/judge.py` (tool-use verdict, guard text, tag neutralising); `agents/online_judge.py` (sample of at most `JUDGE_MAX_ITEMS`=12, papers first then a seeded news sample stratified by `used_fallback`; cost estimate checked against `JUDGE_MAX_USD`=0.25 before any call; results on the run doc as `judge_results`, counts and verdicts only; idempotent); `drift.evaluate_judge` (Fisher exact on the unsupported rate, p < 0.01 and a 15-point rise); a healthcheck section that is report-only until `JUDGE_ALERTING_ENABLED` is flipped after calibration; `evals/run_judge_calibration.py` (kappa against the 40 labels, on demand).
+
 ## Completed steps
 
 (Each completed step is described here, written on the step's own branch before its PR is declared ready.)
@@ -281,3 +287,25 @@ Deviations from the plan and caveats:
 - History starts at the first run after deploy and secret mounting, so expect "not enough history" for about three weekly runs. Only agent1b's own `token_usage` on older run docs exists from before; it is not backfilled (LangSmith only holds 14 days and the other agents were never traced).
 - **Deployed 2026-10-05:** PR #60 merged (`78c9d88`), images built from `main` (Cloud Build `2fd8e954`), and agents 1a, 1b, 2a, 2b, 3 and the healthcheck updated. Agents 1a, 2a, 2b and 3 now get `LANGSMITH_API_KEY` (from the existing `langsmith-api-key` secret), `LANGSMITH_TRACING=true` and `LANGSMITH_PROJECT=latent-spacemail-prod`, the same values agent1b already had; the healthcheck gets the key and project only (it reads from LangSmith and does not send traces). Updates used `--update-secrets` and `--update-env-vars`, never `--set-*`. The owner confirmed the `latent-spacemail-prod` project already had traces in it, which shows the existing key works.
 - **Still unverified until the first traced weekly run (2026-10-12):** that agents 1a, 2a, 2b and 3 actually send traces carrying the `agent:` and `run:` tags, that LangSmith fills in token counts and `total_cost` for the wrapped Anthropic calls and prices `claude-haiku-4-5-20251001`, and the real number of traces per run against the free plan's 5k a month (shared across the LangSmith account). Until then the healthcheck's usage section will report "no traced Claude calls found" if tracing is not producing data. No traced run has been inspected in the LangSmith UI, and the first healthcheck after that run is where the archive and usage section run for real.
+
+### Step 6: Online judge (tentatively complete; waiting on labels)
+Branch `feat/online-judge`. Status: all code is written and stub-tested (239 tests passing); nothing is deployed and no paid run has been made. The box in the checklist is `[~]` until the items under "Still open" are done.
+
+Built:
+- `agents/judge.py` + `prompts/judge_prompt.txt`: binary faithfulness verdict (tool use, guard text, tag neutralising). Model `JUDGE_MODEL = claude-sonnet-5-5` in `config.py`; list price $2 / $10 per MTok registered in `agents/pricing.py`, checked against the pricing page on 2026-10-06.
+- `agents/summary_sources.py`: agents 2a and 2b persist the exact source text each summary was written from to Firestore `summary_sources` (one doc per item, 21-day expiry, a failed write never fails the agent). Additive; no orchestration change.
+- `agents/online_judge.py`: weekly sample of at most `JUDGE_MAX_ITEMS`=12 shipped summaries (papers first, then a seeded news sample stratified by `used_fallback`), cost estimate checked against `JUDGE_MAX_USD`=0.25 before any call, `judge_results` (counts and verdicts only, no text) written to the run doc, idempotent.
+- `agents/drift.py`: `judge_unsupported_test` / `evaluate_judge` (Fisher exact, p < 0.01 and a 15-point rise, 3 prior judged runs needed).
+- `agents/agent_healthcheck.py`: a summary-faithfulness section in the weekly email, in its own `try/except`. Report-only while `JUDGE_ALERTING_ENABLED` is False; it cannot suppress the heartbeat.
+- `evals/judge_eval.py`, `evals/run_judge_calibration.py`: kappa (bootstrap interval), agreement, recall and precision for "unsupported", per-source agreement; `--dry-run` estimates about $0.38 for the 40 rows. `evals/README.md` explains how to label `supported`.
+- `evals/run_judge_drift_sim.py` -> `evals/results/judge_drift_simulation.json` (assumed true unsupported rates, 12 items a week, perfect judge assumed): false alarms 0.3% to 0.4% at 5%, 15% and 30% assumed rates (about 0.1% to 0.9%); a rise from 10% to 30% unsupported is caught in 16% of weeks (14-17%), to 50% in 61% (58-63%), to 70% in 94% (93-95%). It catches only large jumps at this sample size.
+
+Run (CMD): `venv\Scripts\python -m pytest -q`; `venv\Scripts\python -m evals.run_judge_drift_sim`; after labeling, `venv\Scripts\python -m evals.run_judge_calibration --dry-run`, then without `--dry-run`.
+
+Still open:
+1. The owner's 40 `supported` labels in `evals/labels/summaries_template.csv` (in progress). Until they exist there is no kappa and no claim about how well the judge agrees with a human.
+2. Run the calibration (about $0.38), record the real numbers here, and decide from the kappa whether to set `JUDGE_ALERTING_ENABLED = True`. If kappa is weak or the interval is too wide to tell, the judge stays informational and this entry says so.
+3. Deploy, each needing the owner's approval: redeploy agents 2a and 2b (source persistence); run `gcloud firestore fields ttls update expires_at --collection-group=summary_sources --enable-ttl`; mount `ANTHROPIC_1ST_API_KEY` on the healthcheck from the `anthropic-api-key` secret (`--update-secrets`, never `--set-*`) and redeploy it.
+4. Verified: the healthcheck image builds on `python:3.11-slim` and `judge`, `online_judge`, `summary_sources`, `drift`, `agent_healthcheck`, `agent2a_summarize_papers` and `agent2b_summarize_news` import inside it (Python 3.11.17, scipy 1.17.1; the judge prompt file is present). Not verified: anything against real Firestore or a real Claude call. The first real check is the first weekly run after deploy: confirm `summary_sources` docs exist, `judge_results` is on the run doc and the email section renders. History needs about three weekly runs before the drift line says anything.
+
+Caveats: n=40 labels, so kappa will have a wide interval; the judge is the same model family as the summarizer; the labeler saw the same source and summary; the template's sources were re-fetched when it was built, so they may differ slightly from what the summarizer saw; unsupported summaries are probably rare, so recall is very uncertain. The weekly sample is about a dozen items, so the drift check is a tripwire, not a guarantee. Sonnet 5.5 uses a newer tokenizer (about 30% more tokens per text than Haiku 4.5), so the cost estimate uses a rough tokens-per-word figure and the real cost is taken from reported usage.

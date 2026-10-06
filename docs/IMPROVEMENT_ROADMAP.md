@@ -30,7 +30,7 @@ Purpose: make Latent SpaceMail defensible in technical interviews for LLM system
 - [x] Step 4: Prompt-injection tests
 - [x] Step 5: Drift monitoring
 - [x] Step 5b: Token and cost monitoring (LangSmith, weekly summary and drift alert)
-- [~] Step 6: Online judge (calibrated weekly scoring and alerting). Built and tested; calibration, alert threshold and deploy wait on the 40 summary labels (see "Completed steps")
+- [~] Step 6: Online judge (calibrated weekly scoring and alerting). Tentatively complete: built, tested and image-checked; calibration, alert threshold and deploy wait on the 40 summary labels (see "Completed steps")
 - [ ] Step 7: Click-through signal (SendGrid). Depends only on Step 5, so it can start while Step 6 waits on labels
 - [ ] Step 8: Postmortems and runbook
 - [ ] Optional A: Model card and privacy review (Law 25 / GDPR)
@@ -288,7 +288,7 @@ Deviations from the plan and caveats:
 - **Deployed 2026-10-05:** PR #60 merged (`78c9d88`), images built from `main` (Cloud Build `2fd8e954`), and agents 1a, 1b, 2a, 2b, 3 and the healthcheck updated. Agents 1a, 2a, 2b and 3 now get `LANGSMITH_API_KEY` (from the existing `langsmith-api-key` secret), `LANGSMITH_TRACING=true` and `LANGSMITH_PROJECT=latent-spacemail-prod`, the same values agent1b already had; the healthcheck gets the key and project only (it reads from LangSmith and does not send traces). Updates used `--update-secrets` and `--update-env-vars`, never `--set-*`. The owner confirmed the `latent-spacemail-prod` project already had traces in it, which shows the existing key works.
 - **Still unverified until the first traced weekly run (2026-10-12):** that agents 1a, 2a, 2b and 3 actually send traces carrying the `agent:` and `run:` tags, that LangSmith fills in token counts and `total_cost` for the wrapped Anthropic calls and prices `claude-haiku-4-5-20251001`, and the real number of traces per run against the free plan's 5k a month (shared across the LangSmith account). Until then the healthcheck's usage section will report "no traced Claude calls found" if tracing is not producing data. No traced run has been inspected in the LangSmith UI, and the first healthcheck after that run is where the archive and usage section run for real.
 
-### Step 6: Online judge (nearly complete; waiting on labels)
+### Step 6: Online judge (tentatively complete; waiting on labels)
 Branch `feat/online-judge`. Status: all code is written and stub-tested (239 tests passing); nothing is deployed and no paid run has been made. The box in the checklist is `[~]` until the items under "Still open" are done.
 
 Built:
@@ -306,6 +306,6 @@ Still open:
 1. The owner's 40 `supported` labels in `evals/labels/summaries_template.csv` (in progress). Until they exist there is no kappa and no claim about how well the judge agrees with a human.
 2. Run the calibration (about $0.38), record the real numbers here, and decide from the kappa whether to set `JUDGE_ALERTING_ENABLED = True`. If kappa is weak or the interval is too wide to tell, the judge stays informational and this entry says so.
 3. Deploy, each needing the owner's approval: redeploy agents 2a and 2b (source persistence); run `gcloud firestore fields ttls update expires_at --collection-group=summary_sources --enable-ttl`; mount `ANTHROPIC_1ST_API_KEY` on the healthcheck from the `anthropic-api-key` secret (`--update-secrets`, never `--set-*`) and redeploy it.
-4. Not verified: the healthcheck image has not been built on `python:3.11-slim` with the new modules (the Docker check was skipped), and nothing has run against real Firestore or a real Claude call. The first real check is the first weekly run after deploy: confirm `summary_sources` docs exist, `judge_results` is on the run doc and the email section renders. History needs about three weekly runs before the drift line says anything.
+4. Verified: the healthcheck image builds on `python:3.11-slim` and `judge`, `online_judge`, `summary_sources`, `drift`, `agent_healthcheck`, `agent2a_summarize_papers` and `agent2b_summarize_news` import inside it (Python 3.11.17, scipy 1.17.1; the judge prompt file is present). Not verified: anything against real Firestore or a real Claude call. The first real check is the first weekly run after deploy: confirm `summary_sources` docs exist, `judge_results` is on the run doc and the email section renders. History needs about three weekly runs before the drift line says anything.
 
 Caveats: n=40 labels, so kappa will have a wide interval; the judge is the same model family as the summarizer; the labeler saw the same source and summary; the template's sources were re-fetched when it was built, so they may differ slightly from what the summarizer saw; unsupported summaries are probably rare, so recall is very uncertain. The weekly sample is about a dozen items, so the drift check is a tripwire, not a guarantee. Sonnet 5.5 uses a newer tokenizer (about 30% more tokens per text than Haiku 4.5), so the cost estimate uses a rough tokens-per-word figure and the real cost is taken from reported usage.

@@ -1,0 +1,15 @@
+You are checking a short newsletter summary against the source text it was written from.
+
+A summary is SUPPORTED only if every factual claim in it (numbers, names, dates, causes, results, quotes) is stated in, or directly follows from, the source text. It is UNSUPPORTED if any claim is missing from the source, contradicts it, or goes beyond it (invented detail, overstated certainty, wrong figure). Do not use outside knowledge to fill gaps. Style, brevity and omissions are not errors; only unsupported claims are.
+
+Title: {title}
+
+<source>
+{source}
+</source>
+
+<summary>
+{summary}
+</summary>
+
+Call the record_verdict tool with your verdict. List each unsupported claim briefly (quote or paraphrase it); leave the list empty when the summary is supported.

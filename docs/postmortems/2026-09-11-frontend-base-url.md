@@ -17,7 +17,7 @@ Subscribers who clicked "manage preferences" in a newsletter footer reached a de
 **Confirmed.** A configuration error, not a code bug: the value was `https://lofeodo.com/newsletter` (wrong host; `/newsletter` is not a real path, because Firebase Hosting serves `public/newsletter/*` at the site root). The correct value is `https://newsletter.lofeodo.com`. `agent-subscriptions` had the correct value the whole time, so the two services disagreed.
 
 ## Detection
-OWNER: add how it was found. Nothing automated checks link targets in a sent newsletter.
+Found by the owner clicking the preferences link in a received newsletter (owner). Nothing automated checks link targets in a sent newsletter.
 
 ## Fixes
 Configuration only: corrected the environment variable on `agent4`. No code change, so there is no code regression to test; a test can only show that footer links are built from the variable, not that the deployed value is right.

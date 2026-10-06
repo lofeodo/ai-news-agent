@@ -32,7 +32,7 @@ Purpose: make Latent SpaceMail defensible in technical interviews for LLM system
 - [x] Step 5b: Token and cost monitoring (LangSmith, weekly summary and drift alert)
 - [x] Step 6: Online judge (calibrated weekly scoring and alerting). Built, calibrated and recorded; the judge did not validate against the owner's labels (kappa 0.04), so it ships report-only. Deployed 2026-10-06; its weekly path is first exercised on the 2026-10-12 run
 - [~] Step 7: Click-through signal (SendGrid). Built, tested and deployed 2026-10-06; no real click has been counted yet, first tracked send is 2026-10-12 (see "Completed steps")
-- [~] Step 8: Postmortems and runbook. Written and tested on branch `docs/postmortems-runbook`; open: the owner's facts for the `OWNER:` markers (see "Completed steps")
+- [x] Step 8: Postmortems and runbook. Written and tested on branch `docs/postmortems-runbook`; ready for owner review
 - [ ] Optional A: Model card and privacy review (Law 25 / GDPR)
 - [ ] Optional B: Agent 2b verify loop (generate, verify, retry or fall back)
 - [ ] Step 9: Results, README, CLAUDE.md, retire this doc
@@ -350,7 +350,7 @@ Still open: no real tracked email has been sent and no real click counted. agent
 Caveats: under 50 readers makes this a rough signal; counts are not unique per reader (that would need per-subscriber state), and SendGrid can deliver an event more than once, so a click can occasionally be counted twice; scanner and bot clicks inflate counts and are only partly filtered; position and layout bias are not corrected; the webhook handler sees subscriber emails and IPs in memory by design, and the guarantee that none are stored or logged is enforced by tests (`tests/test_sendgrid_webhook.py`, `tests/test_click_endpoint.py`), not by SendGrid; link branding is not set up, so clicks go through SendGrid's default tracking domain, which can affect deliverability and how links look; Cloud Run's request logs still record caller IPs for the webhook route as they do for every route.
 
 ### Step 8: Postmortems and runbook
-Branch `docs/postmortems-runbook`. Status: written and tested; waiting on owner review.
+Branch `docs/postmortems-runbook`. Status: written and tested; waiting on owner review of the final text.
 
 Built:
 - `docs/postmortems/`: `TEMPLATE.md`, an index `README.md`, and three postmortems: `2026-09-07-stale-newsletter.md`, `2026-09-28-firestore-doc-size.md`, `2026-09-11-frontend-base-url.md`. Facts come from CLAUDE.md, commit messages and the code, plus the owner's answers (the owner noticed the duplicate issue; all active subscribers received it; no complaints; no agent 2b abort seen since 2026-09-28; start date of the wrong `FRONTEND_BASE_URL` unknown). The native abort root cause is stated as unconfirmed.
@@ -359,4 +359,4 @@ Built:
 
 Findings while writing the runbook (not fixed, no production code changed): re-running agent 2a or 2b on a run whose counter has already reached 2 publishes `content-summarized` again and so starts agent 3 a second time; agent 2a's increment is not idempotent, and agent 2b's returns the existing count (still 2 or more).
 
-Open: (1) done after owner approval: the pruning was extracted unchanged from `run()` into the pure `build_run_doc_update()` in `agents/agent3_compose.py`, and a test checks that ~500 articles plus four variants stay under 1 MiB (measured as JSON size, a proxy for Firestore's own size accounting) while the unpruned shape exceeds it (suite: 329 passing); (2) `OWNER:` markers in the postmortems (send time and subscriber count of the 09-07 send, whether a newsletter went out the week of 09-28, how the 09-28 failure and the dead link were detected) for the owner to fill in; (3) the file date of the FRONTEND_BASE_URL postmortem is the fix date, as the start is unknown.
+Open: (1) done after owner approval: the pruning was extracted unchanged from `run()` into the pure `build_run_doc_update()` in `agents/agent3_compose.py`, and a test checks that ~500 articles plus four variants stay under 1 MiB (measured as JSON size, a proxy for Firestore's own size accounting) while the unpruned shape exceeds it (suite: 329 passing); (2) the `OWNER:` markers were filled from the owner's answers (the 09-07 subscriber count and time are intentionally left out of the public repo; no issue went out the week of 09-28; the 09-28 failure was caught by the health check email; the dead link was found by clicking it in a received newsletter); (3) the file date of the FRONTEND_BASE_URL postmortem is the fix date, as the start is unknown.

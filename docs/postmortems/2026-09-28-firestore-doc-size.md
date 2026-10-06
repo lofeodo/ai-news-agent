@@ -7,7 +7,7 @@ Sources: commit messages `53f832b`, `894d124`, `d4869b2`, `bec6e2c`; CLAUDE.md; 
 On Monday 2026-09-28 agent 3 failed writing the composed newsletter because the `pipeline_runs/{run_id}` document had grown to about 1.2 MB, over Firestore's 1 MiB document cap. The same day agent 2b hit its native SIGABRT crash again. Both were fixed the same day.
 
 ## Impact
-- The 2026-09-28 pipeline run did not complete on its own. OWNER: add whether a newsletter was sent that week, and if so when and how (manual rerun?).
+- The 2026-09-28 pipeline run did not complete on its own, and no newsletter was sent that week (owner).
 - No other run is known to be affected, but earlier run sizes were not checked. The document grows with the number of articles, not with code changes.
 
 ## Timeline
@@ -20,7 +20,7 @@ On Monday 2026-09-28 agent 3 failed writing the composed newsletter because the 
 **Unconfirmed for the agent 2b crash**; see the [2026-09-07 postmortem](2026-09-07-stale-newsletter.md).
 
 ## Detection
-By failure: agent 3's write was rejected. Agent 3 records `agent3_error` on uncaught failures, which the health check reports, but the write that records the error goes to the same oversized document, so whether it landed is not established here. OWNER: add whether it was the health check email or logs that surfaced it.
+By failure: agent 3's write was rejected. Agent 3 records `agent3_error` on uncaught failures, which the health check reports, but the write that records the error goes to the same oversized document, so whether it landed is not established here. The failure was detected through the health check email (owner).
 
 ## Fixes
 - `53f832b` agent 1b stops storing the duplicate flat `articles` list; agent 2b builds its list from `by_category`.

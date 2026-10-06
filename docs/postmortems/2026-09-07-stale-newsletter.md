@@ -8,7 +8,7 @@ On Monday 2026-09-07 agent 2b crashed with a native abort a few seconds into sum
 
 ## Impact
 - All active subscribers received the 2026-08-24 issue again instead of a new one (owner). No reader complaints were received (owner).
-- The number of subscribers is not recorded in this document. OWNER: add the count if you want it public.
+- The subscriber count is deliberately not given, because the repo is public.
 - No newsletter was sent for the 2026-09-07 week.
 - The health check heartbeat was missing for three Mondays (2026-08-17 to 2026-09-07), so there was no alert at all that morning.
 
@@ -17,7 +17,7 @@ On Monday 2026-09-07 agent 2b crashed with a native abort a few seconds into sum
 - 2026-08-17: the health check starts raising `TypeError: can't subtract offset-naive and offset-aware datetimes` before sending its email, every Monday, so the heartbeat silently stops (`374e19e`).
 - 2026-09-07, before 7 AM: agent 2b dies with `munmap_chunk(): invalid pointer`, SIGABRT (exit 134), about 5 seconds into summarizing (`83627a5`). Python's `try/except` cannot catch it, so no error is written to the run document. The `agent2_completions` counter never reaches 2, `content-summarized` is never published, agent 3 never runs.
 - 2026-09-07, 7 AM: agent 4 queries for the newest run with `newsletter_composed == True`, finds the 2026-08-24 run (440 hours old, per `d137c7b`) and sends it.
-- 2026-09-07: the owner notices the duplicate issue (owner). OWNER: add the time and how soon after the send.
+- After the send (exact time not recorded): the owner notices the duplicate issue (owner).
 - 2026-09-11: fixes merged (see Fixes).
 - 2026-09-28: the same native crash happens again (see the [2026-09-28 postmortem](2026-09-28-firestore-doc-size.md)).
 
@@ -46,4 +46,3 @@ Regression tests: see the Step 8 entry in the roadmap for which of these now hav
 
 ## Follow-ups
 - Root cause of the native abort is still unconfirmed. Unassigned.
-- OWNER: fill in the subscriber count and detection time above, if wanted.

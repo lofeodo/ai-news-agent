@@ -1,0 +1,481 @@
+[
+  {
+    "id": "4175c343c461",
+    "kind": "paper",
+    "source_kind": "pdf_text",
+    "gold_supported": true,
+    "judge_supported": false,
+    "n_claims": 2,
+    "claims": [
+      "States as fact that the work \"provides the first error rates for user-facing coding agent responses\". The source only says \"as far as we are aware\" these are the first reported rates, so the summary d",
+      "Says the work \"establishes benchmarks for measuring real-world reliability beyond benchmark scores\". The source does not claim this."
+    ],
+    "error": null
+  },
+  {
+    "id": "98518e1817df",
+    "kind": "paper",
+    "source_kind": "pdf_text",
+    "gold_supported": true,
+    "judge_supported": false,
+    "n_claims": 3,
+    "claims": [
+      "\"This safety vulnerability suggests current safeguards fail when user intent is subtly manipulated\" \u2013 the source only shows refusal reduced (98% to 62%, not eliminated) via white-box latent steering; ",
+      "\"indicating this implicit modeling is a shared architectural feature\" \u2013 the source reports shared geometry across independently trained models (partial alignment) and says it \"may generalize\"; it does",
+      "\"models secretly believe\" \u2013 the source says beliefs are implicit/opaque, not secret (minor framing)."
+    ],
+    "error": null
+  },
+  {
+    "id": "32a71d81c172",
+    "kind": "news",
+    "source_kind": "description",
+    "gold_supported": true,
+    "judge_supported": false,
+    "n_claims": 1,
+    "claims": [
+      "The land bank is meant \"to support large-scale data center infrastructure\". The source text cuts off at \"large-scale powered land bank design\u2026\" and doesn't say what the site is for."
+    ],
+    "error": null
+  },
+  {
+    "id": "cadb87718323",
+    "kind": "news",
+    "source_kind": "full_text",
+    "gold_supported": true,
+    "judge_supported": true,
+    "n_claims": 0,
+    "claims": [],
+    "error": null
+  },
+  {
+    "id": "8c5d90e877f3",
+    "kind": "news",
+    "source_kind": "full_text",
+    "gold_supported": true,
+    "judge_supported": true,
+    "n_claims": 0,
+    "claims": [],
+    "error": null
+  },
+  {
+    "id": "e385c9851e4e",
+    "kind": "news",
+    "source_kind": "full_text",
+    "gold_supported": true,
+    "judge_supported": false,
+    "n_claims": 1,
+    "claims": [
+      "Says he quickly burned through his AI usage quota. The source says only that he used 33 percent of his weekly usage in one day, not that he used it all up."
+    ],
+    "error": null
+  },
+  {
+    "id": "fcf4a5e6fb87",
+    "kind": "paper",
+    "source_kind": "pdf_text",
+    "gold_supported": true,
+    "judge_supported": false,
+    "n_claims": 3,
+    "claims": [
+      "\"this means faster, more interpretable discoveries\" \u2013 the source does not report speed advantages in the experiments (the intro asserts efficiency, but no efficiency results are shown), so \"faster\" is",
+      "\"The approach generalizes across different language models and datasets, suggesting real practical utility\" \u2013 generalization across datasets is not shown. Robustness was tested only across LLM variant",
+      "\"enabling clustering outputs that map directly to biological cell types\" \u2013 overstated. The source shows marker-overlap annotation on one dataset, not direct mapping to cell types in general"
+    ],
+    "error": null
+  },
+  {
+    "id": "1022b310ec80",
+    "kind": "news",
+    "source_kind": "full_text",
+    "gold_supported": true,
+    "judge_supported": true,
+    "n_claims": 0,
+    "claims": [],
+    "error": null
+  },
+  {
+    "id": "639b8919b62d",
+    "kind": "news",
+    "source_kind": "full_text",
+    "gold_supported": true,
+    "judge_supported": false,
+    "n_claims": 5,
+    "claims": [
+      "States Mistral \"is raising\" $3.5B at $23.1B valuation as fact; source says only that it is in early-stage talks, terms could change.",
+      "\"to build AI infrastructure\" as the purpose of the funding is not stated; source only says it positions itself as an AI infrastructure provider (the Sept round was for scientific research).",
+      "\"European alternative to U.S. competitors\" \u2013 source says European alternative in the AI market, not specifically to U.S. competitors (only mentions Anthropic's Mythos for one product).",
+      "Significance: \"compete against better-funded U.S. rivals\" adds a specific claim (rivals better funded) not in the source.",
+      "Significance: \"funding signals investor confidence in Europe's AI sovereignty efforts\" and \"promises of locally-controlled models and infrastructure\" are not supported; the source has no investor-conf"
+    ],
+    "error": null
+  },
+  {
+    "id": "6109cfa6b3b6",
+    "kind": "news",
+    "source_kind": "full_text",
+    "gold_supported": true,
+    "judge_supported": true,
+    "n_claims": 0,
+    "claims": [],
+    "error": null
+  },
+  {
+    "id": "a2a7c0357f0f",
+    "kind": "news",
+    "source_kind": "full_text",
+    "gold_supported": true,
+    "judge_supported": false,
+    "n_claims": 3,
+    "claims": [
+      "\"Chinese-made Arm processor\" \u2013 the source names the Cix CD8180 but never says it is Chinese-made.",
+      "\"Lenovo launched the AI Host\" \u2013 the source says it is available for pre-order, not launched or shipping.",
+      "\"The device marks Lenovo's push into budget AI computing\" \u2013 the source doesn't describe any broader Lenovo strategy or push; it only says the device is unusual for Lenovo and cheaper than some systems"
+    ],
+    "error": null
+  },
+  {
+    "id": "75bf38104c60",
+    "kind": "news",
+    "source_kind": "full_text",
+    "gold_supported": true,
+    "judge_supported": true,
+    "n_claims": 0,
+    "claims": [],
+    "error": null
+  },
+  {
+    "id": "a48669e06889",
+    "kind": "paper",
+    "source_kind": "pdf_text",
+    "gold_supported": true,
+    "judge_supported": false,
+    "n_claims": 1,
+    "claims": [
+      "The summary says residual correlation \"lingers after independent models leave accuracy near-ceiling.\" The source says the opposite. When independent GPs reach near-ceiling accuracy, as on Tecator, lit"
+    ],
+    "error": null
+  },
+  {
+    "id": "0ee577cedf3b",
+    "kind": "news",
+    "source_kind": "full_text",
+    "gold_supported": true,
+    "judge_supported": false,
+    "n_claims": 2,
+    "claims": [
+      "Describes 1min.AI as \"a startup\" \u2014 the source never says it is a startup.",
+      "\"Users could eliminate recurring AI subscription costs entirely\" slightly overstates; the source only says one could cancel other subscriptions and the $60 plan has no recurring payments (minor)."
+    ],
+    "error": null
+  },
+  {
+    "id": "98c28ba88613",
+    "kind": "news",
+    "source_kind": "description",
+    "gold_supported": true,
+    "judge_supported": true,
+    "n_claims": 0,
+    "claims": [],
+    "error": null
+  },
+  {
+    "id": "fa263a7209a1",
+    "kind": "news",
+    "source_kind": "description",
+    "gold_supported": true,
+    "judge_supported": false,
+    "n_claims": 2,
+    "claims": [
+      "The source says Meta is \"restricting how employees use tokens\", not specifically \"capping employee access\" to tokens. The source excerpt is truncated and doesn't state a cap.",
+      "\"Spiraling computational costs\" is not stated. The source says only \"rising artificial intelligence costs\", and it doesn't mention computational costs."
+    ],
+    "error": null
+  },
+  {
+    "id": "95d831ff7c48",
+    "kind": "paper",
+    "source_kind": "pdf_text",
+    "gold_supported": false,
+    "judge_supported": false,
+    "n_claims": 3,
+    "claims": [
+      "\"verified reasoning ratios increasing from single digits to 30-46% on many models\" \u2013 the source reports Verified Utility (VU) gains (e.g., 9.24% to 32.75%, 21.51% to 46.61%, 16.33% to 35.54%), not ver",
+      "\"dangerous in law, science, and medicine\" \u2013 the source mentions legal and scientific reasoning only; medicine is not mentioned.",
+      "\"converts these into mathematical logic notation\" is loose, but the main unsupported specific is \"medicine\"; also \"without external solvers\" is a mild extension (source says without external critics)."
+    ],
+    "error": null
+  },
+  {
+    "id": "34304906d51e",
+    "kind": "news",
+    "source_kind": "full_text",
+    "gold_supported": true,
+    "judge_supported": false,
+    "n_claims": 2,
+    "claims": [
+      "Nimbus is citing concerns about reduced quality. The source gives Nimbus's reasons as its mission to share human stories and the need to protect authors' intellectual property. The reduced-quality con",
+      "The claim that Nimbus cites \"intellectual property theft\" is a stretch. Moran talks about protecting intellectual property and says it is disrespectful to \"mine the information that's out there\", but "
+    ],
+    "error": null
+  },
+  {
+    "id": "a3ea24e61cb4",
+    "kind": "news",
+    "source_kind": "full_text",
+    "gold_supported": true,
+    "judge_supported": false,
+    "n_claims": 2,
+    "claims": [
+      "The 13% of organizations breached were \"largely due to missing access controls\". The source says 97% of those breached lacked proper AI access controls. It doesn't say the missing controls caused the ",
+      "Companies \"face... regulatory penalties under emerging laws like the EU AI Act\". The source says the EU AI Act imposes mandatory requirements. It doesn't mention penalties or call the laws \"emerging\"."
+    ],
+    "error": null
+  },
+  {
+    "id": "a08c9ab28f32",
+    "kind": "news",
+    "source_kind": "full_text",
+    "gold_supported": true,
+    "judge_supported": false,
+    "n_claims": 2,
+    "claims": [
+      "\"studies show 97% of listeners cannot distinguish AI-made tracks\": the source cites a single survey (une enqu\u00eate) saying \"jusqu'\u00e0 97 %\" (up to 97%) of people can't tell the difference. The summary mak",
+      "\"20 streaming platforms\": the source says \"une vingtaine\" (about twenty), not exactly 20. This is a minor point."
+    ],
+    "error": null
+  },
+  {
+    "id": "11cfcfc127ec",
+    "kind": "news",
+    "source_kind": "full_text",
+    "gold_supported": true,
+    "judge_supported": false,
+    "n_claims": 2,
+    "claims": [
+      "The summary says Kim raised concerns about \"deepfake generation\". The source says he warned about misinformation, bias, and dangerous outputs such as bioterrorism content. The deepfake cases are cited",
+      "The summary states as fact that he was fired for raising safety concerns. The source presents this only as an allegation in the complaint."
+    ],
+    "error": null
+  },
+  {
+    "id": "731e759cda4f",
+    "kind": "news",
+    "source_kind": "full_text",
+    "gold_supported": true,
+    "judge_supported": false,
+    "n_claims": 2,
+    "claims": [
+      "Describes the research as \"a randomized controlled trial\" of 1,222 participants, but the source says a series of randomized controlled trials involving 1,222 participants.",
+      "Says the tasks were \"problem-solving\" tasks and \"difficult tasks\"; the source only says \"tasks\" and doesn't describe them as problem-solving or difficult."
+    ],
+    "error": null
+  },
+  {
+    "id": "db6863bcd34d",
+    "kind": "news",
+    "source_kind": "full_text",
+    "gold_supported": true,
+    "judge_supported": true,
+    "n_claims": 0,
+    "claims": [],
+    "error": null
+  },
+  {
+    "id": "84628058bad2",
+    "kind": "news",
+    "source_kind": "full_text",
+    "gold_supported": true,
+    "judge_supported": false,
+    "n_claims": 4,
+    "claims": [
+      "\"This will force AI companies to slash token prices\" overstates the source. The source says providers will \"probably slash\" prices \"because they can,\" not that they are forced to.",
+      "\"which will soon flood the market with cheap AI processing power\" states as certain what the source calls \"very likely\" and \"probably.\"",
+      "\"potentially ending the era of expensive AI usage\" is not in the source. It adds an implication the source doesn't make.",
+      "The summary says Blackwell generates tokens \"65 times faster,\" but the source gives 65x per GPU, for the GB300 NVL72 against Hopper. The summary drops that qualifier and states it as a general speed c"
+    ],
+    "error": null
+  },
+  {
+    "id": "67d7a93d04af",
+    "kind": "news",
+    "source_kind": "full_text",
+    "gold_supported": true,
+    "judge_supported": false,
+    "n_claims": 3,
+    "claims": [
+      "\"that companies may resist\" \u2014 the source says nothing about AI companies resisting regulation; this is an added speculative outcome.",
+      "\"creating pressure for stronger regulatory frameworks\" \u2014 the source reports support for regulation but does not say it is creating pressure for stronger frameworks (mild overreach).",
+      "\"survey of 52,000 Americans\" is slightly rounded from \"nearly 52,000\" (minor)."
+    ],
+    "error": null
+  },
+  {
+    "id": "14b5ced4489c",
+    "kind": "news",
+    "source_kind": "full_text",
+    "gold_supported": false,
+    "judge_supported": true,
+    "n_claims": 0,
+    "claims": [],
+    "error": null
+  },
+  {
+    "id": "f2121efd7eff",
+    "kind": "news",
+    "source_kind": "full_text",
+    "gold_supported": true,
+    "judge_supported": true,
+    "n_claims": 0,
+    "claims": [],
+    "error": null
+  },
+  {
+    "id": "c2d6a312e9e2",
+    "kind": "news",
+    "source_kind": "full_text",
+    "gold_supported": true,
+    "judge_supported": false,
+    "n_claims": 2,
+    "claims": [
+      "Describes a \"strategic pivot\" toward crypto infrastructure. The source calls it a deliberate strategy but never says OpenAI changed direction.",
+      "Says OpenAI is integrating its AI agents with blockchain platforms \"through partnerships with Paradigm and Coinbase\". The source describes a Paradigm partnership to build the EVMbench benchmark. It sa"
+    ],
+    "error": null
+  },
+  {
+    "id": "3168cd2beb65",
+    "kind": "news",
+    "source_kind": "full_text",
+    "gold_supported": true,
+    "judge_supported": true,
+    "n_claims": 0,
+    "claims": [],
+    "error": null
+  },
+  {
+    "id": "916b079093c7",
+    "kind": "news",
+    "source_kind": "full_text",
+    "gold_supported": true,
+    "judge_supported": true,
+    "n_claims": 0,
+    "claims": [],
+    "error": null
+  },
+  {
+    "id": "9d0d219f2753",
+    "kind": "paper",
+    "source_kind": "pdf_text",
+    "gold_supported": false,
+    "judge_supported": false,
+    "n_claims": 2,
+    "claims": [
+      "Programs \"passing upstream syntax checks\" still fail in plant simulation. The source describes the upstream checks as submission-profile acceptance and required I/O checks, not syntax checks.",
+      "\"Static validation misses real-world control dependencies\" and \"production losses\". The source doesn't make the static-validation point or mention production losses. It only says that upstream accepta"
+    ],
+    "error": null
+  },
+  {
+    "id": "62a122c572bc",
+    "kind": "paper",
+    "source_kind": "pdf_text",
+    "gold_supported": false,
+    "judge_supported": true,
+    "n_claims": 0,
+    "claims": [],
+    "error": null
+  },
+  {
+    "id": "38575eddae43",
+    "kind": "news",
+    "source_kind": "description",
+    "gold_supported": true,
+    "judge_supported": false,
+    "n_claims": 2,
+    "claims": [
+      "The summary says the threatened companies are \"enterprise companies\" that built their own AI tools. The source says only \"companies that use its AI models to build their own tools\".",
+      "The claim that Anthropic is \"in direct competition with its own customer base\" overstates the source, which says the tools \"threaten\" these companies' business."
+    ],
+    "error": null
+  },
+  {
+    "id": "3173deafc815",
+    "kind": "news",
+    "source_kind": "description",
+    "gold_supported": true,
+    "judge_supported": true,
+    "n_claims": 0,
+    "claims": [],
+    "error": null
+  },
+  {
+    "id": "28a7874e66f8",
+    "kind": "paper",
+    "source_kind": "pdf_text",
+    "gold_supported": true,
+    "judge_supported": true,
+    "n_claims": 0,
+    "claims": [],
+    "error": null
+  },
+  {
+    "id": "d9a316c21637",
+    "kind": "news",
+    "source_kind": "full_text",
+    "gold_supported": true,
+    "judge_supported": false,
+    "n_claims": 2,
+    "claims": [
+      "The summary says AI-powered medical billing tools document the more granular diagnostic details. The source attributes this to AI note-taking tools. It mentions AI for billing separately, as a trend t",
+      "The summary says the report found AI is driving up costs 'primarily' through these tools. The source calls AI one of five drivers and says it is not the biggest driver overall."
+    ],
+    "error": null
+  },
+  {
+    "id": "7bd9d5655c34",
+    "kind": "paper",
+    "source_kind": "pdf_text",
+    "gold_supported": true,
+    "judge_supported": true,
+    "n_claims": 0,
+    "claims": [],
+    "error": null
+  },
+  {
+    "id": "b8ba6260a977",
+    "kind": "news",
+    "source_kind": "full_text",
+    "gold_supported": true,
+    "judge_supported": true,
+    "n_claims": 0,
+    "claims": [],
+    "error": null
+  },
+  {
+    "id": "cfed8e5c75b8",
+    "kind": "news",
+    "source_kind": "full_text",
+    "gold_supported": false,
+    "judge_supported": false,
+    "n_claims": 2,
+    "claims": [
+      "The summary says the series will use franchises \"like 'John Wick' and 'The Hunger Games'\". The source says the companies did not reveal which franchises will be used. It names those titles only as pop",
+      "The significance sentence says major studios are now treating generative AI as a core creative tool. It also says this could reshape content production \"at scale\". The source has only Runway's co-CEO "
+    ],
+    "error": null
+  },
+  {
+    "id": "498ed53d9e16",
+    "kind": "paper",
+    "source_kind": "pdf_text",
+    "gold_supported": false,
+    "judge_supported": false,
+    "n_claims": 2,
+    "claims": [
+      "Vision-token forecasting achieved the strongest robustness under camera blur. The source says only that every forecasting variant beat the baseline under blur. Vision-token forecasting had the highest",
+      "The summary groups the shuffled-future result with the real-robot tests (\"In simulation and real robot tests... shuffling the future target removed gains entirely\"). The shuffled-future control was ev"
+    ],
+    "error": null
+  }
+]

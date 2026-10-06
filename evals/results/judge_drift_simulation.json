@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "name": "judge_drift_simulation",
+  "created_at": "2026-10-06T12:14:45.625228+00:00",
+  "git_sha": "3dd9178",
+  "model": "none",
+  "cost_usd": 0.0,
+  "notes": "Simulated weeks of 12 judged summaries each (binomial), tested against 4 simulated prior weeks of the same size. The true unsupported rate is ASSUMED (see each metric name); no real weekly rate exists yet, so these are not measured production rates. Rule: Fisher exact p < 0.01 and a rise of at least 15%. Perfect judge assumed: judge error is not modelled.",
+  "metrics": {
+    "null_false_alarm_at_5pct_unsupported": {
+      "value": 0.003,
+      "n": 2000,
+      "ci_low": 0.0013756299236301096,
+      "ci_high": 0.006529915073935308
+    },
+    "null_false_alarm_at_15pct_unsupported": {
+      "value": 0.003,
+      "n": 2000,
+      "ci_low": 0.0013756299236301096,
+      "ci_high": 0.006529915073935308
+    },
+    "null_false_alarm_at_30pct_unsupported": {
+      "value": 0.0045,
+      "n": 2000,
+      "ci_low": 0.002369280636961836,
+      "ci_high": 0.008530513218759823
+    },
+    "planted_10_to_30pct_detected": {
+      "value": 0.1565,
+      "n": 2000,
+      "ci_low": 0.14123686235693386,
+      "ci_high": 0.17308014912528694
+    },
+    "planted_10_to_50pct_detected": {
+      "value": 0.606,
+      "n": 2000,
+      "ci_low": 0.5844013923106882,
+      "ci_high": 0.6271921936656862
+    },
+    "planted_10_to_70pct_detected": {
+      "value": 0.9435,
+      "n": 2000,
+      "ci_low": 0.9325050206793214,
+      "ci_high": 0.9527945583822074
+    }
+  }
+}

@@ -158,6 +158,12 @@ Design: (1) additive `confidence_hist` and `category_counts` in `agent1b_review_
 
 Code vs. roadmap: only agent1b graph mode read `response.usage` and only agent1b was traced in LangSmith (opt-in, `agents/tracing.py`, set up 2026-09-30; the `langsmith-api-key` secret and `LANGSMITH_*` vars already exist on the agent1b service). LangSmith's free Developer plan has 5k base traces a month, shared across the account, and 14-day retention, so it cannot hold the 4 prior weeks a drift baseline needs. The owner's idea, adopted: have the healthcheck copy each run's LangSmith totals into Firestore every week (`pipeline_runs/{run_id}.llm_usage`), so history accumulates while LangSmith only keeps recent traces. The owner also chose to show both LangSmith's cost and a list-price estimate from our own table, and to flag drift in the email without changing the pipeline status (as in Step 5).
 
+### Step 6 plan (branch `feat/online-judge`, approved)
+
+Code vs. roadmap: summaries carry no source text (agent2b fetches live, agent2a reads the PDF) and the healthcheck has no ArXiv proxy, so the judge cannot rebuild a source later; agents 2a and 2b now persist the exact text they summarized to a new Firestore collection `summary_sources` (additive, one doc per item, TTL 21 days). agent3 prunes `news_summaries` to the shipped articles, so the weekly sample is drawn from what readers saw. Owner decisions: judge `claude-sonnet-5-5` (stronger, same family; bias documented as a limit), runs inside the healthcheck, owner labels the 40 summaries first.
+
+Design: pure `agents/judge.py` (tool-use verdict, guard text, tag neutralising); `agents/online_judge.py` (sample of at most `JUDGE_MAX_ITEMS`=12, papers first then a seeded news sample stratified by `used_fallback`; cost estimate checked against `JUDGE_MAX_USD`=0.25 before any call; results on the run doc as `judge_results`, counts and verdicts only; idempotent); `drift.evaluate_judge` (Fisher exact on the unsupported rate, p < 0.01 and a 15-point rise); a healthcheck section that is report-only until `JUDGE_ALERTING_ENABLED` is flipped after calibration; `evals/run_judge_calibration.py` (kappa against the 40 labels, on demand).
+
 ## Completed steps
 
 (Each completed step is described here, written on the step's own branch before its PR is declared ready.)

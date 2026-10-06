@@ -153,3 +153,7 @@ CLICK_BOT_UA_MARKERS = ("bot", "spider", "crawler", "scanner", "preview", "proof
 # Clicks within this many seconds of agent4 starting its send are counted separately ("early"): mail
 # security scanners prefetch every link at delivery time, long before a person reads the email.
 CLICK_EARLY_SECONDS = 300
+
+# agent4: turn on SendGrid click tracking and tag each email with the pipeline run id, so the Event Webhook
+# can count clicks per article. Unset = the newsletter is sent exactly as before (the rollback switch).
+CLICK_TRACKING = os.environ.get("CLICK_TRACKING", "false").lower() == "true"

@@ -24,19 +24,24 @@ class _Doc:
 
 
 class _Query:
-    def __init__(self, store, name, limit=None):
-        self._store, self._name, self._limit = store, name, limit
+    def __init__(self, store, name, limit=None, filters=()):
+        self._store, self._name, self._limit, self._filters = store, name, limit, tuple(filters)
 
     def order_by(self, field, direction=None):
         self._field = field
         return self
 
+    def where(self, field, op, value):
+        assert op == "==", "the fake only supports equality filters"
+        return _Query(self._store, self._name, self._limit, self._filters + ((field, value),))
+
     def limit(self, n):
-        return _Query(self._store, self._name, n)
+        return _Query(self._store, self._name, n, self._filters)
 
     def stream(self):
         # Newest first by started_at (ISO strings sort lexicographically).
-        rows = sorted(self._store.get(self._name, {}).items(),
+        rows = sorted(((i, d) for i, d in self._store.get(self._name, {}).items()
+                       if all(d.get(f) == v for f, v in self._filters)),
                       key=lambda kv: kv[1].get("started_at", ""), reverse=True)
         rows = rows[: self._limit] if self._limit else rows
         return [_Snap(i, d) for i, d in rows]

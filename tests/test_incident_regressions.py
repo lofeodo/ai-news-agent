@@ -1,0 +1,190 @@
+"""Regression tests for the fixes made after real incidents (docs/postmortems/). Stubs only.
+
+2026-09-07 stale newsletter: parse_started_at, the healthcheck's stale check, agent4's freshness guard,
+the watchdog deadline. 2026-09-07 / 2026-09-28 agent2b crash: isolated retry and the idempotent counter.
+2026-09-11 dead footer link: the footer URL is built from FRONTEND_BASE_URL (not the deployed value).
+"""
+from datetime import datetime, timedelta, timezone
+
+import signal
+
+import pytest
+
+import agent2b_summarize_news as a2b
+import agent4_send as a4
+import agent_healthcheck as hc
+import config
+import main
+from fakes_firestore import FakeDb
+
+NOW = datetime.now(timezone.utc)
+ABORT = int(signal.SIGABRT)  # 6 on Linux (Cloud Run), differs on Windows
+
+
+# --- parse_started_at (naive-datetime crash, healthcheck silent 2026-08-17 to 2026-09-07) -----------
+
+def test_parse_started_at_treats_naive_as_utc():
+    assert config.parse_started_at("2026-09-07T06:00:00") == datetime(2026, 9, 7, 6, tzinfo=timezone.utc)
+
+
+def test_parse_started_at_keeps_aware_and_z_values():
+    assert config.parse_started_at("2026-09-07T06:00:00+00:00") == datetime(2026, 9, 7, 6, tzinfo=timezone.utc)
+    assert config.parse_started_at("2026-09-07T06:00:00Z") == datetime(2026, 9, 7, 6, tzinfo=timezone.utc)
+
+
+def test_healthcheck_survives_a_naive_started_at_and_still_sends_its_report(monkeypatch):
+    old_naive = (NOW - timedelta(hours=30)).replace(tzinfo=None).isoformat()
+    db = FakeDb({"pipeline_runs": {"old": {"started_at": old_naive}}})
+    sent = []
+    import google.cloud.firestore as fs
+    monkeypatch.setattr(fs, "Client", lambda project=None: db)
+    monkeypatch.setattr(hc, "USE_FIRESTORE", True)
+    monkeypatch.setattr(hc, "_notify", lambda message, healthy: sent.append((message, healthy)))
+    hc._run("t")
+    assert len(sent) == 1 and sent[0][1] is False
+    assert "No recent pipeline run" in sent[0][0]
+
+
+# --- agent4 freshness guard (stale newsletter re-sent 2026-09-07) -----------------------------------
+
+def _runs(started_at):
+    return {"pipeline_runs": {"old": {"run_id": "old", "started_at": started_at, "newsletter_composed": True,
+                                      "newsletter_variants": {"0_0": "<p>x</p>"}, "newsletter_subject": "S"}}}
+
+
+def test_agent4_refuses_a_newsletter_older_than_the_limit():
+    old = (NOW - timedelta(hours=a4.MAX_NEWSLETTER_AGE_HOURS + 1)).isoformat()
+    with pytest.raises(a4.StaleNewsletterError) as exc:
+        a4._load_latest_newsletter(FakeDb(_runs(old)))
+    assert exc.value.run_id == "old"  # the error is recorded against the stale run's own doc
+    assert exc.value.age_hours > a4.MAX_NEWSLETTER_AGE_HOURS
+
+
+def test_agent4_refuses_a_week_old_run_with_a_naive_timestamp():
+    old = (NOW - timedelta(days=14)).replace(tzinfo=None).isoformat()
+    with pytest.raises(a4.StaleNewsletterError):
+        a4._load_latest_newsletter(FakeDb(_runs(old)))
+
+
+def test_agent4_loads_a_fresh_newsletter():
+    loaded = a4._load_latest_newsletter(FakeDb(_runs((NOW - timedelta(hours=2)).isoformat())))
+    assert loaded.run_id == "old" and set(loaded.variants) == {"0_0"} and loaded.subject == "S"
+
+
+# --- footer links (FRONTEND_BASE_URL dead preferences link) -----------------------------------------
+
+def test_footer_links_are_built_from_the_configured_base_urls(monkeypatch):
+    monkeypatch.setattr(a4, "FRONTEND_BASE_URL", "https://front.example")
+    monkeypatch.setattr(a4, "SERVICE_BASE_URL", "https://svc.example")
+    html = a4._personalize("{{PREFERENCES_URL}} {{UNSUBSCRIBE_URL}}", "TOK")
+    assert html == "https://front.example/preferences.html?token=TOK https://svc.example/unsubscribe?token=TOK"
+    assert "{{" not in html
+
+
+# --- watchdog deadline (hard runtime cap) -----------------------------------------------------------
+
+def _freeze(monkeypatch, local_iso):
+    """Make main._deadline_seconds see 'now' as the given America/Toronto wall-clock time."""
+    fixed = datetime.fromisoformat(local_iso).replace(tzinfo=main._CUTOFF_TZ).astimezone(timezone.utc)
+
+    class _DT(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return fixed if tz is None else fixed.astimezone(tz)
+
+    monkeypatch.setattr(main, "datetime", _DT)
+
+
+def test_deadline_is_the_flat_cap_early_in_the_morning(monkeypatch):
+    _freeze(monkeypatch, "2026-10-12T06:00:00")  # cutoff 07:30 is 90 min away, cap is 60 min
+    assert main._deadline_seconds() == main.MAX_RUNTIME_SECONDS
+
+
+def test_deadline_is_the_0730_cutoff_when_that_comes_first(monkeypatch):
+    _freeze(monkeypatch, "2026-10-12T07:00:00")
+    assert main._deadline_seconds() == pytest.approx(30 * 60, abs=1)
+
+
+def test_run_started_after_the_cutoff_gets_only_the_flat_cap(monkeypatch):
+    _freeze(monkeypatch, "2026-10-12T14:00:00")
+    assert main._deadline_seconds() == main.MAX_RUNTIME_SECONDS
+
+
+# --- crash-isolated retry (agent2b native aborts) ---------------------------------------------------
+
+class _Proc:
+    def __init__(self, codes):
+        self._codes = codes
+
+    def wait(self):
+        return self._codes.pop(0)
+
+
+def _isolated(monkeypatch, codes):
+    import subprocess
+    writes, seq = [], list(codes)
+    monkeypatch.setattr(subprocess, "Popen", lambda *a, **k: _Proc(seq))
+    monkeypatch.setattr("time.sleep", lambda s: None)
+    monkeypatch.setattr(main, "_update_run_doc", lambda run_id, fn: writes.append((run_id, fn)))
+    main._run_isolated("agent2b", "agent2b_summarize_news", "R1", 5, {"proc": None})
+    return writes, seq
+
+
+class _FS:
+    DELETE_FIELD = "DELETED"
+
+
+def test_isolated_agent_recovers_after_a_native_abort_and_clears_the_stale_error(monkeypatch):
+    writes, seq = _isolated(monkeypatch, [-ABORT, -ABORT, 0])  # SIGABRT twice, then success
+    assert seq == []  # stopped at the first success
+    assert len(writes) == 1
+    assert writes[0][1](_FS) == {"agent2b_error": "DELETED", "agent2b_failed_at": "DELETED", "agent2b_attempts": 3}
+
+
+def test_isolated_agent_records_a_crash_when_every_attempt_dies_by_signal(monkeypatch):
+    recorded = []
+    monkeypatch.setattr(main, "_record_failure", lambda agent, run_id, error: recorded.append((agent, run_id, error)))
+    _isolated(monkeypatch, [-ABORT] * 6)
+    assert recorded == [("agent2b", "R1", "crashed (killed by SIGABRT) on all 6 attempts")]
+
+
+def test_isolated_agent_first_try_success_writes_nothing(monkeypatch):
+    writes, _ = _isolated(monkeypatch, [0])
+    assert writes == []
+
+
+# --- idempotent agent2 counter ----------------------------------------------------------------------
+
+class _Ref:
+    def __init__(self, data):
+        self.data = data
+
+    def get(self, transaction=None):
+        return type("S", (), {"to_dict": lambda s: dict(self.data)})()
+
+
+class _Txn:
+    def update(self, ref, fields):
+        ref.data.update(fields)
+
+
+def _counter(monkeypatch, data):
+    import google.cloud.firestore as fs
+    ref = _Ref(data)
+    db = type("D", (), {"collection": lambda s, n: type("C", (), {"document": lambda s2, i: ref})(),
+                        "transaction": lambda s: _Txn()})()
+    monkeypatch.setattr(fs, "Client", lambda project=None: db)
+    monkeypatch.setattr(fs, "transactional", lambda f: f)
+    return ref
+
+
+def test_agent2b_counter_increments_once_even_if_the_agent_is_retried(monkeypatch):
+    ref = _counter(monkeypatch, {})
+    assert a2b.increment_and_check("R1") is False  # agent2a has not finished: 1 of 2
+    assert a2b.increment_and_check("R1") is False  # retried attempt must not push the count to 2
+    assert ref.data["agent2_completions"] == 1 and ref.data["agent2b_counted"] is True
+
+
+def test_agent2b_counter_reaches_two_when_agent2a_already_counted(monkeypatch):
+    _counter(monkeypatch, {"agent2_completions": 1})
+    assert a2b.increment_and_check("R1") is True

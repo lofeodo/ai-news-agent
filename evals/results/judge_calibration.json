@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "name": "judge_calibration",
+  "created_at": "2026-10-06T17:09:50.747437+00:00",
+  "git_sha": "bf0b99e",
+  "model": "claude-sonnet-5-5",
+  "cost_usd": 0.5578,
+  "notes": "Judge claude-sonnet-5-5 vs the owner's `supported` labels on 40 summaries (0 judge errors). Same model family as the summarizer; n is small; the labeler saw the same source and summary; sources were re-fetched when the template was built. kappa 0.04 (bootstrap 95% CI -0.15 to 0.23, n=40) is below the 0.6 working bar; the interval is wide at this n. gold: 34 supported, 6 unsupported (n=40); with so few unsupported rows, recall is very uncertain.",
+  "metrics": {
+    "agreement": {
+      "value": 0.45,
+      "n": 40,
+      "ci_low": 0.30705307810904925,
+      "ci_high": 0.6017090820106794
+    },
+    "unsupported_recall": {
+      "value": 0.6666666666666666,
+      "n": 6,
+      "ci_low": 0.299993315138392,
+      "ci_high": 0.9032285888942195
+    },
+    "unsupported_precision": {
+      "value": 0.16666666666666666,
+      "n": 24,
+      "ci_low": 0.06678676328632951,
+      "ci_high": 0.3585307064969906
+    },
+    "false_alarm_rate": {
+      "value": 0.5882352941176471,
+      "n": 34,
+      "ci_low": 0.42221593878812513,
+      "ci_high": 0.7363403163612884
+    },
+    "cohens_kappa": {
+      "value": 0.0350877192982455,
+      "n": 40,
+      "ci_low": -0.1520737327188939,
+      "ci_high": 0.23076923076923084
+    },
+    "agreement_description": {
+      "value": 0.4,
+      "n": 5,
+      "ci_low": 0.11762077423264794,
+      "ci_high": 0.769275718723987
+    },
+    "agreement_full_text": {
+      "value": 0.44,
+      "n": 25,
+      "ci_low": 0.26665638881067355,
+      "ci_high": 0.6293266813020123
+    },
+    "agreement_pdf_text": {
+      "value": 0.5,
+      "n": 10,
+      "ci_low": 0.236593090512564,
+      "ci_high": 0.7634069094874361
+    }
+  },
+  "detail": {
+    "rows": 40,
+    "labeled": 40,
+    "scored": 40,
+    "judge_errors": 0,
+    "confusion": {
+      "gold_unsupported_judge_unsupported": 4,
+      "gold_unsupported_judge_supported": 2,
+      "gold_supported_judge_unsupported": 20,
+      "gold_supported_judge_supported": 14
+    },
+    "gold_unsupported": 6,
+    "gold_supported": 34
+  }
+}

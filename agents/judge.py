@@ -21,7 +21,7 @@ VERDICT_TOOL = {
     "input_schema": {
         "type": "object",
         "properties": {
-            "supported": {"type": "boolean", "description": "True only if every claim is supported by the source."},
+            "supported": {"type": "boolean", "description": "True if every factual claim is supported and no significance sentence adds an unsupported specific."},
             "unsupported_claims": {"type": "array", "items": {"type": "string"}},
         },
         "required": ["supported", "unsupported_claims"],
@@ -59,9 +59,14 @@ def judge_summary(client, title: str, source: str, summary: str, template: str |
         max_tokens=JUDGE_MAX_TOKENS,
         system=GUARD_XML_TAGS,
         tools=[VERDICT_TOOL],
-        tool_choice={"type": "tool", "name": VERDICT_TOOL["name"]},
+        # No forced tool_choice: claude-sonnet-5-5 rejects type "tool" and "any" with a 400. The prompt asks
+        # for the tool call, and a reply without it raises ValueError below, so a miss shows up as an error.
+        tool_choice={"type": "auto"},
         messages=[{"role": "user", "content": prompt}],
     )
+    if getattr(response, "stop_reason", None) == "max_tokens":
+        # A cut-off reply can hold a truncated tool input (a verdict without its claims): do not trust it.
+        raise ValueError("judge hit max_tokens before finishing")
     usage = getattr(response, "usage", None)
     for block in response.content or []:
         if getattr(block, "type", None) == "tool_use" and block.name == VERDICT_TOOL["name"]:

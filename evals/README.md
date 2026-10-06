@@ -59,11 +59,23 @@ success; n per scope is small.
 ## Labeling the summaries template and calibrating the judge
 
 `labels/summaries_template.csv`: fill `supported` with `yes` or `no` for each generated summary, judged against
-the source text in `source_text_ref` (under the gitignored `fixtures/private/summary_sources/`). `yes` means every
-factual claim (numbers, names, dates, causes, results) is stated in, or directly follows from, the source; `no`
-means at least one claim is missing from the source, contradicts it or goes beyond it. Style and brevity do not
-count against a summary. Use only the source; do not fill gaps from what you know. This is the same definition the
-judge prompt (`prompts/judge_prompt.txt`) uses, so the two can be compared.
+the source text in `source_text_ref` (under the gitignored `fixtures/private/summary_sources/`). Judge against that
+file, not the live link (a dead link does not matter if the file has the text).
+
+The summarizer prompts ask for two things: say what the source reports, and add a short significance sentence
+("why it matters", "the single most important implication", "what comes next"). Label the two differently,
+the same way the judge prompt (`prompts/judge_prompt.txt`) does:
+
+- **Factual claims** (what happened, who, numbers, dates, findings, causes stated as fact) must be stated in the
+  source or follow directly from it, in one short mechanical step. A fact, number or name that is missing,
+  contradicted or invented makes the row `no`. Do not fill gaps from what you know, even when it is true.
+- **Significance sentences** are fine if they are a reasonable reading of the source and add no new specific
+  fact, figure, name, event or outcome. Generic framing is fine. Mark `no` if one adds such a specific, contradicts
+  the source, or overstates it ("proves", "will replace", "first ever" when the source does not say so).
+
+Style and brevity never count against a summary. If the source file is empty or only an error page, leave the
+row blank (it will be dropped and n reported accordingly). A `used_fallback` row is judged against the short
+description it was written from, so be strict there. Keep a side list of ids you could not decide on.
 
 Once all 40 rows are labeled: `venv\Scripts\python -m evals.run_judge_calibration --dry-run`, then without
 `--dry-run`. It writes `results/judge_calibration.json` (agreement, kappa with a bootstrap interval, recall and

@@ -20,8 +20,11 @@ def test_parse_label_variants_and_errors():
         je.parse_label("maybe")
 
 
-def test_load_gold_reads_template_blank_by_default():
-    assert all(r["gold"] is None for r in je.load_gold())
+def test_load_gold_parses_labels_and_blanks(tmp_path):
+    f = tmp_path / "labels.csv"
+    rows = ["id,source_kind,supported", "a,full_text,yes", "b,full_text,No", "c,description,"]
+    f.write_text(chr(10).join(rows) + chr(10), encoding="utf-8")
+    assert [r["gold"] for r in je.load_gold(f)] == [True, False, None]
 
 
 def test_perfect_agreement():
@@ -97,6 +100,9 @@ def test_runner_scores_stub_judge(tmp_path, monkeypatch):
     assert details[1]["n_claims"] == 1
 
 
-def test_runner_refuses_real_run_with_unlabeled_rows(capsys):
+def test_runner_refuses_real_run_with_unlabeled_rows(capsys, monkeypatch):
+    # Never read the live label file here: once it is fully labeled, main() would call the real API.
+    monkeypatch.setattr(je, "load_gold", lambda: [{"id": "a", "gold": None, "source_text_ref": "x"}])
+    monkeypatch.setattr(rjc.judge_eval, "load_gold", lambda: [{"id": "a", "gold": None, "source_text_ref": "x"}])
     assert rjc.main([]) == 1
     assert "no `supported` label" in capsys.readouterr().out

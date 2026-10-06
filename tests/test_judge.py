@@ -67,3 +67,8 @@ def test_source_truncated_to_word_limit():
     assert len(judge.truncate_words("w " * 9000, 5000).split()) == 5000
     p = judge.build_prompt(judge.load_prompt(), "T", "zq " * 9000, "s")
     assert p.count("zq") == 5000
+
+
+def test_judge_model_has_a_registered_price():
+    from pricing import estimate_cost
+    assert estimate_cost(1_000_000, 1_000_000, model=JUDGE_MODEL) == 12.0

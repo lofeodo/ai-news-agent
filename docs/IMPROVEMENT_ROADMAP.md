@@ -32,7 +32,7 @@ Purpose: make Latent SpaceMail defensible in technical interviews for LLM system
 - [x] Step 5b: Token and cost monitoring (LangSmith, weekly summary and drift alert)
 - [x] Step 6: Online judge (calibrated weekly scoring and alerting). Built, calibrated and recorded; the judge did not validate against the owner's labels (kappa 0.04), so it ships report-only. Deployed 2026-10-06; its weekly path is first exercised on the 2026-10-12 run
 - [~] Step 7: Click-through signal (SendGrid). Built, tested and deployed 2026-10-06; no real click has been counted yet, first tracked send is 2026-10-12 (see "Completed steps")
-- [ ] Step 8: Postmortems and runbook
+- [~] Step 8: Postmortems and runbook. Written and tested on branch `docs/postmortems-runbook`; open: owner review of the facts, and the agent 3 pruning test (see "Completed steps")
 - [ ] Optional A: Model card and privacy review (Law 25 / GDPR)
 - [ ] Optional B: Agent 2b verify loop (generate, verify, retry or fall back)
 - [ ] Step 9: Results, README, CLAUDE.md, retire this doc
@@ -169,6 +169,10 @@ Design: pure `agents/judge.py` (tool-use verdict, guard text, tag neutralising);
 Code vs. roadmap: SendGrid's Event Webhook click events carry the original target `url` and any `custom_args`, so per-article counts need no rewriting of our HTML; but every event also carries the recipient's email, IP and user agent, and the Stats API only gives totals. The owner first chose a first-party redirect for privacy, then reversed after review: the webhook handler that aggregates in memory and drops the personal fields satisfies the "aggregate counts only" rule, uses a tool the owner already pays for, and avoids making every newsletter link depend on our own service. Checked by the owner in the console: Click Tracking and Event Webhooks with Signature Verification are available on the Essentials 50k plan (2 webhooks allowed, this uses 1); link branding was skipped as too complex. Audience is under 50 active subscribers, so this is a rough signal (counts and n only, no tests).
 
 Design: agent4 builds a link map from the run doc (shipped articles and papers) and stores it as `click_links/{run_id}`, then sends each email with SendGrid click tracking on and `custom_args {run_id}` (behind `CLICK_TRACKING`, failing open); a signed `POST /sendgrid/events` route verifies the ECDSA signature before parsing, reduces events to `{run_id, url, timestamp, bot}`, and increments `click_counts/{run_id}`; the healthcheck email gets an informational click section.
+
+### Step 8 plan (branch `docs/postmortems-runbook`, approved)
+
+Code vs. roadmap: the 2026-09-07 incident is a chain (agent 2b native abort, then no freshness check in agent 4, then a healthcheck that had been crashing silently since 2026-08-17), fixed across three dates; 2026-09-28 has two faults (the agent 2b abort again, and the 1 MiB run doc); FRONTEND_BASE_URL was a configuration fix with no code change. Owner decisions: three postmortems (the two named plus FRONTEND_BASE_URL), the owner is interviewed for facts git cannot give, unknowns stay as `OWNER:` markers, no production code changes. Regression tests only where an existing seam allows it.
 
 ## Completed steps
 
@@ -344,3 +348,15 @@ Deployed 2026-10-06 (the owner did the SendGrid and secret steps; the services w
 Still open: no real tracked email has been sent and no real click counted. agent4 refuses a newsletter older than 24 hours, and the last composed one was already stale when this was deployed, so the first tracked send is the real one on 2026-10-12 at 7 AM; the owner chose to save the cost of a manual pipeline run. After that send: confirm the agent4 log line "click tracking on", the `click_links` and `click_counts` documents, the real shape of SendGrid's events (for example whether `url` arrives HTML-decoded, which `normalize_url` tolerates either way), and the healthcheck's clicks section. Then record the result here and tick the box.
 
 Caveats: under 50 readers makes this a rough signal; counts are not unique per reader (that would need per-subscriber state), and SendGrid can deliver an event more than once, so a click can occasionally be counted twice; scanner and bot clicks inflate counts and are only partly filtered; position and layout bias are not corrected; the webhook handler sees subscriber emails and IPs in memory by design, and the guarantee that none are stored or logged is enforced by tests (`tests/test_sendgrid_webhook.py`, `tests/test_click_endpoint.py`), not by SendGrid; link branding is not set up, so clicks go through SendGrid's default tracking domain, which can affect deliverability and how links look; Cloud Run's request logs still record caller IPs for the webhook route as they do for every route.
+
+### Step 8: Postmortems and runbook
+Branch `docs/postmortems-runbook`. Status: written and tested; waiting on owner review.
+
+Built:
+- `docs/postmortems/`: `TEMPLATE.md`, an index `README.md`, and three postmortems: `2026-09-07-stale-newsletter.md`, `2026-09-28-firestore-doc-size.md`, `2026-09-11-frontend-base-url.md`. Facts come from CLAUDE.md, commit messages and the code, plus the owner's answers (the owner noticed the duplicate issue; all active subscribers received it; no complaints; no agent 2b abort seen since 2026-09-28; start date of the wrong `FRONTEND_BASE_URL` unknown). The native abort root cause is stated as unconfirmed.
+- `docs/runbook.md`: health check messages mapped to causes and first checks, finding the stalled stage, re-running a stage with a Pub/Sub-style envelope (so the run id is kept), rollback switches, key rotation without naming secrets, known gaps. Verified against `main.py`, `agent_healthcheck.py` and both `increment_and_check` functions.
+- `tests/test_incident_regressions.py` (15 stubbed tests): `parse_started_at`, the healthcheck with a naive `started_at`, agent 4's freshness guard, footer links built from `FRONTEND_BASE_URL`, the watchdog deadline (before, at and after 07:30), `_run_isolated` (recovery clears the error; all attempts dying by signal records a crash), and agent 2b's idempotent counter. `tests/fakes_firestore.py` gained an equality `where`. Suite: 328 passing.
+
+Findings while writing the runbook (not fixed, no production code changed): re-running agent 2a or 2b on a run whose counter has already reached 2 publishes `content-summarized` again and so starts agent 3 a second time; agent 2a's increment is not idempotent, and agent 2b's returns the existing count (still 2 or more).
+
+Open: (1) the agent 3 pruning fix has no regression test, because the pruning is inline in `run()` and testing it needs a small extraction into a pure helper, which the plan said to ask about first; (2) `OWNER:` markers in the postmortems (send time and subscriber count of the 09-07 send, whether a newsletter went out the week of 09-28, how the 09-28 failure and the dead link were detected) for the owner to fill in; (3) the file date of the FRONTEND_BASE_URL postmortem is the fix date, as the start is unknown.

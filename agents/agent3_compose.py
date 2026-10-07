@@ -24,10 +24,10 @@ ARTICLES_PER_CATEGORY_TARGET = "3 to 5"
 
 NEWS_CATEGORIES = [
     "Model & Product Releases",
-    "Industry & Business",
     "Policy, Law & Regulation",
     "Open Source & Tools",
     "Safety & Alignment",
+    "Industry & Business",
     "Society & Culture",
     "Canada & Montreal",
 ]
@@ -468,6 +468,27 @@ def compose_html(
     toc_row1 = "".join(_toc_cell(n, s) for n, s in _toc_entries[:4])
     toc_row2 = "".join(_toc_cell(n, s) for n, s in _toc_entries[4:])
 
+    # — one-line share strip, sits after the 1st news section (outside SECTION markers; agent4 re-places it
+    # when it reorders sections, keyed on the SHARE markers) —
+    def _share_strip() -> str:
+        return (
+            f'<!-- SHARE -->\n'
+            f'<tr><td class="mob-share" style="background:{_WHITE};padding:0 40px 22px;">'
+            f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr>'
+            f'<td style="background:#f3e4c0;border:2px solid #b8975a;border-radius:999px;padding:7px 8px 7px 18px;" class="mob-share-in">'
+            f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr>'
+            f'<td style="font-family:{_F};font-size:11px;color:{_INK};white-space:nowrap;vertical-align:middle;">'
+            f'<span class="mob-hide">&#128140;&nbsp; </span>Enjoying the newsletter? <strong>Consider sharing!</strong></td>'
+            f'<td align="right" style="vertical-align:middle;white-space:nowrap;padding-left:8px;">'
+            f'<a href="https://newsletter.lofeodo.com/share.html" style="display:inline-block;font-family:{_F};'
+            f'font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#f3e4c0;'
+            f'background:{_INK};border-radius:999px;padding:6px 14px;text-decoration:none;" class="mob-share-btn">Share &#8599;</a>'
+            f'</td></tr></table>'
+            f'</td></tr></table>'
+            f'</td></tr>\n'
+            f'<!-- /SHARE -->\n'
+        )
+
     # — news section rows —
     news_rows = ""
     for i, category in enumerate(active_categories):
@@ -495,6 +516,8 @@ def compose_html(
               f'</td></tr>\n'
             + f'<!-- /SECTION:{category} -->\n'
         )
+        if i == 0:
+            news_rows += _share_strip()
 
     # — research section: the spotlight paper leads the issue, right under the editor's note —
     paper_cards   = "".join(render_paper_card(p) for p in papers)
@@ -520,6 +543,11 @@ def compose_html(
     }}
     @media only screen and (max-width: 480px) {{
       .mob-pad {{ padding-left: 16px !important; padding-right: 16px !important; }}
+      .mob-share {{ padding-left: 12px !important; padding-right: 12px !important; }}
+      .mob-share td {{ font-size: 10px !important; }}
+      .mob-share-in {{ padding-left: 12px !important; }}
+      .mob-share-btn {{ padding: 6px 10px !important; letter-spacing: 1px !important; }}
+      .mob-hide {{ display: none !important; }}
       .mob-h1 {{ font-size: 26px !important; }}
       .mob-spot-title {{ font-size: 21px !important; }}
       .mob-btn {{ display: block !important; text-align: center; }}

@@ -92,10 +92,10 @@ class StaleNewsletterError(RuntimeError):
 # Keep in sync with DEFAULT_SECTIONS in agents/agent_subscriptions.py
 _DEFAULT_SECTIONS = [
     "Model & Product Releases",
-    "Industry & Business",
     "Policy, Law & Regulation",
     "Open Source & Tools",
     "Safety & Alignment",
+    "Industry & Business",
     "Society & Culture",
     "Research Spotlights",
 ]
@@ -106,6 +106,9 @@ _SECTION_RE = re.compile(
     r'<!-- SECTION:(.+?) -->(.*?)<!-- /SECTION:\1 -->',
     re.DOTALL,
 )
+
+# The one-line share strip agent3 puts between sections (outside SECTION markers)
+_SHARE_RE = re.compile(r'<!-- SHARE -->.*?<!-- /SHARE -->\n?', re.DOTALL)
 
 # Matches the section-number span in section strips: <span style="...font-size:28px...letter-spacing:-1px...">01</span>
 _SECTION_NUM_RE = re.compile(
@@ -307,6 +310,18 @@ def _apply_section_config(html: str, section_config: dict | None) -> str:
         parts.append(sections["Research Spotlights"])
         toc_entries.append(("RES", "Research Spotlights"))
 
+    # The reorder below rewrites everything between the first and last SECTION marker, which would swallow
+    # the share strip, so lift it out and put it back after the first news section.
+    share_m     = _SHARE_RE.search(html)
+    share_html  = share_m.group(0) if share_m else ""
+    share_placed = False
+
+    def _place_share():
+        nonlocal share_placed
+        if share_html and not share_placed and counter - 1 == 1:
+            parts.append(share_html)
+            share_placed = True
+
     for name in desired:
         if name == "Research Spotlights":
             continue  # pinned first above
@@ -316,6 +331,7 @@ def _apply_section_config(html: str, section_config: dict | None) -> str:
         parts.append(_renumber_section(sections[name], new_num))
         toc_entries.append((new_num, name))
         counter += 1
+        _place_share()
 
     # Canada & Montreal passes through unchanged — it is controlled by the
     # include_canada pref, not section_config. Append after enabled news sections.
@@ -325,6 +341,10 @@ def _apply_section_config(html: str, section_config: dict | None) -> str:
         parts.append(_renumber_section(canada, canada_num))
         toc_entries.append((canada_num, "Canada & Montreal"))
         counter += 1
+        _place_share()
+
+    if share_html and not share_placed:
+        parts.append(share_html)  # no news sections placed: keep the strip at the end
 
     # Replace the entire section zone (first marker to last marker)
     all_matches = list(_SECTION_RE.finditer(html))

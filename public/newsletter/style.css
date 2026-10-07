@@ -1278,3 +1278,56 @@ input[type="password"]:focus {
   letter-spacing: 0.04em;
 }
 .upgrade-gate__soon.visible { display: block; }
+
+/* ── Share ─────────────────────────────────────────────────────────────── */
+.share-wrap { position: relative; display: inline-flex; }
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: #c8b89a;
+  border: 1px solid #c8b89a;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-family: 'Menlo', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.share-btn:hover { background: #c8b89a; color: #0a0a0a; }
+.share-btn svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.share-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  min-width: 150px;
+  background: #141414;
+  border: 1px solid #333;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+.share-pop[hidden] { display: none; }
+.share-opt {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #222;
+  color: #d8d0c2;
+  padding: 10px 14px;
+  text-align: left;
+  font-family: 'Menlo', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  cursor: pointer;
+}
+.share-opt:last-child { border-bottom: 0; }
+.share-opt:hover { background: #1f1f1f; color: #c8b89a; }
+.share-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
+.share-grid .share-opt { border: 1px solid #333; text-align: center; padding: 12px; }
+.share-grid > :last-child:nth-child(odd) { grid-column: 1 / -1; }

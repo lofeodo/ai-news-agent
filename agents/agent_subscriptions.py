@@ -100,10 +100,10 @@ DEFAULT_RETURN_PAGE  = "preferences.html"
 
 DEFAULT_SECTIONS = [
     "Model & Product Releases",
-    "Industry & Business",
     "Policy, Law & Regulation",
     "Open Source & Tools",
     "Safety & Alignment",
+    "Industry & Business",
     "Society & Culture",
     "Research Spotlights",
 ]

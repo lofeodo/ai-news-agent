@@ -93,7 +93,6 @@
       <div class="msg" id="msg"></div>
     </form>
 
-    <a href="login.html" class="btn-email-link">Have an account? Sign in with email →</a>
 
     <!-- Shown instead of sign-in buttons when already authenticated -->
     <div id="signed-in-ctas" style="display:none">
@@ -116,7 +115,6 @@
     function showSignedIn() {
       document.getElementById('google-btn').style.display     = 'none';
       document.querySelector('.auth-divider').style.display   = 'none';
-      document.querySelector('.btn-email-link').style.display = 'none';
       document.getElementById('subscribe-form').style.display = 'none';
       document.getElementById('spots-remaining').style.display = 'none';
       document.getElementById('signed-in-ctas').style.display = 'block';
@@ -124,7 +122,6 @@
     function showSignedOut() {
       document.getElementById('google-btn').style.display     = '';
       document.querySelector('.auth-divider').style.display   = '';
-      document.querySelector('.btn-email-link').style.display = '';
       document.getElementById('subscribe-form').style.display = '';
       document.getElementById('spots-remaining').style.display = '';
       document.getElementById('signed-in-ctas').style.display = 'none';

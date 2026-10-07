@@ -304,25 +304,25 @@ def render_paper_card(paper: dict) -> str:
 
     return (
         f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">\n'
-        f'<tr><td class="mob-pad" style="background:#17140f;padding:26px 34px 28px 30px;border-left:4px solid {_AMBER};border-bottom:3px solid {_AMBER};">\n'
+        f'<tr><td class="mob-pad" style="background:#17140f;padding:22px 32px 24px 28px;border-left:4px solid {_AMBER};border-bottom:3px solid {_AMBER};">\n'
         # kicker row: label left, HF upvotes right
-        f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 12px 0;"><tr>'
+        f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 9px 0;"><tr>'
         f'<td valign="top" style="font-family:{_F};font-size:11px;font-weight:700;'
         f'letter-spacing:3px;text-transform:uppercase;color:{_AMBER};">&#9733;&nbsp; Paper of the week</td>'
         f'{stat}</tr></table>\n'
         # title
-        f'<h2 class="mob-spot-title" style="margin:0 0 6px 0;font-family:{_F};font-size:23px;font-weight:700;'
+        f'<h2 class="mob-spot-title" style="margin:0 0 4px 0;font-family:{_F};font-size:22px;font-weight:700;'
         f'line-height:1.25;letter-spacing:-0.3px;color:{_CREAM};">'
         f'<a href="{link}" target="_blank" rel="noopener noreferrer" style="color:{_CREAM};text-decoration:none;">{title}</a>'
         f'</h2>\n'
-        f'<p style="margin:0 0 14px 0;font-family:{_F};font-size:12px;color:#8a8580;">{authors}</p>\n'
+        f'<p style="margin:0 0 11px 0;font-family:{_F};font-size:12px;color:#8a8580;">{authors}</p>\n'
         # hook
-        f'<p style="margin:0 0 18px 0;font-family:{_F};font-size:16px;line-height:1.62;color:{_ASH};">{_esc(summary)}</p>\n'
+        f'<p style="margin:0 0 15px 0;font-family:{_F};font-size:15px;line-height:1.55;color:{_ASH};">{_esc(summary)}</p>\n'
         # bulletproof button
         f'<table role="presentation" cellspacing="0" cellpadding="0" border="0" class="mob-block">'
         f'<tr><td align="center" bgcolor="{_AMBER}" style="background:{_AMBER};">'
         f'<a href="{link}" target="_blank" rel="noopener noreferrer" class="mob-btn" '
-        f'style="display:inline-block;padding:11px 22px;font-family:{_F};font-size:13px;font-weight:700;'
+        f'style="display:inline-block;padding:9px 20px;font-family:{_F};font-size:13px;font-weight:700;'
         f'letter-spacing:1px;color:{_D0};text-decoration:none;">'
         f'{"Read on Hugging Face" if on_hf else "Read the paper"} &nbsp;&#8594;</a>'
         f'</td></tr></table>\n'

@@ -23,7 +23,7 @@ def _setup(monkeypatch, runs):
     import google.cloud.firestore as fs
     monkeypatch.setattr(fs, "Client", lambda project=None: db)
     monkeypatch.setattr(hc, "USE_FIRESTORE", True)
-    monkeypatch.setattr(hc, "_notify", lambda message, healthy: sent.append((message, healthy)))
+    monkeypatch.setattr(hc, "_notify", lambda message, healthy, mode="send": sent.append((message, healthy)))
     return db, sent
 
 

@@ -145,11 +145,10 @@ Past incidents are written up in `docs/postmortems/` (index in its README). `doc
 - `GET /stats?token=` — admin-only (requires `ADMIN_TOKEN` as the query param, 403 otherwise); returns `{active, max}` subscriber counts.
 - `GET /preview` — public, rate-limited (30/min); returns the latest newsletter HTML for the `preview.html` iframe.
 
-**Account-based (Firebase Auth, `Authorization: Bearer <id_token>`):** Users sign in via Google or email+password through `login.html`. Firebase ID token verified in `agents/auth_middleware.py` using `firebase-admin`. No confirmation email needed — Firebase already verified the email. Creates a `users/{uid}` doc on first call.
+**Account-based (Firebase Auth, `Authorization: Bearer <id_token>`):** Users sign in with Google through `login.html` (new email+password accounts were removed 2026-10-07; accounts that already exist still work while signed in, and email-only people use the emailed token links, which work for every subscriber since subscribers are keyed by email). Firebase ID token verified in `agents/auth_middleware.py` using `firebase-admin`. No confirmation email needed — Firebase already verified the email. Creates a `users/{uid}` doc on first call.
 - `GET /auth/me` — return user info + subscription status + tier.
 - `POST /auth/subscribe` — subscribe instantly (email already verified; requires `email_verified: true`). Accepts `{"send_latest": bool}` body.
 - `POST /auth/unsubscribe` — deactivate subscription.
-- `POST /auth/send-verification-email` — rate-limited 5/min; sends a themed Firebase email-verification link for email+password accounts (no-op if already verified).
 - `GET /auth/google/login?return_to=` — start Google Sign-In (see "Google Sign-In" below).
 - `GET /auth/google/callback` — Google OAuth redirect target.
 - `POST /auth/google/exchange` — redeem a one-time exchange code for a Firebase custom token.
@@ -186,7 +185,7 @@ Two tiers: `"free"` (default) and `"premium"`. Tier is set at login time based o
 
 In Firebase Console → Authentication → Sign-in method:
 1. Enable **Google** provider
-2. Enable **Email/Password** (standard, not email link)
+2. **Email/Password** is no longer used for new accounts; leave it enabled so existing password users' sessions keep refreshing
 3. Add authorized domains: `newsletter.lofeodo.com`, `latentspacemail.web.app`
 
 `auth.js` hardcodes the Firebase project config directly in source (see the comment at the top of that file — a prior version fetched it from `/__/firebase/init.json` via a top-level `await`, replaced after causing intermittent failures on real mobile Safari). Firebase's client config isn't a secret; its security model is server-side rules, not hiding this object. `firebase serve --only hosting` is still recommended for local frontend development, since Firebase Hosting's `/__/auth/action` pages (password reset / email verification continue links) are otherwise unavailable from a plain HTTP server.

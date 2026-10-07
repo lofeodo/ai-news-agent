@@ -191,7 +191,7 @@ A separate FastAPI service handles sign-ups and preferences. Two auth paths coex
 
 **Token-based (email links):** The original "inbox is the authentication" model. Website-initiated actions trigger an email round-trip; token-carrying links clicked inside an email prove inbox ownership. Tokens are `secrets.token_urlsafe(32)`, 48h TTL for confirmation, 1-year TTL for action links. Still used for newsletter footer links (unsubscribe, preferences) for all subscribers.
 
-**Account-based (Firebase Auth):** Users sign up or sign in via `login.html` using Google OAuth or email + password. The frontend gets a Firebase ID token and sends it as `Authorization: Bearer <token>`. The backend (`agents/auth_middleware.py`) verifies it with `firebase-admin`. No confirmation email needed — Firebase handles email verification. Account-based subscribers can manage preferences and unsubscribe directly without waiting for an email link.
+**Account-based (Firebase Auth):** Users sign up or sign in via `login.html` using Google OAuth (email+password sign-up was removed; people without a Google account subscribe with just their email on the homepage and manage preferences through the emailed link). The frontend gets a Firebase ID token and sends it as `Authorization: Bearer <token>`. The backend (`agents/auth_middleware.py`) verifies it with `firebase-admin`. No confirmation email needed — Firebase handles email verification. Account-based subscribers can manage preferences and unsubscribe directly without waiting for an email link.
 
 Subscriber document fields: `email`, `token`, `token_expires_at`, `active`, `subscribed_at`, `confirmed_at`, `prefs: {include_french, include_canada}`, `send_latest`, `latest_sent`, `uid` (Firebase UID, null for legacy token-only subscribers). Unsubscribe sets `active: false` (soft delete, never hard-deleted).
 
@@ -204,7 +204,7 @@ Subscriber document fields: `email`, `token`, `token_expires_at`, `active`, `sub
 - **Messaging:** Google Cloud Pub/Sub (push subscriptions, JSON `{run_id}` payload)
 - **State:** Google Cloud Firestore (`pipeline_runs`, `subscribers`, `users` collections)
 - **Scheduling:** Google Cloud Scheduler (weekly cron jobs over two days: Sunday pipeline draft and draft health check; Monday newsletter send and send health check)
-- **Auth:** Firebase Authentication (Google OAuth + email/password; ID tokens verified server-side with `firebase-admin`)
+- **Auth:** Firebase Authentication (Google OAuth; ID tokens verified server-side with `firebase-admin`)
 - **Frontend:** Firebase Hosting (static, custom domain via Cloudflare DNS; vanilla HTML/JS + Firebase Auth JS SDK)
 - **Email:** SendGrid (custom domain `newsletter@lofeodo.com`, DKIM + SPF + DMARC)
 - **AI:** Anthropic Claude (`claude-haiku-4-5-20251001`) — scoring, filtering, summarization, composition
@@ -249,7 +249,7 @@ Subscriber document fields: `email`, `token`, `token_expires_at`, `active`, `sub
 │   └── quebec_french_style.txt     # French-language style guide for news summaries
 ├── public/newsletter/              # Firebase Hosting frontend
 │   ├── index.html                  # Subscribe form (auth-aware nav)
-│   ├── login.html                  # Sign in / create account (Google + email+password)
+│   ├── login.html                  # Sign in (Google) + emailed preferences link
 │   ├── preferences.html            # Preferences (account auth or token fallback)
 │   ├── unsubscribe.html            # Unsubscribe (one-click if signed in, email form otherwise)
 │   ├── preview.html                # Newsletter preview page
@@ -393,7 +393,7 @@ The subscription service and agent4 (sender) are synchronous and don't need `--n
 
 **Hard runtime watchdog.** `main.py` arms a `threading.Timer` around every agent: whichever is sooner of 1 hour after start, or 07:30 America/Toronto for a run that started before it (a manual daytime recovery run only gets the 1-hour cap). On expiry it records `{agent}_error`/`{agent}_failed_at` to the run's Firestore doc, then `os._exit(124)` — a hard process exit that works even if the agent thread is wedged in a C extension, which a Python-level timeout wouldn't survive. Added after agent2b died from a native SIGABRT with no trace left behind; the watchdog bounds hangs going forward, though it can't help a process that has already crashed on its own.
 
-**Dual auth model.** The subscription service supports two auth paths. The original "inbox as auth" token model (email links) remains fully functional for newsletter footer links and legacy subscribers. A new account-based path uses Firebase Authentication (Google OAuth + email/password): the frontend gets a Firebase ID token and sends it as `Authorization: Bearer`; `auth_middleware.py` verifies it with `firebase-admin`. Account-based subscribers get immediate subscribe/unsubscribe/preferences without waiting for an email — the Firebase auth flow already verified inbox ownership. Both paths read and write the same `subscribers` Firestore collection; account subscribers get a `uid` field linking them to the `users` collection.
+**Dual auth model.** The subscription service supports two auth paths. The original "inbox as auth" token model (email links) remains fully functional for newsletter footer links and legacy subscribers. A new account-based path uses Firebase Authentication (Google OAuth): the frontend gets a Firebase ID token and sends it as `Authorization: Bearer`; `auth_middleware.py` verifies it with `firebase-admin`. Account-based subscribers get immediate subscribe/unsubscribe/preferences without waiting for an email — the Firebase auth flow already verified inbox ownership. Both paths read and write the same `subscribers` Firestore collection; account subscribers get a `uid` field linking them to the `users` collection.
 
 **Email deliverability.** Mail sends from `newsletter@lofeodo.com` via SendGrid with full domain authentication (DKIM + SPF via CNAME records, DMARC policy). Sending from a gmail.com address through a third-party relay fails SPF alignment and lands in spam — a controlled sending domain is required.
 

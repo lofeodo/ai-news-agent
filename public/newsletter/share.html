@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Share — Latent SpaceMail</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/svg+xml" href="/images/logo-mark.svg">
+  <link rel="icon" type="image/png" href="/images/logo-email.png">
+  <link rel="preload" href="/fonts/cormorant-garamond-600.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="style.css?v=6">
+</head>
+<body>
+  <canvas id="bg-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;will-change:transform;"></canvas>
+
+  <header class="topbar">
+    <a href="/" class="topbar__logo" aria-label="Latent SpaceMail home">
+      <img src="/images/logo-mark.svg" alt="" height="26" width="26" fetchpriority="high">
+    </a>
+    <nav class="topbar__nav" aria-label="Main">
+      <a href="/preview.html" class="topbar__nav-link" data-href="/preview.html">Latest Issue</a>
+    </nav>
+  </header>
+
+  <div class="card">
+    <h1><span class="prompt">❯</span> Share Latent SpaceMail</h1>
+    <p class="subtitle">Know someone who'd like a weekly briefing on AI research and news? Send them the link.</p>
+
+    <button type="button" class="share-btn" id="native-share" style="display:none;width:100%;justify-content:center;padding:12px;font-size:0.82rem;">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v14"/></svg>
+      Share
+    </button>
+
+    <div class="share-grid" id="share-grid"></div>
+  </div>
+
+  <script src="bg.js"></script>
+  <script src="share.js"></script>
+  <script>
+    LSMShare.renderOptions(document.getElementById('share-grid'));
+    if (navigator.share) {
+      const b = document.getElementById('native-share');
+      b.style.display = 'inline-flex';
+      b.addEventListener('click', () => LSMShare.nativeShare());
+    }
+  </script>
+</body>
+</html>

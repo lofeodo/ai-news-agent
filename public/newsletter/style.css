@@ -1330,3 +1330,4 @@ input[type="password"]:focus {
 .share-opt:hover { background: #1f1f1f; color: #c8b89a; }
 .share-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
 .share-grid .share-opt { border: 1px solid #333; text-align: center; padding: 12px; }
+.share-grid > :last-child:nth-child(odd) { grid-column: 1 / -1; }

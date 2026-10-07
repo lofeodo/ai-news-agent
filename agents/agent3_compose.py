@@ -20,7 +20,7 @@ from config import DATA_DIR, SCORING_MODEL, GCP_PROJECT_ID, USE_FIRESTORE, FIRES
 # ---------------------------------------------------------------------------
 
 NEWSLETTER_NAME              = "Latent SpaceMail"
-ARTICLES_PER_CATEGORY_TARGET = "3 to 5"
+ARTICLES_PER_CATEGORY_TARGET = "3 (more only for major stories)"
 
 NEWS_CATEGORIES = [
     "Model & Product Releases",

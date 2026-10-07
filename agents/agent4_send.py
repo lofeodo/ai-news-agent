@@ -302,9 +302,14 @@ def _apply_section_config(html: str, section_config: dict | None) -> str:
     toc_entries = []
     counter     = 1
 
+    # Research Spotlights: pinned first (right under the editor's note) if the user has it enabled
+    if "Research Spotlights" in desired and "Research Spotlights" in sections:
+        parts.append(sections["Research Spotlights"])
+        toc_entries.append(("RES", "Research Spotlights"))
+
     for name in desired:
         if name == "Research Spotlights":
-            continue  # always placed last
+            continue  # pinned first above
         if name not in sections:
             continue
         new_num = f"{counter:02d}"
@@ -320,11 +325,6 @@ def _apply_section_config(html: str, section_config: dict | None) -> str:
         parts.append(_renumber_section(canada, canada_num))
         toc_entries.append((canada_num, "Canada & Montreal"))
         counter += 1
-
-    # Research Spotlights: always last if the user has it enabled
-    if "Research Spotlights" in desired and "Research Spotlights" in sections:
-        parts.append(sections["Research Spotlights"])
-        toc_entries.append(("RES", "Research Spotlights"))
 
     # Replace the entire section zone (first marker to last marker)
     all_matches = list(_SECTION_RE.finditer(html))

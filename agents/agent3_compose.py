@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_XML_TAGS, neutralize_tags
 import tracing
-from config import DATA_DIR, SCORING_MODEL, GCP_PROJECT_ID, USE_FIRESTORE, FIRESTORE_COLLECTION
+from config import DATA_DIR, SCORING_MODEL, GCP_PROJECT_ID, USE_FIRESTORE, FIRESTORE_COLLECTION, newsletter_send_date
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -233,7 +233,7 @@ def write_intro(
     headline_lines = [line for _, line in all_headlines]
 
     prompt = prompt_template.format(
-        date=datetime.now().strftime("%B %d, %Y"),
+        date=newsletter_send_date().strftime("%B %d, %Y"),
         papers=paper_lines,
         headlines="\n".join(headline_lines[:15]),
     )
@@ -746,7 +746,7 @@ def run(run_id: str):
         print(f"  Intro: {intro[:100]}...")
 
         print("\n=== Composing HTML variants ===")
-        week_of = datetime.now().strftime("%B %d, %Y")
+        week_of = newsletter_send_date().strftime("%B %d, %Y")
         newsletter_variants: dict[str, str] = {}
         for key, prefs in NEWSLETTER_VARIANTS.items():
             selection = selected_all if prefs["include_french"] else selected_en

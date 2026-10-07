@@ -1,8 +1,9 @@
 # agents/agent_healthcheck.py
 #
 # Standalone check, independent of the fetch->summarize->compose->send chain.
-# Triggered by its own Cloud Scheduler job (7:10 AM Monday, shortly after
-# agent4's 7:00 AM send) rather than by Pub/Sub, so it has no run_id for the
+# Triggered by two Cloud Scheduler jobs rather than by Pub/Sub: Sunday ~1:15 PM
+# (after the noon draft; "draft mode", delivery not expected yet) and Monday
+# 7:10 AM (after agent4's 7:00 AM send). It has no run_id for the
 # pipeline run it's checking — it looks that up itself, by most recent
 # started_at in the pipeline_runs collection.
 #
@@ -27,7 +28,9 @@ NEWSLETTER_NAME = "Latent SpaceMail"
 
 # How stale the latest pipeline_runs doc can be before we treat it as "no
 # run happened this week" rather than evaluating its (old) completion state.
-STALE_AFTER_HOURS = 4
+# The pipeline starts Sunday 12:00 and the Monday 7:10 check must still accept
+# it (~19h old); a prior week's run is 7 days old, so 30h still catches it.
+STALE_AFTER_HOURS = 30
 
 # (Firestore field, human label) — checked in pipeline order.
 EXPECTED_STAGES = [
@@ -57,8 +60,14 @@ def _latest_run_doc(db):
     return None, None
 
 
-def _diagnose(doc: dict) -> list[str]:
-    """Return human-readable problem descriptions for one pipeline_runs doc. Empty means healthy."""
+def _is_draft_check(now: datetime | None = None) -> bool:
+    """True on Sunday (Toronto): the draft is done but agent4 hasn't sent yet, so delivery isn't expected."""
+    return (now or datetime.now(timezone.utc)).astimezone(config.NEWSLETTER_TZ).weekday() == 6
+
+
+def _diagnose(doc: dict, draft_only: bool = False) -> list[str]:
+    """Return human-readable problem descriptions for one pipeline_runs doc. Empty means healthy.
+    `draft_only` skips the send stage (the Sunday check, before agent4 has run)."""
     problems = []
 
     for agent in ERROR_AGENTS:
@@ -68,6 +77,8 @@ def _diagnose(doc: dict) -> list[str]:
             problems.append(f"{agent} failed at {failed_at}: {error}")
 
     for field, label in EXPECTED_STAGES:
+        if draft_only and field == "agent4_send_summary":
+            continue
         if not doc.get(field):
             problems.append(f"{label} never completed — '{field}' missing from pipeline_runs")
 
@@ -336,12 +347,18 @@ def _run(run_id: str) -> None:
             )
             return
 
-    problems = _diagnose(doc)
+    draft_only = _is_draft_check()
+    problems = _diagnose(doc, draft_only=draft_only)
     judge_text, judge_flagged = _judge_section(db, checked_run_id, doc)
     if judge_flagged and config.JUDGE_ALERTING_ENABLED:
         problems.append("summary faithfulness dropped versus the prior weeks (see the judge section below)")
     drift_text = (f"{_drift_section(db, checked_run_id, doc)}\n\n{_usage_section(db, checked_run_id, doc)}"
-                  f"\n\n{judge_text}\n\n{_click_section(db, checked_run_id, doc)}")
+                  f"\n\n{judge_text}")
+    if draft_only:
+        drift_text = ("DRAFT CHECK (Sunday): the newsletter is composed and sends Monday 7:00 AM; "
+                      "delivery is checked by the Monday 7:10 report.\n\n" + drift_text)
+    else:
+        drift_text += f"\n\n{_click_section(db, checked_run_id, doc)}"
 
     if not problems:
         print(f"[healthcheck]  run_id={checked_run_id} looks healthy.", flush=True)

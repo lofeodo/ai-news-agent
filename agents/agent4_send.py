@@ -11,7 +11,7 @@
 # TEST_RECIPIENT_EMAIL (if set). Local mode does NOT query Firestore.
 #
 # Triggered by a Cloud Scheduler job at 7:00 AM every Monday — separate from the
-# pipeline orchestrator, which runs at 6:00 AM.
+# pipeline orchestrator, which drafts the newsletter the day before (Sunday 12:00).
 
 import json
 import os
@@ -67,8 +67,8 @@ TEST_SEND_TO = os.environ.get("TEST_SEND_TO", "")
 # run — if the current week's pipeline stalls before agent3 (any cause: a
 # crash, a hang, an API failure), that query silently falls back to an older
 # successful run and ships it as if current. 24h safely covers a normal
-# Monday run (composed within ~1h of the 06:00 start) while clearly
-# rejecting anything from a prior week (>= 144h old).
+# run (drafted Sunday ~12:00, composed within ~1h, sent Monday 07:00 = ~19h
+# after the start) while clearly rejecting anything from a prior week (>= 144h old).
 MAX_NEWSLETTER_AGE_HOURS = 24
 
 

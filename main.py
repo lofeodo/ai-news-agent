@@ -236,7 +236,7 @@ def _run_isolated(agent_name: str, module_name: str, run_id: str, retries: int, 
     sys.stderr.flush()
 
 
-def _run_agent(agent_name: str, module_name: str, run_id: str) -> None:
+def _run_agent(agent_name: str, module_name: str, run_id: str, options: dict | None = None) -> None:
     """Import the agent module and call its run(run_id) function, under a
     wall-clock watchdog that hard-exits the process if it overruns."""
     timeout = _deadline_seconds()
@@ -267,7 +267,7 @@ def _run_agent(agent_name: str, module_name: str, run_id: str) -> None:
         import importlib
         module = importlib.import_module(module_name)
         print(f"[main]  Module imported successfully", flush=True)
-        module.run(run_id)
+        module.run(run_id, **(options or {}))
         print(f"[main]  {module_name} completed successfully", flush=True)
     except Exception:
         sys.stderr.write(f"[main]  ERROR in {module_name} (run_id={run_id}):\n")
@@ -309,8 +309,17 @@ async def trigger(request: Request):
         run_id = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H%M%SZ")
         print(f"[main]  No run_id in request body — generated: {run_id}", flush=True)
 
+    # The health check has two scheduled variants: POST /?check=draft (Sunday) or /?check=send (Monday).
+    options = None
+    if agent_name == "healthcheck":
+        check = request.query_params.get("check")
+        if check and check not in ("draft", "send"):
+            return Response(content=f"Unknown check '{check}'. Valid values: draft, send.", status_code=400)
+        if check:
+            options = {"check": check}
+
     print(f"[main]  Starting {agent_name} in background thread (run_id={run_id})...", flush=True)
-    thread = threading.Thread(target=_run_agent, args=(agent_name, module_name, run_id), daemon=True)
+    thread = threading.Thread(target=_run_agent, args=(agent_name, module_name, run_id, options), daemon=True)
     thread.start()
 
     return {"status": "started", "agent": agent_name, "run_id": run_id}

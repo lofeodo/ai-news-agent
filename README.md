@@ -16,7 +16,7 @@ flowchart TB
 
     SUB ~~~ CS1
 
-    CS1["☁️ Cloud Scheduler — 6 AM Monday"] --> ORC["Orchestrator · Cloud Run"]
+    CS1["☁️ Cloud Scheduler — 12 PM Sunday (draft)"] --> ORC["Orchestrator · Cloud Run"]
 
     ORC -->|"Pub/Sub: pipeline-start"| A1A["Agent 1a\nFetch & score ArXiv papers\nup to 500 → 35 sampled → top 3"]
     ORC -->|"Pub/Sub: pipeline-start"| A1B["Agent 1b\nFetch HN + NewsAPI\nlanguage-filter → categorize"]
@@ -30,13 +30,13 @@ flowchart TB
     FAN -->|"Pub/Sub: content-summarized"| A3["Agent 3\nSelect articles · write intro\ncompose 4 HTML variants\nsave to Firestore"]
 
     FAN ~~~ CS2
-    CS2["☁️ Cloud Scheduler — 7 AM Monday"] --> A4["Agent 4\nLoad latest newsletter\npersonalize per subscriber\nsend via SendGrid"]
+    CS2["☁️ Cloud Scheduler — 7 AM Monday (send)"] --> A4["Agent 4\nLoad latest newsletter\npersonalize per subscriber\nsend via SendGrid"]
 
     A3 --> FSP[("Firestore\npipeline_runs")]
     A4 --> FSP
 
     FAN ~~~ CS3
-    CS3["☁️ Cloud Scheduler — 7:10 AM Monday"] --> HC["Health Check\nFind latest run · diagnose\nemail alert if unhealthy"]
+    CS3["☁️ Cloud Scheduler — 1:15 PM Sunday (draft check) + 7:10 AM Monday (send check)"] --> HC["Health Check\nFind latest run · diagnose\nemail alert if unhealthy"]
     FSP --> HC
 ```
 
@@ -65,10 +65,15 @@ Both agent 2a and 2b atomically increment `agent2_completions` in the Firestore 
 Runs two article-selection passes per category (all languages, English-only) to support subscriber preference variants. Calls Claude to pick the best 3-5 articles per category (HN points weighed heavily relative to the section, articles without an HN score not penalized; named model releases always included). Writes a 2-3 sentence editor's note. Renders 4 HTML variants keyed by `{include_french}_{include_canada}`. Saves all variants to Firestore and copies `0_0` to `public/newsletter/latest.html` for the live preview.
 
 **Agent 4 — Send**
-Triggered separately by Cloud Scheduler at 7 AM. Loads the most recent run's newsletter variants from Firestore, queries active subscribers, picks each subscriber's variant by preference key, substitutes `{{UNSUBSCRIBE_URL}}` and `{{PREFERENCES_URL}}` placeholders with per-subscriber token links, and sends via SendGrid. Logs a structured JSON send summary to stdout for Cloud Logging, and also writes it to the run's Firestore document (`agent4_send_summary`, `agent4_completed_at`) so delivery success is queryable, not just visible in logs. Refuses to send (raises instead) if the newsletter it found is more than 24 hours old — a stalled pipeline upstream of agent 3 otherwise leaves the most recent *composed* run pointing at an older week's content, which agent 4 would ship silently with no error. See `CLAUDE.md` for the incident that motivated this.
+Triggered separately by Cloud Scheduler at 7 AM Monday, a day after the pipeline drafted the newsletter (Sunday 12 PM; the issue is dated the send day). Loads the most recent run's newsletter variants from Firestore, queries active subscribers, picks each subscriber's variant by preference key, substitutes `{{UNSUBSCRIBE_URL}}` and `{{PREFERENCES_URL}}` placeholders with per-subscriber token links, and sends via SendGrid. Logs a structured JSON send summary to stdout for Cloud Logging, and also writes it to the run's Firestore document (`agent4_send_summary`, `agent4_completed_at`) so delivery success is queryable, not just visible in logs. Refuses to send (raises instead) if the newsletter it found is more than 24 hours old — a stalled pipeline upstream of agent 3 otherwise leaves the most recent *composed* run pointing at an older week's content, which agent 4 would ship silently with no error. See `CLAUDE.md` for the incident that motivated this.
 
 **Health check**
-A standalone agent, `agent_healthcheck.py`, triggered separately by Cloud Scheduler at 7:10 AM — shortly after agent 4's send — rather than by Pub/Sub, so it has no `run_id` handed to it; it looks up the most recent `pipeline_runs` document itself. It flags a stale run (started more than 4 hours ago with no completion), any recorded agent failure, or a missing pipeline stage, and emails a report every run — a weekly heartbeat that says "all clear" or lists what's wrong, rather than only emailing on failure. Never touches the subscribers collection. See `CLAUDE.md` for the full failure-recording and detection mechanics.
+A standalone agent, `agent_healthcheck.py`, run as **two separate checks**, each triggered by its own Cloud Scheduler job rather than by Pub/Sub (so it has no `run_id` handed to it; it looks up the most recent `pipeline_runs` document itself). Each check covers one segment of the pipeline:
+
+- **Draft check — Sunday 1:15 PM, after the noon draft.** Did the newsletter compose properly? It verifies every stage through agent 3 and the composed output itself: all four preference variants present and non-trivial, the per-subscriber `{{UNSUBSCRIBE_URL}}` / `{{PREFERENCES_URL}}` placeholders intact, and the subject dated for the Monday send day. It runs a day ahead of the send so a failure can be fixed and re-run before subscribers are affected.
+- **Send check — Monday 7:10 AM, after agent 4's 7:00 AM send.** Did the newsletter send? It verifies every stage plus delivery (`agent4_send_summary`: nothing sent, or partial failures) and reader clicks.
+
+Both flag a stale run (no pipeline run started recently enough: more than 4 hours ago for the draft check, more than 30 for the send check, since the Sunday run is already about 19 hours old by Monday 7:10 AM), any recorded agent failure, or a missing stage, and each emails a report every run — a weekly heartbeat that says "all clear" or lists what's wrong, rather than only emailing on failure. Never touches the subscribers collection. See `CLAUDE.md` for the full failure-recording and detection mechanics.
 
 ### Two-layer orchestration
 
@@ -198,7 +203,7 @@ Subscriber document fields: `email`, `token`, `token_expires_at`, `active`, `sub
 - **Compute:** Google Cloud Run (single Docker image, `AGENT_NAME` env var selects agent)
 - **Messaging:** Google Cloud Pub/Sub (push subscriptions, JSON `{run_id}` payload)
 - **State:** Google Cloud Firestore (`pipeline_runs`, `subscribers`, `users` collections)
-- **Scheduling:** Google Cloud Scheduler (weekly cron jobs: pipeline start, newsletter send, post-send health check)
+- **Scheduling:** Google Cloud Scheduler (weekly cron jobs over two days: Sunday pipeline draft and draft health check; Monday newsletter send and send health check)
 - **Auth:** Firebase Authentication (Google OAuth + email/password; ID tokens verified server-side with `firebase-admin`)
 - **Frontend:** Firebase Hosting (static, custom domain via Cloudflare DNS; vanilla HTML/JS + Firebase Auth JS SDK)
 - **Email:** SendGrid (custom domain `newsletter@lofeodo.com`, DKIM + SPF + DMARC)
@@ -223,7 +228,7 @@ Subscriber document fields: `email`, `token`, `token_expires_at`, `active`, `sub
 │   ├── agent2b_summarize_news.py   # Article fetch + Claude news summaries
 │   ├── agent3_compose.py           # Article selection, intro, HTML composition
 │   ├── agent4_send.py              # Per-subscriber personalization + SendGrid send
-│   ├── agent_healthcheck.py        # Standalone weekly pipeline health check + alert
+│   ├── agent_healthcheck.py        # Standalone health check + alert (draft check Sunday, send check Monday)
 │   ├── agent_subscriptions.py      # Subscription FastAPI service (separate deployment)
 │   ├── auth_middleware.py          # Firebase ID token verification (FastAPI dependency)
 │   ├── agent1b_graph.py            # LangGraph implementation of agent1b (state, nodes, review loop)
@@ -299,7 +304,7 @@ Credentials (API keys and similar) are supplied to the services at runtime and a
 | `ALLOWED_ORIGINS` | main.py (subscriptions) | Comma-separated CORS origins; required in production |
 | `MAILING_ADDRESS` | agent3 | Physical address in email footer (CASL compliance) |
 | `MAX_SUBSCRIBERS` | agent_subscriptions | Subscriber cap (default `50000`) |
-| `ALERT_EMAIL` | agent_healthcheck | Where the weekly pipeline health check sends a problem report; never used for subscriber-facing sends |
+| `ALERT_EMAIL` | agent_healthcheck | Where the draft and send health checks email their reports; never used for subscriber-facing sends |
 | `GOOGLE_OAUTH_CLIENT_ID` | agent_subscriptions | Google OAuth 2.0 Web client ID for server-side Google Sign-In (not secret) |
 
 ---

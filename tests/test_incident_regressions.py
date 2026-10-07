@@ -39,7 +39,7 @@ def test_healthcheck_survives_a_naive_started_at_and_still_sends_its_report(monk
     import google.cloud.firestore as fs
     monkeypatch.setattr(fs, "Client", lambda project=None: db)
     monkeypatch.setattr(hc, "USE_FIRESTORE", True)
-    monkeypatch.setattr(hc, "_notify", lambda message, healthy: sent.append((message, healthy)))
+    monkeypatch.setattr(hc, "_notify", lambda message, healthy, mode="send": sent.append((message, healthy)))
     hc._run("t")
     assert len(sent) == 1 and sent[0][1] is False
     assert "No recent pipeline run" in sent[0][0]

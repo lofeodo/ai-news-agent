@@ -39,7 +39,7 @@ def _setup(monkeypatch, runs, ls_runs=(), ls_error=None):
 
     monkeypatch.setattr(langsmith, "Client", lambda *a, **k: FakeLS())
     monkeypatch.setattr(hc, "USE_FIRESTORE", True)
-    monkeypatch.setattr(hc, "_notify", lambda message, healthy: sent.append((message, healthy)))
+    monkeypatch.setattr(hc, "_notify", lambda message, healthy, mode="send": sent.append((message, healthy)))
     monkeypatch.setenv("LANGSMITH_API_KEY", "ls-test")
     return db, sent
 

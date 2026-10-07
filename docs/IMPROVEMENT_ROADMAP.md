@@ -96,7 +96,7 @@ Scope: `docs/postmortems/` with a consistent template (summary, impact, timeline
 
 ### Step 9: Results, README, CLAUDE.md, retire this doc
 Goal: make the repo tell its story.
-Scope: README section with the eval and monitoring results (generated tables first), architecture notes updated, CLAUDE.md updated, and a decision from me on deleting or archiving this file.
+Scope: README section with the eval and monitoring results (generated tables first), architecture notes updated (including the 2026-10-07 schedule change: pipeline drafts Sunday 12 PM, agent 4 sends Monday 7 AM, split into a Sunday draft health check and a Monday send health check, issue dated the send day), CLAUDE.md updated, and a decision from me on deleting or archiving this file.
 
 ### Optional A: Model card and privacy review
 A short model card and a data-flow and retention review (what is stored, for how long, consent and unsubscribe flow, what leaves to LLM providers). Only if time allows.

@@ -11,7 +11,7 @@
 # TEST_RECIPIENT_EMAIL (if set). Local mode does NOT query Firestore.
 #
 # Triggered by a Cloud Scheduler job at 7:00 AM every Monday — separate from the
-# pipeline orchestrator, which runs at 6:00 AM.
+# pipeline orchestrator, which drafts the newsletter the day before (Sunday 12:00).
 
 import json
 import os
@@ -67,8 +67,8 @@ TEST_SEND_TO = os.environ.get("TEST_SEND_TO", "")
 # run — if the current week's pipeline stalls before agent3 (any cause: a
 # crash, a hang, an API failure), that query silently falls back to an older
 # successful run and ships it as if current. 24h safely covers a normal
-# Monday run (composed within ~1h of the 06:00 start) while clearly
-# rejecting anything from a prior week (>= 144h old).
+# run (drafted Sunday ~12:00, composed within ~1h, sent Monday 07:00 = ~19h
+# after the start) while clearly rejecting anything from a prior week (>= 144h old).
 MAX_NEWSLETTER_AGE_HOURS = 24
 
 
@@ -590,14 +590,16 @@ def run(run_id: str):
     # visible in Cloud Logging, but a health check needs a queryable signal
     # that the send actually ran (not just that composition succeeded).
     try:
-        db.collection("pipeline_runs").document(run_id).set(
+        # Keyed on the composed run's doc (what the health check reads), not agent4's
+        # own invocation run_id, which belongs to no pipeline run.
+        db.collection("pipeline_runs").document(loaded.run_id).set(
             {
                 "agent4_send_summary": summary,
                 "agent4_completed_at": datetime.now(timezone.utc).isoformat(),
             },
             merge=True
         )
-        print(f"[agent4]  Recorded send_summary to Firestore (run_id={run_id})", flush=True)
+        print(f"[agent4]  Recorded send_summary to Firestore (run_id={loaded.run_id})", flush=True)
     except Exception as e:
         print(f"[agent4]  Failed to record send_summary to Firestore: {e}", flush=True)
 

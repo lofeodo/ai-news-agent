@@ -1,7 +1,7 @@
 # config.py
 
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 # ArXiv fetching
 MAX_FETCH = 500              # safety ceiling for ArXiv API
@@ -157,3 +157,23 @@ CLICK_EARLY_SECONDS = 300
 # agent4: turn on SendGrid click tracking and tag each email with the pipeline run id, so the Event Webhook
 # can count clicks per article. Unset = the newsletter is sent exactly as before (the rollback switch).
 CLICK_TRACKING = os.environ.get("CLICK_TRACKING", "false").lower() == "true"
+
+
+try:
+    from zoneinfo import ZoneInfo
+    NEWSLETTER_TZ = ZoneInfo("America/Toronto")
+except Exception:  # pragma: no cover - zoneinfo/tzdata missing
+    NEWSLETTER_TZ = timezone(timedelta(hours=-5))  # fallback: fixed EST offset
+
+
+def newsletter_send_date(now: datetime | None = None) -> datetime:
+    """The date the newsletter is (or will be) sent, as a Toronto-local datetime.
+
+    The pipeline drafts on Sunday at noon and agent4 sends on Monday at 7 AM, so a
+    run composed on a Sunday is dated the next day. Any other day (Monday, or a
+    manual recovery run later in the week) is dated today.
+    """
+    local = (now or datetime.now(timezone.utc)).astimezone(NEWSLETTER_TZ)
+    if local.weekday() == 6:  # Sunday
+        local = local.replace(hour=12) + timedelta(days=1)
+    return local

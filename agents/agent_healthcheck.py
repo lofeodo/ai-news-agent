@@ -1,8 +1,14 @@
 # agents/agent_healthcheck.py
 #
 # Standalone check, independent of the fetch->summarize->compose->send chain.
-# Triggered by its own Cloud Scheduler job (7:10 AM Monday, shortly after
-# agent4's 7:00 AM send) rather than by Pub/Sub, so it has no run_id for the
+# Two separate checks, each triggered by its own Cloud Scheduler job (POST to
+# "/?check=draft" or "/?check=send") rather than by Pub/Sub:
+#   draft  Sunday ~1:15 PM  did the newsletter COMPOSE properly? (all stages up
+#                           to agent3, plus the composed output itself)
+#   send   Monday 7:10 AM   did the newsletter SEND? (every stage, agent4's
+#                           send summary, reader clicks)
+# With no `check` (manual run, or the old single job) it picks by weekday:
+# Sunday -> draft, otherwise send. It has no run_id for the
 # pipeline run it's checking — it looks that up itself, by most recent
 # started_at in the pipeline_runs collection.
 #
@@ -27,7 +33,19 @@ NEWSLETTER_NAME = "Latent SpaceMail"
 
 # How stale the latest pipeline_runs doc can be before we treat it as "no
 # run happened this week" rather than evaluating its (old) completion state.
-STALE_AFTER_HOURS = 4
+# The pipeline starts Sunday 12:00 and the Monday 7:10 check must still accept
+# it (~19h old); a prior week's run is 7 days old, so 30h still catches it.
+STALE_AFTER_HOURS = 30
+# The draft check runs ~1h after the pipeline starts, so a much older run is stale.
+DRAFT_STALE_AFTER_HOURS = 4
+
+CHECK_MODES = ("draft", "send")
+
+# Every subscriber-preference variant agent3 composes (keys of agent3's NEWSLETTER_VARIANTS),
+# and the smallest a real rendered variant plausibly is (real ones are ~100 KB).
+VARIANT_KEYS = ("0_0", "1_0", "0_1", "1_1")
+MIN_VARIANT_CHARS = 5000
+PLACEHOLDERS = ("{{UNSUBSCRIBE_URL}}", "{{PREFERENCES_URL}}")
 
 # (Firestore field, human label) — checked in pipeline order.
 EXPECTED_STAGES = [
@@ -57,8 +75,47 @@ def _latest_run_doc(db):
     return None, None
 
 
-def _diagnose(doc: dict) -> list[str]:
-    """Return human-readable problem descriptions for one pipeline_runs doc. Empty means healthy."""
+def _resolve_mode(check: str | None, now: datetime | None = None) -> str:
+    """'draft' or 'send'. An explicit `check` wins; otherwise Sunday (Toronto) is a draft check."""
+    if check:
+        if check not in CHECK_MODES:
+            raise ValueError(f"unknown check {check!r}; expected one of {CHECK_MODES}")
+        return check
+    sunday = (now or datetime.now(timezone.utc)).astimezone(config.NEWSLETTER_TZ).weekday() == 6
+    return "draft" if sunday else "send"
+
+
+def _check_composition(doc: dict) -> list[str]:
+    """Problems with the composed newsletter itself (draft check): all four variants present and
+    non-trivial, still carrying agent4's per-subscriber placeholders, and dated for the send day."""
+    problems = []
+    variants = doc.get("newsletter_variants") or {}
+    for key in VARIANT_KEYS:
+        html = variants.get(key)
+        if not html:
+            problems.append(f"newsletter variant {key} is missing")
+            continue
+        if len(html) < MIN_VARIANT_CHARS:
+            problems.append(f"newsletter variant {key} is only {len(html)} chars (expected at least {MIN_VARIANT_CHARS})")
+        for ph in PLACEHOLDERS:
+            if ph not in html:
+                problems.append(f"newsletter variant {key} has no {ph} placeholder, so agent4 cannot personalize it")
+
+    subject = doc.get("newsletter_subject") or ""
+    started_raw = doc.get("started_at")
+    if not subject:
+        problems.append("newsletter_subject is missing")
+    elif started_raw:
+        expected = config.newsletter_send_date(parse_started_at(started_raw)).strftime("%B %d, %Y")
+        if not subject.endswith(expected):
+            problems.append(f"newsletter subject {subject!r} is not dated for the send day ({expected})")
+    return problems
+
+
+def _diagnose(doc: dict, mode: str = "send") -> list[str]:
+    """Return human-readable problem descriptions for one pipeline_runs doc. Empty means healthy.
+    In 'draft' mode the send stage is not expected yet and the composed output is checked instead."""
+    draft_only = mode == "draft"
     problems = []
 
     for agent in ERROR_AGENTS:
@@ -68,8 +125,15 @@ def _diagnose(doc: dict) -> list[str]:
             problems.append(f"{agent} failed at {failed_at}: {error}")
 
     for field, label in EXPECTED_STAGES:
+        if draft_only and field == "agent4_send_summary":
+            continue
         if not doc.get(field):
             problems.append(f"{label} never completed — '{field}' missing from pipeline_runs")
+
+    if draft_only:
+        if doc.get("newsletter_composed"):
+            problems += _check_composition(doc)
+        return problems
 
     send_summary = doc.get("agent4_send_summary")
     if send_summary:
@@ -266,14 +330,14 @@ def _click_section(db, run_id: str, doc: dict) -> str:
         return f"Reader clicks: failed ({type(e).__name__}: {e}). This does not affect the pipeline status above."
 
 
-def _notify(message: str, healthy: bool) -> None:
+def _notify(message: str, healthy: bool, mode: str = "send") -> None:
     """Best-effort single email to ALERT_EMAIL, sent every run. Never touches subscriber-facing code."""
     if not ALERT_EMAIL:
         print(f"[healthcheck]  ALERT_EMAIL not set — cannot send report. Message was:\n{message}", flush=True)
         return
 
     status    = "all clear" if healthy else "problem detected"
-    subject   = f"{NEWSLETTER_NAME} pipeline health check — {status}"
+    subject   = f"{NEWSLETTER_NAME} {mode} health check — {status}"
     escaped   = message.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     html_body = f"<pre style=\"font-family:monospace;white-space:pre-wrap;\">{escaped}</pre>"
 
@@ -285,7 +349,7 @@ def _notify(message: str, healthy: bool) -> None:
         print(f"[healthcheck]  FAILED to send report email: {e}", flush=True)
 
 
-def run(run_id: str) -> None:
+def run(run_id: str, check: str | None = None) -> None:
     """Entry point. `run_id` is this health check's OWN invocation id — the
     pipeline run being checked is looked up separately below.
 
@@ -294,8 +358,9 @@ def run(run_id: str) -> None:
     the health check silently suppresses the weekly heartbeat entirely, which
     is exactly how it failed before (a naive `started_at` crashed the age
     check every week for a month with no email either way)."""
+    mode = _resolve_mode(check)
     try:
-        _run(run_id)
+        _run(run_id, mode)
     except Exception as e:
         import traceback
         tb = traceback.format_exc()
@@ -304,12 +369,14 @@ def run(run_id: str) -> None:
             f"The health check itself failed with an unexpected error — the pipeline "
             f"status could not be evaluated this run:\n\n{tb}",
             healthy=False,
+            mode=mode,
         )
         raise
 
 
-def _run(run_id: str) -> None:
-    print(f"[healthcheck]  Starting check (invocation run_id={run_id})", flush=True)
+def _run(run_id: str, mode: str = "send") -> None:
+    draft_only = mode == "draft"
+    print(f"[healthcheck]  Starting {mode} check (invocation run_id={run_id})", flush=True)
 
     if not USE_FIRESTORE:
         print("[healthcheck]  USE_FIRESTORE is false — nothing to check locally, skipping.", flush=True)
@@ -320,39 +387,46 @@ def _run(run_id: str) -> None:
 
     checked_run_id, doc = _latest_run_doc(db)
     if doc is None:
-        _notify("No pipeline_runs document found at all — the pipeline may never have started this week.", healthy=False)
+        _notify("No pipeline_runs document found at all — the pipeline may never have started this week.", healthy=False, mode=mode)
         return
 
     started_at_raw = doc.get("started_at")
     if started_at_raw:
         started_at = parse_started_at(started_at_raw)
         age_hours = (datetime.now(timezone.utc) - started_at).total_seconds() / 3600
-        if age_hours > STALE_AFTER_HOURS:
+        stale_after = DRAFT_STALE_AFTER_HOURS if draft_only else STALE_AFTER_HOURS
+        if age_hours > stale_after:
             _notify(
                 f"No recent pipeline run found — the most recent pipeline_runs document "
                 f"(run_id={checked_run_id}) started {age_hours:.1f}h ago, at {started_at_raw}. "
-                f"Expected a run to have started within the last {STALE_AFTER_HOURS}h.",
+                f"Expected a run to have started within the last {stale_after}h.",
                 healthy=False,
+                mode=mode,
             )
             return
 
-    problems = _diagnose(doc)
+    problems = _diagnose(doc, mode)
     judge_text, judge_flagged = _judge_section(db, checked_run_id, doc)
     if judge_flagged and config.JUDGE_ALERTING_ENABLED:
         problems.append("summary faithfulness dropped versus the prior weeks (see the judge section below)")
     drift_text = (f"{_drift_section(db, checked_run_id, doc)}\n\n{_usage_section(db, checked_run_id, doc)}"
-                  f"\n\n{judge_text}\n\n{_click_section(db, checked_run_id, doc)}")
+                  f"\n\n{judge_text}")
+    if draft_only:
+        drift_text = ("DRAFT CHECK: this verifies the newsletter composed properly. It sends Monday 7:00 AM; "
+                      "delivery is checked by the Monday 7:10 send report.\n\n" + drift_text)
+    else:
+        drift_text += f"\n\n{_click_section(db, checked_run_id, doc)}"
 
     if not problems:
         print(f"[healthcheck]  run_id={checked_run_id} looks healthy.", flush=True)
         _notify(f"Pipeline run {checked_run_id} (started {started_at_raw}) completed successfully. "
-                f"No problems detected.\n\n{drift_text}", healthy=True)
+                f"No problems detected.\n\n{drift_text}", healthy=True, mode=mode)
         return
 
     body_lines = [f"Pipeline run {checked_run_id} (started {started_at_raw}) has problems:", ""]
     body_lines += [f"- {p}" for p in problems]
     body_lines += ["", drift_text]
-    _notify("\n".join(body_lines), healthy=False)
+    _notify("\n".join(body_lines), healthy=False, mode=mode)
 
 
 if __name__ == "__main__":

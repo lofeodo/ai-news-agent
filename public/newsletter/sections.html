@@ -56,6 +56,11 @@
       <p class="note" style="margin-bottom:18px">Reorder, enable, and customize the sections in your AI news digest.</p>
       <div class="sections-preview" aria-hidden="true">
         <div class="sections-preview-item">
+          <span class="sections-preview-drag">★</span>
+          <span class="sections-preview-name">Research Spotlights</span>
+          <span class="sections-preview-toggle"></span>
+        </div>
+        <div class="sections-preview-item">
           <span class="sections-preview-drag">⠿</span>
           <span class="sections-preview-name">Model &amp; Product Releases</span>
           <span class="sections-preview-toggle"></span>
@@ -112,11 +117,6 @@
         <div class="sections-preview-item">
           <span class="sections-preview-drag">⠿</span>
           <span class="sections-preview-name">Society &amp; Culture</span>
-          <span class="sections-preview-toggle"></span>
-        </div>
-        <div class="sections-preview-item">
-          <span class="sections-preview-drag">⠿</span>
-          <span class="sections-preview-name">Research Spotlights</span>
           <span class="sections-preview-toggle"></span>
         </div>
         <div class="sections-preview-custom">+ Custom AI topics</div>
@@ -272,12 +272,22 @@
 
     // ── Render ───────────────────────────────────────────────────────────────
 
+    // The spotlight paper always leads the newsletter, so it is pinned to the top of this list.
+    const PINNED_FIRST = 'Research Spotlights';
+
     function getOrderedSections() {
-      if (!pendingEnabled) return [...defaultSections];
-      // preserve saved order; append any new sections not yet in saved list
-      const known = new Set(pendingEnabled);
-      const extra = defaultSections.filter(s => !known.has(s));
-      return [...pendingEnabled.filter(s => defaultSections.includes(s)), ...extra];
+      let ordered;
+      if (!pendingEnabled) {
+        ordered = [...defaultSections];
+      } else {
+        // preserve saved order; append any new sections not yet in saved list
+        const known = new Set(pendingEnabled);
+        const extra = defaultSections.filter(s => !known.has(s));
+        ordered = [...pendingEnabled.filter(s => defaultSections.includes(s)), ...extra];
+      }
+      return ordered.includes(PINNED_FIRST)
+        ? [PINNED_FIRST, ...ordered.filter(s => s !== PINNED_FIRST)]
+        : ordered;
     }
 
     function renderSections() {
@@ -291,7 +301,7 @@
         const isOn = enabledSet.has(name);
         const row  = document.createElement('div');
         row.className = 'section-row';
-        row.draggable = true;
+        row.draggable = name !== PINNED_FIRST;
         row.dataset.index = i;
         row.dataset.name  = name;
         // Static markup only; names go in via textContent/attributes so they can never be parsed as HTML.
@@ -302,12 +312,12 @@
             <input type="checkbox" role="switch">
             <span class="toggle-track"><span class="toggle-thumb"></span></span>
           </label>`;
-        row.querySelector('.section-row__name').textContent = name;
+        row.querySelector('.section-row__name').textContent = name === PINNED_FIRST ? name + ' (always first)' : name;
         row.querySelector('.toggle-switch').setAttribute('aria-label', name);
         const toggle = row.querySelector('input');
         toggle.checked = isOn;
         toggle.dataset.section = name;
-        attachDragEvents(row, 'default');
+        if (name !== PINNED_FIRST) attachDragEvents(row, 'default');
         listEl.appendChild(row);
       }
       renderCustomSections();

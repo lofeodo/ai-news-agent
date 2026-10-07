@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_XML_TAGS, neutralize_tags
 import tracing
-from config import DATA_DIR, SCORING_MODEL, GCP_PROJECT_ID, USE_FIRESTORE, FIRESTORE_COLLECTION, newsletter_send_date
+from config import DATA_DIR, SCORING_MODEL, GCP_PROJECT_ID, USE_FIRESTORE, FIRESTORE_COLLECTION, MAX_SCORE, newsletter_send_date
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -217,7 +217,7 @@ def write_intro(
     client: anthropic.Anthropic,
 ) -> str:
     paper_lines = "\n".join(
-        f"<paper>- {neutralize_tags(p['title'])} (score: {(p.get('scores') or {}).get('total', 0)}/28)</paper>"
+        f"<paper>- {neutralize_tags(p['title'])} (score: {(p.get('scores') or {}).get('total', 0)}/{MAX_SCORE})</paper>"
         for p in papers
     )
 
@@ -283,52 +283,48 @@ def _strip_markdown_headers(text: str) -> str:
 
 
 def render_paper_card(paper: dict) -> str:
+    """The spotlight paper: a dark, amber-accented hero block, visually distinct from the white news cards."""
     scores       = paper.get("scores") or {}
-    score        = scores.get("total", 0)
+    upvotes      = scores.get("upvotes")
     authors_list = paper.get("authors", [])
     authors      = _esc(", ".join(authors_list[:3]) + (" et al." if len(authors_list) > 3 else ""))
-    summary      = _strip_markdown_headers(paper.get("summary") or "")
-    paragraphs   = [p.strip() for p in summary.split("\n\n") if p.strip()]
-    pdf_url      = _safe_url(paper.get("pdf_url"))
+    summary      = " ".join(_strip_markdown_headers(paper.get("summary") or "").split())
+    # Link to the Hugging Face page; older runs and the fallback path may only have the PDF.
+    link         = _safe_url(paper.get("hf_url") or paper.get("pdf_url"))
+    on_hf        = bool(paper.get("hf_url"))
     title        = _esc(paper.get("title", ""))
 
-    summary_rows = "".join(
-        f'<tr><td style="padding:{"0" if i == 0 else "10px"} 0 0 0;'
-        f'font-family:{_F};font-size:14px;line-height:1.82;color:#8a8580;">{_esc(para)}</td></tr>\n'
-        for i, para in enumerate(paragraphs)
-    )
+    stat = ""
+    if isinstance(upvotes, int) and upvotes > 0:
+        stat = (
+            f'<p style="margin:0 0 18px 0;font-family:{_F};font-size:13px;color:{_GOLD};">'
+            f'<span style="font-weight:700;">&#9650;&nbsp;{upvotes:,}</span>'
+            f'<span style="color:{_CHAR};">&nbsp;&nbsp;upvotes on Hugging Face</span></p>\n'
+        )
 
     return (
-        # dark card, 2px gap between cards via margin-bottom
-        f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"'
-        f' style="margin-bottom:3px;">\n'
-        f'<tr><td style="padding:22px 26px 22px;background:{_D3};">\n'
-        # title (left) + large score (right)
         f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">\n'
-        f'<tr>\n'
-        f'<td style="vertical-align:top;padding-right:18px;">'
-        f'<p style="margin:0 0 6px 0;font-family:{_F};font-size:15px;font-weight:600;line-height:1.38;">'
-        f'<a href="{pdf_url}" target="_blank" rel="noopener noreferrer" style="color:{_ASH};text-decoration:underline;'
-        f'text-decoration-color:{_AMBER};text-underline-offset:2px;">{title}</a>'
-        f'</p></td>\n'
-        f'<td width="60" valign="top" style="white-space:nowrap;text-align:right;">'
-        f'<p style="margin:0;font-family:{_F};line-height:1;">'
-        f'<span style="font-size:26px;font-weight:700;color:{_GOLD};">{score}</span>'
-        f'<br><span style="font-size:10px;color:{_AMBER};letter-spacing:1px;">/28</span>'
-        f'</p></td>\n'
-        f'</tr>\n'
-        f'</table>\n'
-        f'<p style="margin:0 0 10px 0;font-family:{_F};font-size:11px;color:{_CHAR};">{authors}</p>\n'
-        f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:12px;">'
-        f'<tr><td height="2" style="background:{_AMBER};font-size:0;line-height:0;mso-line-height-rule:exactly;">&nbsp;</td></tr>'
-        f'</table>\n'
-        f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">\n'
-        f'{summary_rows}'
-        f'</table>\n'
-        f'<p style="margin:16px 0 0 0;font-family:{_F};font-size:12px;">'
-        f'<a href="{pdf_url}" target="_blank" rel="noopener noreferrer" style="color:{_AMBER};text-decoration:none;">'
-        f'Read paper &nbsp;&#8594;</a>'
-        f'</p>\n'
+        f'<tr><td class="mob-pad" style="background:#17140f;padding:32px 40px 36px 36px;border-left:4px solid {_AMBER};border-bottom:3px solid {_AMBER};">\n'
+        # kicker
+        f'<p style="margin:0 0 16px 0;font-family:{_F};font-size:11px;font-weight:700;'
+        f'letter-spacing:4px;text-transform:uppercase;color:{_AMBER};">&#9733;&nbsp; Paper of the week</p>\n'
+        # title
+        f'<h2 class="mob-spot-title" style="margin:0 0 10px 0;font-family:{_F};font-size:25px;font-weight:700;'
+        f'line-height:1.28;letter-spacing:-0.3px;color:{_CREAM};">'
+        f'<a href="{link}" target="_blank" rel="noopener noreferrer" style="color:{_CREAM};text-decoration:none;">{title}</a>'
+        f'</h2>\n'
+        f'<p style="margin:0 0 20px 0;font-family:{_F};font-size:12px;color:#8a8580;">{authors}</p>\n'
+        # hook
+        f'<p style="margin:0 0 22px 0;font-family:{_F};font-size:16px;line-height:1.78;color:{_ASH};">{_esc(summary)}</p>\n'
+        f'{stat}'
+        # bulletproof button
+        f'<table role="presentation" cellspacing="0" cellpadding="0" border="0" class="mob-block">'
+        f'<tr><td align="center" bgcolor="{_AMBER}" style="background:{_AMBER};">'
+        f'<a href="{link}" target="_blank" rel="noopener noreferrer" class="mob-btn" '
+        f'style="display:inline-block;padding:13px 24px;font-family:{_F};font-size:13px;font-weight:700;'
+        f'letter-spacing:1px;color:{_D0};text-decoration:none;">'
+        f'{"Read on Hugging Face" if on_hf else "Read the paper"} &nbsp;&#8594;</a>'
+        f'</td></tr></table>\n'
         f'</td></tr>\n'
         f'</table>\n'
     )
@@ -462,9 +458,11 @@ def compose_html(
             f'</td>'
         )
 
-    _toc_entries = [(f"{i+1:02d}", cat.split(" &")[0].split(",")[0].upper())
-                    for i, cat in enumerate(active_categories)]
-    _toc_entries.append(("RES", "RESEARCH"))
+    # The spotlight paper leads the issue, so it leads the contents too (and stays unnumbered).
+    _toc_entries = [("RES", "RESEARCH")] + [
+        (f"{i+1:02d}", cat.split(" &")[0].split(",")[0].upper())
+        for i, cat in enumerate(active_categories)
+    ]
     while len(_toc_entries) % 4 != 0:
         _toc_entries.append(("", ""))
     toc_row1 = "".join(_toc_cell(n, s) for n, s in _toc_entries[:4])
@@ -498,12 +496,11 @@ def compose_html(
             + f'<!-- /SECTION:{category} -->\n'
         )
 
-    # — research section —
+    # — research section: the spotlight paper leads the issue, right under the editor's note —
     paper_cards   = "".join(render_paper_card(p) for p in papers)
     research_rows = (
         f'<!-- SECTION:Research Spotlights -->\n'
-        + _section_strip("RES", "🔬", "Research Spotlights")
-        + f'<tr><td class="mob-pad" style="background:{_D1};padding:20px 40px 32px;">\n'
+        + f'<tr><td style="padding:0;background:{_D0};">\n'
           f'{paper_cards}'
           f'</td></tr>\n'
         + f'<!-- /SECTION:Research Spotlights -->\n'
@@ -524,6 +521,8 @@ def compose_html(
     @media only screen and (max-width: 480px) {{
       .mob-pad {{ padding-left: 16px !important; padding-right: 16px !important; }}
       .mob-h1 {{ font-size: 26px !important; }}
+      .mob-spot-title {{ font-size: 21px !important; }}
+      .mob-btn {{ display: block !important; text-align: center; }}
       .mob-block {{ display: block !important; width: 100% !important; }}
       .mob-hn {{ border-left: none !important; padding-left: 0 !important; margin-top: 10px; }}
       .mob-toc-cell {{ width: 50% !important; display: inline-block !important; box-sizing: border-box; }}
@@ -596,8 +595,8 @@ def compose_html(
       <p style="margin:0 0 0 0;font-family:{_F};font-size:15px;line-height:1.88;color:{_INK};">{_esc(intro)}</p>
     </td></tr>
 
-    {news_rows}
     {research_rows}
+    {news_rows}
 
     <!-- ════════════════════════════════════════════
          FOOTER

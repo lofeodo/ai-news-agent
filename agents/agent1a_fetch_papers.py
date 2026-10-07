@@ -18,10 +18,16 @@ from scoring_tool import SCORING_TOOL
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_PAPER_SCORING
 import tracing
+import spotlight_history
+import trending_papers
 from config import (
     MAX_FETCH, SAMPLE_SIZE, LOOKBACK_HOURS, DATA_DIR, SCORING_MODEL, MAX_TOKENS, WORD_CUTOFF,
     GCP_PROJECT_ID, TOPIC_PAPERS_SCORED, USE_FIRESTORE, PAPERS_IN_NEWSLETTER,
+    TRENDING_LOOKBACK_DAYS, HF_DAILY_PAPERS_URL, TRACTION_MAX_POINTS, MAX_SCORE,
 )
+
+# Fewer usable trending candidates than this means HF (or the arXiv lookup) is misbehaving.
+MIN_TRENDING_CANDIDATES = 10
 
 # --- Rate limiting ---
 MAX_CONCURRENT_CLAUDE_CALLS = 5
@@ -32,12 +38,11 @@ _TRACE_RUN_ID = None
 
 
 
-def fetch_papers():
-    """Fetch AI papers submitted in the last LOOKBACK_HOURS from ArXiv."""
+def _arxiv_client():
+    """arxiv.Client routed through the Squid proxy when configured (GCP IPs are throttled)."""
     import socket
     import urllib.request
     socket.setdefaulttimeout(30)
-    print(f"Fetching papers from ArXiv (last {LOOKBACK_HOURS} hours)...", flush=True)
 
     proxy_url = os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY")
     if proxy_url:
@@ -57,6 +62,13 @@ def fetch_papers():
             "https": proxy_url,
         })
         print(f"[fetch_papers] Proxy set on arxiv session", flush=True)
+    return client
+
+
+def fetch_papers():
+    """Fetch AI papers submitted in the last LOOKBACK_HOURS from ArXiv (fallback path)."""
+    print(f"Fetching papers from ArXiv (last {LOOKBACK_HOURS} hours)...", flush=True)
+    client = _arxiv_client()
 
     search = arxiv.Search(
         query="cat:cs.AI OR cat:cs.LG",
@@ -85,6 +97,28 @@ def fetch_papers():
 
     print(f"Found {len(papers)} papers in the last {LOOKBACK_HOURS} hours", flush=True)
     return papers
+
+
+def select_trending_papers(run_id: str):
+    """The SAMPLE_SIZE most-upvoted HF Daily Papers of the last TRENDING_LOOKBACK_DAYS that no earlier
+    run spotlighted. Returns papers carrying `upvotes` and `community_traction`; raises if HF or the
+    arXiv lookup fails or yields too few papers (the caller falls back to the random sample)."""
+    seen = spotlight_history.load_seen_ids(USE_FIRESTORE, GCP_PROJECT_ID, DATA_DIR, run_id)
+    print(f"[trending] {len(seen)} papers spotlighted before", flush=True)
+
+    candidates = trending_papers.fetch_hf_candidates(HF_DAILY_PAPERS_URL, TRENDING_LOOKBACK_DAYS)
+    print(f"[trending] {len(candidates)} HF papers in the last {TRENDING_LOOKBACK_DAYS} days", flush=True)
+
+    # Over-fetch: some HF papers are not cs.AI/cs.LG and get dropped after the arXiv lookup.
+    ranked = trending_papers.rank_candidates(candidates, seen, SAMPLE_SIZE * 2)
+    upvotes = {c["arxiv_id"]: c["upvotes"] for c in ranked}
+    papers = trending_papers.keep_ai_papers(
+        trending_papers.fetch_arxiv_papers([c["arxiv_id"] for c in ranked], _arxiv_client()))
+    papers.sort(key=lambda p: -upvotes.get(trending_papers.base_arxiv_id(p["id"]), 0))
+    papers = papers[:SAMPLE_SIZE]
+    if len(papers) < MIN_TRENDING_CANDIDATES:
+        raise RuntimeError(f"only {len(papers)} usable trending papers (need {MIN_TRENDING_CANDIDATES})")
+    return trending_papers.attach_traction(papers, upvotes, TRACTION_MAX_POINTS)
 
 
 def sample_papers(papers):
@@ -119,13 +153,17 @@ def download_and_extract(pdf_url: str, paper_id: str) -> str:
 
 
 def score_paper(paper: dict, full_text: str) -> dict:
-    """Score a paper using Claude on a 28-point rubric."""
+    """Score a paper using Claude on an 8-dimension rubric plus community traction."""
     with open("prompts/scoring_rubric.txt", "r", encoding="utf-8") as f:
         prompt_template = f.read()
 
     truncated_text = " ".join(full_text.split()[:WORD_CUTOFF])
 
+    upvotes = paper.get("upvotes")
+    upvote_line = (f"{upvotes} upvotes on Hugging Face Daily Papers" if upvotes is not None
+                   else "not available")
     prompt = prompt_template.format(
+        upvote_line=upvote_line,
         title=paper["title"],
         abstract=paper["abstract"],
         full_text=truncated_text
@@ -146,7 +184,23 @@ def score_paper(paper: dict, full_text: str) -> dict:
 
     if not response.content:
         raise RuntimeError(f"Empty Claude response for paper: {paper['title'][:40]}")
-    return response.content[0].input
+    return finalize_scores(response.content[0].input, paper)
+
+
+_CLAUDE_DIMENSIONS = (
+    "novelty", "rigor", "reproducibility", "clarity", "practical_applicability",
+    "significance", "disruption_potential", "wow_factor",
+)
+
+
+def finalize_scores(scores: dict, paper: dict) -> dict:
+    """Recompute the total in code: Claude's 8 dimensions (max 33) + community traction (max 8).
+
+    The model's own `total` is not trusted; traction comes from HF upvotes, never from the model."""
+    claude_total = sum(int(scores.get(d, 0)) for d in _CLAUDE_DIMENSIONS)
+    traction = int(paper.get("community_traction", 0))
+    return {**scores, "claude_total": claude_total, "community_traction": traction,
+            "upvotes": paper.get("upvotes"), "total": claude_total + traction}
 
 
 def score_with_retry(paper: dict, full_text: str, max_retries: int = 3) -> dict:
@@ -174,7 +228,7 @@ def process_paper(paper: dict) -> dict:
             scores = score_with_retry(paper, full_text)
             print(f"  [scoring-done] {paper_id}", flush=True)
 
-        print(f"  [done]     {paper['title'][:50]} → {scores.get('total', '?')}/28", flush=True)
+        print(f"  [done]     {paper['title'][:50]} → {scores.get('total', '?')}/{MAX_SCORE}", flush=True)
         return {**paper, "scores": scores, "error": None}
 
     except Exception as e:
@@ -223,8 +277,13 @@ def run(run_id: str):
     start_time = datetime.now()
 
     try:
-        papers = fetch_papers()
-        sampled = sample_papers(papers)
+        try:
+            sampled = select_trending_papers(run_id)
+            print(f"[trending] scoring the {len(sampled)} most-upvoted unspotlighted papers", flush=True)
+        except Exception as e:
+            print(f"[trending] falling back to a random sample of recent ArXiv papers: {e}", flush=True)
+            sampled = sample_papers(fetch_papers())
+        sampled = [{**p, "hf_url": trending_papers.hf_paper_url(p["id"])} for p in sampled]
         scored = score_all_papers(sampled)
 
         successful = [r for r in scored if r["scores"] is not None]
@@ -240,8 +299,13 @@ def run(run_id: str):
         print(f"\n=== TOP {PAPERS_IN_NEWSLETTER} PAPERS ===")
         for i, paper in enumerate(top_papers, 1):
             scores = paper.get("scores") or {}
-            print(f"{i}. [{scores.get('total', '?')}/28] {paper['title']}")
+            print(f"{i}. [{scores.get('total', '?')}/{MAX_SCORE}] {paper['title']}")
             print(f"   {scores.get('reasoning', '')}\n")
+
+        recorded = spotlight_history.record_spotlight(
+            [{"arxiv_id": trending_papers.base_arxiv_id(p["id"]), "title": p["title"]} for p in top_papers],
+            run_id, USE_FIRESTORE, GCP_PROJECT_ID, DATA_DIR)
+        print(f"[spotlight] recorded {recorded} spotlighted paper(s)", flush=True)
 
         os.makedirs(DATA_DIR, exist_ok=True)
         out_path = os.path.join(DATA_DIR, "scored_papers.json")

@@ -7,17 +7,25 @@ from datetime import datetime, timedelta, timezone
 MAX_FETCH = 500              # safety ceiling for ArXiv API
 SAMPLE_SIZE = 35             # papers to score per week
 WORD_CUTOFF = 5000           # papers — covers method + results, excludes references (~6-7k tokens)
-PAPERS_IN_NEWSLETTER = 3     # how many top-scored papers appear in the newsletter
+PAPERS_IN_NEWSLETTER = 1     # how many top-scored papers appear in the newsletter (one spotlight per week)
 ARTICLE_WORD_LIMIT = 1500 # news articles — most articles are under this anyway
 
-# Paper scoring
-MAX_SCORE = 28
+# Trending-paper shortlist (agent1a): the SAMPLE_SIZE most-upvoted Hugging Face Daily Papers of the
+# last TRENDING_LOOKBACK_DAYS that have not been spotlighted before are scored by Claude.
+TRENDING_LOOKBACK_DAYS = 14
+HF_DAILY_PAPERS_URL = "https://huggingface.co/api/daily_papers"
+
+# Paper scoring: 8 dimensions scored by Claude (max 33) + community traction computed in code
+# from Hugging Face upvotes (1..TRACTION_MAX_POINTS, a percentile within the shortlist).
+CLAUDE_MAX_SCORE = 33
+TRACTION_MAX_POINTS = 8
+MAX_SCORE = CLAUDE_MAX_SCORE + TRACTION_MAX_POINTS
 
 # Claude
 SCORING_MODEL = "claude-haiku-4-5-20251001"
 MAX_TOKENS = 1000           # used for scoring
 FILTER_MAX_TOKENS = 4000    # used for news filtering — up to 100 index+category pairs per batch
-PAPER_SUMMARY_MAX_TOKENS = 400   # ~95 words with breathing room for 2 paragraphs
+PAPER_SUMMARY_MAX_TOKENS = 150   # 2-3 sentence hook (~45 words) with breathing room
 NEWS_SUMMARY_MAX_TOKENS  = 200   # 2-3 sentences
 
 # Shared timing

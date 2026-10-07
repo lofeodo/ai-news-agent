@@ -16,7 +16,7 @@ Style rules:
 
 Today's date: {date}
 
-TOP RESEARCH PAPERS THIS WEEK:
+THE SPOTLIGHT RESEARCH PAPER (leads the newsletter, right below this note):
 {papers}
 
 TOP NEWS STORIES THIS WEEK (sorted by HN score descending where available):

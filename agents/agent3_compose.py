@@ -473,14 +473,14 @@ def compose_html(
     def _share_strip() -> str:
         return (
             f'<!-- SHARE -->\n'
-            f'<tr><td class="mob-share" style="background:{_D0};padding:10px 40px;border-top:1px solid #1a1a1a;">'
+            f'<tr><td class="mob-share" style="background:{_AMBER};padding:10px 40px;">'
             f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr>'
-            f'<td style="font-family:{_F};font-size:11px;color:#8a8a8a;white-space:nowrap;vertical-align:middle;">'
+            f'<td style="font-family:{_F};font-size:11px;font-weight:700;color:{_D0};white-space:nowrap;vertical-align:middle;">'
             f'Enjoying the newsletter? Consider sharing!</td>'
             f'<td align="right" style="vertical-align:middle;white-space:nowrap;padding-left:10px;">'
             f'<a href="https://newsletter.lofeodo.com/share.html" style="display:inline-block;font-family:{_F};'
-            f'font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:{_D0};'
-            f'background:{_AMBER};border-radius:999px;padding:5px 12px;text-decoration:none;">Share &#8599;</a>'
+            f'font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:{_AMBER};'
+            f'background:{_D0};border-radius:999px;padding:5px 12px;text-decoration:none;">Share &#8599;</a>'
             f'</td></tr></table>'
             f'</td></tr>\n'
             f'<!-- /SHARE -->\n'

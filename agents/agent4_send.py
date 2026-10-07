@@ -311,14 +311,14 @@ def _apply_section_config(html: str, section_config: dict | None) -> str:
         toc_entries.append(("RES", "Research Spotlights"))
 
     # The reorder below rewrites everything between the first and last SECTION marker, which would swallow
-    # the share strip, so lift it out and put it back after the second news section.
+    # the share strip, so lift it out and put it back after the first news section.
     share_m     = _SHARE_RE.search(html)
     share_html  = share_m.group(0) if share_m else ""
     share_placed = False
 
     def _place_share():
         nonlocal share_placed
-        if share_html and not share_placed and counter - 1 == 2:
+        if share_html and not share_placed and counter - 1 == 1:
             parts.append(share_html)
             share_placed = True
 
@@ -344,7 +344,7 @@ def _apply_section_config(html: str, section_config: dict | None) -> str:
         _place_share()
 
     if share_html and not share_placed:
-        parts.append(share_html)  # fewer than two news sections: keep the strip at the end
+        parts.append(share_html)  # no news sections placed: keep the strip at the end
 
     # Replace the entire section zone (first marker to last marker)
     all_matches = list(_SECTION_RE.finditer(html))

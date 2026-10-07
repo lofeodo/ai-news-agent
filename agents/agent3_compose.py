@@ -468,7 +468,7 @@ def compose_html(
     toc_row1 = "".join(_toc_cell(n, s) for n, s in _toc_entries[:4])
     toc_row2 = "".join(_toc_cell(n, s) for n, s in _toc_entries[4:])
 
-    # — one-line share strip, sits after the 2nd news section (outside SECTION markers; agent4 re-places it
+    # — one-line share strip, sits after the 1st news section (outside SECTION markers; agent4 re-places it
     # when it reorders sections, keyed on the SHARE markers) —
     def _share_strip() -> str:
         return (
@@ -516,7 +516,7 @@ def compose_html(
               f'</td></tr>\n'
             + f'<!-- /SECTION:{category} -->\n'
         )
-        if i == 1:
+        if i == 0:
             news_rows += _share_strip()
 
     # — research section: the spotlight paper leads the issue, right under the editor's note —

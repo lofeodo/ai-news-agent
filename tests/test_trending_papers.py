@@ -115,3 +115,17 @@ def test_summary_heading_is_stripped_before_storing():
     out = a2a.summarize_paper({"title": "t"}, "text", "{title} {text}", client)
     assert out == "A robot learned to cook. It now makes omelettes."
     assert a2a.summarize_paper({"title": "t"}, "text", "{title} {text}", TextClient("Plain hook.")) == "Plain hook."
+
+
+def test_truncated_summary_is_trimmed_to_its_last_full_sentence():
+    import agent2a_summarize_papers as a2a
+    from test_injection_prompts import TextClient
+
+    class Cut(TextClient):
+        def create(self, **kw):
+            r = super().create(**kw)
+            r.stop_reason = "max_tokens"
+            return r
+
+    out = a2a.summarize_paper({"title": "t"}, "x", "{title}{text}", Cut("First idea. Second idea! And a third that gets cu"))
+    assert out == "First idea. Second idea!"

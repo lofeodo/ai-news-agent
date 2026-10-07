@@ -468,6 +468,24 @@ def compose_html(
     toc_row1 = "".join(_toc_cell(n, s) for n, s in _toc_entries[:4])
     toc_row2 = "".join(_toc_cell(n, s) for n, s in _toc_entries[4:])
 
+    # — one-line share strip, sits after the 2nd news section (outside SECTION markers; agent4 re-places it
+    # when it reorders sections, keyed on the SHARE markers) —
+    def _share_strip() -> str:
+        return (
+            f'<!-- SHARE -->\n'
+            f'<tr><td class="mob-share" style="background:{_D0};padding:10px 40px;border-top:1px solid #1a1a1a;">'
+            f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr>'
+            f'<td style="font-family:{_F};font-size:11px;color:#8a8a8a;white-space:nowrap;vertical-align:middle;">'
+            f'Enjoying the newsletter? Consider sharing!</td>'
+            f'<td align="right" style="vertical-align:middle;white-space:nowrap;padding-left:10px;">'
+            f'<a href="https://newsletter.lofeodo.com/share.html" style="display:inline-block;font-family:{_F};'
+            f'font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:{_D0};'
+            f'background:{_AMBER};border-radius:999px;padding:5px 12px;text-decoration:none;">Share &#8599;</a>'
+            f'</td></tr></table>'
+            f'</td></tr>\n'
+            f'<!-- /SHARE -->\n'
+        )
+
     # — news section rows —
     news_rows = ""
     for i, category in enumerate(active_categories):
@@ -495,6 +513,8 @@ def compose_html(
               f'</td></tr>\n'
             + f'<!-- /SECTION:{category} -->\n'
         )
+        if i == 1:
+            news_rows += _share_strip()
 
     # — research section: the spotlight paper leads the issue, right under the editor's note —
     paper_cards   = "".join(render_paper_card(p) for p in papers)
@@ -520,6 +540,8 @@ def compose_html(
     }}
     @media only screen and (max-width: 480px) {{
       .mob-pad {{ padding-left: 16px !important; padding-right: 16px !important; }}
+      .mob-share {{ padding-left: 12px !important; padding-right: 12px !important; }}
+      .mob-share td {{ font-size: 10px !important; }}
       .mob-h1 {{ font-size: 26px !important; }}
       .mob-spot-title {{ font-size: 21px !important; }}
       .mob-btn {{ display: block !important; text-align: center; }}

@@ -2,7 +2,7 @@
 
 How to diagnose the weekly health check email, re-run a stage, roll back a change and rotate a key. Every procedure here was checked against `main.py`, `agents/agent_healthcheck.py` and `cloudbuild.yaml`. Incident history is in [postmortems/](postmortems/README.md).
 
-Schedule (America/Toronto, Mondays): pipeline 6:00 AM, agent 4 send 7:00 AM, health check 7:10 AM. The watchdog kills an agent at 07:30 if it started before then, or after 1 hour, whichever is sooner.
+Schedule (America/Toronto): pipeline drafts Sunday 12:00 PM, draft health check Sunday 1:15 PM (skips the send stage), agent 4 send Monday 7:00 AM, send health check Monday 7:10 AM. The issue is dated the Monday send date. The watchdog kills an agent after 1 hour, or at 07:30 if it started before then (a Sunday-noon run only gets the 1-hour cap). A problem in the Sunday email leaves the whole day to fix and re-run before the send.
 
 Commands use PowerShell syntax; `gcloud` works from PowerShell on the owner's machine, not Git Bash. Project and region come from the gcloud config. Replace `<run_id>` and `<SERVICE>`; never paste real secret values or unredacted `describe` output into a ticket, a commit or a chat.
 
@@ -33,7 +33,7 @@ A run doc must stay under Firestore's 1 MiB cap. A write that fails with a size 
 ### No email arrived
 1. Look at the healthcheck service logs for a `[healthcheck]` line (`Report sent`, or a Python traceback).
 2. If it logged a send but nothing arrived, SendGrid is the suspect: the health check uses the same SendGrid credential as the newsletter, so a dead credential also silences the alert. This is a known limitation, deliberately not fixed. Check SendGrid directly.
-3. Check Cloud Scheduler for the 7:10 job and the `ALERT_EMAIL` setting on the healthcheck service.
+3. Check Cloud Scheduler for the Sunday 1:15 PM and Monday 7:10 jobs and the `ALERT_EMAIL` setting on the healthcheck service.
 
 ## 2. Re-run a stage
 

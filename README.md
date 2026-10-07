@@ -16,7 +16,7 @@ flowchart TB
 
     SUB ~~~ CS1
 
-    CS1["☁️ Cloud Scheduler — 6 AM Monday"] --> ORC["Orchestrator · Cloud Run"]
+    CS1["☁️ Cloud Scheduler — 12 PM Sunday (draft)"] --> ORC["Orchestrator · Cloud Run"]
 
     ORC -->|"Pub/Sub: pipeline-start"| A1A["Agent 1a\nFetch & score ArXiv papers\nup to 500 → 35 sampled → top 3"]
     ORC -->|"Pub/Sub: pipeline-start"| A1B["Agent 1b\nFetch HN + NewsAPI\nlanguage-filter → categorize"]
@@ -30,13 +30,13 @@ flowchart TB
     FAN -->|"Pub/Sub: content-summarized"| A3["Agent 3\nSelect articles · write intro\ncompose 4 HTML variants\nsave to Firestore"]
 
     FAN ~~~ CS2
-    CS2["☁️ Cloud Scheduler — 7 AM Monday"] --> A4["Agent 4\nLoad latest newsletter\npersonalize per subscriber\nsend via SendGrid"]
+    CS2["☁️ Cloud Scheduler — 7 AM Monday (send)"] --> A4["Agent 4\nLoad latest newsletter\npersonalize per subscriber\nsend via SendGrid"]
 
     A3 --> FSP[("Firestore\npipeline_runs")]
     A4 --> FSP
 
     FAN ~~~ CS3
-    CS3["☁️ Cloud Scheduler — 7:10 AM Monday"] --> HC["Health Check\nFind latest run · diagnose\nemail alert if unhealthy"]
+    CS3["☁️ Cloud Scheduler — 1:15 PM Sunday (draft check) + 7:10 AM Monday (send check)"] --> HC["Health Check\nFind latest run · diagnose\nemail alert if unhealthy"]
     FSP --> HC
 ```
 

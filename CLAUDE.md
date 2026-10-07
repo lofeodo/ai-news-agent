@@ -82,7 +82,7 @@ agent1a (ArXiv papers) ──┐
 agent1b (news fetch)  ──┘                                    ├──> agent3 (compose HTML) ──> agent4 (send)
                           └──> agent2b (summarize news)  ──┘
 
-agent_healthcheck — independent, Cloud Scheduler-triggered (7:10 AM Monday,
+agent_healthcheck — independent, Cloud Scheduler-triggered (Sunday 1:15 PM draft check + 7:10 AM Monday,
 not Pub/Sub). Not part of the chain above; reads pipeline_runs after the
 fact and alerts on failure.
 ```
@@ -104,7 +104,7 @@ Every pipeline agent's `run()` body (agent1a, agent1b, agent2a, agent2b, agent3,
 - *Likely cause:* 20 threads running newspaper3k's `Article.parse()` concurrently — lxml/libxml2 (and, with image fetching on, Pillow) C code. `fetch_article_text()` (now in `agents/article_fetch.py`, shared with agent1b's review loop; one process-wide `_parse_lock`) sets `config.fetch_images = False` (summaries never use images) and serializes `parse()` behind `_parse_lock`; downloads stay parallel. Unconfirmed as the root cause — not reproduced.
 - *Retry:* agents listed in `main.py`'s `_ISOLATED_RETRIES` (currently only `agent2b: 5`) run in a **child process** instead of the server thread. A native abort kills only the child; `_run_isolated()` re-runs it up to N more times (5s apart), all under the one watchdog deadline (which also kills the child on expiry). Child stdout/stderr are inherited, so logs are unchanged apart from `[main] agent2b attempt n/6` lines. On eventual success after a failure it deletes any `agent2b_error`/`agent2b_failed_at` an earlier attempt wrote and sets `agent2b_attempts`, so the health check doesn't flag a recovered run. If every attempt dies by signal it writes `agent2b_error = "crashed (killed by SIGABRT) on all 6 attempts"` — previously a native crash left no trace on the doc at all. Because agent2b can now run more than once per run, `increment_and_check()` is idempotent: it sets `agent2b_counted` in the same transaction and skips the increment if already set, so a retried attempt can't push `agent2_completions` to 2 before agent2a finishes.
 
-`agents/agent_healthcheck.py` is a standalone agent (registered in `main.py`'s `AGENT_REGISTRY` as `healthcheck`) that reads that trail. It's triggered by its own Cloud Scheduler job (7:10 AM Monday, shortly after agent4's 7:00 AM send) rather than by Pub/Sub, so — unlike every other agent — it has no `run_id` for the pipeline run it's checking; it looks up the most recent `pipeline_runs` document itself, ordered by `started_at` descending. It then:
+`agents/agent_healthcheck.py` is a standalone agent (registered in `main.py`'s `AGENT_REGISTRY` as `healthcheck`) that reads that trail. It's triggered by two Cloud Scheduler jobs rather than by Pub/Sub: Sunday 1:15 PM (after the noon draft; on Sundays `_is_draft_check()` skips the `agent4_send_summary` stage and the clicks section) and Monday 7:10 AM (after agent4's 7:00 AM send). The pipeline now drafts Sunday 12:00 PM and agent4 sends Monday 7:00 AM; `config.newsletter_send_date()` dates a Sunday-composed issue as Monday (`STALE_AFTER_HOURS` is 30 so the Monday check accepts the ~19h-old run), so — unlike every other agent — it has no `run_id` for the pipeline run it's checking; it looks up the most recent `pipeline_runs` document itself, ordered by `started_at` descending. It then:
 1. Flags a **stale run** if the latest doc's `started_at` is more than `STALE_AFTER_HOURS` (4h) old — this catches the case where the pipeline never started at all this week (e.g. the orchestrator itself failed before creating a Firestore doc), which the per-agent error fields alone wouldn't catch. `started_at` is parsed via `_parse_started_at()`, which treats a timezone-naive value as UTC — agent1a overwrites the orchestrator's aware timestamp with `datetime.now().isoformat()` (naive), and subtracting that from an aware "now" used to raise `TypeError` and crash the check before any email went out (silently, every week from 2026-08-17 to 2026-09-07).
 2. Flags any of the six `{agent}_error` fields present on the doc.
 3. Flags any `EXPECTED_STAGES` field missing (`scored_papers`, `news_filtered`, `paper_summaries`, `news_summaries`, `newsletter_composed`, `agent4_send_summary`).
@@ -265,7 +265,7 @@ Steps 1 to 7 of `docs/IMPROVEMENT_ROADMAP.md` are built, merged and deployed. St
 
 ## Pub/Sub Topics (Cloud Mode)
 
-`pipeline-start` → `papers-scored` + `news-filtered` → `content-summarized` → (agent3 runs) → agent4 triggered separately by Cloud Scheduler. `agent_healthcheck` is triggered by its own separate Cloud Scheduler job (7:10 AM Monday) and is not part of this Pub/Sub chain at all.
+`pipeline-start` → `papers-scored` + `news-filtered` → `content-summarized` → (agent3 runs) → agent4 triggered separately by Cloud Scheduler. `agent_healthcheck` is triggered by its own separate Cloud Scheduler job (Sunday 1:15 PM and Monday 7:10 AM) and is not part of this Pub/Sub chain at all.
 
 ## Prompts
 

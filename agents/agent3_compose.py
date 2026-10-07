@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_XML_TAGS, neutralize_tags
 import tracing
-from config import DATA_DIR, SCORING_MODEL, GCP_PROJECT_ID, USE_FIRESTORE, FIRESTORE_COLLECTION, newsletter_send_date
+from config import DATA_DIR, SCORING_MODEL, GCP_PROJECT_ID, USE_FIRESTORE, FIRESTORE_COLLECTION, MAX_SCORE, newsletter_send_date
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -217,7 +217,7 @@ def write_intro(
     client: anthropic.Anthropic,
 ) -> str:
     paper_lines = "\n".join(
-        f"<paper>- {neutralize_tags(p['title'])} (score: {(p.get('scores') or {}).get('total', 0)}/28)</paper>"
+        f"<paper>- {neutralize_tags(p['title'])} (score: {(p.get('scores') or {}).get('total', 0)}/{MAX_SCORE})</paper>"
         for p in papers
     )
 
@@ -289,7 +289,8 @@ def render_paper_card(paper: dict) -> str:
     authors      = _esc(", ".join(authors_list[:3]) + (" et al." if len(authors_list) > 3 else ""))
     summary      = _strip_markdown_headers(paper.get("summary") or "")
     paragraphs   = [p.strip() for p in summary.split("\n\n") if p.strip()]
-    pdf_url      = _safe_url(paper.get("pdf_url"))
+    # Link to the Hugging Face page; older runs and the fallback path may only have the PDF.
+    pdf_url      = _safe_url(paper.get("hf_url") or paper.get("pdf_url"))
     title        = _esc(paper.get("title", ""))
 
     summary_rows = "".join(
@@ -314,7 +315,7 @@ def render_paper_card(paper: dict) -> str:
         f'<td width="60" valign="top" style="white-space:nowrap;text-align:right;">'
         f'<p style="margin:0;font-family:{_F};line-height:1;">'
         f'<span style="font-size:26px;font-weight:700;color:{_GOLD};">{score}</span>'
-        f'<br><span style="font-size:10px;color:{_AMBER};letter-spacing:1px;">/28</span>'
+        f'<br><span style="font-size:10px;color:{_AMBER};letter-spacing:1px;">/{MAX_SCORE}</span>'
         f'</p></td>\n'
         f'</tr>\n'
         f'</table>\n'

@@ -36,7 +36,7 @@ def build_link_map(run_doc: dict) -> dict[str, dict]:
     """{url_key: {url, title, category}} for every article and paper that shipped in this run.
 
     Reads `news_summaries` (agent3 prunes it to what shipped, grouped by category) and `paper_summaries`
-    (linked by `pdf_url`). Only public titles and URLs are kept. A URL that appears twice keeps its first entry.
+    (linked by `hf_url`, else `pdf_url`). Only public titles and URLs are kept. A URL that appears twice keeps its first entry.
     """
     out: dict[str, dict] = {}
 
@@ -49,7 +49,7 @@ def build_link_map(run_doc: dict) -> dict[str, dict]:
         for a in articles or []:
             add(a.get("url"), a.get("title"), category)
     for p in run_doc.get("paper_summaries") or []:
-        add(p.get("pdf_url"), p.get("title"), PAPERS_CATEGORY)
+        add(p.get("hf_url") or p.get("pdf_url"), p.get("title"), PAPERS_CATEGORY)
     return out
 
 

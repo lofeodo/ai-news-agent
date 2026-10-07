@@ -212,6 +212,7 @@ def run(run_id: str):
                 "authors":       paper["authors"],
                 "published":     paper["published"],
                 "pdf_url":       paper["pdf_url"],
+                "hf_url":        paper.get("hf_url"),
                 "categories":    paper["categories"],
                 "scores":        paper["scores"],
                 "summary":       summary,

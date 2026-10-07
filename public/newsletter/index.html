@@ -66,7 +66,34 @@
 
     <div class="auth-divider"><span>or</span></div>
 
-    <a href="login.html" class="btn-email-link">Sign in with email →</a>
+    <!-- Account-free subscribe: double opt-in, POST /subscribe sends a confirmation email. -->
+    <form id="subscribe-form" novalidate>
+      <div class="field">
+        <label for="email">Subscribe with just your email</label>
+        <input type="email" id="email" name="email" autocomplete="email" required placeholder="you@example.com">
+      </div>
+
+      <div class="checkboxes">
+        <label as="div">Include in my newsletter</label>
+        <label class="check-row">
+          <input type="checkbox" id="send_latest" name="send_latest" checked>
+          <span>Send me the latest issue right away<span class="check-desc">Delivered after you confirm your subscription</span></span>
+        </label>
+        <label class="check-row">
+          <input type="checkbox" id="include_french" name="include_french" checked>
+          <span>French-language articles<span class="check-desc">AI coverage from French-language sources</span></span>
+        </label>
+        <label class="check-row">
+          <input type="checkbox" id="include_canada" name="include_canada" checked>
+          <span>Canada &amp; Montréal section<span class="check-desc">Local AI news from across Canada</span></span>
+        </label>
+      </div>
+
+      <button type="submit" id="submit-btn">Subscribe</button>
+      <div class="msg" id="msg"></div>
+    </form>
+
+    <a href="login.html" class="btn-email-link">Have an account? Sign in with email →</a>
 
     <!-- Shown instead of sign-in buttons when already authenticated -->
     <div id="signed-in-ctas" style="display:none">
@@ -90,6 +117,7 @@
       document.getElementById('google-btn').style.display     = 'none';
       document.querySelector('.auth-divider').style.display   = 'none';
       document.querySelector('.btn-email-link').style.display = 'none';
+      document.getElementById('subscribe-form').style.display = 'none';
       document.getElementById('spots-remaining').style.display = 'none';
       document.getElementById('signed-in-ctas').style.display = 'block';
     }
@@ -97,6 +125,7 @@
       document.getElementById('google-btn').style.display     = '';
       document.querySelector('.auth-divider').style.display   = '';
       document.querySelector('.btn-email-link').style.display = '';
+      document.getElementById('subscribe-form').style.display = '';
       document.getElementById('spots-remaining').style.display = '';
       document.getElementById('signed-in-ctas').style.display = 'none';
     }
@@ -117,10 +146,70 @@
         const el = document.getElementById('spots-remaining');
         if (!el) return;
         el.textContent = `${active} / ${max}`;
-        if (active >= max) el.classList.add('spots-full');
+        if (active >= max) {
+          el.classList.add('spots-full');
+          btn.disabled = true;
+          document.getElementById('email').disabled = true;
+        }
       } catch (e) {}
     }
     loadSpots();
+
+    const form = document.getElementById('subscribe-form');
+    const btn  = document.getElementById('submit-btn');
+    const msg  = document.getElementById('msg');
+
+    function showMsg(text, type) {
+      msg.textContent = text;
+      msg.className = `msg visible ${type}`;
+    }
+    function resetBtn() {
+      btn.disabled = false;
+      btn.textContent = 'Subscribe';
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      if (!email) { showMsg('Please enter your email address.', 'error'); return; }
+
+      btn.disabled = true;
+      btn.textContent = 'Subscribing…';
+      const payload = {
+        email,
+        prefs: {
+          include_french: document.getElementById('include_french').checked,
+          include_canada: document.getElementById('include_canada').checked,
+        },
+        send_latest: document.getElementById('send_latest').checked,
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/subscribe`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (res.status === 503) {
+          showMsg('Subscriber limit reached — no spots available.', 'error');
+          resetBtn();
+          loadSpots();
+        } else if (res.status === 422) {
+          showMsg("That doesn't look like a valid email address.", 'error');
+          resetBtn();
+        } else if (res.status === 429) {
+          showMsg('Too many attempts. Please wait a minute and try again.', 'error');
+          resetBtn();
+        } else {
+          form.reset();
+          resetBtn();
+          showMsg("Check your inbox to confirm. If you don't see it, check your spam folder and mark it as not spam.", 'success');
+        }
+      } catch {
+        showMsg('Something went wrong. Please try again.', 'error');
+        resetBtn();
+      }
+    });
 
     // Google sign-in is a plain navigation to the backend — see auth.js /
     // auth-callback.html for why (server-side OAuth Authorization Code flow).

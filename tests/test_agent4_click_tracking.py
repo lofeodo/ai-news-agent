@@ -119,3 +119,15 @@ def test_map_failure_still_sends_every_email_untracked(loop, monkeypatch):
     monkeypatch.setattr(click_counts, "save_link_doc", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom")))
     a4.run("agent4-run")
     assert sends == [("a@example.com", None), ("b@example.com", None)]
+
+
+# --- send summary lands on the composed run's doc (what the Monday send health check reads) -------
+
+def test_send_summary_is_recorded_on_the_composed_run_not_agent4s_invocation_id(loop, monkeypatch):
+    db, _ = loop
+    monkeypatch.setattr(a4, "CLICK_TRACKING", False)
+    a4.run("agent4-run")
+    runs = db.store["pipeline_runs"]
+    assert runs["RUN1"]["agent4_send_summary"]["sent"] == 2
+    assert "agent4_completed_at" in runs["RUN1"]
+    assert "agent4-run" not in runs

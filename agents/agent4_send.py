@@ -590,14 +590,16 @@ def run(run_id: str):
     # visible in Cloud Logging, but a health check needs a queryable signal
     # that the send actually ran (not just that composition succeeded).
     try:
-        db.collection("pipeline_runs").document(run_id).set(
+        # Keyed on the composed run's doc (what the health check reads), not agent4's
+        # own invocation run_id, which belongs to no pipeline run.
+        db.collection("pipeline_runs").document(loaded.run_id).set(
             {
                 "agent4_send_summary": summary,
                 "agent4_completed_at": datetime.now(timezone.utc).isoformat(),
             },
             merge=True
         )
-        print(f"[agent4]  Recorded send_summary to Firestore (run_id={run_id})", flush=True)
+        print(f"[agent4]  Recorded send_summary to Firestore (run_id={loaded.run_id})", flush=True)
     except Exception as e:
         print(f"[agent4]  Failed to record send_summary to Firestore: {e}", flush=True)
 

@@ -24,10 +24,10 @@ ARTICLES_PER_CATEGORY_TARGET = "3 to 5"
 
 NEWS_CATEGORIES = [
     "Model & Product Releases",
-    "Industry & Business",
     "Policy, Law & Regulation",
     "Open Source & Tools",
     "Safety & Alignment",
+    "Industry & Business",
     "Society & Culture",
     "Canada & Montreal",
 ]

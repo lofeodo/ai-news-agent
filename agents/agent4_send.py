@@ -92,10 +92,10 @@ class StaleNewsletterError(RuntimeError):
 # Keep in sync with DEFAULT_SECTIONS in agents/agent_subscriptions.py
 _DEFAULT_SECTIONS = [
     "Model & Product Releases",
-    "Industry & Business",
     "Policy, Law & Regulation",
     "Open Source & Tools",
     "Safety & Alignment",
+    "Industry & Business",
     "Society & Culture",
     "Research Spotlights",
 ]

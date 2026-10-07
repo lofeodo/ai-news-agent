@@ -92,10 +92,16 @@
       <div class="msg" id="unsub-msg"></div>
     </div>
 
+    <!-- Sign in prompt (no token, not logged in) -->
+    <div id="signin-prompt" style="display:none">
+      <p class="note" style="margin-bottom:16px">Sign in with Google to manage your preferences.</p>
+      <a href="login.html?returnUrl=preferences.html" id="signin-link" style="display:block;background:var(--accent);color:var(--bg);font-family:var(--label);font-size:0.95rem;letter-spacing:0.18em;text-transform:uppercase;border:none;padding:14px 11px;cursor:pointer;text-align:center;text-decoration:none;transition:opacity 0.15s;">Sign in with Google</a>
+    </div>
+
     <!-- Request new link (token flow fallback) -->
     <div id="new-link-section" style="display:none">
       <hr class="divider">
-      <p class="note" style="margin-bottom:14px">Need a new preferences link? Enter your email and we'll send one.</p>
+      <p class="note" style="margin-bottom:14px">No Google account? Enter your email and we'll send you a preferences link.</p>
       <form id="request-form" novalidate>
         <div class="field">
           <label for="req-email">Email address</label>
@@ -104,12 +110,6 @@
         <button type="submit" id="req-btn">Send preferences link</button>
         <div class="msg" id="req-msg"></div>
       </form>
-    </div>
-
-    <!-- Sign in prompt (no token, not logged in) -->
-    <div id="signin-prompt" style="display:none">
-      <p class="note" style="margin-bottom:16px">Sign in to manage your preferences, or use the link from your newsletter email.</p>
-      <a href="login.html?returnUrl=preferences.html" id="signin-link" style="display:block;background:var(--accent);color:var(--bg);font-family:var(--label);font-size:0.95rem;letter-spacing:0.18em;text-transform:uppercase;border:none;padding:14px 11px;cursor:pointer;text-align:center;text-decoration:none;transition:opacity 0.15s;">Sign in</a>
     </div>
   </div>
 
@@ -228,6 +228,7 @@
       if (!token) {
         loadingMsg.style.display   = 'none';
         signinPrompt.style.display = 'block';
+        newLinkSection.style.display = 'block';
         return;
       }
       loadTokenPrefs();

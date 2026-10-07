@@ -338,8 +338,14 @@ def _notify(message: str, healthy: bool, mode: str = "send") -> None:
 
     status    = "all clear" if healthy else "problem detected"
     subject   = f"{NEWSLETTER_NAME} {mode} health check — {status}"
-    escaped   = message.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-    html_body = f"<pre style=\"font-family:monospace;white-space:pre-wrap;\">{escaped}</pre>"
+    try:
+        import report_html
+        html_body = report_html.render(message, healthy, mode, NEWSLETTER_NAME)
+    except Exception as e:
+        # Presentation must never suppress the heartbeat: fall back to the plain monospace report.
+        print(f"[healthcheck]  styled report failed, sending plain text: {e}", flush=True)
+        escaped   = message.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        html_body = f"<pre style=\"font-family:monospace;white-space:pre-wrap;\">{escaped}</pre>"
 
     try:
         api_key = agent4_send._get_sendgrid_api_key()

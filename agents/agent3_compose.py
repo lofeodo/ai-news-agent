@@ -532,6 +532,9 @@ def compose_html(
 </head>
 <body style="margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
 
+<!-- preheader: inbox preview text = editor's note; hidden in the body -->
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#ffffff;opacity:0;">{_esc(intro[:200])}{'&zwnj;&nbsp;' * 60}</div>
+
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
 <tr><td class="dm-outer" style="padding:32px 12px 48px;">
 

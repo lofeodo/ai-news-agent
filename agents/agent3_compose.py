@@ -297,31 +297,32 @@ def render_paper_card(paper: dict) -> str:
     stat = ""
     if isinstance(upvotes, int) and upvotes > 0:
         stat = (
-            f'<p style="margin:0 0 18px 0;font-family:{_F};font-size:13px;color:{_GOLD};">'
+            f'<td align="right" valign="top" style="white-space:nowrap;font-family:{_F};font-size:12px;color:{_GOLD};">'
             f'<span style="font-weight:700;">&#9650;&nbsp;{upvotes:,}</span>'
-            f'<span style="color:{_CHAR};">&nbsp;&nbsp;upvotes on Hugging Face</span></p>\n'
+            f'<span style="color:{_CHAR};">&nbsp;upvotes</span></td>'
         )
 
     return (
         f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">\n'
-        f'<tr><td class="mob-pad" style="background:#17140f;padding:32px 40px 36px 36px;border-left:4px solid {_AMBER};border-bottom:3px solid {_AMBER};">\n'
-        # kicker
-        f'<p style="margin:0 0 16px 0;font-family:{_F};font-size:11px;font-weight:700;'
-        f'letter-spacing:4px;text-transform:uppercase;color:{_AMBER};">&#9733;&nbsp; Paper of the week</p>\n'
+        f'<tr><td class="mob-pad" style="background:#17140f;padding:22px 32px 24px 28px;border-left:4px solid {_AMBER};border-bottom:3px solid {_AMBER};">\n'
+        # kicker row: label left, HF upvotes right
+        f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 9px 0;"><tr>'
+        f'<td valign="top" style="font-family:{_F};font-size:11px;font-weight:700;'
+        f'letter-spacing:3px;text-transform:uppercase;color:{_AMBER};">&#9733;&nbsp; Paper of the week</td>'
+        f'{stat}</tr></table>\n'
         # title
-        f'<h2 class="mob-spot-title" style="margin:0 0 10px 0;font-family:{_F};font-size:25px;font-weight:700;'
-        f'line-height:1.28;letter-spacing:-0.3px;color:{_CREAM};">'
+        f'<h2 class="mob-spot-title" style="margin:0 0 4px 0;font-family:{_F};font-size:22px;font-weight:700;'
+        f'line-height:1.25;letter-spacing:-0.3px;color:{_CREAM};">'
         f'<a href="{link}" target="_blank" rel="noopener noreferrer" style="color:{_CREAM};text-decoration:none;">{title}</a>'
         f'</h2>\n'
-        f'<p style="margin:0 0 20px 0;font-family:{_F};font-size:12px;color:#8a8580;">{authors}</p>\n'
+        f'<p style="margin:0 0 11px 0;font-family:{_F};font-size:12px;color:#8a8580;">{authors}</p>\n'
         # hook
-        f'<p style="margin:0 0 22px 0;font-family:{_F};font-size:16px;line-height:1.78;color:{_ASH};">{_esc(summary)}</p>\n'
-        f'{stat}'
+        f'<p style="margin:0 0 15px 0;font-family:{_F};font-size:15px;line-height:1.55;color:{_ASH};">{_esc(summary)}</p>\n'
         # bulletproof button
         f'<table role="presentation" cellspacing="0" cellpadding="0" border="0" class="mob-block">'
         f'<tr><td align="center" bgcolor="{_AMBER}" style="background:{_AMBER};">'
         f'<a href="{link}" target="_blank" rel="noopener noreferrer" class="mob-btn" '
-        f'style="display:inline-block;padding:13px 24px;font-family:{_F};font-size:13px;font-weight:700;'
+        f'style="display:inline-block;padding:9px 20px;font-family:{_F};font-size:13px;font-weight:700;'
         f'letter-spacing:1px;color:{_D0};text-decoration:none;">'
         f'{"Read on Hugging Face" if on_hf else "Read the paper"} &nbsp;&#8594;</a>'
         f'</td></tr></table>\n'

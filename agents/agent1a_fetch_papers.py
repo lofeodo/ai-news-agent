@@ -11,6 +11,7 @@ import requests
 import sys
 import threading
 import time
+from urllib.parse import urlsplit
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 from scoring_tool import SCORING_TOOL
@@ -52,7 +53,7 @@ def _arxiv_client():
         })
         opener = urllib.request.build_opener(proxy_handler)
         urllib.request.install_opener(opener)
-        print(f"[fetch_papers] Using proxy: {proxy_url}", flush=True)
+        print(f"[fetch_papers] Using proxy: {urlsplit(proxy_url).hostname}", flush=True)  # host only, the URL embeds the password
 
     client = arxiv.Client()
 

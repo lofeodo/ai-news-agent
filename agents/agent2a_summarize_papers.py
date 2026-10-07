@@ -82,7 +82,7 @@ def claude_call_with_retry(client: anthropic.Anthropic, max_retries: int = 4, **
 
 
 def summarize_paper(paper: dict, text: str, prompt_template: str, client: anthropic.Anthropic) -> str:
-    """Ask Claude for a 4-paragraph review of one paper."""
+    """Ask Claude for a 2-3 sentence hook summary of one paper."""
     prompt = prompt_template.format(title=paper["title"], text=text)
 
     with _semaphore:
@@ -100,10 +100,11 @@ def summarize_paper(paper: dict, text: str, prompt_template: str, client: anthro
 
 
 def validate_summary(summary: str, paper_id: str) -> bool:
-    """Warn if Claude didn't return 2 paragraphs."""
+    """Warn if the hook summary is empty, split into paragraphs, or much longer than asked (~45 words)."""
     paragraphs = [p.strip() for p in summary.split("\n\n") if p.strip()]
-    if len(paragraphs) < 2:
-        print(f"  [validate] {paper_id}: expected 2 paragraphs, got {len(paragraphs)} — storing anyway")
+    words = len(summary.split())
+    if len(paragraphs) != 1 or words > 80:
+        print(f"  [validate] {paper_id}: expected one short paragraph, got {len(paragraphs)} paragraph(s), {words} words — storing anyway")
         return False
     return True
 

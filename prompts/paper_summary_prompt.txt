@@ -1,18 +1,15 @@
-Write a concise review of the following research paper for an AI newsletter read by curious, technically-minded readers who follow AI news but are not necessarily researchers.
+Write a short hook for the following research paper, for an AI newsletter read by curious, technically-minded readers who follow AI news but are not necessarily researchers. This is the lead story of the issue, so it should make the reader want to click through.
 
-Your response must be exactly 2 short paragraphs with no headers or labels, in this order:
-
-Paragraph 1 — What it does: describe what the paper builds or discovers, how it works at a high level, and the key finding. Briefly explain any technical terms a non-specialist would not know. Max 55 words.
-Paragraph 2 — Why it matters: explain the practical significance, what it changes or enables, and what comes next. Connect it to things readers already care about. Max 40 words.
+Your response must be exactly ONE paragraph of 2 or 3 short sentences, 45 words maximum, with no headers or labels. Explain at a very high level what the paper does and why it is striking, so that someone with no background can get the idea and feel its coolness or importance. Lead with the surprising or vivid part, not with background.
 
 Style rules:
+- Stay strictly faithful to the paper. Do not claim anything the text does not support, and do not invent numbers or results. Vivid does not mean exaggerated.
 - No em dashes (—) or en dashes (–). Use commas or short sentences instead.
 - No bullet points, bold, headers, or labels of any kind.
 - No markdown of any kind. Never start a line with #, ##, ###, *, -, or any other markdown syntax.
 - No filler words like "importantly", "notably", "crucially", "interestingly", or "in conclusion".
 - No robotic constructions like "the authors propose", "this paper presents", or "the proposed method".
-- Write in a direct, confident tone. Short sentences are better than long ones.
-- Define jargon in-line (e.g. "a technique called X, which does Y") rather than assuming prior knowledge.
+- Direct, confident tone. Plain words. If a technical term is essential, define it in a few words; otherwise avoid jargon.
 
 Paper title: {title}
 

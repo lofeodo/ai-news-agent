@@ -3,6 +3,7 @@
 import anthropic
 import io
 import json
+import re
 import os
 import requests
 import sys
@@ -96,7 +97,8 @@ def summarize_paper(paper: dict, text: str, prompt_template: str, client: anthro
 
     if not response.content:
         raise RuntimeError("Empty Claude response content")
-    return response.content[0].text.strip()
+    # Haiku sometimes opens with a markdown heading ("# Hook") despite the prompt; never store it.
+    return re.sub(r"^\s*#{1,6}[^\n]*\n+", "", response.content[0].text.strip()).strip()
 
 
 def validate_summary(summary: str, paper_id: str) -> bool:

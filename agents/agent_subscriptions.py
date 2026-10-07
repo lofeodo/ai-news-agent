@@ -470,29 +470,6 @@ def _already_subscribed_email_html(token: str) -> str:
     )
 
 
-def _verify_email_html(link: str) -> str:
-    body = (
-        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#9a9088;margin:0 0 16px 0;">'
-        'You created an account on '
-        f'<span style="color:#c8b89a;font-weight:700;">Latent SpaceMail</span>. '
-        'Click below to verify your email address and activate your account.'
-        '</p>'
-        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#9a9088;margin:0;">'
-        'Tap <strong style="color:#c8b89a;">VERIFY</strong> above or click the button below. '
-        'This link expires in 24 hours.'
-        '</p>'
-    )
-    return _email_shell(
-        headline_big="VERIFY",
-        headline_small="YOUR EMAIL",
-        body_html=body,
-        cta_text="VERIFY EMAIL ADDRESS",
-        cta_link=link,
-        footer_note="If you didn't create this account, you can safely ignore this email.",
-        tx_code="VERIFY",
-    )
-
-
 # ---------------------------------------------------------------------------
 # Small HTML pages returned by the GET endpoints (clicked from emails)
 # ---------------------------------------------------------------------------
@@ -1252,43 +1229,6 @@ async def auth_google_exchange(request: Request, req: GoogleExchangeRequest) -> 
     from firebase_admin import auth as fb_auth
     custom_token = fb_auth.create_custom_token(data["uid"]).decode("utf-8")  # bytes -> str for JSON
     return {"custom_token": custom_token}
-
-
-@router.post("/auth/send-verification-email")
-@limiter.limit("5/minute")
-async def auth_send_verification_email(request: Request, user: dict = Depends(get_current_user)):
-    """Send a themed email verification email for email+password accounts."""
-    if user.get("email_verified"):
-        return {"status": "already_verified"}
-
-    email = user.get("email", "").lower()
-    import firebase_admin
-    if not firebase_admin._apps:
-        firebase_admin.initialize_app()
-    from firebase_admin import auth as fb_auth
-    # Without action_code_settings, the emailed link drops the user on
-    # Firebase's generic hosted confirmation page with no way back into the
-    # app. handle_code_in_app stays False (the default) on purpose: this app
-    # never calls applyActionCode()/checkActionCode() client-side anywhere --
-    # the server-side OAuth rebuild (see CLAUDE.md) exists specifically to
-    # avoid client-side Firebase action-code/redirect machinery on Safari.
-    # `url` only sets the "Continue" link Firebase's hosted page shows after
-    # verification succeeds; the user still signs in again from there for
-    # onAuthStateChanged (and nav.js's auto-subscribe) to see a refreshed,
-    # verified token client-side.
-    action_code_settings = fb_auth.ActionCodeSettings(
-        url=f"{FRONTEND_BASE_URL}/login.html",
-        handle_code_in_app=False,
-    )
-    try:
-        link = fb_auth.generate_email_verification_link(email, action_code_settings=action_code_settings)
-    except Exception as exc:
-        print(f"[subscriptions]  generate_email_verification_link failed: {exc}", flush=True)
-        raise HTTPException(status_code=503, detail="verification_link_failed")
-
-    _send_email(email, f"Verify your {NEWSLETTER_NAME} account", _verify_email_html(link))
-    print(f"[subscriptions]  verification email sent: {email}", flush=True)
-    return {"status": "ok"}
 
 
 @router.get("/auth/preferences")

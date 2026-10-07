@@ -1,6 +1,6 @@
 SCORING_TOOL = {
     "name": "score_paper",
-    "description": "Score a research paper on 7 dimensions",
+    "description": "Score a research paper on 8 dimensions",
     "input_schema": {
         "type": "object",
         "properties": {
@@ -11,13 +11,14 @@ SCORING_TOOL = {
             "practical_applicability": {"type": "integer", "minimum": 1, "maximum": 5},
             "significance":            {"type": "integer", "minimum": 1, "maximum": 4},
             "disruption_potential":    {"type": "integer", "minimum": 1, "maximum": 5},
-            "total":                   {"type": "integer", "minimum": 7, "maximum": 28},
+            "wow_factor":              {"type": "integer", "minimum": 1, "maximum": 5},
+            "total":                   {"type": "integer", "minimum": 8, "maximum": 33},
             "reasoning":               {"type": "string"}
         },
         "required": [
             "novelty", "rigor", "reproducibility", "clarity",
             "practical_applicability", "significance",
-            "disruption_potential", "total", "reasoning"
+            "disruption_potential", "wow_factor", "total", "reasoning"
         ]
     }
 }

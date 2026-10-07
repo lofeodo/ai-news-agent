@@ -3,6 +3,7 @@
 import anthropic
 import io
 import json
+import re
 import os
 import requests
 import sys
@@ -94,9 +95,44 @@ def summarize_paper(paper: dict, text: str, prompt_template: str, client: anthro
             messages=[{"role": "user", "content": prompt}]
         )
 
+    summary = _clean_summary(response)
+
+    # Haiku overshoots word limits, so give it one chance to shorten when it is clearly too long.
+    if len(summary.split()) > MAX_HOOK_WORDS:
+        with _semaphore:
+            response = claude_call_with_retry(
+                client,
+                model=SCORING_MODEL,
+                max_tokens=PAPER_SUMMARY_MAX_TOKENS,
+                system=GUARD_PAPER_SUMMARY,
+                messages=[
+                    {"role": "user", "content": prompt},
+                    {"role": "assistant", "content": summary},
+                    {"role": "user", "content": f"That was {len(summary.split())} words. Rewrite it in exactly 2 sentences "
+                                                f"and at most 35 words in total. Reply with only the rewritten hook."},
+                ],
+            )
+        shorter = _clean_summary(response)
+        if shorter and len(shorter.split()) < len(summary.split()):
+            summary = shorter
+    return summary
+
+
+# Above this many words the hook gets one shortening retry (it is asked for 35; Haiku tends to overshoot).
+MAX_HOOK_WORDS = 50
+
+
+def _clean_summary(response) -> str:
     if not response.content:
         raise RuntimeError("Empty Claude response content")
-    return response.content[0].text.strip()
+    # Haiku sometimes opens with a markdown heading ("# Hook") despite the prompt; never store it.
+    summary = re.sub(r"^\s*#{1,6}[^\n]*\n+", "", response.content[0].text.strip()).strip()
+    if getattr(response, "stop_reason", None) == "max_tokens":
+        # Cut off mid-sentence: keep only the complete sentences (or the whole text if there is no full one).
+        ends = [m.end() for m in re.finditer(r"[.!?][\"')\]]*(?=\s|$)", summary)]
+        if ends:
+            summary = summary[:ends[-1]].strip()
+    return summary
 
 
 def validate_summary(summary: str, paper_id: str) -> bool:

@@ -25,7 +25,7 @@ MAX_SCORE = CLAUDE_MAX_SCORE + TRACTION_MAX_POINTS
 SCORING_MODEL = "claude-haiku-4-5-20251001"
 MAX_TOKENS = 1000           # used for scoring
 FILTER_MAX_TOKENS = 4000    # used for news filtering — up to 100 index+category pairs per batch
-PAPER_SUMMARY_MAX_TOKENS = 150   # 2-3 sentence hook (~45 words) with breathing room
+PAPER_SUMMARY_MAX_TOKENS = 110   # 2-3 sentence hook (~35 words); a cut-off reply is trimmed to its last full sentence
 NEWS_SUMMARY_MAX_TOKENS  = 200   # 2-3 sentences
 
 # Shared timing

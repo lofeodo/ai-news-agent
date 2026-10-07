@@ -1,6 +1,6 @@
 Write a short hook for the following research paper, for an AI newsletter read by curious, technically-minded readers who follow AI news but are not necessarily researchers. This is the lead story of the issue, so it should make the reader want to click through.
 
-Your response must be exactly ONE paragraph of 2 or 3 short sentences, 45 words maximum, with no headers or labels. Explain at a very high level what the paper does and why it is striking, so that someone with no background can get the idea and feel its coolness or importance. Lead with the surprising or vivid part, not with background.
+Your response must be exactly ONE paragraph of exactly 2 sentences, with no headers, titles, or labels. Sentence 1 is at most 15 words: the striking idea or finding. Sentence 2 is at most 20 words: what the paper did or why it matters. 35 words in total is a hard limit. Cut every detail that is not essential: no numbers unless they are the hook, no method names, no hedging. Start directly with the first sentence of the hook; never begin with a heading such as "Hook". Explain at a very high level what the paper does and why it is striking, so that someone with no background can get the idea and feel its coolness or importance. Lead with the surprising or vivid part, not with background.
 
 Style rules:
 - Stay strictly faithful to the paper. Do not claim anything the text does not support, and do not invent numbers or results. Vivid does not mean exaggerated.
@@ -10,6 +10,10 @@ Style rules:
 - No filler words like "importantly", "notably", "crucially", "interestingly", or "in conclusion".
 - No robotic constructions like "the authors propose", "this paper presents", or "the proposed method".
 - Direct, confident tone. Plain words. If a technical term is essential, define it in a few words; otherwise avoid jargon.
+
+Example of the right shape (a made-up paper, do not reuse its content):
+Good: A robot learned to cook by watching 10 hours of cooking videos, no instructions given. It now makes omelettes it never saw before.
+Too long and too dry: This paper diagnoses a failure mode in robot learning and introduces a method that improves success rates across several benchmark tasks by a significant margin.
 
 Paper title: {title}
 

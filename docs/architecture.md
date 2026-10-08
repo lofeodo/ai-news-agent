@@ -45,37 +45,22 @@ Why LangGraph is *not* used across agents: [docs/decisions/0001-langgraph-inside
 ## Inside agent 1b (LangGraph)
 
 ```mermaid
-flowchart TB
-    FETCH["fetch
-HN top 1000 + 10 NewsAPI queries"] --> PRE["prefilter
-Drop paywalled & non-Latin in code"]
-    PRE --> LANG["language_filter
-Claude: English / French only
-25-article batches"]
-    LANG --> CAT["categorize
-Claude: 7 categories + 1–5 confidence
-100-article batches"]
+%%{init: {"themeVariables": {"fontSize": "16px"}, "flowchart": {"nodeSpacing": 28, "rankSpacing": 44, "padding": 10, "curve": "basis"}}}%%
+flowchart LR
+    COL["<b>Collect</b><br/>HN + NewsAPI<br/>drop paywalls"] --> LANG["<b>Language</b><br/>English or<br/>French only"]
+    LANG --> CAT["<b>Categorize</b><br/>7 topics +<br/>confidence 1-5"]
+    CAT -->|"confident"| FIN["<b>Finalize</b><br/>write results<br/>+ audit log"]
+    CAT -->|"unsure"| LLM["<b>Review: think</b><br/>Claude decides"]
+    LLM -->|"needs text"| TOOL["<b>Review: act</b><br/>fetch the article"]
+    TOOL --> LLM
+    LLM -->|"answer"| FIN
 
-    CAT -->|"confidence ≥ 4"| FIN["finalize
-Write news_filtered.json / Firestore
-+ per-article audit log"]
-    CAT -->|"confidence < 4
-least confident first, max 30"| LLM
-
-    subgraph REVIEW["review — ReAct loop per low-confidence article"]
-        direction TB
-        LLM["llm_call
-Claude: fetch the article or answer"]
-        TOOL["tool_exec
-fetch_article_text with timeout"]
-        LLM -->|"tool call"| TOOL
-        TOOL -->|"article text"| LLM
-    end
-
-    LLM -->|"submit_category
-or 3 calls used"| FIN
-    TOOL -.->|"fetch failed:
-keep first-pass category"| FIN
+    classDef step fill:#4f46e5,stroke:#312e81,color:#fff
+    classDef loop fill:#7c3aed,stroke:#4c1d95,color:#fff
+    classDef out fill:#059669,stroke:#065f46,color:#fff
+    class COL,LANG,CAT step
+    class LLM,TOOL loop
+    class FIN out
 ```
 
 - `categorize` returns a 1–5 `confidence` per article. The conditional edge after it sends articles below `REVIEW_CONFIDENCE_THRESHOLD` (least confident first, at most `REVIEW_MAX_ARTICLES` per run) to `review`, in parallel; everything else goes straight to `finalize`.

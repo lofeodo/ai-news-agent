@@ -18,39 +18,28 @@ A weekly AI briefing, written and sent by a team of AI agents: one spotlight res
 Stage-by-stage detail: [docs/architecture.md](docs/architecture.md)
 
 ```mermaid
-flowchart TB
-    subgraph SUB["Subscription subsystem"]
-        direction LR
-        FE["🌐 Firebase Hosting"] <--> SUBS["Subscription API\nCloud Run"]
-        SUBS <--> FSS[("Firestore\nsubscribers")]
-    end
-
-    SUB ~~~ CS1
-
-    CS1["☁️ Scheduler · Sun 12 PM"] --> ORC["Orchestrator"]
-
-    ORC -->|"Pub/Sub"| A1A["Agent 1a\nPick spotlight paper"]
-    ORC -->|"Pub/Sub"| A1B["Agent 1b\nFetch & categorize news"]
-
-    A1A -->|"Pub/Sub"| A2A["Agent 2a\nSummarize paper"]
-    A1B -->|"Pub/Sub"| A2B["Agent 2b\nSummarize articles"]
-
-    A2A --> FAN{"Fan-in\n2 of 2 done?"}
+%%{init: {"themeVariables": {"fontSize": "16px"}, "flowchart": {"nodeSpacing": 26, "rankSpacing": 40, "padding": 10, "curve": "basis"}}}%%
+flowchart LR
+    ORC["☁️ Sun 12 PM<br/><b>Orchestrator</b>"] --> A1A["<b>Agent 1a</b><br/>Pick paper"]
+    ORC --> A1B["<b>Agent 1b</b><br/>Fetch news"]
+    A1A --> A2A["<b>Agent 2a</b><br/>Summarize"]
+    A1B --> A2B["<b>Agent 2b</b><br/>Summarize"]
+    A2A --> FAN{"<b>Fan-in</b><br/>2 of 2"}
     A2B --> FAN
+    FAN --> A3["<b>Agent 3</b><br/>Compose"]
+    A3 --> DB[("Firestore<br/>run state")]
+    DB --> A4["☁️ Mon 7 AM<br/><b>Agent 4</b> · Send"]
+    DB --> HC1["☁️ Sun 1:15 PM<br/><b>Draft check</b>"]
+    DB --> HC2["☁️ Mon 7:10 AM<br/><b>Send check</b>"]
 
-    FAN -->|"Pub/Sub"| A3["Agent 3\nCompose newsletter"]
-
-    FAN ~~~ CS2
-    CS2["☁️ Scheduler · Mon 7 AM"] --> A4["Agent 4\nSend via SendGrid"]
-
-    A3 --> FSP[("Firestore\npipeline_runs")]
-    A4 --> FSP
-
-    FAN ~~~ CS3
-    CS3["☁️ Scheduler · Sun 1:15 PM"] --> HCD["Draft health check"]
-    CS4["☁️ Scheduler · Mon 7:10 AM"] --> HCS["Send health check"]
-    FSP --> HCD
-    FSP --> HCS
+    classDef agent fill:#4f46e5,stroke:#312e81,color:#fff
+    classDef fan fill:#7c3aed,stroke:#4c1d95,color:#fff
+    classDef store fill:#d97706,stroke:#92400e,color:#fff
+    classDef health fill:#059669,stroke:#065f46,color:#fff
+    class ORC,A1A,A1B,A2A,A2B,A3,A4 agent
+    class FAN fan
+    class DB store
+    class HC1,HC2 health
 ```
 
 | Agent | What it does |
@@ -70,22 +59,22 @@ flowchart TB
 - **Rollback:** `AGENT1B_MODE=single_pass` restores the original linear code without a redeploy.
 
 ```mermaid
-flowchart TB
-    FETCH["fetch"] --> PRE["prefilter"]
-    PRE --> LANG["language_filter"]
-    LANG --> CAT["categorize\nwith 1-5 confidence"]
-
-    CAT -->|"confident"| FIN["finalize"]
-    CAT -->|"low confidence"| LLM
-
-    subgraph REVIEW["Review loop"]
-        direction TB
-        LLM["llm_call"] -->|"tool call"| TOOL["tool_exec\nfetch article text"]
-        TOOL --> LLM
-    end
-
+%%{init: {"themeVariables": {"fontSize": "16px"}, "flowchart": {"nodeSpacing": 28, "rankSpacing": 44, "padding": 10, "curve": "basis"}}}%%
+flowchart LR
+    COL["<b>Collect</b><br/>HN + NewsAPI<br/>drop paywalls"] --> LANG["<b>Language</b><br/>English or<br/>French only"]
+    LANG --> CAT["<b>Categorize</b><br/>7 topics +<br/>confidence 1-5"]
+    CAT -->|"confident"| FIN["<b>Finalize</b><br/>write results<br/>+ audit log"]
+    CAT -->|"unsure"| LLM["<b>Review: think</b><br/>Claude decides"]
+    LLM -->|"needs text"| TOOL["<b>Review: act</b><br/>fetch the article"]
+    TOOL --> LLM
     LLM -->|"answer"| FIN
-    TOOL -.->|"fetch failed"| FIN
+
+    classDef step fill:#4f46e5,stroke:#312e81,color:#fff
+    classDef loop fill:#7c3aed,stroke:#4c1d95,color:#fff
+    classDef out fill:#059669,stroke:#065f46,color:#fff
+    class COL,LANG,CAT step
+    class LLM,TOOL loop
+    class FIN out
 ```
 
 Why LangGraph runs inside agents but not between them: [ADR 0001](docs/decisions/0001-langgraph-inside-agents.md).

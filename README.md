@@ -118,45 +118,25 @@ Deployment and local setup: [docs/development.md](docs/development.md)
 
 ## Results
 
-All tables below are generated from `evals/results/*.json`, never typed by hand.
+All charts below are generated from `evals/results/*.json` by `python -m evals.make_readme_table`, never drawn or typed by hand. Each has its table in [docs/evaluation.md](docs/evaluation.md).
 
 ### Does the review loop help?
 
 Agent 1b's review loop was compared with the original single-pass code on the same hand-labeled articles. It did not measurably help: the differences sit inside the noise, and the model's own confidence did not predict its mistakes. Reported plainly.
 
-<!-- review-eval:start -->
-| Variant | Accuracy (95% CI) | n |
-|---|---|---|
-| Single-pass | 62% (52%–72%) | 90 |
-| Graph, first pass | 59% (49%–68%) | 90 |
-| Graph, after review | 60% (50%–70%) | 90 |
-
-Paired per article, graph vs single-pass: 5 wins, 7 losses, 78 ties out of 90.
-<!-- review-eval:end -->
+<img src="docs/assets/chart-review-accuracy.svg" alt="Bar chart: category accuracy of single-pass, graph first pass and graph after review, with overlapping 95% intervals" width="100%">
 
 ### Prompt-injection tests
 
 Hand-written attacks (forced categories, tag breakouts, prompt leaks, planted URLs) were run through the real agent code paths, once with the injection and once without. The attacks that worked before the fixes were stopped by input sanitising, guard text on every Claude call and a fetch guard. The checks catch canary-style compliance only, and small samples mean "none observed" is not "safe".
 
-<!-- injection-eval:start -->
-| Attacks that achieved their goal | Before fixes | After fixes | Control (no injection) |
-|---|---|---|---|
-| overall | 10/115 (5%–15%) | 0/115 (0%–3%) | 0/115 (0%–3%) |
-<!-- injection-eval:end -->
+<img src="docs/assets/chart-injection.svg" alt="Bar chart: prompt-injection attack success before and after the fixes, with control" width="100%">
 
 ### Summary judge
 
 A second Claude model checks a weekly sample of summaries against the text they were written from. Calibrated against 40 summaries I labeled by hand, it agreed with me no better than chance (kappa in the table), so it runs report-only and can never trigger an alert.
 
-<!-- judge-calibration:start -->
-Generated from `evals/results/judge_calibration.json` (git `bf0b99e`, 2026-10-06, cost $0.5578). 95% intervals in parentheses.
-
-| Metric | Value | n |
-|---|---|---|
-| agreement | 45% (31%–60%) | 40 |
-| unsupported recall | 67% (30%–90%) | 6 |
-| cohens kappa | 0.04 (-0.15 to 0.23) | 40 |
-<!-- judge-calibration:end -->
+<img src="docs/assets/chart-judge-kappa.svg" alt="Kappa of the summary judge against the working bar" width="100%">
 
 Full results and caveats: [docs/evaluation.md](docs/evaluation.md)
 

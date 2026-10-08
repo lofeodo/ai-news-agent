@@ -317,6 +317,13 @@ async def trigger(request: Request):
             return Response(content=f"Unknown check '{check}'. Valid values: draft, send.", status_code=400)
         if check:
             options = {"check": check}
+    # The orchestrator takes ?kind=release|debug. Unflagged means debug, so only the scheduled job publishes.
+    if agent_name == "orchestrator":
+        kind = request.query_params.get("kind")
+        if kind and kind not in ("release", "debug"):
+            return Response(content=f"Unknown kind '{kind}'. Valid values: release, debug.", status_code=400)
+        if kind:
+            options = {"kind": kind}
 
     print(f"[main]  Starting {agent_name} in background thread (run_id={run_id})...", flush=True)
     thread = threading.Thread(target=_run_agent, args=(agent_name, module_name, run_id, options), daemon=True)

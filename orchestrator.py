@@ -48,7 +48,7 @@ def publish_pubsub(topic_name: str, payload: dict) -> None:
     print(f"[orchestrator]  Published to {topic_name} — message_id={message_id}")
 
 
-def create_firestore_run_document(run_id: str) -> None:
+def create_firestore_run_document(run_id: str, kind: str = "debug") -> None:
     """Create the coordination document for this pipeline run."""
     from google.cloud import firestore
 
@@ -58,9 +58,10 @@ def create_firestore_run_document(run_id: str) -> None:
         "run_id":             run_id,
         "started_at":         datetime.now(timezone.utc).isoformat(),
         "status":             "running",
+        "run_kind":           kind,
         "agent2_completions": 0,
     })
-    print(f"[orchestrator]  Firestore document created for run_id={run_id}")
+    print(f"[orchestrator]  Firestore document created for run_id={run_id} (run_kind={kind})")
 
 
 def run_local(run_id: str) -> None:
@@ -91,19 +92,22 @@ def run_local(run_id: str) -> None:
     print(f"\n[orchestrator]  Pipeline complete — run_id={run_id}")
 
 
-def run_cloud(run_id: str) -> None:
+def run_cloud(run_id: str, kind: str = "debug") -> None:
     """Create Firestore coordination document and publish pipeline-start event."""
     print(f"\n[orchestrator]  Cloud run — run_id={run_id}\n")
 
-    create_firestore_run_document(run_id)
+    create_firestore_run_document(run_id, kind)
     publish_pubsub(TOPIC_PIPELINE_START, {"run_id": run_id})
 
     print("[orchestrator]  Pipeline started — agents will trigger each other via Pub/Sub")
 
 
-def run(run_id: str) -> None:
-    """Entry point called by main.py when deployed as a Cloud Run service."""
-    run_cloud(run_id)
+def run(run_id: str, kind: str = "debug") -> None:
+    """Entry point called by main.py when deployed as a Cloud Run service.
+
+    kind is "release" (the official weekly run: published and mailed) or "debug" (the default: previewable only).
+    """
+    run_cloud(run_id, kind)
 
 
 if __name__ == "__main__":

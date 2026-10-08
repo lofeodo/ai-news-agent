@@ -38,6 +38,7 @@ logger = logging.getLogger(__name__)
 
 from auth_middleware import get_current_user
 import click_counts
+import run_kind
 import sendgrid_webhook
 from prompt_guard import GUARD_TOPIC_REFINE, neutralize_tags
 
@@ -699,25 +700,36 @@ def subscribe(request: Request, req: SubscribeRequest):
 
 @router.get("/preview")
 @limiter.limit("30/minute")
-def newsletter_preview(request: Request):
-    """Return the latest newsletter HTML for embedding in the preview iframe."""
+def newsletter_preview(
+    request: Request,
+    run: Annotated[str, Query(max_length=64)] = "",
+    token: Annotated[str, Query(max_length=128)] = "",
+    variant: Annotated[str, Query(max_length=8)] = "",
+):
+    """Return a newsletter's HTML for embedding in the preview iframe.
+
+    Public: the latest *release* run (debug runs are never shown). With the admin token, `run=latest` shows the
+    newest composed run of any kind and `run=<run_id>` shows that exact run; `variant` picks e.g. "1_1".
+    """
     db = _db()
-    from google.cloud import firestore as _fs
-    docs = list(
-        db.collection(FIRESTORE_COLLECTION)
-        .where("newsletter_composed", "==", True)
-        .order_by("started_at", direction=_fs.Query.DESCENDING)
-        .limit(1)
-        .stream()
-    )
-    if not docs:
+    if run:
+        if not ADMIN_TOKEN or not secrets.compare_digest(token, ADMIN_TOKEN):
+            return JSONResponse(status_code=403, content={"error": "forbidden"})
+        if run == "latest":
+            doc = run_kind.latest_run(db, FIRESTORE_COLLECTION, release_only=False)
+        else:
+            doc = db.collection(FIRESTORE_COLLECTION).document(run).get()
+            doc = doc if doc.exists else None
+    else:
+        doc = run_kind.latest_run(db, FIRESTORE_COLLECTION)
+    if doc is None:
         return HTMLResponse("<p>No issue available yet. Check back Monday!</p>", status_code=404)
 
-    data = docs[0].to_dict()
+    data = doc.to_dict()
     variants = data.get("newsletter_variants") or {}
     # Show the Canada-inclusive variant so visitors see the full scope of the newsletter.
     # Fall back through 0_0 and then the legacy newsletter_html field.
-    html = variants.get("0_1") or variants.get("0_0") or data.get("newsletter_html", "")
+    html = (variants.get(variant) if run else None) or variants.get("0_1") or variants.get("0_0") or data.get("newsletter_html", "")
 
     subscribe_url = f"{FRONTEND_BASE_URL}/"
     html = html.replace("{{UNSUBSCRIBE_URL}}", subscribe_url)

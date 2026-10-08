@@ -1,4 +1,4 @@
-case_id,article_id,title,snippet,kind,duplicate_group,note
+﻿case_id,article_id,title,snippet,kind,duplicate_group,note
 real01,4eacf7c1670c,"Designing Enterprise AI Guardrails: Security, Compliance, and Risk Management","Design robust enterprise AI guardrails for security, compliance, and risk management. Ensure safe, responsible, and trustworthy AI integration.",real,,
 real01,d67b8ab0978f,"Anthropic’s Claude Fable 5 speaks its own language, and that’s a problem","The complexity of Claude Fable 5's reasoning highlights challenges in AI transparency, potentially hindering user trust and interpretability. The post Anthropic’s Claude Fable 5 speaks its own language, and that’s a problem appeared first on Crypto Briefing.",real,,
 real01,169fd62cf130,Former xAI staffer says he was fired for questioning Grok safety,"A former AI engineer at xAI is suing the company, alleging that he was wrongfully fired for raising safety concerns about Grok. Read on",real,,

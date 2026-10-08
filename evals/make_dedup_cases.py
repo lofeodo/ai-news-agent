@@ -174,7 +174,7 @@ def write_outputs(cases, cases_path=CASES_PATH, template_path=TEMPLATE_PATH):
     cases_path = Path(cases_path)
     cases_path.parent.mkdir(parents=True, exist_ok=True)
     cases_path.write_text(json.dumps({"cases": cases}, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    write_csv(template_path, COLUMNS, template_rows(cases))
+    write_csv(template_path, COLUMNS, template_rows(cases), encoding="utf-8-sig")  # BOM so Excel reads accents right
     return cases_path, Path(template_path)
 
 

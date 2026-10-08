@@ -39,3 +39,9 @@ def test_bad_labels_rejected(tmp_path, rows):
     lp, cp = setup(tmp_path, rows)
     with pytest.raises(LabelError):
         load_dedup_gold(lp, cp)
+
+
+def test_reads_excel_bom_and_accents(tmp_path):
+    lp, cp = setup(tmp_path, [("c1", "a", "g1", ""), ("c1", "b", "g1", "")])
+    lp.write_text(lp.read_text(encoding="utf-8").replace(",t,", ",été,"), encoding="utf-8-sig")
+    assert load_dedup_gold(lp, cp).groups == {"c1": [frozenset({"a", "b"})]}

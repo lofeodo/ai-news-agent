@@ -30,7 +30,7 @@ def load_dedup_gold(path=TEMPLATE_PATH, cases_path=CASES_PATH):
     """
     cases = json.loads(Path(cases_path).read_text(encoding="utf-8"))["cases"]
     known = {c["case_id"]: {a["id"] for a in c["articles"]} for c in cases}
-    with Path(path).open(newline="", encoding="utf-8") as f:
+    with Path(path).open(newline="", encoding="utf-8-sig") as f:
         rows = list(csv.DictReader(f))
 
     members, excluded, touched = {}, {}, set()

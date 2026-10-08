@@ -2,7 +2,7 @@
 <title>Review loop accuracy</title><desc>n=90. Single-pass 62% (52% to 72%); Graph, first pass 59% (49% to 68%); Graph, after review 60% (50% to 70%)</desc>
 <style>text{font-family:system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;fill:#e8e8e8} .m{fill:#8b8b8b} .s{fill:#c8b89a}</style>
 <rect x="0.5" y="0.5" width="879" height="339" rx="14" fill="#161616" stroke="#2a2a2a"/>
-<text x="28" y="40" font-size="20" font-weight="600" class="s">Does the review loop help?</text>
+<text x="28" y="40" font-size="20" font-weight="600" class="s">Category accuracy by variant</text>
 <text x="28" y="62" font-size="13" class="m">Category accuracy on 90 hand-labeled articles, with Wilson 95% intervals</text>
 <line x1="90" x2="840" y1="270.0" y2="270.0" stroke="#2a2a2a"/><text x="80" y="274.0" font-size="12" text-anchor="end" class="m">0%</text>
 <line x1="90" x2="840" y1="223.5" y2="223.5" stroke="#2a2a2a"/><text x="80" y="227.5" font-size="12" text-anchor="end" class="m">25%</text>

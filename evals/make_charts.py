@@ -54,7 +54,7 @@ def review_accuracy_svg(doc):
     W, H = 880, 340
     x0, x1, y0, y1 = 90, 840, 84, 270       # plot box; y0 = 100%, y1 = 0%
     ys = lambda v: y1 - (y1 - y0) * v
-    parts = [f'<text x="28" y="40" font-size="20" font-weight="600" class="s">Does the review loop help?</text>',
+    parts = [f'<text x="28" y="40" font-size="20" font-weight="600" class="s">Category accuracy by variant</text>',
              f'<text x="28" y="62" font-size="13" class="m">Category accuracy on {n} hand-labeled articles, with Wilson 95% intervals</text>']
     for v in (0, .25, .5, .75, 1):
         parts.append(f'<line x1="{x0}" x2="{x1}" y1="{ys(v):.1f}" y2="{ys(v):.1f}" stroke="{GRID}"/>'
@@ -104,7 +104,7 @@ def injection_svg(baseline, after):
     axis_max = min(1.0, max(0.2, math.ceil(max(highs) / 0.2) * 0.2))
     xs = lambda v: x0 + (x1 - x0) * v / axis_max
     ticks = [round(i * 0.2, 1) for i in range(int(round(axis_max / 0.2)) + 1)]
-    parts = [f'<text x="28" y="40" font-size="20" font-weight="600" class="s">Prompt-injection attacks</text>',
+    parts = [f'<text x="28" y="40" font-size="20" font-weight="600" class="s">Attack success rate</text>',
              f'<text x="28" y="62" font-size="13" class="m">Share of trials where the attack achieved its goal, with Wilson 95% intervals</text>']
     for i, (label, color) in enumerate((("Before fixes", BEFORE), ("After fixes", AFTER), ("Control (no injection)", CONTROL))):
         lx = 28 + i * 150
@@ -142,7 +142,7 @@ def judge_kappa_svg(doc):
     x0, x1 = 60, 820
     xs = lambda v: x0 + (x1 - x0) * (v - lo_axis) / (hi_axis - lo_axis)
     y = 130
-    parts = [f'<text x="28" y="40" font-size="20" font-weight="600" class="s">Can the summary judge be trusted?</text>',
+    parts = [f'<text x="28" y="40" font-size="20" font-weight="600" class="s">Judge agreement with human labels</text>',
              f'<text x="28" y="62" font-size="13" class="m">Cohen\'s kappa against {m["n"]} hand-labeled summaries (bootstrap 95% interval)</text>',
              f'<rect x="{xs(lo_axis)}" y="{y - 7}" width="{xs(KAPPA_BAR) - xs(lo_axis):.1f}" height="14" rx="7" fill="{BEFORE}" fill-opacity=".22"/>',
              f'<rect x="{xs(KAPPA_BAR):.1f}" y="{y - 7}" width="{xs(hi_axis) - xs(KAPPA_BAR):.1f}" height="14" rx="7" fill="{AFTER}" fill-opacity=".22"/>']

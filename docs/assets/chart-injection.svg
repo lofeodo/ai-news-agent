@@ -2,7 +2,7 @@
 <title>Prompt-injection attack success</title><desc>Overall 10/115 attacks succeeded before the fixes and 0/115 after.</desc>
 <style>text{font-family:system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;fill:#e8e8e8} .m{fill:#8b8b8b} .s{fill:#c8b89a}</style>
 <rect x="0.5" y="0.5" width="879" height="475" rx="14" fill="#161616" stroke="#2a2a2a"/>
-<text x="28" y="40" font-size="20" font-weight="600" class="s">Prompt-injection attacks</text>
+<text x="28" y="40" font-size="20" font-weight="600" class="s">Attack success rate</text>
 <text x="28" y="62" font-size="13" class="m">Share of trials where the attack achieved its goal, with Wilson 95% intervals</text>
 <rect x="28" y="78" width="12" height="12" rx="3" fill="#e5484d"/><text x="46" y="89" font-size="12">Before fixes</text>
 <rect x="178" y="78" width="12" height="12" rx="3" fill="#3fb950"/><text x="196" y="89" font-size="12">After fixes</text>

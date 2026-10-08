@@ -2,7 +2,7 @@
 <title>Summary judge calibration</title><desc>Cohen's kappa 0.04, interval -0.15 to 0.23, against a working bar of 0.6.</desc>
 <style>text{font-family:system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;fill:#e8e8e8} .m{fill:#8b8b8b} .s{fill:#c8b89a}</style>
 <rect x="0.5" y="0.5" width="879" height="209" rx="14" fill="#161616" stroke="#2a2a2a"/>
-<text x="28" y="40" font-size="20" font-weight="600" class="s">Can the summary judge be trusted?</text>
+<text x="28" y="40" font-size="20" font-weight="600" class="s">Judge agreement with human labels</text>
 <text x="28" y="62" font-size="13" class="m">Cohen's kappa against 40 hand-labeled summaries (bootstrap 95% interval)</text>
 <rect x="60.0" y="123" width="506.7" height="14" rx="7" fill="#e5484d" fill-opacity=".22"/>
 <rect x="566.7" y="123" width="253.3" height="14" rx="7" fill="#3fb950" fill-opacity=".22"/>

@@ -1,5 +1,3 @@
-# Latent SpaceMail
-
 <div align="center">
 
 <a href="https://newsletter.lofeodo.com"><img src="docs/assets/banner.svg" alt="Latent SpaceMail: a weekly AI briefing, written and sent by a team of AI agents. Live site: newsletter.lofeodo.com" width="100%"></a>
@@ -142,7 +140,7 @@ Hand-written attacks (forced categories, tag breakouts, prompt leaks, planted UR
 
 ### Summary judge
 
-A second Claude model checks a weekly sample of summaries against the text they were written from. Calibrated against 40 summaries I labeled by hand, it agreed with me no better than chance (kappa in the table), so it runs report-only and can never trigger an alert.
+A second Claude model checks a weekly sample of summaries against the text they were written from. Calibrated against 40 summaries I labeled by hand, it agreed with me no better than chance (kappa in the chart), so it runs report-only and can never trigger an alert.
 
 <img src="docs/assets/chart-judge-kappa.svg" alt="Kappa of the summary judge against the working bar" width="100%">
 

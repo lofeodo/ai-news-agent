@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 FONTS = ROOT / "public" / "newsletter" / "fonts"
 OUT = Path(__file__).resolve().parent / "banner.svg"
 
-W, H = 1280, 420
+W, H = 1280, 390
 SAND, INK, TEXT, MUTED = "#c8b89a", "#0f0f0f", "#e8e8e8", "#8b8b8b"
 
 
@@ -42,12 +42,6 @@ def latent_field():
     return "\n    ".join(parts)
 
 
-def chip(x, label, width):
-    return (f'<g transform="translate({x},294)"><rect width="{width}" height="38" rx="19" fill="none" '
-            f'stroke="{SAND}" stroke-opacity="0.55"/><text x="{width / 2}" y="24.5" text-anchor="middle" '
-            f'class="chip">{label}</text></g>')
-
-
 svg = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" aria-label="Latent SpaceMail: a weekly AI briefing, written and sent by a team of AI agents. Live site newsletter.lofeodo.com">
   <title>Latent SpaceMail</title>
   <defs>
@@ -58,7 +52,7 @@ svg = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{
       .title{{font:600 104px 'Cormorant Garamond',Georgia,serif;fill:{SAND};letter-spacing:1px}}
       .tag{{font:italic 400 34px 'Cormorant Garamond',Georgia,serif;fill:{TEXT}}}
       .chip{{font:400 14.5px 'IBM Plex Mono',Menlo,Consolas,monospace;fill:{SAND};letter-spacing:1.2px}}
-      .cta{{font:400 17px 'IBM Plex Mono',Menlo,Consolas,monospace;fill:{INK};letter-spacing:1px;font-weight:700}}
+      .cta{{font:400 24px 'IBM Plex Mono',Menlo,Consolas,monospace;fill:{INK};letter-spacing:1px;font-weight:700}}
     </style>
     <radialGradient id="glow" cx="78%" cy="45%" r="55%">
       <stop offset="0" stop-color="{SAND}" stop-opacity="0.20"/>
@@ -77,14 +71,10 @@ svg = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{
     <circle cx="45" cy="25" r="20" fill="none" stroke="{SAND}" stroke-width="3"/>
   </g>
   <text x="76" y="204" class="title">Latent SpaceMail</text>
-  {chip(80, "MULTI-AGENT ORCHESTRATION", 300)}
-  {chip(394, "LIVE MONITORING", 196)}
-  {chip(604, "MEASURED EVALS", 186)}
-  {chip(804, "CLOUD + CI", 140)}
   <text x="80" y="260" class="tag">A weekly AI briefing, written and sent by a team of AI agents.</text>
   <a href="https://newsletter.lofeodo.com">
-    <rect x="80" y="352" width="440" height="46" rx="23" fill="{SAND}"/>
-    <text x="300" y="381" text-anchor="middle" class="cta">LIVE SITE  →  newsletter.lofeodo.com</text>
+    <rect x="80" y="288" width="640" height="68" rx="34" fill="{SAND}"/>
+    <text x="400" y="331" text-anchor="middle" class="cta">LIVE SITE  →  newsletter.lofeodo.com</text>
   </a>
 </svg>
 """

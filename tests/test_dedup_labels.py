@@ -52,7 +52,6 @@ def test_restores_leading_zero_dropped_by_excel(tmp_path):
     cp = tmp_path / "cases.json"
     cp.write_text(json.dumps(cases), encoding="utf-8")
     lp = tmp_path / "labels.csv"
-    lp.write_text(HEADER + "c1,51952554936,t,s,real,g1,
-c1,000000000abc,t,s,real,g1,
-", encoding="utf-8")
+    rows = ["c1,51952554936,t,s,real,g1,", "c1,000000000abc,t,s,real,g1,"]
+    lp.write_text(HEADER + "\n".join(rows) + "\n", encoding="utf-8")
     assert load_dedup_gold(lp, cp).groups == {"c1": [frozenset({"051952554936", "000000000abc"})]}

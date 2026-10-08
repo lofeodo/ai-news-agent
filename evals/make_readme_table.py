@@ -3,7 +3,7 @@
 CMD:  venv\\Scripts\\python -m evals.make_readme_table
 Rewrites the block between <!-- review-eval:start --> and <!-- review-eval:end --> (latest review eval) and the
 block between <!-- injection-eval:start --> and <!-- injection-eval:end --> (injection_eval_baseline vs
-injection_eval_after) in README.md.
+injection_eval_after) in README.md (compact) and docs/evaluation.md (full).
 It also fills the generic metric tables in GENERIC_BLOCKS (judge calibration and the drift simulations), each
 between <!-- NAME:start --> and <!-- NAME:end --> markers.
 """
@@ -47,6 +47,20 @@ def _pct(m):
     return f"{m['value']:.0%}{ci}"
 
 
+def render_compact(doc):
+    """README version: overall accuracy per variant plus the paired verdict. Full table lives in docs/evaluation.md."""
+    metrics = doc["metrics"]
+    lines = ["| Variant | Accuracy (95% CI) | n |", "|---|---|---|"]
+    for label, key in _ACCURACY:
+        if key in metrics:
+            lines.append(f"| {label} | {_pct(metrics[key])} | {metrics[key]['n']} |")
+    m = metrics.get("paired_graph_final_vs_single_pass")
+    if m:
+        lines += ["", f"Paired per article, graph vs single-pass: {m['wins']} wins, {m['losses']} losses, "
+                      f"{m['ties']} ties out of {m['items']}."]
+    return "\n".join(lines)
+
+
 def render(doc):
     metrics = doc["metrics"]
     lines = [f"Generated from `evals/results/{doc['name']}.json` (git `{doc['git_sha']}`, "
@@ -79,13 +93,13 @@ def render(doc):
     return "\n".join(lines)
 
 
-def update_readme(doc, readme=README):
+def update_readme(doc, readme=README, compact=False):
     """Replace the marked block; raises if the markers are missing so a typo can't silently drop the table."""
     text = Path(readme).read_text(encoding="utf-8")
     pattern = re.compile(re.escape(START) + r".*?" + re.escape(END), re.S)
     if not pattern.search(text):
         raise ValueError(f"{readme} has no {START} ... {END} block")
-    block = f"{START}\n{render(doc)}\n{END}"
+    block = f"{START}\n{render_compact(doc) if compact else render(doc)}\n{END}"
     Path(readme).write_text(pattern.sub(lambda _: block, text, count=1), encoding="utf-8")
 
 
@@ -93,6 +107,16 @@ def _inj_cell(m):
     if not m:
         return "n/a"
     return f"{m['k']}/{m['n']} ({m['ci_low']:.0%}–{m['ci_high']:.0%})"
+
+
+def render_injection_compact(baseline, after):
+    """README version: one overall row. Full per-agent / per-attack table lives in docs/evaluation.md."""
+    b, a = baseline["metrics"], after["metrics"]
+    return "\n".join([
+        "| Attacks that achieved their goal | Before fixes | After fixes | Control (no injection) |",
+        "|---|---|---|---|",
+        f"| overall | {_inj_cell(b.get('attack_success__overall'))} | {_inj_cell(a.get('attack_success__overall'))} "
+        f"| {_inj_cell(a.get('control_success__overall'))} |"])
 
 
 def render_injection(baseline, after):
@@ -122,21 +146,24 @@ def render_injection(baseline, after):
     return "\n".join(lines + [""] + [f"> {n}" for n in notes])
 
 
-def update_readme_injection(baseline, after, readme=README):
+def update_readme_injection(baseline, after, readme=README, compact=False):
     text = Path(readme).read_text(encoding="utf-8")
     pattern = re.compile(re.escape(INJ_START) + r".*?" + re.escape(INJ_END), re.S)
     if not pattern.search(text):
         raise ValueError(f"{readme} has no {INJ_START} ... {INJ_END} block")
-    block = f"{INJ_START}\n{render_injection(baseline, after)}\n{INJ_END}"
+    render_fn = render_injection_compact if compact else render_injection
+    block = f"{INJ_START}\n{render_fn(baseline, after)}\n{INJ_END}"
     Path(readme).write_text(pattern.sub(lambda _: block, text, count=1), encoding="utf-8")
 
 
-def render_generic(doc, notes=True):
+def render_generic(doc, notes=True, keys=None):
     """Every metric of a results file as a row; values print as percentages except kappa, a plain number."""
     lines = [f"Generated from `evals/results/{doc['name']}.json` (git `{doc['git_sha']}`, "
              f"{doc['created_at'][:10]}, cost ${doc['cost_usd']}). 95% intervals in parentheses.", "",
              "| Metric | Value | n |", "|---|---|---|"]
     for key, m in doc["metrics"].items():
+        if keys is not None and key not in keys:
+            continue
         if key == "cohens_kappa":
             ci = f" ({m['ci_low']:.2f} to {m['ci_high']:.2f})" if m.get("ci_low") is not None else ""
             value = f"{m['value']:.2f}{ci}"
@@ -148,14 +175,20 @@ def render_generic(doc, notes=True):
     return "\n".join(lines)
 
 
-def update_readme_generic(name, doc, readme=README, notes=True):
+def update_readme_generic(name, doc, readme=README, notes=True, keys=None):
     start, end = f"<!-- {name}:start -->", f"<!-- {name}:end -->"
     text = Path(readme).read_text(encoding="utf-8")
     pattern = re.compile(re.escape(start) + r".*?" + re.escape(end), re.S)
     if not pattern.search(text):
         raise ValueError(f"{readme} has no {start} ... {end} block")
-    block = f"{start}\n{render_generic(doc, notes)}\n{end}"
+    block = f"{start}\n{render_generic(doc, notes, keys)}\n{end}"
     Path(readme).write_text(pattern.sub(lambda _: block, text, count=1), encoding="utf-8")
+
+
+ROOT = README.parent
+DOCS = ROOT / "docs"
+# Compact README tables vs the full ones in docs/. Marker names are shared between the two files.
+JUDGE_COMPACT_KEYS = ("cohens_kappa", "agreement", "unsupported_recall")
 
 
 def main():
@@ -163,17 +196,25 @@ def main():
     if path is None:
         print("no evals/results/review_eval_*.json found; run evals.run_review_eval first")
         return 1
-    update_readme(results.read_results(path))
-    print(f"README.md updated from {path.name}")
+    review = results.read_results(path)
+    update_readme(review, README, compact=True)
+    update_readme(review, DOCS / "evaluation.md")
+    print(f"README.md and docs/evaluation.md updated from {path.name}")
     base, after = (results.RESULTS_DIR / f"injection_eval_{n}.json" for n in ("baseline", "after"))
     if base.exists() and after.exists():
-        update_readme_injection(results.read_results(base), results.read_results(after))
-        print("README.md updated from injection_eval_baseline.json and injection_eval_after.json")
+        b, a = results.read_results(base), results.read_results(after)
+        update_readme_injection(b, a, README, compact=True)
+        update_readme_injection(b, a, DOCS / "evaluation.md")
+        print("README.md and docs/evaluation.md updated from injection_eval_baseline.json and injection_eval_after.json")
     for name, stem, notes in GENERIC_BLOCKS:
         path = results.RESULTS_DIR / f"{stem}.json"
-        if path.exists():
-            update_readme_generic(name, results.read_results(path), notes=notes)
-            print(f"README.md updated from {path.name}")
+        if not path.exists():
+            continue
+        doc = results.read_results(path)
+        if name == "judge-calibration":
+            update_readme_generic(name, doc, README, notes=False, keys=JUDGE_COMPACT_KEYS)
+        update_readme_generic(name, doc, DOCS / "monitoring.md", notes=notes)
+        print(f"docs/monitoring.md updated from {path.name}")
     return 0
 
 

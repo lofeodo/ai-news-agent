@@ -35,6 +35,21 @@ function showSignedIn(email, tier) {
   if (tierEl)   tierEl.style.display   = tier === 'premium' ? 'inline-block' : 'none';
 }
 
+// Admins get an extra link to the preview page in debug mode (/preview.html?debug=1).
+function showAdminLink(isAdmin) {
+  const nav = document.querySelector('.topbar__nav');
+  if (!nav) return;
+  let link = document.getElementById('topbar-debug');
+  if (!isAdmin) { link?.remove(); return; }
+  if (link) return;
+  link = document.createElement('a');
+  link.id = 'topbar-debug';
+  link.className = 'topbar__nav-link';
+  link.href = '/preview.html?debug=1';
+  link.textContent = 'Debug run';
+  nav.appendChild(link);
+}
+
 function showSignedOut() {
   if (authEl)   authEl.style.display   = 'none';
   if (signinEl) signinEl.style.display = 'flex';
@@ -43,7 +58,7 @@ function showSignedOut() {
 // Restore last-known auth state instantly from cache (no Firebase wait)
 let cached = null;
 try { cached = JSON.parse(localStorage.getItem(CACHE_KEY)); } catch {}
-if (cached?.email) showSignedIn(cached.email, cached.tier || 'free');
+if (cached?.email) { showSignedIn(cached.email, cached.tier || 'free'); showAdminLink(!!cached.isAdmin); }
 
 // Guards against calling /auth/subscribe more than once per page load (e.g.
 // if onAuthStateChanged fires again later in the same tab, such as a token
@@ -58,6 +73,7 @@ onAuthStateChanged(auth, async (user) => {
   if (!user || !user.emailVerified) {
     localStorage.removeItem(CACHE_KEY);
     showSignedOut();
+    showAdminLink(false);
     return;
   }
 
@@ -69,9 +85,11 @@ onAuthStateChanged(auth, async (user) => {
     if (!res.ok) return;
     const me   = await res.json();
     const tier = me.tier || 'free';
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ email: user.email, tier }));
-    cached = { email: user.email, tier };
+    const isAdmin = !!me.is_admin;
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ email: user.email, tier, isAdmin }));
+    cached = { email: user.email, tier, isAdmin };
     showSignedIn(user.email, tier);
+    showAdminLink(isAdmin);
 
     // Auto-subscribe verified users who signed in but never subscribed --
     // sign-in and subscribing used to be two fully decoupled steps, which

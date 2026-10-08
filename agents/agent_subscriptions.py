@@ -38,6 +38,7 @@ logger = logging.getLogger(__name__)
 
 from auth_middleware import get_current_user
 import click_counts
+import run_kind
 import sendgrid_webhook
 from prompt_guard import GUARD_TOPIC_REFINE, neutralize_tags
 
@@ -79,6 +80,13 @@ PREMIUM_EMAILS = {
     if e.strip()
 }
 
+# Comma-separated list of emails that may view unpublished (debug) runs through /auth/admin/preview.
+ADMIN_EMAILS = {
+    e.strip().lower()
+    for e in os.environ.get("ADMIN_EMAILS", "").split(",")
+    if e.strip()
+}
+
 # Google Sign-In (server-side OAuth Authorization Code flow — see CLAUDE.md).
 # Client ID is not secret (it's exposed in the browser redirect URL); the
 # secret follows the same USE_SECRET_MANAGER pattern as SendGrid/Anthropic.
@@ -110,6 +118,10 @@ DEFAULT_SECTIONS = [
 
 limiter = Limiter(key_func=get_remote_address)
 router  = APIRouter()
+
+
+def _is_admin(user: dict) -> bool:
+    return bool(user.get("email_verified")) and user.get("email", "").lower() in ADMIN_EMAILS
 
 
 def _get_user_tier(email: str) -> str:
@@ -697,29 +709,12 @@ def subscribe(request: Request, req: SubscribeRequest):
     return {"status": "ok"}
 
 
-@router.get("/preview")
-@limiter.limit("30/minute")
-def newsletter_preview(request: Request):
-    """Return the latest newsletter HTML for embedding in the preview iframe."""
-    db = _db()
-    from google.cloud import firestore as _fs
-    docs = list(
-        db.collection(FIRESTORE_COLLECTION)
-        .where("newsletter_html", "!=", None)
-        .order_by("newsletter_html")
-        .order_by("started_at", direction=_fs.Query.DESCENDING)
-        .limit(1)
-        .stream()
-    )
-    if not docs:
-        return HTMLResponse("<p>No issue available yet. Check back Monday!</p>", status_code=404)
-
-    data = docs[0].to_dict()
+def _render_preview(data: dict, variant: str = "") -> str:
+    """Turn a run doc's stored newsletter into HTML safe to show on the site (placeholders, image URLs, links)."""
     variants = data.get("newsletter_variants") or {}
     # Show the Canada-inclusive variant so visitors see the full scope of the newsletter.
     # Fall back through 0_0 and then the legacy newsletter_html field.
-    html = variants.get("0_1") or variants.get("0_0") or data.get("newsletter_html", "")
-
+    html = variants.get(variant) or variants.get("0_1") or variants.get("0_0") or data.get("newsletter_html", "")
     subscribe_url = f"{FRONTEND_BASE_URL}/"
     html = html.replace("{{UNSUBSCRIBE_URL}}", subscribe_url)
     html = html.replace("{{PREFERENCES_URL}}", subscribe_url)
@@ -744,8 +739,45 @@ def newsletter_preview(request: Request):
         html,
     )
 
+    return html
+
+
+@router.get("/preview")
+@limiter.limit("30/minute")
+def newsletter_preview(request: Request):
+    """Return the latest *release* newsletter HTML for embedding in the preview iframe. Debug runs are never shown."""
+    doc = run_kind.latest_run(_db(), FIRESTORE_COLLECTION)
+    if doc is None:
+        return HTMLResponse("<p>No issue available yet. Check back Monday!</p>", status_code=404)
     headers = {"Content-Security-Policy": "frame-ancestors https://latentspacemail.web.app https://latentspacemail.firebaseapp.com https://newsletter.lofeodo.com"}
-    return HTMLResponse(content=html, status_code=200, headers=headers)
+    return HTMLResponse(content=_render_preview(doc.to_dict()), status_code=200, headers=headers)
+
+
+@router.get("/auth/admin/preview")
+@limiter.limit("30/minute")
+async def admin_preview(
+    request: Request,
+    run: Annotated[str, Query(max_length=64)] = "latest",
+    variant: Annotated[str, Query(max_length=8)] = "",
+    user: dict = Depends(get_current_user),
+):
+    """Admin only: any run, debug ones included. `run` is "latest" (newest composed run of any kind) or a run id."""
+    if not _is_admin(user):
+        raise HTTPException(status_code=403, detail="forbidden")
+    db = _db()
+    if run == "latest":
+        doc = run_kind.latest_run(db, FIRESTORE_COLLECTION, release_only=False)
+    else:
+        doc = db.collection(FIRESTORE_COLLECTION).document(run).get()
+        doc = doc if doc.exists else None
+    if doc is None:
+        raise HTTPException(status_code=404, detail="no_run")
+    data = doc.to_dict()
+    return {
+        "run_id":   doc.id,
+        "run_kind": data.get("run_kind", run_kind.RELEASE),
+        "html":     _render_preview(data, variant),
+    }
 
 
 @router.post("/request-unsubscribe")
@@ -973,6 +1005,7 @@ async def auth_me(request: Request, user: dict = Depends(get_current_user)):
         "subscribed":     bool(sub_data and sub_data.get("active")),
         "prefs":          sub_data.get("prefs", {}) if sub_data else {},
         "tier":           tier,
+        "is_admin":       _is_admin(user),
     }
 
 

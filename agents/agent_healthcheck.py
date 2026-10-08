@@ -25,6 +25,7 @@ from datetime import datetime, timezone
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import config
 import pricing
+import run_kind
 from config import GCP_PROJECT_ID, FIRESTORE_COLLECTION, USE_FIRESTORE, ALERT_EMAIL, parse_started_at
 
 import agent4_send  # reuse send_email() / _get_sendgrid_api_key() only
@@ -61,18 +62,27 @@ ERROR_AGENTS = ["agent1a", "agent1b", "agent2a", "agent2b", "agent3", "agent4"]
 
 
 def _latest_run_doc(db):
-    """Return (run_id, doc dict) for the most recently started pipeline run, or (None, None)."""
+    """Return (run_id, doc dict) for the most recently started *release* pipeline run, or (None, None).
+
+    Debug runs are skipped: they are never published or mailed, so they say nothing about this week's
+    delivery. Failed runs (never composed) still count, so the scan does not filter on newsletter_composed.
+    """
     from google.cloud import firestore
 
-    docs = (
-        db.collection(FIRESTORE_COLLECTION)
-        .order_by("started_at", direction=firestore.Query.DESCENDING)
-        .limit(1)
-        .stream()
-    )
-    for d in docs:
-        return d.id, (d.to_dict() or {})
-    return None, None
+    rows = [
+        (d.id, d.to_dict() or {})
+        for d in (
+            db.collection(FIRESTORE_COLLECTION)
+            .order_by("started_at", direction=firestore.Query.DESCENDING)
+            .select(["run_kind"])
+            .limit(10)
+            .stream()
+        )
+    ]
+    doc_id = run_kind.pick_release_id(rows)
+    if doc_id is None:
+        return None, None
+    return doc_id, (db.collection(FIRESTORE_COLLECTION).document(doc_id).get().to_dict() or {})
 
 
 def _resolve_mode(check: str | None, now: datetime | None = None) -> str:

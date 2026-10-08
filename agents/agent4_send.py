@@ -22,6 +22,7 @@ from datetime import datetime, timezone
 from typing import NamedTuple
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import run_kind
 from config import (
     CLICK_TRACKING,
     DATA_DIR,
@@ -400,17 +401,12 @@ def _load_latest_newsletter(db) -> LoadedNewsletter:
     variants is a dict keyed by "0_0" / "1_0" / "0_1" / "1_1".
     Falls back to {"0_0": newsletter_html} for old runs that predate variants.
     """
-    from google.cloud import firestore as _fs
-    # Most recent run doc where agent3 finished saving all variants.
+    # Most recent run doc where agent3 finished saving all variants. Debug runs are skipped, so one made
+    # between the Sunday draft and the Monday send can never be mailed; the test-send service (TEST_SEND_TO,
+    # which only mails its owner) may still pick one up to preview it.
     # Agent4 is triggered by Scheduler independently — it doesn't receive a run_id.
-    results = (
-        db.collection(FIRESTORE_COLLECTION)
-        .where("newsletter_composed", "==", True)
-        .order_by("started_at", direction=_fs.Query.DESCENDING)
-        .limit(1)
-        .stream()
-    )
-    docs = list(results)
+    doc = run_kind.latest_run(db, FIRESTORE_COLLECTION, release_only=not TEST_SEND_TO)
+    docs = [doc] if doc is not None else []
     if not docs:
         raise RuntimeError("[agent4]  No Firestore document found with newsletter_html set")
     data = docs[0].to_dict()

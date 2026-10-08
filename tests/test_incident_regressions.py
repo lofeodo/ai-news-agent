@@ -215,3 +215,32 @@ def test_agent3_run_doc_update_stays_under_the_firestore_cap_and_keeps_health_ch
         urls = [a["url"] for a in arts]
         assert len(urls) == len(set(urls)) == 6
     assert update["news_filtered"]["article_counts"] == {c: len(a) for c, a in by_category.items()}
+
+
+# --- release vs debug runs: agent4 never mails a debug run -----------------------------------------
+
+def _two_runs(newest_kind):
+    runs = _runs((NOW - timedelta(hours=3)).isoformat())["pipeline_runs"]
+    runs["old"]["run_id"] = "release_run"
+    runs["debug_run"] = {"run_id": "debug_run", "started_at": (NOW - timedelta(hours=1)).isoformat(),
+                         "run_kind": newest_kind, "newsletter_composed": True,
+                         "newsletter_variants": {"0_0": "<p>d</p>"}}
+    return {"pipeline_runs": runs}
+
+
+def test_agent4_skips_a_newer_debug_run(monkeypatch):
+    monkeypatch.setattr(a4, "TEST_SEND_TO", "")
+    assert a4._load_latest_newsletter(FakeDb(_two_runs("debug"))).run_id == "old"
+
+
+def test_agent4_test_send_may_use_a_debug_run(monkeypatch):
+    monkeypatch.setattr(a4, "TEST_SEND_TO", "me@example.com")
+    assert a4._load_latest_newsletter(FakeDb(_two_runs("debug"))).run_id == "debug_run"
+
+
+def test_healthcheck_checks_the_latest_release_run_not_a_newer_debug_run():
+    db = FakeDb({"pipeline_runs": {
+        "rel": {"started_at": (NOW - timedelta(hours=5)).isoformat()},
+        "dbg": {"started_at": (NOW - timedelta(hours=1)).isoformat(), "run_kind": "debug"},
+    }})
+    assert hc._latest_run_doc(db)[0] == "rel"

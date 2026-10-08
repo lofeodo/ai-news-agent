@@ -49,8 +49,7 @@
 │   ├── nav.js                      # Shared auth-aware navigation bar
 │   ├── bg.js                       # Shared background/decorative script
 │   ├── style.css / fonts.css       # Shared styling
-│   ├── fonts/, images/             # Static assets
-│   └── latest.html                 # Written by agent3 each run
+│   └── fonts/, images/             # Static assets
 ├── evals/                          # Evaluation harnesses, frozen fixtures, labels, results/*.json (see evals/README.md)
 ├── tests/                          # pytest suite (stubbed Claude client + fetcher; no network or keys)
 │   ├── conftest.py / fakes*.py     # Path setup; scripted fake Anthropic client, fetcher and Firestore

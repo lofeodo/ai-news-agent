@@ -705,8 +705,7 @@ def newsletter_preview(request: Request):
     from google.cloud import firestore as _fs
     docs = list(
         db.collection(FIRESTORE_COLLECTION)
-        .where("newsletter_html", "!=", None)
-        .order_by("newsletter_html")
+        .where("newsletter_composed", "==", True)
         .order_by("started_at", direction=_fs.Query.DESCENDING)
         .limit(1)
         .stream()

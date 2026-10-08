@@ -26,7 +26,7 @@ agent3 (`agents/agent3_compose.py`, `select_articles_for_category`) picks each s
 - [x] Step 2: Dedup primitive (multi-turn, tool-based)
 - [x] Step 3: Ranked fallback pool
 - [x] Step 4: LangGraph dedup loop in agent3
-- [ ] Step 5: Dedup eval dataset
+- [x] Step 5: Dedup eval dataset
 - [ ] Step 6: Dedup eval harness (control vs Haiku vs Sonnet)
 - [ ] Step 7: Results in README and docs (later)
 - [ ] Step 8: Deploy and verify on a debug run
@@ -75,26 +75,7 @@ Depends on: Steps 1 to 6.
 
 ## Step detail
 
-### Step 5: Dedup eval dataset (in progress)
-
-Branch `feat/dedup-eval-dataset`. No Claude calls in this step.
-
-**Case shape.** One case = a section name plus an ordered list of articles (title, snippet, summary, HN score, language, source), the same fields `DedupConversation.start` reads. Gold = groups of article ids that cover the same event. The fallback path (`add`) is scored from the same cases by holding the last 1-2 articles out as candidates.
-
-**Case kinds (about 40 cases of 8-10 articles).**
-- `real` (~20): mined from the local 325-article pool (`data/news_summaries.json`). A seeded script proposes suspected duplicate pairs inside a category by title/summary token overlap (stdlib only), then builds a case around each pair plus same-category fillers.
-- `hard_negative` (~10): same company or topic, different event.
-- `synthetic` (~10): a real article plus a rewrite as a second outlet (other wording, French, other angle), flagged so results can be reported separately.
-- `control` (~5): no duplicates, to measure false removals.
-
-**Files.**
-- `evals/make_dedup_cases.py`: builder and CLI; writes `evals/fixtures/dedup_cases.json` (tracked: ids, titles, 300-char snippets, summaries; no full text) and `evals/labels/dedup_cases_template.csv`.
-- `evals/dedup_labels.py`: `load_dedup_gold(path)` returns `{case_id: [frozenset(article_ids), ...]}` and validates ids, singleton groups and completeness. Step 6 imports it.
-- Label CSV columns: `case_id, article_id, title, snippet, kind, duplicate_group, note`. The owner writes the same label (`g1`) on articles that are duplicates; blank means unique; `?` in `note` excludes an ambiguous article from the metrics.
-
-**Labeling rule** (same as `prompts/dedup_prompt.txt`): same event is a duplicate, even across outlets, languages and angles; same company or topic alone is not.
-
-**Rules.** Scripts never write gold labels; the owner labels by hand. Synthetic rewrites are drafts the owner confirms.
+(No step in progress. Step 6 gets its plan here when we start it.)
 
 ## Completed steps
 
@@ -169,3 +150,22 @@ Branch `feat/dedup-graph`. Commits: plan, graph module with tests, agent3 wiring
 - Production is unchanged until agent3 is rebuilt and deployed (Step 8). The first deploy should be checked on a debug run (`agent3_dedup_summary`, `agent3_audits/{run_id}`).
 - A fallback that duplicates a kept article is simply dropped; a higher-HN fallback does not replace the kept one.
 - The extra `agent3_audits` Firestore collection has no TTL rule.
+
+### Step 5: Dedup eval dataset
+
+Branch `feat/dedup-eval-dataset`. No Claude calls.
+
+**Built.**
+- `evals/make_dedup_cases.py`: seeded builder. It mines the 325-article pool in `data/news_summaries.json` for suspected duplicate pairs by word overlap within a category, then builds cases of 8 articles (the pair plus same-category fillers that overlap with nothing). Kinds: `real` (high overlap), `hard_negative` (medium overlap), `control` (no similar pair), `synthetic` (hand-written rewrites from an optional `evals/fixtures/dedup_synthetic.json`, unused so far). Reposts are excluded: pairs with near-identical titles (ratio 0.85) or on the same site are skipped, because a biztoc.com copy of one article is not the cross-outlet case the dedup step exists for.
+- `evals/fixtures/dedup_cases.json` (tracked: ids, titles, 300-char snippets, summaries; no full text) and `evals/labels/dedup_cases_template.csv` (written with a byte-order mark so Excel reads accents; gold column always empty when generated).
+- `evals/dedup_labels.py`: `load_dedup_gold()` returns `Gold(groups, excluded, unlabeled_cases)`, validates case and article ids and rejects one-member groups. It reads files saved by Excel (BOM, and restores the leading zero Excel drops from all-digit ids such as `051952554936`).
+- Labeling rule, same as `prompts/dedup_prompt.txt`: same event is a duplicate, even across outlets and languages; same company or topic alone is not. The owner labeled by hand.
+
+**Result.** 17 cases (2 real, 10 hard_negative, 5 control), 136 articles. Gold: 8 duplicate pairs in 8 cases, no group larger than 2, no articles marked ambiguous; 9 cases have no duplicates (5 controls and 4 others). Tests: `tests/test_make_dedup_cases.py`, `tests/test_dedup_labels.py`; full suite 465 passed.
+
+**Caveats.**
+- The dataset is small. 8 positive pairs gives wide Wilson intervals on duplicate recall (for example 7 of 8 is about 53% to 98%), so Step 6 can separate models only if the gap is large. The `kind` labels are the builder's guess, not truth: several `hard_negative` cases contained real duplicates.
+- Candidate pairs were found by word overlap, so duplicates worded very differently were not mined into cases and are underrepresented. There are no synthetic cases and no pairs of more than two articles.
+- Only the first-turn check (`start`) is directly scored. The fallback path (`add`) can be scored by holding articles out of these cases.
+- Cases were built from a single week's pool.
+

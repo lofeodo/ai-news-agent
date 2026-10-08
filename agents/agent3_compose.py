@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_XML_TAGS, neutralize_tags
 import tracing
+from agent3_dedup_graph import dedup_section
 from config import DATA_DIR, SCORING_MODEL, GCP_PROJECT_ID, USE_FIRESTORE, FIRESTORE_COLLECTION, MAX_SCORE, newsletter_send_date, section_cap, RUNNERS_UP_MAX
 
 # ---------------------------------------------------------------------------
@@ -738,8 +739,43 @@ def compose_html(
 # Main
 # ---------------------------------------------------------------------------
 
+def _dedup(category: str, sel: "SelectionResult", client, run_id: str, pass_name: str, audits: list) -> list:
+    """Run the dedup graph on one selection; records its audit. Never raises (dedup_section degrades)."""
+    result = dedup_section(category, sel.picks, sel.runners_up, client,
+                           create=lambda **kw: claude_call_with_retry(client, **kw),
+                           run_id=run_id, pass_name=pass_name)
+    audits.append({**result.audit, "usage": result.usage})
+    return result.picks
+
+
+def summarize_dedup(audits: list) -> dict:
+    """Counts only, small enough for the run doc."""
+    return {
+        "sections_checked":  sum(1 for a in audits if a["status"] in ("ok", "degraded")),
+        "degraded":          sum(1 for a in audits if a["status"] == "degraded"),
+        "duplicates_removed": sum(len(g["removed"]) for a in audits for g in a["groups"]),
+        "fallbacks_added":   sum(1 for a in audits for f in a["fallbacks"] if f["accepted"]),
+        "input_tokens":      sum(a.get("usage", {}).get("input_tokens", 0) for a in audits),
+        "output_tokens":     sum(a.get("usage", {}).get("output_tokens", 0) for a in audits),
+    }
+
+
+def write_dedup_audit(run_id: str, audits: list) -> None:
+    """Detailed audit to data/ and, in cloud mode, Firestore agent3_audits/{run_id}. Best effort."""
+    try:
+        os.makedirs(DATA_DIR, exist_ok=True)
+        with open(os.path.join(DATA_DIR, "agent3_dedup_log.json"), "w", encoding="utf-8") as f:
+            json.dump({"run_id": run_id, "sections": audits}, f, indent=2, ensure_ascii=False)
+        if USE_FIRESTORE:
+            from google.cloud import firestore as _fs
+            _fs.Client(project=GCP_PROJECT_ID).collection("agent3_audits").document(run_id).set(
+                {"run_id": run_id, "sections": audits})
+    except Exception as e:
+        print(f"  [dedup] could not write audit log: {e}")
+
+
 def build_run_doc_update(newsletter_variants: dict, subject: str, selected_all: dict,
-                         selected_en: dict, by_category: dict) -> dict:
+                         selected_en: dict, by_category: dict, dedup_summary: dict | None = None) -> dict:
     """Fields agent3 writes to the run doc when it finishes.
 
     The doc must stay under Firestore's 1 MiB cap, and the full article pools
@@ -757,7 +793,7 @@ def build_run_doc_update(newsletter_variants: dict, subject: str, selected_all: 
                 shipped.append(a)
         if shipped:
             shipped_by_category[category] = shipped
-    return {
+    update = {
         "newsletter_variants":  newsletter_variants,
         "newsletter_html":      newsletter_variants["0_0"],
         "newsletter_subject":   subject,
@@ -768,6 +804,9 @@ def build_run_doc_update(newsletter_variants: dict, subject: str, selected_all: 
             "article_counts":   {cat: len(arts) for cat, arts in by_category.items()},
         },
     }
+    if dedup_summary is not None:
+        update["agent3_dedup_summary"] = dedup_summary
+    return update
 
 
 def _record_failure(run_id: str, agent_name: str, error: Exception) -> None:
@@ -826,6 +865,7 @@ def run(run_id: str):
         # The second pass is skipped when the category has no French articles.
         selected_all: dict[str, list] = {}
         selected_en:  dict[str, list] = {}
+        dedup_audits: list[dict] = []
 
         for category in NEWS_CATEGORIES:
             articles = by_category.get(category, [])
@@ -837,17 +877,21 @@ def run(run_id: str):
                 selected_en[category]  = []
                 continue
 
-            full_selected = select_articles_for_category(category, articles, selection_prompt, client)
+            sel = select_with_runners_up(category, articles, selection_prompt, client)
+            full_selected = _dedup(category, sel, client, run_id, "all", dedup_audits)
             selected_all[category] = full_selected
 
             en_articles = [a for a in articles if a.get("language") != "fr"]
             if len(en_articles) < len(articles):
                 print(f" → selected {len(full_selected)} (re-running English-only)", end="")
-                selected_en[category] = select_articles_for_category(category, en_articles, selection_prompt, client)
+                sel_en = select_with_runners_up(category, en_articles, selection_prompt, client)
+                selected_en[category] = _dedup(category, sel_en, client, run_id, "en", dedup_audits)
             else:
                 selected_en[category] = full_selected
 
             print(f" → {len(full_selected)} (all) / {len(selected_en[category])} (en)")
+
+        write_dedup_audit(run_id, dedup_audits)
 
         print("\n=== Writing intro paragraph ===")
         intro = write_intro(papers, selected_all, intro_prompt, client)
@@ -879,7 +923,7 @@ def run(run_id: str):
             # The run doc must stay under Firestore's 1 MiB cap; see build_run_doc_update().
             _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).update(
                 build_run_doc_update(newsletter_variants, f"{NEWSLETTER_NAME} — {week_of}",
-                                     selected_all, selected_en, by_category)
+                                     selected_all, selected_en, by_category, summarize_dedup(dedup_audits))
             )
             print(f"  Written newsletter_variants + newsletter_html (0_0) to Firestore; pruned article pools")
 

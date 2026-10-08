@@ -35,7 +35,7 @@ def load_dedup_gold(path=TEMPLATE_PATH, cases_path=CASES_PATH):
 
     members, excluded, touched = {}, {}, set()
     for r in rows:
-        cid, aid = r["case_id"], r["article_id"]
+        cid, aid = r["case_id"], r["article_id"].strip().zfill(12)   # Excel drops leading zeros from all-digit ids
         if cid not in known:
             raise LabelError(f"unknown case {cid!r}")
         if aid not in known[cid]:

@@ -77,3 +77,19 @@ class Fetcher:
 def make_articles(n):
     return [{"source": "hackernews", "title": f"T{i}", "description": "", "url": f"https://example.com/{i}",
              "language": "en", "hn_score": 0} for i in range(n)]
+
+
+class ScriptedClient:
+    """Returns queued responses in order (an Exception instance is raised) and records each call's kwargs."""
+
+    def __init__(self, *replies):
+        self.messages = self
+        self.replies = list(replies)
+        self.calls = []
+
+    def create(self, **kw):
+        self.calls.append({**kw, "messages": list(kw["messages"])})   # snapshot: callers keep mutating history
+        reply = self.replies.pop(0)
+        if isinstance(reply, Exception):
+            raise reply
+        return reply

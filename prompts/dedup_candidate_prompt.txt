@@ -2,6 +2,6 @@ A replacement article has been added to the same section. It is numbered [{numbe
 
 {article}
 
-Does it report the same underlying event, announcement, release or story as any article you have already checked (same rules as before: different outlets, languages or angles count; same company or topic alone does not)?
+Does it cover the same specific story as any article you have already checked (same rules as before: different outlets, languages, focus or opinion on the same story still count; same company or broad topic alone does not)?
 
 Call report_duplicates exactly once. If it duplicates earlier articles, return one group with article [{number}] and the numbers of the earlier articles it duplicates. If it does not, call it with an empty list.

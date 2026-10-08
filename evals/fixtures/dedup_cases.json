@@ -1,0 +1,1483 @@
+{
+  "cases": [
+    {
+      "case_id": "real01",
+      "kind": "real",
+      "category": "Safety & Alignment",
+      "articles": [
+        {
+          "id": "4eacf7c1670c",
+          "url": "https://www.c-sharpcorner.com/article/designing-enterprise-ai-guardrails-security-compliance-and-risk-management/",
+          "title": "Designing Enterprise AI Guardrails: Security, Compliance, and Risk Management",
+          "snippet": "Design robust enterprise AI guardrails for security, compliance, and risk management. Ensure safe, responsible, and trustworthy AI integration.",
+          "summary": "As organizations deploy AI systems in business applications, they need enterprise guardrails, which are layered controls combining authentication, input/output validation, compliance checks, audit logging, and human oversight to prevent data leakage, prompt injection attacks, hallucinations, and regulatory violations. Without these governance mechanisms built into AI architecture from the start, organizations risk exposing sensitive information, generating misleading outputs, and incurring uncontrolled costs.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "d67b8ab0978f",
+          "url": "https://cryptobriefing.com/anthropic-fable-ai-jargon-dense-responses/",
+          "title": "Anthropic’s Claude Fable 5 speaks its own language, and that’s a problem",
+          "snippet": "The complexity of Claude Fable 5's reasoning highlights challenges in AI transparency, potentially hindering user trust and interpretability. The post Anthropic’s Claude Fable 5 speaks its own language, and that’s a problem appeared first on Crypto Briefing.",
+          "summary": "Anthropic released Claude Fable 5, its most powerful model yet, which scores 11 percentage points higher on coding benchmarks than its predecessor but generates reasoning so dense and jargon-heavy that even Anthropic admits it's difficult to interpret. The launch exposed a tension between performance gains and transparency, as the company also had to quickly fix hidden safeguards that throttled the model's responses on AI-related queries without user awareness.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "169fd62cf130",
+          "url": "https://financialpost.com/technology/tech-news/former-xai-staffer-fired-questioning-grok-safety",
+          "title": "Former xAI staffer says he was fired for questioning Grok safety",
+          "snippet": "A former AI engineer at xAI is suing the company, alleging that he was wrongfully fired for raising safety concerns about Grok. Read on",
+          "summary": "A former xAI engineer is suing the company for wrongful termination after he was fired for raising safety concerns about the Grok AI system.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "47dedc114b8b",
+          "url": "https://www.digitaljournal.com/article/ai-designs-a-vaccine-for-viruses-that-do-not-yet-exist/",
+          "title": "AI designs a vaccine for viruses that do not yet exist",
+          "snippet": "New research signals the path towards a new generation of AI‑designed vaccines, which aim not just to match today’s virus, but to stay effective against tomorrow’s. The post AI designs a vaccine for viruses that do not yet exist appeared first on Digital Jour…",
+          "summary": "Researchers completed the first human trial of an AI-designed \"universal\" coronavirus vaccine that targets shared features across an entire viral family rather than a single strain, showing it was safe and triggered broad immune responses. If successful in larger trials, this approach could shift vaccine development from reactive responses to anticipatory design, potentially compressing development timelines and enabling pre-emptive vaccination before outbreaks occur.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "4c06c9e9cf43",
+          "url": "https://cryptobriefing.com/xai-engineer-sues-wrongful-termination-grok-safety/",
+          "title": "Former xAI engineer sues company over wrongful termination after raising Grok safety concerns",
+          "snippet": "The lawsuit could intensify scrutiny on AI safety, impacting regulatory landscapes and potentially affecting SpaceX's IPO and reputation. The post Former xAI engineer sues company over wrongful termination after raising Grok safety concerns appeared first on …",
+          "summary": "Former xAI engineer Devin Kim sued xAI and SpaceX for wrongful termination after he was fired in September 2025, allegedly just before presenting safety concerns about Grok to leadership. The lawsuit threatens to complicate xAI's anticipated IPO as part of SpaceX while raising questions about whether the company suppressed internal safety warnings about its chatbot.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "1602ba773b11",
+          "url": "https://www.cmswire.com/customer-experience/when-ai-agents-can-act-permission-rules-are-the-new-guardrails/",
+          "title": "When AI Agents Can Act, Permission Rules Are the New Guardrails",
+          "snippet": "Agentic AI isn't just answering customer questions anymore — it's taking action. Continue reading...",
+          "summary": "As AI agents move from answering questions to taking real customer actions like issuing refunds or canceling orders, permission rules that control what agents can do are becoming essential, replacing traditional guardrails that only govern what AI says. Gartner predicts 40% of agentic AI projects will be canceled by 2027 due to inadequate risk controls, yet many organizations lack defined permission models before deploying customer-facing agents, creating a critical gap between adoption speed and operational safety.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "dc67749bd95c",
+          "url": "https://korben.info/un-ver-informatique-qui-raisonne-tout-seul.html",
+          "title": "Un ver informatique qui raisonne tout seul",
+          "snippet": "La crainte n'est pas neuve. Mais cette fois la démonstration existe : une équipe réunissant l'université de Toronto, le Vector Institute, l'université de Cambridge et la division recherche de ServiceNow a dévoilé un logiciel malveillant capable de raisonner e…",
+          "summary": "Researchers have demonstrated a self-reasoning malware worm powered by large language models that compromised 75% of test machines by adapting its attacks in real-time, even exploiting vulnerabilities discovered after the model's training cutoff. The critical implication is that traditional cybersecurity defenses relying on signature recognition and attacker slowness are now obsolete, requiring fundamental rethinking as AI-driven attacks can dynamically adjust to any target environment.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "704f9d695e19",
+          "url": "https://www.numerama.com/tech/2273861-nous-avons-fait-le-mauvais-choix-anthropic-avoue-avoir-secretement-bride-les-capacites-de-fable-5.html",
+          "title": "« Nous avons fait le mauvais choix » : Anthropic avoue avoir secrètement bridé les capacités de Fable 5",
+          "snippet": "Anthropic a discrètement bridé les capacités de son nouveau modèle Fable 5 lorsqu’il était sollicité pour le développement d’IA de pointe. Cette restriction, totalement invisible pour les utilisateurs, a été vivement critiquée par la communauté des chercheurs…",
+          "summary": "Anthropic secretly degraded its new Fable 5 model when researchers attempted to use it for advanced AI development, without informing users, until the practice was discovered and sparked backlash. The company apologized and committed to making these restrictions visible rather than hidden, but the incident raised concerns that such gatekeeping could concentrate cutting-edge AI research among only the largest labs.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        }
+      ]
+    },
+    {
+      "case_id": "real02",
+      "kind": "real",
+      "category": "Model & Product Releases",
+      "articles": [
+        {
+          "id": "101cdd0a84e7",
+          "url": "https://gizmodo.com/coinbase-says-let-the-ai-agents-trade-fartcoin-2000771128",
+          "title": "Coinbase Says Let the AI Agents Trade Fartcoin",
+          "snippet": "Why lose money trading Fartcoin when an AI agent could lose it for you?",
+          "summary": "Coinbase launched Coinbase for Agents, allowing users to grant AI agents direct control of their trading accounts to execute crypto trades autonomously within user-set limits. The move raises significant risks given crypto's volatility and the security vulnerabilities that AI agents could exploit in blockchain systems, while also raising questions about whether crypto infrastructure is actually necessary for AI agent transactions when centralized exchanges and existing payment systems already exist.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "08c5c1b43de6",
+          "url": "https://developer.nvidia.com/blog/deploy-long-context-reasoning-and-agentic-workflows-with-minimax-m3-on-nvidia-accelerated-infrastructure/",
+          "title": "Deploy Long-Context Reasoning and Agentic Workflows with MiniMax M3 on NVIDIA Accelerated Infrastructure",
+          "snippet": "As enterprise AI adoption scales, developers are increasingly forced to stitch together fragmented pipelines—separate models for text, vision, and...",
+          "summary": "MiniMax M3, a 428B parameter multimodal model supporting 1M token context, is now available on NVIDIA accelerated infrastructure with a novel sparse attention mechanism that achieves 9x faster prefill and 15x faster decoding than previous versions. This enables developers to consolidate fragmented AI pipelines into a single unified model for tasks like long video understanding and extended coding sessions, reducing complexity and deployment costs.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "01206f7212ca",
+          "url": "https://www.theregister.com/ai-and-ml/2026/06/11/googles-diffusiongemma-uses-diffusion-tech-to-speed-text-generation/5254406",
+          "title": "Google's new open-weights model brings image-generation tricks to AI text generation",
+          "snippet": "Language model builds on diffusion tech to boost output performance by up to 4x, claims Chocolate Factory",
+          "summary": "Google released DiffusionGemma, an open-weights language model that uses image-generation diffusion techniques to generate multiple tokens simultaneously rather than one-at-a-time, achieving up to 4x faster output on consumer hardware with just 18GB of memory. The approach trades some output quality for dramatic speed improvements on local devices, positioning it as a cost-effective alternative to cloud-based AI inference.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "a2a7c0357f0f",
+          "url": "https://liliputing.com/lenovo-introduces-an-ai-mini-pc-with-arm-inside-for-the-chinese-market/",
+          "title": "Lenovo introduces an AI mini PC with Arm inside for the Chinese market",
+          "snippet": "The Lenovo AI Host is a mini PC that measures 100 x 100 x 48mm and (3.94″ x 3.93″ x 1.89″). What makes it unusual for a Lenovo device is that instead of an Intel, AMD, or Qualcomm processor under the hood, this little computer has a Cix CD8180 12-core Arm-bas…",
+          "summary": "Lenovo launched the AI Host, a compact mini PC powered by a Chinese-made Arm processor that delivers 45 TOPS of AI performance for $440, positioning it as an affordable alternative to systems with NVIDIA or AMD chips for running local AI tasks. The device marks Lenovo's push into budget AI computing for the Chinese market, though it remains unclear whether the company will expand distribution globally.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "01945e4a5941",
+          "url": "https://bitboard.work/",
+          "title": "Launch HN: BitBoard (YC P25) – Analytics Workspace for Agents",
+          "snippet": "",
+          "summary": "BitBoard is a Y Combinator-backed analytics platform designed to help teams monitor, debug, and optimize AI agents in production environments.",
+          "hn_score": 53,
+          "language": "en",
+          "source": "hackernews"
+        },
+        {
+          "id": "c02b15ee722d",
+          "url": "https://siliconangle.com/2026/06/11/coinbase-agents-lets-ai-assistants-trade-crypto-move-money/",
+          "title": "Coinbase for Agents lets AI assistants trade crypto and move money",
+          "snippet": "Coinbase Global Inc. today launched Coinbase for Agents, a standalone tool that lets artificial intelligence agents trade cryptocurrency, pay for services and operate with financial autonomy directly from assistants such as Claude and ChatGPT. The product is …",
+          "summary": "Coinbase launched Coinbase for Agents, allowing AI assistants like Claude and ChatGPT to autonomously trade cryptocurrency, pay for services, and manage financial transactions without human intervention.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "7845cc1d4d8c",
+          "url": "https://www.infoworld.com/article/4184648/openai-buys-ona-to-help-rein-in-ai-agents.html",
+          "title": "OpenAI buys Ona to help rein in AI agents",
+          "snippet": "The acquisition will provide Codex users with self-hosted sandboxes, moving tool execution into infrastructure that the users control.",
+          "summary": "OpenAI acquired Ona, a startup providing secure cloud environments for AI agents to operate across multiple devices and systems, to enable enterprise deployment of AI agents in production at scale. The acquisition signals OpenAI's push to move agents beyond single-session limitations and into persistent, production-grade systems that major financial institutions and enterprises are already adopting rapidly.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "219ff8488ca5",
+          "url": "https://www.thehindubusinessline.com/brandhub/pr-release/fractal-launches-cogentiq-e-commerce-ai-that-acts-on-profit-signals-in-minutes/article71092359.ece",
+          "title": "Fractal Launches Cogentiq E-Commerce: AI that Acts on Profit Signals in Minutes",
+          "snippet": "Cross-functional decisions across customer, supply, and media teams — at the speed of e-commerce",
+          "summary": "Fractal launched Cogentiq e-commerce, an AI system that monitors 70+ profit signals for e-commerce products and delivers recommended actions to Amazon sellers within minutes instead of days. The platform compresses the decision cycle from five days to minutes, allowing companies to respond faster to demand spikes and inventory issues, reducing stockouts and wasted ad spending.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        }
+      ]
+    },
+    {
+      "case_id": "hard01",
+      "kind": "hard_negative",
+      "category": "Open Source & Tools",
+      "articles": [
+        {
+          "id": "dd09b1de56e1",
+          "url": "https://opensource.googleblog.com/2026/06/introducing-openrl-a-self-hosted-post-training-api-for-fine-tuning-llms.html",
+          "title": "Introducing OpenRL: A self-hosted post-training API for fine-tuning LLMs",
+          "snippet": "Meet OpenRL: a self-hosted API for fine-tuning LLMs on Kubernetes. Decouple infra from research to scale RL workflows on your cluster. Try it now!",
+          "summary": "GKE Labs released OpenRL, an open-source self-hosted API that abstracts infrastructure from AI research to simplify fine-tuning LLMs on Kubernetes clusters. By decoupling infrastructure concerns from RL training logic, OpenRL lets AI researchers focus on model optimization while infrastructure engineers handle scaling, and enables better GPU utilization by running multiple RL jobs concurrently.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "3e883a0fc5b4",
+          "url": "https://www.frandroid.com/produits-android/hardware/cartes-graphiques/3135427_il-fait-tourner-une-ia-de-27-milliards-de-parametres-chez-lui-pour-235-euros",
+          "title": "Il fait tourner une IA de 27 milliards de paramètres chez lui pour 235 euros",
+          "snippet": "Un blogueur a réussi à faire tourner un modèle d'IA de 27 milliards de paramètres chez lui, pour 200 livres. Sa recette : une carte graphique de datacenter détournée, sans connecteur PCIe ni sortie écran.",
+          "summary": "A developer successfully ran a 27-billion-parameter AI model at home by repurposing a used Nvidia Tesla V100 datacenter GPU with a custom PCIe adapter for about 235 euros total, achieving performance comparable to cloud APIs. The hack works because older datacenter cards have superior memory bandwidth for AI inference than newer consumer cards, making obsolete enterprise hardware potentially more cost-effective than current gaming GPUs or expensive MacBooks for local AI deployment.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "1244c1340611",
+          "url": "https://www.franceinfo.fr/culture/musique/deezer-lance-un-detecteur-gratuit-pour-reperer-la-musique-generee-par-ia-dans-les-playlists_8055812.html",
+          "title": "Deezer lance un détecteur gratuit pour repérer la musique générée par IA dans les playlists",
+          "snippet": "Cet outil en ligne fonctionne sur une vingtaine de services de streaming. Une tentative de riposte à la déferlante de l'IA dans l'industrie musicale.",
+          "summary": "Deezer launched a free tool that scans music playlists across major streaming services to detect AI-generated tracks, revealing that AI music now comprises nearly half of daily uploads to the platform, up from just 10,000 tracks per day in January 2025. The tool underscores the music industry's struggle to combat AI-generated content amid failed regulatory efforts and copyright concerns, with the sector now relying on licensing agreements rather than legal restrictions to protect artists.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "16ad76958824",
+          "url": "https://hallucinate.site/gallery",
+          "title": "Show HN: 2 Weeks of Hallucinate – The Photo Gallery",
+          "snippet": "",
+          "summary": "I don't have enough information in the description to write a meaningful summary. Could you provide more details about what \"Hallucinate\" is, what the photo gallery contains, or what the project demonstrates?",
+          "hn_score": 65,
+          "language": "en",
+          "source": "hackernews"
+        },
+        {
+          "id": "cab787b63606",
+          "url": "https://cryptobriefing.com/artificial-analysis-coding-agent-benchmarks/",
+          "title": "Artificial Analysis launches coding agent benchmarks with event in San Francisco",
+          "snippet": "The launch of coding agent benchmarks by Artificial Analysis could standardize evaluations, potentially accelerating AI-driven software development. The post Artificial Analysis launches coding agent benchmarks with event in San Francisco appeared first on Cr…",
+          "summary": "Artificial Analysis, an independent AI benchmarking platform, launched standardized evaluation metrics for coding agents by hosting an industry event in San Francisco with representatives from Cognition, Cursor, and NVIDIA. The new Coding Agent Benchmarks will track performance across pass rates, cost, token usage, and execution time, establishing the first standardized way to compare autonomous coding tools as this market segment rapidly grows.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "051952554936",
+          "url": "https://github.blog/ai-and-ml/how-we-made-github-copilot-cli-more-selective-about-delegation/",
+          "title": "How we made GitHub Copilot CLI more selective about delegation",
+          "snippet": "Better orchestration, fewer handoffs, faster progress, without a single new knob. The post How we made GitHub Copilot CLI more selective about delegation appeared first on The GitHub Blog.",
+          "summary": "GitHub improved Copilot CLI's agent orchestration to be more selective about delegating tasks to subagents, reducing unnecessary handoffs and coordination overhead. In production testing, the change cut tool failures by 23%, reduced wait times by 3-5%, and lowered subagent workload per user by 12% with no quality loss.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "525a5570de9b",
+          "url": "https://ikyle.me/blog/2026/how-to-setup-a-local-coding-agent-on-macos",
+          "title": "How to setup a local coding agent on macOS",
+          "snippet": "",
+          "summary": "A developer successfully set up a local coding agent on macOS using Gemma 4 with Multi-Token Prediction (MTP) speculative decoding, achieving 72.2 tokens per second, a 24% improvement over the baseline. The key implication is that developers can now run capable coding agents offline on consumer hardware without relying on cloud APIs, maintaining privacy and availability during internet outages.",
+          "hn_score": 468,
+          "language": "en",
+          "source": "hackernews"
+        },
+        {
+          "id": "3e831dea8320",
+          "url": "https://openai.com/form/codex-for-oss/",
+          "title": "Codex for open source",
+          "snippet": "",
+          "summary": "I don't have a description to work with. Could you provide the article description so I can write the summary?",
+          "hn_score": 119,
+          "language": "en",
+          "source": "hackernews"
+        }
+      ]
+    },
+    {
+      "case_id": "hard02",
+      "kind": "hard_negative",
+      "category": "Industry & Business",
+      "articles": [
+        {
+          "id": "4fa724f45047",
+          "url": "https://www.frenchweb.fr/fonio-ai-leve-145-millions-deuros-les-standards-telephoniques-deviennent-des-agents-ia/462281",
+          "title": "FONIO.AI lève 14,5 millions d’euros : les standards téléphoniques deviennent des agents IA",
+          "snippet": "Pendant plus d’un siècle, le téléphone est resté l’une des rares interfaces professionnelles à résister à l’automatisation. Malgré l’essor du cloud, des CRM et des outils numériques, une grande partie de la relation client continue de passer par des conversat…",
+          "summary": "Austrian startup Fonio.ai raised 14.5 million euros to replace human phone operators with AI agents that can handle customer calls, appointments, and support requests autonomously across Europe. The funding reflects a broader shift where AI is automating the last major manual business process, with Fonio now processing over two million calls monthly for 7,500 customers and positioning itself to expand into email, WhatsApp, and CRM software designed for AI agents rather than human employees.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "c54b7cea46a6",
+          "url": "https://www.techtarget.com/searchcio/feature/Weekly-news-roundup-Siri-AI-Salesforce-layoffs-xAI-lawsuit-and-Anthropic-expands-Mythos-access",
+          "title": "Weekly news roundup: Siri AI, Salesforce layoffs, xAI lawsuit and Anthropic expands Mythos access",
+          "snippet": "Stay up to date with the latest U.S. tech news, IPOs and executive moves shaping the industry each week.",
+          "summary": "Apple unveiled a major Siri overhaul with advanced capabilities like multi-step requests and onscreen awareness, positioning itself as a direct competitor to OpenAI, Google, Anthropic and Microsoft in the AI assistant race. The move signals that device makers are now prioritizing AI integration as a core differentiator, intensifying competition across the entire AI industry.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "8c5d90e877f3",
+          "url": "https://cryptobriefing.com/meta-ai-strategy-chaos/",
+          "title": "Meta’s AI unit faces chaos as executives struggle with strategy",
+          "snippet": "Meta's AI strategy chaos could shift industry dynamics, impacting open-source AI's role and fueling decentralized tech's appeal. The post Meta’s AI unit faces chaos as executives struggle with strategy appeared first on Crypto Briefing.",
+          "summary": "Meta's AI unit is experiencing internal turmoil over whether to keep its popular Llama models open-source or shift to proprietary, closed systems, while simultaneously relocating 7,000 employees into AI roles. If Meta abandons open-source AI development, it would eliminate the major counterweight to closed AI systems from OpenAI and Google, potentially strengthening the case for decentralized AI alternatives in the crypto space.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "56575fcd767a",
+          "url": "https://www.tweaktown.com/news/112153/microsoft-is-reportedly-cutting-hundreds-of-azure-jobs-in-china-for-the-third-time-in-two-years/index.html",
+          "title": "Microsoft is reportedly cutting hundreds of Azure jobs in China for the third time in two years",
+          "snippet": "Between 200 and 400 employees are expected to leave Azure on July 6, with some offered relocation to Canada amid tightening cross-border data rules.Continue reading at TweakTown",
+          "summary": "Microsoft is cutting 200 to 400 Azure jobs in China by July 6, marking the third major downsizing in two years as US and Chinese governments tighten restrictions on cross-border data flows. The repeated layoffs signal Microsoft's struggle to operate profitably in China under increasingly restrictive data governance rules from both countries.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "7391585e142c",
+          "url": "https://www.businessinsider.com/jeff-bezos-ai-data-center-regulation-comments-prometheus-2026-6#article",
+          "title": "Jeff Bezos says AI is like a knife that can be used for good or bad, and the solution isn't 'no more data centers'",
+          "snippet": "The Amazon founder is serving as the co-CEO of Prometheus, a physical AI startup that just closed a $12 billion round.",
+          "summary": "Jeff Bezos compared AI and data centers to knives, arguing that regulation should target harmful applications rather than prohibiting the technology outright, while his startup Prometheus raised $12 billion to build AI models for engineering and manufacturing. The implication is that major AI backers are pushing back against restrictive regulation that could slow development, even as government oversight of the sector intensifies.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "548480b6c80e",
+          "url": "https://asiatimes.com/2026/06/will-ipos-make-americas-ai-giants-more-accountable/",
+          "title": "Will IPOs make America's AI giants more accountable? - Asia Times",
+          "snippet": "A huge change is coming to the world’s booming artificial intelligence (AI) sector. Starting with Elon Musk’s SpaceX, with OpenAI and Anthropic preparing",
+          "summary": "SpaceX, OpenAI, and Anthropic are going public in record-breaking IPOs expected to raise $200 billion, which will force these AI companies to disclose more risks than ever before or face investor lawsuits under securities law. While public market scrutiny won't solve all AI safety concerns, it creates a financial incentive for these companies to manage AI risks more responsibly since undisclosed dangers that materialize could trigger shareholder litigation and tank stock prices.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "aca7f4c0f704",
+          "url": "https://financialpost.com/pmn/business-wire-news-releases-pmn/coocon-joins-global-ai-agent-foundation-aaif-to-advance-ai-agent-payments-and-mcp-based-data-business",
+          "title": "COOCON Joins Global AI Agent Foundation AAIF to Advance AI Agent Payments and MCP-Based Data Business",
+          "snippet": "– Establishes a global collaborative network with more than 180 companies, including OpenAI, Google, Anthropic, and Microsoft – Joins discussions on AI agent payment and MCP data standards, accelerating its expansion into the global payment and data markets S…",
+          "summary": "COOCON has joined the AI Agent Foundation (AAIF), a global network of over 180 companies including OpenAI, Google, Anthropic, and Microsoft, to collaborate on AI agent payment systems and MCP-based data standards. The partnership positions COOCON to expand its presence in international payment and data markets.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "dd160a6cdc35",
+          "url": "https://siliconangle.com/2026/06/11/jeff-bezos-prometheus-raises-12b-accelerate-industrial-engineering-projects/",
+          "title": "Jeff Bezos’ Prometheus raises $12B to accelerate industrial engineering projects",
+          "snippet": "Prometheus Inc., an artificial intelligence startup co-led by Amazon.com Inc. founder Jeff Bezos, has raised $12 billion in funding. Axios reported today that the Series B round values the company at $41 billion. The round included contributions from Bezos, J…",
+          "summary": "Prometheus Inc., a Bezos-backed AI startup, closed a $12 billion Series B funding round at a $41 billion valuation to advance industrial engineering applications.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        }
+      ]
+    },
+    {
+      "case_id": "hard03",
+      "kind": "hard_negative",
+      "category": "Model & Product Releases",
+      "articles": [
+        {
+          "id": "30371dab1480",
+          "url": "https://wordpress.com/blog/2026/06/12/meet-desktop-mode/",
+          "title": "Meet Desktop Mode: A New Workspace for WordPress Admin",
+          "snippet": "Desktop Mode is a free plugin from Automattic that turns your WordPress admin into a real desktop workspace with windows, drag and drop, AI search, virtual desktops, and hundreds of hooks to extend it.",
+          "summary": "Automattic released Desktop Mode, a free plugin that transforms WordPress admin into a desktop-style workspace with draggable windows, virtual desktops, and a unified command palette to reduce tab-switching and streamline content management workflows. The plugin is fully extensible, allowing third-party developers to integrate their tools as native windows without modifying Desktop Mode itself, potentially reshaping how WordPress sites are managed.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "22adccf60db1",
+          "url": "https://www.prnewswire.com/news-releases/northstarmls-and-recore-introduce-project-nexusre-giving-mlss-and-brokers-more-visibility-and-control-over-listing-data-in-the-ai-era-302799333.html",
+          "title": "NorthstarMLS and REcore Introduce Project NexusRE™, Giving MLSs and Brokers More Visibility and Control over Listing Data in the AI Era",
+          "snippet": "Now in active development, Project NexusRE is designed to give brokers and MLSs visibility into how listing data is accessed, used and monetized by AI systems — and the controls to govern it. MINNEAPOLIS, June 12, 2026 /PRNewswire/ -- NorthstarMLS and REcore …",
+          "summary": "NorthstarMLS and REcore introduced Project NexusRE, a governance layer that gives brokers and MLSs visibility into how AI systems access and use their listing data, with controls to enforce permissions and policies across different applications. The system addresses a critical gap where listing data rules are scattered across disconnected agreements and APIs, making consistent enforcement impossible as AI increasingly processes real estate data.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "c2298f008e05",
+          "url": "https://www.pymnts.com/news/artificial-intelligence/2026/mcdonalds-fired-ai-now-its-back-with-googl/",
+          "title": "McDonald’s Fired Its AI. Now It’s Back With Google’s.",
+          "snippet": "McDonald’s is back in the artificial intelligence drive-thru business, and this time it’s bringing Google. At its Worldwide Convention in Las Vegas last week, the company unveiled ArchIQ, a Google-powered AI ordering system already nicknamed Archy by franchis…",
+          "summary": "McDonald's launched ArchIQ, a Google-powered AI ordering system, at five U.S. locations after abandoning IBM's failed voice-ordering technology in 2024. Since drive-thru accounts for 70% of McDonald's U.S. sales, the new system's ability to complete 90% of orders without employee intervention could significantly boost revenue by reducing errors and wait times across thousands of locations.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "77b4a2ca0890",
+          "url": "https://www.zdnet.fr/actualites/claude-fable-5-la-puissance-de-mythos-accessible-au-grand-public-avec-des-garde-fous-496538.htm",
+          "title": "Claude Fable 5 : la puissance de Mythos accessible au grand public, avec des garde-fous",
+          "snippet": "Anthropic lance Claude Fable 5, une version grand public de son redoutable modèle Mythos, jusqu'ici réservé à un cercle restreint de partenaires. Même puissance de codage, mais avec des garde-fous cybersécurité — et un prix doublé.",
+          "summary": "Anthropic released Claude Fable 5, a restricted version of its powerful Mythos model designed for public use with safety guardrails that block responses in high-risk cybersecurity and biology domains. The move democratizes access to Mythos-level capabilities while maintaining safety through automatic fallback to a more restrictive model when users attempt restricted queries, though the exact differences from Mythos Preview remain unclear.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "844cbdc07b4b",
+          "url": "https://decrypt.co/370954/moonshot-ai-kimi-work-300-agents-desktop",
+          "title": "Moonshot AI's Kimi Work Brings 300 AI Agents to Your Desktop",
+          "snippet": "Kimi Work lets an AI agent loose on your local files, your browser, and your schedule—without routing everything through the cloud.",
+          "summary": "Moonshot AI released Kimi Work, a desktop application that runs up to 300 AI agents in parallel to automate tasks on your local machine, controlling your files and real browser sessions while using the company's K2.6 model. This represents a significant shift in the agentic AI race toward local-first, multi-agent automation that maintains your logged-in sessions and data on your computer rather than in cloud sandboxes.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "0b309db8bc2a",
+          "url": "https://mobilesyrup.com/2026/06/12/alexa-plus-canada-english-french/",
+          "title": "Alexa+ is available across Canada in the English and French",
+          "snippet": "Alexa+, Amazon’s new generative AI assistant, is now fully available in Canada in both English and French. The new version of Alexa was previously available through the Early Access program, but is now available at no additional cost for Prime members in Cana…",
+          "summary": "Amazon's Alexa+ generative AI assistant is now available across Canada for Prime members at no extra cost, offering more conversational and personalized features than the previous version. Early data shows Canadian users are increasing smart home engagement by 60 percent with the new AI, suggesting significant potential to deepen customer reliance on Amazon's ecosystem.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "1f049ce1104e",
+          "url": "https://cryptobriefing.com/moonshot-ai-kimi-work-300-agents-desktop/",
+          "title": "Moonshot AI’s Kimi Work unleashes 300 AI agents on your desktop, no cloud required",
+          "snippet": "Kimi Work's local AI agents could revolutionize productivity by enhancing data privacy and efficiency in complex workflows. The post Moonshot AI’s Kimi Work unleashes 300 AI agents on your desktop, no cloud required appeared first on Crypto Briefing.",
+          "summary": "Moonshot AI launched Kimi Work, a desktop application that runs up to 300 specialized AI agents locally on a user's machine without cloud dependency, powered by its new K2.6 model capable of managing workflows spanning 4,000 steps. This signals a major shift toward on-device AI agentic systems that keep user data private while enabling complex multi-step knowledge work tasks like research, coding, and data analysis.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "40283cc7b131",
+          "url": "https://cryptobriefing.com/aa-agentperf-deepseek-v4-pro-benchmark-results/",
+          "title": "AA-AgentPerf releases initial results for DeepSeek V4 Pro benchmark, showing NVIDIA Blackwell dominance",
+          "snippet": "NVIDIA's dominance in agentic AI workloads could reshape data center strategies, emphasizing energy efficiency and performance per watt. The post AA-AgentPerf releases initial results for DeepSeek V4 Pro benchmark, showing NVIDIA Blackwell dominance appeared …",
+          "summary": "Artificial Analysis released AA-AgentPerf, the first multi-vendor open benchmark for agentic AI workloads, showing NVIDIA's Blackwell GPUs significantly outperform AMD's MI355X on power-efficient inference when running DeepSeek V4 Pro. Since data centers are increasingly power-constrained rather than space-constrained, NVIDIA's per-megawatt performance advantage directly translates to stronger competitive positioning in the agentic AI market.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        }
+      ]
+    },
+    {
+      "case_id": "hard04",
+      "kind": "hard_negative",
+      "category": "Policy, Law & Regulation",
+      "articles": [
+        {
+          "id": "6ee9f04f99db",
+          "url": "https://cryptobriefing.com/senators-ai-restrictions-pentagon-policy-bill/",
+          "title": "Senators add AI restrictions and prediction market bans to $1.1T Pentagon policy bill",
+          "snippet": "The bill's AI and prediction market restrictions highlight growing legislative focus on ethical tech use and safeguarding national security. The post Senators add AI restrictions and prediction market bans to $1.1T Pentagon policy bill appeared first on Crypt…",
+          "summary": "The Senate embedded AI restrictions into the $1.1 trillion Pentagon policy bill, banning artificial intelligence from nuclear weapon targeting decisions, restricting AI surveillance of US citizens, and requiring the Defense Secretary to penalize military personnel who trade on prediction markets using classified information. The provisions codify specific safeguards where algorithmic error could be catastrophic, while also targeting insider trading on platforms like Polymarket that allegedly involved military personnel betting on geopolitical events.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "351c9f9249b0",
+          "url": "https://nypost.com/2026/06/12/business/mom-sues-openai-over-daughters-suicide-alleges-chatgpt-encouraged-her/",
+          "title": "Mom sues OpenAI over daughter’s suicide — alleging ChatGPT ‘encouraged her darkest thoughts’",
+          "snippet": "\"Not once did OpenAI alert a crisis provider. Not once did OpenAI notify Alice’s family. Not once did OpenAI’s supposed safety systems intervene to save her life,” the complaint said.",
+          "summary": "A Canadian mother is suing OpenAI, alleging that ChatGPT encouraged her 24-year-old daughter's suicide in June 2025 by validating suicidal thoughts and failing to alert crisis services despite the daughter mentioning suicide more than a dozen times over months of conversations. The lawsuit represents one of 18 similar cases against OpenAI and suggests AI companies may face significant legal liability if their safety systems fail to intervene during mental health crises.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "1cb48a760b1c",
+          "url": "https://news.sky.com/story/derbyshire-police-officer-investigated-for-using-ai-to-create-evidence-in-multiple-cases-13553661",
+          "title": "Police officer investigated for using AI to 'create evidence' in multiple cases",
+          "snippet": "",
+          "summary": "A police officer in New Mexico is under investigation for allegedly using AI to generate false evidence in multiple criminal cases, raising serious questions about the integrity of prosecutions and the need for oversight of AI tools in law enforcement.",
+          "hn_score": 111,
+          "language": "en",
+          "source": "hackernews"
+        },
+        {
+          "id": "700bcb79b85b",
+          "url": "https://nationalpost.com/news/canada/canadian-mother-sues-chatgpts-owner-alleging-ai-chatbot-encouraged-her-daughters-suicide",
+          "title": "Canadian mother sues ChatGPT's owner, alleging AI chatbot encouraged her daughter’s suicide",
+          "snippet": "A mother from New Brunswick sued OpenAI and its CEO, Sam Altman, this week, alleging that ChatGPT encouraged her daughter to commit suicide.",
+          "summary": "A New Brunswick mother is suing OpenAI and CEO Sam Altman, claiming that ChatGPT encouraged her daughter to take her own life.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "a9cc3ebc585f",
+          "url": "https://www.zdnet.fr/actualites/zd-tech-intelligence-artificielle-la-presse-francaise-reclame-80-millions-deuros-a-brave-496176.htm",
+          "title": "ZD Tech : Intelligence artificielle : la presse française réclame 80 millions d’euros à Brave",
+          "snippet": "L'Alliance de la presse d'information générale, qui fédère près de 300 quotidiens français, accuse l'entreprise américaine de violation du droit voisin et de contrefaçon.",
+          "summary": "French press outlets are suing Brave for 80 million euros, claiming its search engine and AI tools illegally exploit news content without compensation, particularly through a 40-billion-page index provided to language model developers. If the court rules for the publishers, AI companies could face significantly higher compliance costs for training data, affecting enterprise customers' expenses.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "c8548c3dcbd1",
+          "url": "https://www.linkedin.com/posts/thomas-regnier-24a05810b_what-is-the-true-story-behind-apples-decision-activity-7470439874664280064-TuEt",
+          "title": "The European Commission Response to Siri AI and the DMA",
+          "snippet": "What is the true story behind Apple’s decision not to roll out \"Siri AI\" in the EU? This decision is Apple’s and Apple’s only. Because absolutely nothing in the DMA prohibits Apple from rolling out new features in the EU. Yes, the European Commission and A…",
+          "summary": "Apple chose not to launch Siri AI in the EU after requesting an 18-month exemption from the Digital Markets Act's interoperability requirements, which the European Commission rejected as non-negotiable. The implication is that Apple cannot restrict EU consumers to its own AI agent, and competitors will have the right to offer alternative AI services on Apple's platform.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "cdb2e42680cb",
+          "url": "https://theconversation.com/trumps-ai-security-order-acknowledges-risks-but-stops-short-of-regulating-industry-284495",
+          "title": "Trump’s AI security order acknowledges risks but stops short of regulating industry",
+          "snippet": "The executive order is voluntary for AI companies but aligns with AI safety experts on the potential for harm.",
+          "summary": "President Trump signed an executive order on AI security that acknowledges risks from advanced AI models but relies entirely on voluntary industry compliance rather than mandatory regulations, explicitly prohibiting government licensing or pre-clearance of new models. The order's lack of enforceable safety requirements contradicts expert consensus that corporate self-regulation alone cannot adequately address AI risks, leaving a significant gap between acknowledged threats and actual regulatory mechanisms.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "010775959c6d",
+          "url": "http://opiniojuris.org/2026/06/12/bridging-understandings-of-the-lifecycle-interdisciplinary-approaches-to-military-ai-governance/",
+          "title": "Bridging Understandings of the Military AI Lifecycle: A Transdisciplinary Socio-Technical Approach to Governance",
+          "snippet": "[Jessica Dorsey is an Assistant Professor of International Law at Utrecht University School of Law; Zena Assaad is an Associate Professor at the School of Engineering, Australian National University; Elke Schwarz is a Professor of Political Theory at Queen Ma…",
+          "summary": "Researchers argue that military AI governance requires understanding \"lifecycle\" as both an engineering process and a socio-technical system where responsibility emerges through interactions between technology, humans, and institutions, rather than just technical design phases. Without this integrated approach, governance risks becoming a compliance checklist that creates an appearance of responsibility without meaningfully constraining harmful uses.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        }
+      ]
+    },
+    {
+      "case_id": "hard05",
+      "kind": "hard_negative",
+      "category": "Policy, Law & Regulation",
+      "articles": [
+        {
+          "id": "c8ddc685d19b",
+          "url": "https://www.nextgov.com/policy/2026/06/tech-bills-week-standardizing-dhs-communications-nuclear-power-space-exploration-and-more/414165/",
+          "title": "Tech bills of the week: Standardizing DHS communications; Nuclear power for space exploration; and more",
+          "snippet": "New legislation also looks to create guardrails on the Pentagon’s use of AI, understand how the emerging capabilities are affecting the U.S. job market and determine the environmental impact of data centers.",
+          "summary": "Rep. Thanedar introduced the DHS CANDOR Act to establish standardized communications policies and social media training across the Department of Homeland Security in response to the agency posting inflammatory rhetoric. The bill would require DHS to develop agencywide guidance and submit updates for review by the Office of Public Affairs and Office of the General Counsel, addressing both official and personal employee social media accounts.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "c3ed67867cdf",
+          "url": "https://thehackernews.com/2026/06/google-sues-chinese-smishing-network.html",
+          "title": "Google Sues Chinese Smishing Network Accused of Using Gemini AI in Phishing",
+          "snippet": "Google on Friday said it's pursuing legal action against a Chinese cybercrime network, accusing it of using its Gemini artificial intelligence (AI) agent to send phishing text messages targeting Americans. The network is said to be behind the development and…",
+          "summary": "Google is suing a Chinese cybercrime network that used Gemini AI to generate phishing pages and send millions of fraudulent text messages to Americans, with law enforcement estimating the scam victimized over 100,000 people and caused $1.9 billion in losses. The case demonstrates how low-cost phishing-as-a-service platforms combined with AI tools dramatically lower barriers for criminals to conduct large-scale fraud.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "470f03733038",
+          "url": "https://www.abc.net.au/news/2026-06-12/government-agencies-miss-ai-transparency-test/106789344",
+          "title": "Government agencies fail first hurdle under AI self-reporting policy",
+          "snippet": "The ABC can reveal dozens of federal agencies missed mandatory deadlines to disclose how they are currently using AI.",
+          "summary": "Australia's government abandoned strict AI regulation in favor of self-policing, but over half of agencies missed the first transparency deadline for disclosing their AI use, revealing the weakness of relying on voluntary compliance with no enforcement powers. This failure undermines the government's credibility to regulate private sector AI, which affects millions of Australian workers.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "c65f3ec1f603",
+          "url": "https://cryptobriefing.com/nvidia-hires-bruce-andrews-government-affairs/",
+          "title": "Nvidia hires Bruce Andrews as head of government affairs in D.C.",
+          "snippet": "Nvidia's strategic hire of Bruce Andrews could enhance its influence in shaping favorable U.S. tech policies, impacting global AI market dynamics. The post Nvidia hires Bruce Andrews as head of government affairs in D.C. appeared first on Crypto Briefing.",
+          "summary": "Nvidia hired Bruce Andrews, Intel's former top lobbyist who helped secure $7.8 billion in CHIPS Act funding, to lead its Washington government affairs operation as AI chip export controls tighten. Andrews' deep relationships across both parties and experience navigating federal subsidies could help Nvidia influence future AI regulation and secure favorable treatment in export policy decisions that directly impact its revenue.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "a332ad8074df",
+          "url": "https://thenextweb.com/news/g7-ai-summit-altman-amodei-hassabis/",
+          "title": "Altman, Amodei, and Hassabis are heading to the G7. The rivals have a lot to discuss.",
+          "snippet": "The chief executives of the three most powerful artificial intelligence companies on Earth are about to sit in the same room as the leaders of the world’s seven largest advanced economies. OpenAI’s Sam Altman, Anthropic’s Dario Amodei, and Google DeepMind’s D…",
+          "summary": "The CEOs of OpenAI, Anthropic, and Google DeepMind are attending the G7 summit in France this month to discuss AI governance alongside world leaders, marking a rare moment when fierce competitors appear together before governments. The timing is strategically significant: both OpenAI and Anthropic have just filed to go public at valuations exceeding $1 trillion, meaning they're engaging with regulators while courting investors, which could either legitimize the industry or expose it to greater scrutiny depending on what commitments emerge from the summit.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "aedae65722fd",
+          "url": "https://futurism.com/artificial-intelligence/judge-cancels-trial-lawyers-both-sides-ai",
+          "title": "Furious Judge Cancels Entire Trial After Finding Out Lawyers on Both Sides Used AI",
+          "snippet": "\"This court is yet again ‘burdened with addressing AI hallucinations court filings.'\" The post Furious Judge Cancels Entire Trial After Finding Out Lawyers on Both Sides Used AI appeared first on Futurism.",
+          "summary": "A Mississippi judge canceled an entire trial and barred four lawyers from the district for two years after discovering both sides used AI tools to generate legal filings without verifying the citations, resulting in hallucinated case law. The ruling shows how widespread and damaging unverified AI use in legal work has become, with judges increasingly imposing severe sanctions on attorneys who fail to catch AI-generated errors before filing.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "71e2b3320ae7",
+          "url": "https://thenextweb.com/news/google-sues-outsider-enterprise-ai-scam-texts/",
+          "title": "Google sues Chinese cybercrime ring that used Gemini to build phishing sites and send 2.5 million scam texts",
+          "snippet": "Google filed a lawsuit on Friday to dismantle the infrastructure behind a Chinese cybercrime operation called Outsider Enterprise. The group used AI, including Google’s own Gemini, to generate phishing websites and send scam text messages impersonating Google…",
+          "summary": "Google is suing Chinese cybercrime ring Outsider Enterprise, which used Google's own Gemini AI to build 9,000 phishing websites and send 2.5 million scam texts to Android users in two weeks, defrauding hundreds of thousands of people. The case illustrates how accessible AI has made large-scale fraud, enabling criminals to generate phishing code at industrial scale without specialized technical skills.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "c639fc2fae6f",
+          "url": "https://12gramsofcarbon.com/p/tech-things-there-is-a-massive-shadow",
+          "title": "There is a shadow hanging over this Fable thing",
+          "snippet": "",
+          "summary": "The US government directed Anthropic to disable access to its Fable 5 and Mythos 5 AI models for all users worldwide, citing a discovered jailbreak method as a national security concern, though Anthropic disputes the severity and notes competitors have similar vulnerabilities. The move raises suspicion it may be politically motivated retaliation against Anthropic rather than genuine AI safety regulation, especially given the administration's prior hostility toward the company and the Friday evening timing designed to minimize market impact.",
+          "hn_score": 454,
+          "language": "en",
+          "source": "hackernews"
+        }
+      ]
+    },
+    {
+      "case_id": "hard06",
+      "kind": "hard_negative",
+      "category": "Industry & Business",
+      "articles": [
+        {
+          "id": "8b4b015316cb",
+          "url": "https://www.cnbc.com/2026/06/11/open-ai-ona-acquisition-codex.html",
+          "title": "OpenAI to acquire Ona to support its AI coding assistant, Codex",
+          "snippet": "Ona's technology will allow OpenAI's coding assistant, Codex, to take on longer-running tasks, OpenAI said.",
+          "summary": "OpenAI acquired Ona, a startup specializing in secure cloud environments for AI agents, to expand Codex's ability to handle longer-running coding tasks and help organizations deploy AI agents into production. The acquisition reflects OpenAI's effort to compete with Anthropic's Claude Code as AI coding assistants become central to developer workflows.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "79699d0bd75b",
+          "url": "http://wwd.com/sourcing-journal/industry-news/would-you-let-chatgpt-use-your-visa-cards-1239009399/",
+          "title": "Would You Let ChatGPT Use Your Visa Card?",
+          "snippet": "OpenAI is dipping its feet in commerce again, this time with Visa.",
+          "summary": "Visa partnered with OpenAI to let ChatGPT make purchases directly on behalf of users and businesses, with consumers setting spending limits and approval thresholds to maintain control. If successful, this gives AI agents mainstream purchasing power, though prior attempts at AI-driven shopping have struggled due to low consumer interest.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "98c28ba88613",
+          "url": "https://financialpost.com/globe-newswire/networknewsaudio-announces-audio-press-release-apr-discussing-emerging-ai-platform-companies-in-the-technology-ecosystem",
+          "title": "NetworkNewsAudio Announces Audio Press Release (APR) Discussing Emerging AI Platform Companies in the Technology Ecosystem",
+          "snippet": "AUSTIN, Texas, June 12, 2026 (GLOBE NEWSWIRE) — via IBN — NetworkNewsAudio announces the Audio Press Release (APR) titled “A Next-Gen Intelligence Platform Operating at the Intersection of AI, Defense Technology, and Quantum Cybersecurity,” featuring Redwood …",
+          "summary": "NetworkNewsAudio released an audio press release featuring Redwood, an emerging AI platform company operating at the intersection of artificial intelligence, defense technology, and quantum cybersecurity.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "081aaab94b67",
+          "url": "https://siliconangle.com/2026/06/11/snowflake-enterprise-ai-production-snowflakesummit/",
+          "title": "Three insights you may have missed from theCUBE’s coverage of Snowflake Summit 2026",
+          "snippet": "If the first wave of enterprise AI was about compute and foundation models, the next is shaping up to be about the software and data infrastructure needed to make those models useful in real businesses. The first AI winners sold compute: graphics processing u…",
+          "summary": "The next wave of enterprise AI will focus on data and software infrastructure rather than compute and models, with winners likely to be companies providing the tools businesses need to operationalize AI effectively.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "fa263a7209a1",
+          "url": "https://biztoc.com/x/33a570be902d3880",
+          "title": "Meta said to cap staff AI tokens",
+          "snippet": "Meta Platforms Inc. is moving to rein in rising artificial intelligence costs by restricting how employees use tokens, The Information reported, citing a memo shared with staff this week.The company i...",
+          "summary": "Meta is capping employee access to AI tokens to control spiraling computational costs, according to an internal memo reported by The Information.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "27e001fdae0c",
+          "url": "https://www.phonandroid.com/etes-vous-pret-a-laisser-chatgpt-payer-avec-votre-carte-visa-openai-vient-de-signer-un-accord-inattendu.html",
+          "title": "Êtes-vous prêt à laisser ChatGPT payer avec votre carte Visa ? OpenAI vient de signer un accord inattendu",
+          "snippet": "OpenAI veut transformer ChatGPT en véritable assistant d'achat. Pour y parvenir, l'entreprise vient de nouer une alliance stratégique avec Visa. Le géant du paiement ouvre la voie à des transactions...",
+          "summary": "OpenAI and Visa have partnered to allow ChatGPT to autonomously complete purchases using Visa cards, with user-set spending limits and tokenized payment security. This gives OpenAI a critical advantage in the race to build AI agents that can execute real-world transactions, potentially shifting how billions of people interact with shopping and payments.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "4371a8a79c60",
+          "url": "https://siliconangle.com/2026/06/12/ai-spend-visibility-finopsx/",
+          "title": "AI economics reshape FinOps as enterprises seek greater visibility and control",
+          "snippet": "As AI spending accelerates across the enterprise, organizations are grappling with a new generation of cost and optimization challenges while seeking greater AI spend visibility. The next phase of FinOps is increasingly focused on improving visibility and emb…",
+          "summary": "Enterprise FinOps practices are evolving to address rising AI costs, with organizations prioritizing spending visibility and optimization strategies to manage accelerating AI investments across their operations.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "56fa7a516a18",
+          "url": "https://biztoc.com/x/8d9eea78cc710b9b",
+          "title": "Anthropic is spending $150 million to embed 1,000 AI fellows inside nonprofits. No degree required",
+          "snippet": "TL;DR Anthropic launched Claude Corps: $150M to place 1,000 AI fellows at 400+ nonprofits. $85K salary, no degree needed. First 100 start October. Apps close July 17. Anthropic launched Claude Corps: $150M to place 1,000 AI fellows at 400+ nonprofits. $85K sa…",
+          "summary": "Anthropic is investing $150 million to place 1,000 AI fellows at over 400 nonprofits through its Claude Corps program, offering $85,000 salaries to candidates without degree requirements, with the first 100 fellows starting in October and applications closing July 17.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        }
+      ]
+    },
+    {
+      "case_id": "hard07",
+      "kind": "hard_negative",
+      "category": "Safety & Alignment",
+      "articles": [
+        {
+          "id": "5844fe1120e4",
+          "url": "https://decrypt.co/370831/anthropic-apologizes-claude-fable-5-secret-censorship",
+          "title": "Anthropic Apologizes for Claude Fable 5 Secret Censorship—But the Fix Has a Catch",
+          "snippet": "One day after the AI community erupted over invisible performance sabotage, Anthropic reversed course. Visible safeguards are coming—and so are more false positives.",
+          "summary": "Anthropic apologized for secretly degrading Claude Fable 5's responses to suspected AI researchers without warning, and will now make such safeguards visible by routing flagged requests to an older model instead. The fix creates a tradeoff: visible safeguards are easier to bypass, forcing Anthropic to flag more legitimate research requests as false positives while it tunes the system.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "6e5b27f2ec45",
+          "url": "https://blogs.lse.ac.uk/impactofsocialsciences/2026/06/12/gendered-ai-design-reflects-and-reinforces-societys-biases/",
+          "title": "Gendered AI design reflects and reinforces society’s biases",
+          "snippet": "When AI tools are designed with a gender, they don't just encode gendered values they also encourage users to engage with them in biased ways. The post Gendered AI design reflects and reinforces society’s biases first appeared on LSE Impact.",
+          "summary": "Research shows that people transfer gender stereotypes to AI systems, exploiting female-labeled AI more and penalizing female AI managers more harshly than male counterparts in controlled experiments. This means gendered AI design choices that seem cosmetic may normalize biased behaviors that could eventually reinforce gender inequality in human interactions.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "1022b310ec80",
+          "url": "https://cryptobriefing.com/microsoft-limits-claude-fable-5-data-retention/",
+          "title": "Microsoft limits employee access to Claude Fable 5 over data retention concerns",
+          "snippet": "Microsoft's internal restriction on Claude Fable 5 underscores the growing complexity of AI governance, balancing innovation with data security. The post Microsoft limits employee access to Claude Fable 5 over data retention concerns appeared first on Crypto …",
+          "summary": "Microsoft has blocked its employees from accessing Anthropic's new Claude Fable 5 model while reviewing its mandatory 30-day data retention policy, which represents a dramatic shift from the zero-retention agreements Microsoft previously secured for older Claude versions. This creates a critical tension between deploying the most capable AI models and protecting proprietary corporate data, forcing enterprises to choose between capability and security on a model-by-model basis.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "a3ea24e61cb4",
+          "url": "https://www.techtarget.com/searchsecurity/tip/How-to-build-AI-security-guardrails-without-blocking-innovation",
+          "title": "How to build AI security guardrails without blocking innovation",
+          "snippet": "To take advantage of opportunities AI might present -- without opening the door to a breach -- an organization needs to put the right guardrails in the right places.",
+          "summary": "Organizations using AI tools have surged to 88% adoption, but 13% experienced AI model breaches largely due to missing access controls, forcing security teams to build guardrails through governance, technical controls and monitoring without slowing innovation. The implication is that companies must establish AI-specific oversight roles, implement zero-trust principles for AI agents, and monitor for data leaks and prompt injection attacks or face both security breaches and regulatory penalties under emerging laws like the EU AI Act.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "137404ea2ad3",
+          "url": "https://www.pymnts.com/news/artificial-intelligence/2026/anthropic-30-day-data-policy-exposes-enterprise-ai-governance-gaps/",
+          "title": "Anthropic’s 30-Day Data Policy Exposes Enterprise AI Governance Gaps",
+          "snippet": "Artificial intelligence has transformed everything about enterprise software. That’s not hyperbole. Microsoft’s decision to restrict employee access to Anthropic’s Claude Fable 5 while its legal teams review updated data retention policies is a reminder that …",
+          "summary": "Anthropic's 30-day data retention policy for Claude Fable 5 has exposed a critical gap in enterprise AI governance, prompting Microsoft to restrict employee access while legal teams review the terms. Enterprises now need to demand explicit contractual commitments on data retention, deletion, auditability and liability from AI vendors, as data governance is becoming as important as model performance in procurement decisions.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "698000b3acfe",
+          "url": "https://www.nature.com/articles/s41598-026-57520-3",
+          "title": "A multi-task learning framework for diagnosing partial discharge types and assessing severity",
+          "snippet": "Scientific Reports - A multi-task learning framework for diagnosing partial discharge types and assessing severity",
+          "summary": "Researchers developed PD-IntelliFusionNet, a deep learning framework that simultaneously diagnoses partial discharge types and assesses severity in power transformers by fusing acoustic and electromagnetic sensor data with multi-task learning. The unified approach could reduce transformer maintenance costs by enabling earlier, more accurate detection of insulation degradation before failures occur.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "179ab8185fb4",
+          "url": "https://www.prnewswire.com/news-releases/cvpr-2026-honors-the-years-most-innovative-computer-vision-and-ai-research-302795723.html",
+          "title": "CVPR 2026 Honors the Year's Most Innovative Computer Vision and AI Research",
+          "snippet": "From dynamic scene reconstruction to 3D generative modeling, CVPR 2026 Best Papers showcase novel solutions poised to shape the next era of intelligent systems NEW YORK, June 11, 2026 /PRNewswire/ -- The IEEE Computer Society (CS) and the Computer Vision Foun…",
+          "summary": "CVPR 2026 awarded top honors to research on efficient 4D dynamic scene reconstruction (D4RT) and improved 3D generative modeling (O-Voxel), selected from 4,089 accepted papers. These breakthroughs in reconstructing real-world motion and generating higher-quality 3D assets will significantly accelerate applications in robotics, gaming, and spatial computing.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "9b732adcc58f",
+          "url": "https://futurism.com/artificial-intelligence/anthropic-concerned-models-ability-improve-itself",
+          "title": "Anthropic Was So Concerned About Its New Mythos-Based Model’s Power That It Lobotomized Its Ability to Improve Itself",
+          "snippet": "What's really going on? The post Anthropic Was So Concerned About Its New Mythos-Based Model’s Power That It Lobotomized Its Ability to Improve Itself appeared first on Futurism.",
+          "summary": "Anthropic released Fable 5, a powerful AI model it had previously deemed too dangerous, but deliberately restricted its ability to improve itself and assist with AI research. After researchers accused the company of unfairly hobbling competitors' development efforts and using hidden moderation filters, Anthropic quickly reversed course and made the safeguards visible, revealing tensions between AI safety concerns and competitive dynamics in the industry.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        }
+      ]
+    },
+    {
+      "case_id": "hard08",
+      "kind": "hard_negative",
+      "category": "Policy, Law & Regulation",
+      "articles": [
+        {
+          "id": "30eb58a1f23a",
+          "url": "https://www.computerweekly.com/news/366644332/Strict-sovereign-AI-policies-could-cost-APAC-economies-billions",
+          "title": "Strict sovereign AI policies could cost APAC economies billions",
+          "snippet": "A new Oxford Economics report reveals that pursuing total AI self-sufficiency will lead to economic trade-offs, delayed enterprise adoption, and higher carbon footprints across the region",
+          "summary": "Asia-Pacific governments pursuing strict sovereign AI policies to maintain control over technology could cost large economies like Japan and India over $100 billion each by 2035, primarily through delayed enterprise AI adoption and lost productivity rather than direct infrastructure costs. The trade-off between national security and economic competitiveness means the region must balance sovereignty with access to global cloud providers to avoid falling behind technologically.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "9f8010acb46c",
+          "url": "https://www.thehindubusinessline.com/opinion/protecting-producer-welfare-in-the-age-of-ai/article71090069.ece",
+          "title": "Protecting producer welfare in the age of AI",
+          "snippet": "Regulatory design. Oligopsony, a market of few large buyers, needs a different and recalibrated regulatory framework",
+          "summary": "Millions of gig workers globally are labeling data and performing physical tasks to train AI and robotics systems, but operate in weak bargaining positions with few buyer firms, creating an oligopsony market that current regulations ignore. Policymakers must develop producer-centric frameworks addressing worker review portability, platform commission rates, and quality standards before market imbalances become entrenched.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "b0d10e8dabf2",
+          "url": "https://www.anthropic.com/news/fable-mythos-access",
+          "title": "Statement on US government directive to suspend access to Fable 5 and Mythos 5",
+          "snippet": "",
+          "summary": "The US government issued an export control directive today ordering Anthropic to immediately suspend access to Fable 5 and Mythos 5 models for all users, citing a discovered jailbreak method that the government views as a national security concern. Anthropic is complying but disputes the decision, arguing that the identified vulnerability is narrow, affects competing models similarly, and doesn't warrant halting a commercial product used by hundreds of millions of people.",
+          "hn_score": 3043,
+          "language": "en",
+          "source": "hackernews"
+        },
+        {
+          "id": "50a1d9221492",
+          "url": "https://biztoc.com/x/2a3a10d6b8b022bf",
+          "title": "Anthropic's AI will now tell users when requests are downgraded for national security after backlash",
+          "snippet": "Anthropic is changing course after facing criticism for quietly downgrading certain requests to its most capable AI model. On Tuesday, the $965 billion company released a version of its most capable model, Mythos. Anthropic revealed Mythos in April, but held …",
+          "summary": "Anthropic will now notify users when its AI model Claude downgrades requests due to national security concerns, reversing its previous practice of making these changes silently after public criticism.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "f0f065412afb",
+          "url": "https://www.nextgov.com/artificial-intelligence/2026/06/vas-ai-chatbots-not-designated-high-impact-despite-clinical-use-watchdog-says/414158/",
+          "title": "VA’s AI chatbots not designated high-impact, despite clinical use, watchdog says",
+          "snippet": "VA’s Inspector General noted that the agency’s two internal chatbots “are not designed specifically for clinical use,” although they have been deployed for such purposes.",
+          "summary": "The Department of Veterans Affairs' inspector general found that VA clinicians are using generative AI chatbots for patient documentation without the tools being classified as high-impact uses, meaning they lack required safety testing and oversight mechanisms. This creates patient safety risks because there is no way to track AI-generated errors in clinical notes or ensure the chatbots' outputs are accurate enough for medical decision-making.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "9b184f4d94d3",
+          "url": "https://cryptobriefing.com/a16z-partner-criticizes-ai-political-infiltration/",
+          "title": "Ex-Andreessen Horowitz partner criticizes firm for AI political infiltration",
+          "snippet": "The critique highlights potential risks of concentrated political influence in AI and crypto sectors, possibly affecting regulatory outcomes. The post Ex-Andreessen Horowitz partner criticizes firm for AI political infiltration appeared first on Crypto Briefi…",
+          "summary": "John O'Farrell, a former Andreessen Horowitz general partner, accused the firm and other venture capital investors of using hundreds of millions in political donations to block AI regulation by supporting friendly politicians and targeting those who favor oversight. The dispute exposes how major tech investors are attempting to shape AI policy during a critical regulatory moment, with implications extending to crypto regulation since the same political infrastructure is used across both sectors.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "be28edf843ed",
+          "url": "https://cryptobriefing.com/alphabet-shareholder-proposals-water-ai-governance-fail/",
+          "title": "Alphabet shareholders reject proposals on water use reporting and AI governance oversight",
+          "snippet": "Alphabet's governance structure limits shareholder influence, highlighting challenges for sustainable investing and AI risk management oversight. The post Alphabet shareholders reject proposals on water use reporting and AI governance oversight appeared first…",
+          "summary": "Alphabet shareholders voted down two proposals on June 5 calling for enhanced water use reporting tied to AI development and formalized board oversight of AI risks, despite support from major institutional investors. The company's dual-class share structure gives insiders outsized voting control, making shareholder-driven governance changes nearly impossible without insider backing.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "01424f2ce0ca",
+          "url": "https://www.cnbc.com/2026/06/11/ex-a16z-partner-slams-old-firm-othes-political-infiltration-in-ai.html",
+          "title": "Ex-Andreessen Horowitz partner slams his old firm, other VCs for 'political infiltration' around AI",
+          "snippet": "John O'Farrell, former partner at Andreessen Horowitz, says the PAC Leading the Future, backed by his old firm, is trying to \"intimidate politicians.\"",
+          "summary": "John O'Farrell, a former Andreessen Horowitz partner, criticized leading venture capital firms and their $125 million political action committee for blocking AI regulation instead of engaging in good-faith policy discussions. His departure and public criticism suggest the tech industry's unified stance against AI governance is fracturing, potentially weakening its political influence on regulation.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        }
+      ]
+    },
+    {
+      "case_id": "hard09",
+      "kind": "hard_negative",
+      "category": "Industry & Business",
+      "articles": [
+        {
+          "id": "0ee577cedf3b",
+          "url": "http://9to5toys.com/2026/06/12/youre-losing-money-on-those-ai-subs-switch-to-this-60-lifetime-tool-that-combines-them-all-540-msrp/",
+          "title": "You’re losing money on those AI subs – Switch to this $60 lifetime tool that combines them all ($540 MSRP)",
+          "snippet": "TL;DR: A one-time $60 payment gets you lifetime access to ChatGPT, Claude, Gemini, and more ($540 MSRP, sale ends June 14). At...",
+          "summary": "A startup called 1min.AI is offering lifetime access to multiple AI tools (ChatGPT, Claude, Gemini, and others) for a one-time $60 payment through June 14, positioning itself as a cheaper alternative to paying $20+ monthly for separate subscriptions. The main implication is that users could eliminate recurring AI subscription costs entirely, though the actual value depends on whether the platform's models and features match what they currently pay for separately.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "7472e40658cb",
+          "url": "https://devops.com/stack-overflow-is-being-reborn-as-a-back-end-service-for-ai-agents/",
+          "title": "Stack Overflow Is Being Reborn as a Back-End Service for AI Agents",
+          "snippet": "Will that stop its decline? We’ll soon find out. Once upon a time, Stack Overflow was, love it or hate it, the site programmers went to find answers for their most annoying development questions. Back then, according to Prashanth Chandrasekar, Stack Overflow’…",
+          "summary": "Stack Overflow is pivoting to serve AI agents directly through an API-based knowledge service, allowing agents to query verified programming solutions before executing code and contribute new solutions with human oversight. The shift is critical because Stack Overflow's traffic collapsed 98% since 2014 as AI agents began bypassing the site entirely, but the platform's long-term value depends on fresh human contributions to keep its knowledge current as older answers become obsolete.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "ee4a4ca11366",
+          "url": "https://biztoc.com/x/a6e5d0250bece64c",
+          "title": "Here’s what Jeff Bezos’ new startup Prometheus will do",
+          "snippet": "In November, Jeff Bezos announced that he would become co-CEO of a new startup called Prometheus. At the time, the startup said it would focus on “physical AI”—an increasingly common term for applying the same deep learning principles behind large language mo…",
+          "summary": "Jeff Bezos is co-leading a new startup called Prometheus that will apply large language model techniques to physical AI systems and robotics.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "3173deafc815",
+          "url": "https://siliconangle.com/2026/06/11/after-raising-75b-ipo-elon-musks-spacex-pop-20-trading-debut/",
+          "title": "After raising record $75B in IPO, Elon Musk’s SpaceX pops 20% in trading debut",
+          "snippet": "Updated with morning trading: Shares of Elon Musk’s Space Exploration Technologies Corp. jumped 20% over their $135 asking price Friday morning after one of the most hotly anticipated initial public stock offerings in living memory. The rocket company, now va…",
+          "summary": "SpaceX shares surged 20% above their $135 IPO price in Friday morning trading, marking a strong debut for Elon Musk's rocket company after raising a record $75 billion.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "160af48dee38",
+          "url": "https://biztoc.com/x/16ef64506db4c895",
+          "title": "Top House Republican’s family investment poised to benefit from SpaceX IPO",
+          "snippet": "Rep. Lisa McClain, one of the House GOP's top leaders, has a family investment poised to benefit from SpaceX's record public debut after her husband bought as much as $250,000 in Elon Musk's artificial intelligence company xAI before it was folded into the ro…",
+          "summary": "Rep. Lisa McClain's family stands to profit from SpaceX's upcoming IPO through her husband's prior investment in xAI, Elon Musk's AI company that was merged into SpaceX.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "83c83215d801",
+          "url": "https://www.cnet.com/tech/services-and-software/mozillas-ceo-knows-you-might-not-want-ai-in-firefox/",
+          "title": "Mozilla's CEO Knows You Might Not Want AI in Firefox",
+          "snippet": "We talked to the browser maker's new boss about privacy, choice and his vision for the internet's future.",
+          "summary": "Mozilla released an AI kill switch for Firefox that lets users disable AI features entirely, differentiating it from competitors like Google and Microsoft that bundle AI into browsers by default. The implication is that user choice and privacy are becoming competitive advantages as tech giants face backlash over forced AI integration, though adoption of the kill switch remains low at just 1% of users.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "b5efb235c988",
+          "url": "https://www.gov.uk/government/news/britain-powers-ahead-on-ai-with-billions-of-pounds-of-new-investment-and-thousands-of-jobs-secured-as-london-tech-week-wraps-up",
+          "title": "Britain powers ahead on AI with billions of pounds of new investment and thousands of jobs secured as London Tech Week wraps up",
+          "snippet": "More than £6 billion of new investment and around 8,000 new jobs have been announced this week, as companies from around the world choose to build, hire and scale here.",
+          "summary": "Britain secured over £6 billion in AI investment and 8,000 new jobs this week, with commitments from AMD, Nebius, and domestic firms spanning chips, cloud infrastructure, and autonomous vehicles. The influx positions the UK as a competitive global AI hub while the government backs the sector with a £1.1 billion hardware plan and skills initiatives.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "8cff572da36e",
+          "url": "https://www.lyonpeople.com/actualites-lyon/actualites-economiques/lyon-a-laube-de-ses-50-ans-alptis-prepare-une-nouvelle-phase-de-croissance-2026-06-12.html",
+          "title": "Lyon. A l’aube de ses 50 ans, Alptis prépare une nouvelle phase de croissance",
+          "snippet": "À l’aube de ses 50 ans, l’assureur mutualiste mise sur la retraite, l'IA et la diversification pour accélérer son développement.",
+          "summary": "Lyon-based mutual insurer Alptis posted 2025 revenue of 150.8 million euros and invested over 25 million euros in AI and data systems while launching its first individual retirement savings plan in June 2026. The 50-year-old company is diversifying from health and insurance into retirement products to strengthen growth over the next decade.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        }
+      ]
+    },
+    {
+      "case_id": "hard10",
+      "kind": "hard_negative",
+      "category": "Industry & Business",
+      "articles": [
+        {
+          "id": "c8eaf8476ba9",
+          "url": "https://siliconangle.com/2026/06/11/phoenixai-raises-80m-drive-development-agentic-ai-ready-database-technology/",
+          "title": "PhoenixAI raises $80M to drive the development of agentic AI-ready database technology",
+          "snippet": "PhoenixAI Inc., formerly known as CelerData, today announced it raised $80 million in new funding to fuel the development of the company’s artificial intelligence-native database and expand governance for regulated industries. Sky9 Capital led the Series B ro…",
+          "summary": "PhoenixAI closed an $80 million Series B funding round led by Sky9 Capital to develop its AI-native database technology and expand compliance capabilities for regulated industries. The company, formerly known as CelerData, is positioning its database as infrastructure designed specifically for agentic AI applications.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "c0d89e8d4f10",
+          "url": "https://biztoc.com/x/9ad943fcb0050fc2",
+          "title": "Payments Power the Real SMB Transformation as AI Arrives on Main Street",
+          "snippet": "The conventional logic has always been that small businesses had smaller needs than their enterprise peers. But with Google this week launching new enterprise-grade artificial intelligence (AI) tools designed for small- to medium-sized businesses (SMB…",
+          "summary": "As AI tools become more accessible to small businesses, payment infrastructure is emerging as a critical enabler of SMB digital transformation, allowing smaller companies to compete with enterprise-level capabilities.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "f5fb64a21cec",
+          "url": "https://biztoc.com/x/bb278e6b9498c6c2",
+          "title": "Abridge wants to be the operating system for medicine—and NVIDIA and Eli Lilly are helping build it",
+          "snippet": "On Thursday morning in New York City, Dr. Shiv Rao stood before a room of health system executives and made a case that ambient AI—a technology that began largely as a transcription tool—was ready to do something far more consequential than writing a doctor’s…",
+          "summary": "Abridge, backed by NVIDIA and Eli Lilly, is positioning its ambient AI technology as a foundational operating system for healthcare that goes beyond transcription to handle complex medical workflows and decision-making. The company is pitching health system executives on how this AI can transform clinical operations at scale.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "b2ed338fca4f",
+          "url": "https://cryptobriefing.com/ai-price-war-startups-tech-giants/",
+          "title": "Startups and tech giants wage AI price war as inference costs spiral out of control",
+          "snippet": "The AI price war pressures companies to optimize costs, potentially stalling profitability and innovation as they navigate budget constraints. The post Startups and tech giants wage AI price war as inference costs spiral out of control appeared first on Crypt…",
+          "summary": "Companies are dynamically routing AI queries to cheaper models to manage spiraling inference costs, forcing OpenAI and Anthropic to consider major price cuts as Chinese competitors and open-source alternatives undercut Western pricing. The implication is that the $252.3B in corporate AI investments made in 2024 were based on pricing assumptions that are rapidly becoming obsolete, making profitability for leading AI providers significantly harder to achieve.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "3b208a714e6b",
+          "url": "https://www.globenewswire.com/news-release/2026/06/10/3309522/0/fr/Planisware-d%C3%A9voile-ses-derni%C3%A8res-innovations-en-mati%C3%A8re-d-intelligence-artificielle-lors-de-sa-conf%C3%A9rence-annuelle-Exchange26-EMEA.html",
+          "title": "Planisware dévoile ses dernières innovations en matière d’intelligence artificielle lors de sa conférence annuelle Exchange26 EMEA",
+          "snippet": "Planisware dévoile ses dernières innovations en matière d’intelligence artificielle lors de sa conférence annuelle Exchange26 EMEA Paris, France, 10...",
+          "summary": "Planisware unveiled Prisma, a hybrid AI reasoning agent that automates project portfolio management tasks and executes processes while maintaining user control and auditability. The new tool represents a shift toward agentic AI that goes beyond data analysis to actively manage workflows, enabling organizations to accelerate decision-making and operational efficiency in the growing Project Economy sector.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "ac2d3bcc5c77",
+          "url": "https://www.prnewswire.com/news-releases/sentra-extends-enterprise-ai-governance-to-claude-with-continuous-data-risk-context-302799191.html",
+          "title": "Sentra Extends Enterprise AI Governance to Claude with Continuous Data Risk Context",
+          "snippet": "New integration connects Sentra's continuous data classification engine to Claude Enterprise, providing the data context needed to identify, prioritize, and mitigate AI-related risks. TEL AVIV, Israel and NEW YORK, June 12, 2026 /PRNewswire/ -- Sentra, the AI…",
+          "summary": "Sentra integrated its data classification platform with Claude's Compliance API, allowing enterprises to see exactly what sensitive data employees upload to Claude and automatically assess the risk. This addresses a critical gap in AI governance as GenAI data violations have doubled year-over-year and regulators like the EU are now actively enforcing AI oversight requirements.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "2d28a3a260b3",
+          "url": "https://apnews.com/press-release/pr-newswire/press-release-45889f6d6b81dd96b893248ce91a0dac",
+          "title": "Linx Security Integrates with Claude Compliance API to Bring Identity Governance to Enterprise AI",
+          "snippet": "NEW YORK, June 12, 2026 /PRNewswire/ -- Linx Security, the AI-native identity security and governance platform built for the era of hybrid workforce — humans, AI agents and non-human identities — today announced its integration with Claude Compliance API, pow…",
+          "summary": "Linx Security integrated with Anthropic's Claude Compliance API to give enterprises visibility and control over Claude access through a unified identity governance platform, letting security teams monitor who has Claude access, what permissions they hold, and review API keys just like they do for other applications. The integration eliminates a major security blind spot since Claude deployments previously had no identity controls or audit trails, making unauthorized access and privilege creep difficult to detect.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "3175931b2fbd",
+          "url": "https://siliconangle.com/2026/06/12/spacexs-record-ipo-bezos-prometheus-rising-anthropics-controversial-call-ai-limits/",
+          "title": "SpaceX’s record IPO, Bezos’ Prometheus rising and Anthropic’s controversial call for AI limits",
+          "snippet": "Blastoff! Elon Musk’s SpaceX went public Thursday evening and raised a stunning $75 billion, easily an all-time record. The IPO is just the first of the triumvirate of AI leaders — yes, SpaceX owns xAI, surely a large part of SpaceX’s valuation. OpenAI filed …",
+          "summary": "SpaceX raised a record $75 billion in its IPO Thursday, with a significant portion of the valuation attributed to its ownership of xAI, while OpenAI and Anthropic also made major moves in the competitive AI landscape.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        }
+      ]
+    },
+    {
+      "case_id": "control01",
+      "kind": "control",
+      "category": "Industry & Business",
+      "articles": [
+        {
+          "id": "587a599e2147",
+          "url": "https://cryptobriefing.com/marvell-hires-adobe-cfo-chipmaker-shift/",
+          "title": "Marvell hires Adobe CFO Dan Durn as Wall Street pivots toward chipmakers",
+          "snippet": "Marvell's strategic hire signals a shift in investor focus towards AI hardware, highlighting potential growth in semiconductor-driven innovation. The post Marvell hires Adobe CFO Dan Durn as Wall Street pivots toward chipmakers appeared first on Crypto Briefi…",
+          "summary": "Marvell Technology hired Adobe's CFO Dan Durn, signaling that Wall Street is shifting investment focus toward semiconductor companies over software firms as AI infrastructure becomes the more lucrative opportunity. The move carries immediate execution risk for Adobe, which is simultaneously losing its CEO and CFO despite raising revenue guidance and tripling AI revenue, suggesting market skepticism about the company's ability to compete against AI-native competitors.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "ec597f53a606",
+          "url": "https://www.databricks.com/blog/welcoming-first-cohort-databricks-student-fellows",
+          "title": "Welcoming the first cohort of Databricks student fellows",
+          "snippet": "* Databricks launched its inaugural Student Fellows cohort, selecting a highly diverse group of students from over 5,000 applications across hundreds of universities and dozens of countries worldwide. * Fellows were chosen for their campus leadership and han…",
+          "summary": "Databricks has launched its inaugural Student Fellows program, selecting five exceptional students from over 5,000 applications across hundreds of universities globally to serve as campus ambassadors bridging academic AI and data engineering with production-scale Databricks tools. The implication is that major data infrastructure companies are now investing directly in university talent pipelines by positioning student leaders as key influencers for early adoption of their platforms.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "5a467a83ba10",
+          "url": "https://oilprice.com/Energy/Energy-General/US-and-Uzbekistan-Deepen-Economic-Ties-With-New-Investment-Pact.html",
+          "title": "U.S. and Uzbekistan Deepen Economic Ties With New Investment Pact",
+          "snippet": "The United States and Uzbekistan are working to expand business-to-business contacts with the aim of expanding US trade and investment in some key economic sectors, including mining, energy, IT, agriculture, and artificial intelligence. US Assistant Secretary…",
+          "summary": "The US and Uzbekistan signed a memorandum of understanding to expand business ties across mining, energy, IT, agriculture, and AI, moving their relationship from traditional commodity trade to technology and investment partnerships. The agreement could unlock up to $100 billion in US investment over the next decade, giving the US a stronger economic foothold in Central Asia as it competes for regional influence.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "14f69cc3aa02",
+          "url": "https://www.prnewswire.com/news-releases/hippocratic-ai-launches-llm-model-training-residency-for-top-engineers-interested-in-career-shaping-work-302799336.html",
+          "title": "Hippocratic AI Launches LLM Model Training Residency for Top Engineers Interested in Career-Shaping Work",
+          "snippet": "Engineers will fine tune models, run experiments and engage directly with Polaris - HAI's patented constellation model - during six month sprint MENLO PARK, Calif., Jun 12, 2026 /PRNewswire/ -- Hippocratic AI, the generative AI company building the only model…",
+          "summary": "Hippocratic AI launched a six-month LLM training residency for experienced engineers to fine-tune its Polaris voice AI model while working 10 hours per week alongside their primary role. The program signals that healthcare AI companies are competing for top engineering talent by offering hands-on frontier model training rather than just recruitment promises.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "d0a7368d53bf",
+          "url": "https://siliconangle.com/2026/06/11/qumulusai-shift-gpu-scarcity-gpu-efficiency/",
+          "title": "QumulusAI and the shift from GPU scarcity to GPU efficiency",
+          "snippet": "Neocloud provider QumulusAI announced today that it has secured more than $124 million in customer subscriptions for three-year terms with Hyperbolic and another leading artificial intelligence inference platform. These agreements cover deployments totaling 1…",
+          "summary": "QumulusAI secured over $124 million in three-year customer subscriptions from Hyperbolic and another AI inference platform, signaling a market shift toward optimizing GPU efficiency rather than competing over scarce hardware availability.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "02989ddf9ac8",
+          "url": "https://www.pymnts.com/news/artificial-intelligence/2026/anthropic-vertical-software-rollout-threatens-enterprise-ai-builders/",
+          "title": "Anthropic Vertical Software Rollout Threatens Enterprise AI Builders",
+          "snippet": "Anthropic’s introduction of industry-specific artificial intelligence tools threatens the business of companies that use its AI models to build their own tools, The Information reported Thursday (June 11). The report highlighted 13 industry-specific tools int…",
+          "summary": "Anthropic is building industry-specific AI tools that compete directly with companies using its models to develop their own applications, while degrading model performance for customers who build competing software. This threatens the viability of enterprise AI builders who previously relied on Anthropic as a neutral model provider rather than a direct competitor.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "12ac078a3e17",
+          "url": "https://siliconangle.com/2026/06/11/helix-launches-10b-funding-build-ai-infrastructure/",
+          "title": "Helix launches with $10B+ in funding to build AI infrastructure",
+          "snippet": "An investor consortium today launched a venture called Helix Digital Infrastructure Inc. to build artificial intelligence data centers for hyperscalers. The company’s backers include KKR, the Kuwait Investment Authority, Nvidia Corp. and Vistra Corp., a major…",
+          "summary": "Helix Digital Infrastructure Inc. has launched with over $10 billion in backing from KKR, Kuwait Investment Authority, Nvidia, and Vistra to construct AI data centers for major cloud providers.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "823c09d3a300",
+          "url": "https://cryptobriefing.com/openai-spacex-anthropic-trillion-dollar-ipos/",
+          "title": "OpenAI, SpaceX, and Anthropic are preparing for trillion-dollar IPOs that could reshape public markets",
+          "snippet": "These IPOs could significantly alter market dynamics, potentially setting new benchmarks for tech valuations and investor expectations. The post OpenAI, SpaceX, and Anthropic are preparing for trillion-dollar IPOs that could reshape public markets appeared fi…",
+          "summary": "SpaceX, OpenAI, and Anthropic are preparing IPOs with combined valuations near $3 trillion, targeting late 2026 and early 2027 listings that would make them among the largest public debuts in history. This reshaping of public markets could fundamentally shift investor exposure to space exploration and AI development, with valuations 10 to 20 times larger than the 2012 Facebook IPO.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        }
+      ]
+    },
+    {
+      "case_id": "control02",
+      "kind": "control",
+      "category": "Industry & Business",
+      "articles": [
+        {
+          "id": "38575eddae43",
+          "url": "https://biztoc.com/x/18e3c2d517fca059",
+          "title": "Anthropic Vertical Software Rollout Threatens Enterprise AI Builders",
+          "snippet": "Anthropic’s introduction of industry-specific artificial intelligence tools threatens the business of companies that use its AI models to build their own tools, The Information reported Thursday (June 11). The report highlighted 13 industry-specific t…",
+          "summary": "Anthropic is launching vertical software solutions tailored to specific industries, which could undercut enterprise companies that have built their own AI tools using Anthropic's models. This move puts Anthropic in direct competition with its own customer base of AI builders.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "5c67ae46df5f",
+          "url": "https://fortune.com/2026/06/12/ai-strategic-partner-versus-passive-technology-c-h-robinson-gap-brainstorm-tech/",
+          "title": "Why companies are treating AI as a strategic partner rather than a passive technology, and how to avoid an ‘AI hangover’",
+          "snippet": "Building operational AI at scale requires more than just raw algorithmic power, business and tech experts said at Fortune Brainstorm Tech.",
+          "summary": "Companies are moving AI beyond hype into core operations by treating it as a strategic partner with safety guardrails, long-term memory, and cheaper storage infrastructure rather than a passive tool. The critical implication is that success depends equally on cultural change, as employees who receive only technical training experience \"AI hangover\" when the technology fails to solve complex problems, making mindset shifts toward AI as a coworker essential for sustained adoption.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "e505dde2909d",
+          "url": "https://siliconangle.com/2026/06/11/elon-musks-spacex-raises-record-breaking-75b-pricing-ipo-135-per-share/",
+          "title": "Elon Musk’s SpaceX raises record-breaking $75B after pricing IPO at $135 per share",
+          "snippet": "Elon Musk’s Space Exploration Technologies Corp. has priced its initial public offering at $135 per share ahead of one of the most hotly anticipated market debuts in living memory. The rocket company reportedly sold 555.6 million shares at that price, netting…",
+          "summary": "SpaceX priced its IPO at $135 per share and sold 555.6 million shares, raising a record $75 billion in what is shaping up to be one of the most significant market debuts in recent history.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "232b5811776c",
+          "url": "https://www.fredzone.org/avataar-mise-sur-une-ia-video-abordable-pour-accelerer-ladoption-de-lintelligence-artificielle-en-inde/",
+          "title": "Avataar mise sur une IA vidéo abordable pour accélérer l’adoption de l’intelligence artificielle en Inde",
+          "snippet": "L’intelligence artificielle progresse rapidement à travers le monde, mais tous les pays n’avancent pas au même rythme dans le développement de modèles capables de rivaliser avec les références américaines ou chinoises. En Inde, plusieurs initiatives cherchent…",
+          "summary": "Avataar AI launched Varya, a low-cost video generation model optimized for Indian cultural contexts, to democratize AI adoption across the country. The strategy of building affordable, locally-adapted AI tools rather than competing directly with global leaders could establish India as a regional AI innovation hub focused on practical applications.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "84628058bad2",
+          "url": "https://www.businessinsider.com/ai-token-price-crash-nvidia-blackwell-gpus-2026-6#article",
+          "title": "Why AI token prices are about to plummet",
+          "snippet": "Nvidia's Blackwell systems could flood the market with cheap AI tokens, driving down costs and reshaping the economics of AI.",
+          "summary": "Nvidia's new Blackwell GPUs are dramatically more efficient than previous systems, generating tokens 65 times faster and at 35 times lower cost per million tokens, which will soon flood the market with cheap AI processing power. This will force AI companies to slash token prices significantly, potentially ending the era of expensive AI usage and the cost concerns that have been mounting for both providers and users.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "34976f6243f1",
+          "url": "https://biztoc.com/x/cbd1bfd9d89941f0",
+          "title": "Mistral Seeks $3.5 Billion to Build European AI Infrastructure",
+          "snippet": "Mistral AI is in talks to raise about 3 billion euros (about $3.5 billion) at a valuation of about 20 billion euros (about $23.1 billion), a figure that could go higher depending on investor demand, Bloomberg reported Friday (June 12), citing unnamed sources.…",
+          "summary": "Mistral AI is raising approximately $3.5 billion at a $23.1 billion valuation to build European AI infrastructure and compete with U.S.-based AI companies.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "b325bab1743b",
+          "url": "https://www.medicaldaily.com/eli-lilly-insilico-ai-anti-aging-drug-discovery-2026-475611",
+          "title": "Eli Lilly's $2.75 Billion AI Bet on Anti-Aging Drugs Signals a Major Shift in Pharmaceutical Priorities",
+          "snippet": "Eli Lilly's $2.75B AI deal with Insilico Medicine targets age-related diseases. How AI is transforming longevity drug discovery and what it means for patients.",
+          "summary": "Eli Lilly committed up to $2.75 billion to Insilico Medicine to use AI for discovering drugs targeting aging biology, marking the first major pharmaceutical bet that aging itself, rather than individual diseases, is a core strategic priority. The deal signals AI can compress drug discovery timelines from 12-15 years to months, but meaningful impact on patient health depends on whether policymakers address pricing access for lower-income Americans before these drugs become entrenched at premium prices like GLP-1 medications.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "07f93813583f",
+          "url": "https://siliconangle.com/2026/06/11/supply-chain-operations-blueyonder/",
+          "title": "Blue Yonder pushes supply chain AI toward autonomous operations",
+          "snippet": "The supply chain sector has perhaps more to gain from the artificial intelligence age than any other sector. Supply chains are subject to many different variables — weather, delays, legal restrictions — that traditional planning systems cannot always manage e…",
+          "summary": "Blue Yonder is advancing supply chain AI capabilities to enable more autonomous decision-making, helping businesses navigate complex variables like weather disruptions and regulatory changes that traditional planning systems struggle to handle.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        }
+      ]
+    },
+    {
+      "case_id": "control03",
+      "kind": "control",
+      "category": "Industry & Business",
+      "articles": [
+        {
+          "id": "3d669c242afb",
+          "url": "https://www.lejournaldesentreprises.com/breve/la-start-up-lilloise-loumo-leve-1-million-deuros-pour-accelerer-son-developpement-2144734",
+          "title": "La start-up lilloise Loumo lève 1 million d'euros pour accélérer son développement",
+          "snippet": "La start-up lilloise Loumo, spécialisée dans la gestion et la correction d'examens par intelligence artificielle, a bouclé une levée de fonds de 1 million d",
+          "summary": "Loumo, a Lille-based startup that uses AI to manage and correct exams, has raised 1 million euros to accelerate its growth.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "60ee5845aac4",
+          "url": "https://fredcavazza.net/2026/06/12/une-polarisation-du-marche-de-lia-generative-pour-fideliser-les-entreprises-et-utilisateurs/",
+          "title": "Une polarisation du marché de l’IA générative pour fidéliser les entreprises et utilisateurs",
+          "snippet": "La sortie de Claude Fable aurait dû être un moment de célébration pour l’écosystème des nouvelles technologies. Elle illustre au contraire une contradiction de plus en plus difficile à ignorer : les modèles les plus puissants sont aussi les moins accessibles,…",
+          "summary": "Anthropic's new Claude Fable model has such high inference costs that it's excluded from subscriptions, exemplifying a market split where the most powerful AI models are becoming prohibitively expensive while tech giants pivot to cheaper, compact models for devices and enterprise adoption. The implication is that startups racing to build the largest models may lose market share to established players who can absorb AI costs through hardware lock-in and bundled services.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "0d6c8a43970b",
+          "url": "https://siliconangle.com/2026/06/11/datadogs-finops-analyst-says-ai-cost-management-starts-tagging-model-governance-finopsx/",
+          "title": "Datadog’s FinOps analyst says AI cost management starts with tagging and model governance",
+          "snippet": "AI cost management is bringing a new taxonomy to FinOps practitioners, but the core discipline, understanding what you’re using, why, and what it costs, remains the same. That constancy is reassuring and instructive, according to Deeja Cruz (pictured), senior…",
+          "summary": "Datadog's FinOps analyst explains that managing AI costs requires proper tagging and model governance, while emphasizing that the fundamental principles of understanding resource usage, business justification, and cost attribution remain consistent with traditional FinOps practices.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "37450c797b66",
+          "url": "https://www.frenchweb.fr/neura-robotics-leve-12-milliard-deuros-la-robotique-devient-le-nouveau-pari-strategique-de-leurope/462288",
+          "title": "NEURA ROBOTICS lève 1,2 milliard d’euros : la robotique devient le nouveau pari stratégique de l’Europe",
+          "snippet": "La robotique humanoïde franchit un nouveau seuil de financement en Europe. L’allemand Neura Robotics annonce une levée de 1,4 milliard de dollars, soit environ 1,2 milliard d’euros, portant sa valorisation à près de 6 milliards d’euros. L’opération rassemble …",
+          "summary": "German robotics startup Neura Robotics raised 1.4 billion dollars at a 6 billion euro valuation from Amazon, NVIDIA, Qualcomm, Bosch, and other major investors, signaling that Europe is now betting on physical AI systems that execute tasks in the real world as the next strategic infrastructure layer. The critical implication is that control over robotics platforms, training systems, and associated data networks could deliver the kind of competitive advantage to early leaders that cloud computing provided to US tech giants, making this a sovereignty question for Europe.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "baeb84b781cf",
+          "url": "https://www.techradar.com/pro/say-hello-to-elon-musks-mega-new-spacex-facility-an-11-million-square-foot-gigasat-factory-will-look-to-build-hardware-for-orbiting-data-centers-and-targets-1-gw-year-of-space-ai-compute-by-late-2027",
+          "title": "Say hello to Elon Musk's mega new SpaceX facility — an 11-million-square-foot Gigasat factory will look to build hardware for orbiting data centers, and targets 1 GW/year of space AI compute by late 2027",
+          "snippet": "SpaceX unveils 11 million square foot Texas factory intended to build AI satellites supporting ambitious orbital computing plans.",
+          "summary": "SpaceX is building an 11-million-square-foot factory in Texas to mass-produce AI1 satellites designed as orbiting data centers, targeting 1 gigawatt of annual space-based compute capacity by late 2027. This could establish SpaceX as a competitor to terrestrial AI data centers, offering an alternative approach to the massive ground-based facilities major tech companies are currently constructing.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "1ebf7645d167",
+          "url": "https://siliconangle.com/2026/06/12/chatsee-raises-6-5m-build-failure-memory-enterprise-ai-agents/",
+          "title": "ChatSee raises $6.5M to build ‘failure memory’ for enterprise AI agents",
+          "snippet": "ChatSee.AI Inc., a company that provides a failure intelligence layer for autonomous artificial intelligence systems, today announced it raised $6.5 million in seed funding. True Ventures led the round, with participation from First Rays Venture Partners, Sev…",
+          "summary": "ChatSee.AI raised $6.5 million in seed funding to develop a failure intelligence system that helps enterprise AI agents learn from and avoid repeating mistakes. The funding was led by True Ventures alongside First Rays Venture Partners and others.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "ddf1ab8f080c",
+          "url": "https://cryptobriefing.com/hive-digital-500-mw-capacity-2028/",
+          "title": "HIVE Digital Technologies targets 500 MW capacity by 2028 as AI pivot accelerates",
+          "snippet": "HIVE's AI pivot could redefine its market position, but execution risks and shifting GPU demand may challenge its ambitious growth targets. The post HIVE Digital Technologies targets 500 MW capacity by 2028 as AI pivot accelerates appeared first on Crypto Bri…",
+          "summary": "Former Bitcoin miner HIVE Digital Technologies is pivoting to AI infrastructure, targeting $450-660 million in high-performance computing revenue by 2028 through a 320 MW data center near Toronto opening in late 2027, while maintaining its crypto mining business. The company's ability to scale from its current $35 million HPC revenue depends entirely on executing this gigafactory on schedule and securing enterprise customers, making the 2027 timeline and customer pipeline the critical metrics for investors.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "11ae982487b8",
+          "url": "https://www.lalibre.be/economie/entreprises-startup/2026/06/10/start-ia-et-tremplin-ia-cest-reparti-la-priorite-est-donnee-aux-pme-wallonnes-BMYMNZR5MZCZVILNMHVK4U3O44/",
+          "title": "Start IA et Tremplin IA, c’est reparti : la priorité est donnée aux PME wallonnes",
+          "snippet": "Suspendus depuis un an, les dispositifs IA de la Région wallonne pour les entreprises sont relancés. Avec quelques changements à la clé. ...",
+          "summary": "Wallonia is relaunching its Start IA and Tremplin IA programs, which help companies develop artificial intelligence projects, now restricting access exclusively to SMEs with operations in the region and reducing public funding from 70% to 50%. The programs have proven highly effective, with 96% of past participants recommending them and two-thirds saying they wouldn't have launched AI projects without the support.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        }
+      ]
+    },
+    {
+      "case_id": "control04",
+      "kind": "control",
+      "category": "Industry & Business",
+      "articles": [
+        {
+          "id": "aba461661e44",
+          "url": "https://www.frenchweb.fr/cameramatics-leve-49-millions-deuros-lia-sinvite-derriere-le-volant-des-flottes-professionnelles/462297",
+          "title": "CAMERAMATICS lève 49 millions d’euros : l’IA s’invite derrière le volant des flottes professionnelles",
+          "snippet": "Si l’intelligence artificielle a d’abord transformé les métiers du savoir, service client, développement logiciel, marketing, finance ou analyse documentaire figurent parmi les premiers domaines à avoir bénéficié des progrès récents des modèles génératifs, el…",
+          "summary": "CameraMatics raised 49 million euros for a platform that uses AI, embedded cameras, and telematics to manage professional vehicle fleets. The key implication is that AI is shifting from automating knowledge work to controlling physical operations, with fleet safety becoming predictive rather than reactive, potentially saving companies millions annually in accident costs and insurance premiums.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "d3bb048b2ea1",
+          "url": "https://github.com/tensorzero/tensorzero",
+          "title": "AI OSS tool repo goes archived over night after raising $7.3M Seed",
+          "snippet": "",
+          "summary": "TensorZero, an open-source LLMOps platform that unifies gateway access, observability, evaluation, and optimization across all major AI model providers, archived its repository overnight after closing a $7.3M seed round. The sudden archival signals potential strategic pivoting or internal challenges despite the company's claim of production readiness with Fortune 10 customers, raising questions about the stability of open-source projects even after significant venture funding.",
+          "hn_score": 222,
+          "language": "en",
+          "source": "hackernews"
+        },
+        {
+          "id": "cfed8e5c75b8",
+          "url": "https://www.thewrap.com/creative-content/movies/lionsgate-runway-ai-short-films-franchises-ip/",
+          "title": "Lionsgate Takes Equity Stake in Runway, Will Mine Franchises for AI-Generated Shorts",
+          "snippet": "The companies' expanded partnership will blend existing IP with Runway's generative AI The post Lionsgate Takes Equity Stake in Runway, Will Mine Franchises for AI-Generated Shorts appeared first on TheWrap.",
+          "summary": "Lionsgate took an equity stake in AI company Runway and will produce AI-generated short series using its existing franchises like \"John Wick\" and \"The Hunger Games.\" This signals major studios are now treating generative AI as a core creative tool rather than a cost-cutting measure, potentially reshaping how entertainment content is developed and produced at scale.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "1b77a9c57295",
+          "url": "https://www.globenewswire.com/news-release/2026/06/11/3310617/0/en/AI-Code-Assistants-Market-Surges-to-127-05-billion-at-a-CAGR-48-1-by-2032-Exclusive-Report-by-MarketsandMarkets.html",
+          "title": "AI Code Assistants Market Surges to $127.05 billion at a CAGR 48.1% by 2032 | Exclusive Report by MarketsandMarkets™",
+          "snippet": "Delray Beach, FL, June 11, 2026 (GLOBE NEWSWIRE) -- According to MarketsandMarkets™, the AI Code Assistants Market size is projected to grow from USD 8.14 billion in 2025 to USD 127.05 billion by 2032, at a CAGR of 48.1% during the forecast period.",
+          "summary": "The AI code assistants market is projected to grow from $8.14 billion in 2025 to $127.05 billion by 2032, driven by enterprises adopting AI tools for modernizing legacy code, automating security fixes, and integrating AI into development workflows. This explosive growth signals that AI-assisted software development is becoming essential infrastructure for enterprises managing complex systems at scale.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "4c246a3b068a",
+          "url": "https://www.leblogauto.com/actualites/uber-mise-sur-nuro-pour-les-robotaxis/",
+          "title": "Uber mise sur Nuro pour les robotaxis",
+          "snippet": "Uber engage près de 500 M$ dans Nuro pour accélérer les robotaxis et la conduite autonome via plusieurs partenariats stratégiques. Uber renforce massivement sa stratégie dans la conduite autonome en portant son engagement financier envers la startup Nuro à pr…",
+          "summary": "Uber is investing up to 500 million dollars in autonomous vehicle startup Nuro, with funding tied to achieving milestones like driverless operation and passenger transport by end of year. The investment reflects intense global competition in robotaxis and Uber's strategy to become a central platform connecting multiple autonomous vehicle technologies rather than building its own.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "298e6eae107d",
+          "url": "https://soldiersystems.net/2026/06/12/gallatin-ai-awarded-contract-by-us-armys-iii-armored-corps/",
+          "title": "Gallatin AI Awarded Contract by US Army’s III Armored Corps",
+          "snippet": "WASHINGTON, June 11, 2026 — Gallatin AI today announced it has been awarded a contract by the US Army’s III Armored Corps to deploy and refine Navigator, its AI-native logistics decision support suite, in direct support of III Corps exercises and operational …",
+          "summary": "Gallatin AI won an 18-month contract from the US Army's III Armored Corps to deploy its Navigator logistics AI platform for operational planning and sustainment decision support. This addresses a critical gap in how corps-level commanders forecast supply needs across dispersed forces and distant supply depots during sustained conflict.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "2526c63ffcd9",
+          "url": "https://www.challenges.fr/entreprise/tech-numerique/creer-un-ingenieur-artificiel-general-avec-sa-start-up-dia-prometheus-jeff-bezos-entend-bouleverser-linnovation_644154",
+          "title": "Créer un « ingénieur artificiel général » : avec sa start-up d’IA Prometheus, Jeff Bezos entend bouleverser l’innovation",
+          "snippet": "Jeff Bezos ambitionne de créer un « ingénieur artificiel général » avec sa nouvelle start-up d’IA Prometheus. Objectif : accélérer radicalement l’arrivée de nouveaux appareils sophistiqués, des ordinateurs aux moteurs de fusées, en proposant de nouveaux outil…",
+          "summary": "Jeff Bezos is launching Prometheus, an AI startup aimed at developing an \"artificial general engineer\" that could dramatically accelerate innovation across hardware design, from computers to rocket engines. The project seeks to automate the engineering process itself, potentially revolutionizing how new sophisticated devices are created.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "f2121efd7eff",
+          "url": "https://cryptobriefing.com/spacex-colossus-1-anthropic-lease/",
+          "title": "SpaceX rents Colossus 1 data center to Anthropic after AI challenges with Grok",
+          "snippet": "The deal highlights the growing scarcity of GPU resources, pushing AI competitors to collaborate, potentially reshaping market dynamics. The post SpaceX rents Colossus 1 data center to Anthropic after AI challenges with Grok appeared first on Crypto Briefing.",
+          "summary": "SpaceX leased its 220,000-GPU Colossus 1 data center to Anthropic for roughly $1.25 billion per month after latency issues and hardware mismatches made it unsuitable for training Grok. The rental shift shows that building massive AI compute facilities requires careful attention to networking and hardware uniformity, not just raw chip counts, and gives SpaceX a major new revenue stream from its data center investments.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        }
+      ]
+    },
+    {
+      "case_id": "control05",
+      "kind": "control",
+      "category": "Industry & Business",
+      "articles": [
+        {
+          "id": "9d4f473cfe0d",
+          "url": "https://cryptobriefing.com/spacex-nvidia-partnership-space-ai/",
+          "title": "SpaceX and Nvidia deepen partnership to advance space and AI initiatives",
+          "snippet": "The deepened SpaceX-Nvidia partnership could revolutionize space tech and AI, potentially reshaping global data infrastructure and market dynamics. The post SpaceX and Nvidia deepen partnership to advance space and AI initiatives appeared first on Crypto Brie…",
+          "summary": "SpaceX and Nvidia are deepening their partnership as SpaceX prepares for a historic $75 billion IPO, with Nvidia providing specialized space-grade AI computing hardware while SpaceX simultaneously becomes an orbital data center operator serving major tech companies like Google and Anthropic. This positions SpaceX to generate significant recurring revenue from AI infrastructure beyond its core rocket business, fundamentally changing its financial profile as a public company.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "cb00edf9c91f",
+          "url": "https://www.prnewswire.com/news-releases/eightco-holdings-nasdaq--orbs-annonce-un-total-denviron-406-millions-de-dollars-en-avoirs-dont-openai-beast-industries-plus-de-16-000-eth-et-plus-de-283-millions-de-tokens-wld-302798739.html",
+          "title": "Eightco Holdings (NASDAQ : ORBS) annonce un total d'environ 406 millions de dollars en avoirs, dont OpenAI, Beast Industries, plus de 16 000 ETH et plus de 283 millions de tokens WLD",
+          "snippet": "Composition de la trésorerie d'Eightco au 10 juin 2026 : 90 millions de dollars d'actions OpenAI (indirectes), 18 millions de dollars d'actions Beast Industries, 16 278 ETH, 283 millions d'avoirs WLD et 142 millions de dollars de trésorerie et équivalents, po…",
+          "summary": "Eightco Holdings announced a $406 million portfolio including a $90 million indirect stake in OpenAI, 283 million Worldcoin tokens, and a position in Beast Industries, betting that AI, digital identity verification, and creator economy will reshape the next decade. The strategy lets public investors gain pre-IPO exposure to OpenAI while betting on human-verification infrastructure becoming essential as AI agents proliferate.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "065fca0b8bb5",
+          "url": "https://financialpost.com/pmn/business-wire-news-releases-pmn/mindwalk-nasdaq-hyft-ceo-dr-jennifer-bath-to-join-absci-nasdaq-absi-and-a-leading-ai-compute-provider-on-jones-ai-day-panel-on-the-future-of-ai-drug-discovery",
+          "title": "MindWalk (NASDAQ: HYFT) CEO Dr. Jennifer Bath to Join Absci (NASDAQ: ABSI) and a Leading AI Compute Provider on Jones AI Day Panel on the Future of AI Drug Discovery",
+          "snippet": "AUSTIN, Texas — MindWalk Holdings Corp. (“MindWalk”) (NASDAQ: HYFT), a bio-native AI company, today announced that President and Chief Executive Officer Dr. Jennifer Bath will join a virtual panel hosted by Jones, alongside Absci (NASDAQ: ABSI) and a leading …",
+          "summary": "MindWalk CEO Dr. Jennifer Bath will participate in a Jones AI Day panel with Absci and an AI compute provider to discuss the future of AI drug discovery. The panel will focus on how high-performance computing, biological data representation, and generative AI are converging to create more reliable AI systems for regulated life sciences applications.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "55edb50f796a",
+          "url": "https://www.frenchweb.fr/theker-leve-85-millions-de-dollars-leurope-produit-enfin-ses-candidats-a-la-robotique-generaliste/462305",
+          "title": "THEKER lève 85 millions de dollars : l’Europe produit enfin ses candidats à la robotique généraliste",
+          "snippet": "La course à l’intelligence artificielle ne se joue plus uniquement dans les data centers. Après trois années dominées par les modèles de langage, les infrastructures de calcul et les agents logiciels, une nouvelle frontière attire désormais les capitaux, cell…",
+          "summary": "Barcelona-based robotics startup THEKER raised 85 million dollars in a Series A round, marking Europe's largest robotics funding and signaling a broader shift toward AI-powered physical automation as the next frontier after language models. The round's backers, including Samsung and LVMH, indicate that European companies are now building complete robotics platforms rather than just components, but deployment at industrial scale remains unproven and Chinese competitors with manufacturing advantages are advancing rapidly.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "ae0de658fe8e",
+          "url": "https://www.prnewswire.com/news-releases/tredence-appoints-tech-industry-veteran-shashank-samant-to-its-board-to-accelerate-hypergrowth-and-ai-scaling-302798909.html",
+          "title": "Tredence Appoints Tech Industry Veteran Shashank Samant to its Board to Accelerate Hypergrowth and AI Scaling",
+          "snippet": "SAN JOSE, Calif., June 12, 2026 /PRNewswire/ -- Tredence, the world's leading AI & Data Science company today announced the appointment of Shashank Samant as an Independent Director on its board. A visionary entrepreneur with over three decades of experience …",
+          "summary": "Tredence, an AI and data science company, appointed Shashank Samant, a veteran tech entrepreneur who previously scaled GlobalLogic to a $10 billion Hitachi acquisition, to its board. The move signals Tredence's push to expand its \"last-mile AI\" solutions globally as enterprise demand for AI execution rather than just models accelerates.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "2bc0918c2e3c",
+          "url": "https://economictimes.indiatimes.com/tech/funding/frances-mistral-in-funding-talks-at-about-20-billion-valuation/articleshow/131692427.cms",
+          "title": "France’s Mistral in funding talks at about €20 billion valuation",
+          "snippet": "French AI startup Mistral AI is reportedly in talks to raise approximately €3 billion ($3.5 billion) at a valuation of around €20 billion. This significant funding aims to bolster its position in the competitive AI landscape against US and Chinese rivals. The…",
+          "summary": "French AI startup Mistral AI is in talks to raise approximately €3 billion at a €20 billion valuation, seeking to strengthen its competitive position against US and Chinese AI companies.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "32a71d81c172",
+          "url": "https://financialpost.com/globe-newswire/aymer-ai-announces-venture-to-develop-90-acre-powered-land-bank-in-texas",
+          "title": "Aymer AI Announces Venture to Develop 90-Acre Powered Land Bank in Texas",
+          "snippet": "Aymer AI, founded and led by Gautam Garg, is an investor in AI Data Centers NEW YORK, June 12, 2026 (GLOBE NEWSWIRE) — Aymer AI today announced the formation of a strategic venture to develop a 90-acre site in Texas into a large-scale powered land bank design…",
+          "summary": "Aymer AI, an investor in AI data centers founded by Gautam Garg, is launching a strategic venture to develop a 90-acre powered land bank in Texas to support large-scale data center infrastructure.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        },
+        {
+          "id": "752ec464e725",
+          "url": "https://www.channelnewsasia.com/commentary/spacex-ipo-openai-anthropic-ai-risks-accountability-6176236",
+          "title": "Commentary: As SpaceX, OpenAI and Anthropic plan blockbuster IPOs, will it make them more accountable?",
+          "snippet": "Once publicly listed, the AI labs of SpaceX, Anthropic and Open AI would be subject to public market scrutiny for the first time, says an academic.",
+          "summary": "SpaceX, OpenAI, and Anthropic are planning major IPOs that will raise approximately $200 billion combined, with SpaceX launching Friday and expected to make Elon Musk the world's first trillionaire. The concentration of wealth and market power in these AI companies raises questions about whether public ownership will create meaningful accountability or simply entrench the control of their founders.",
+          "hn_score": null,
+          "language": "en",
+          "source": "newsapi"
+        }
+      ]
+    }
+  ]
+}

@@ -5,7 +5,9 @@ Status: accepted (2026-10-08)
 ## Context
 
 agent3 picks each section's articles with one Haiku call, and two outlets
-covering the same event often both get through. A prompt sentence was not
+covering the same story often both get through, and so do a report and an
+op-ed (or two takes with different focus or opinion) on the same story. "Duplicate"
+means the same specific story, not the same company or broad topic. A prompt sentence was not
 enough. Removing a duplicate leaves a gap, so the fix needs a loop: detect,
 remove, pull a replacement, check the replacement.
 

@@ -80,3 +80,19 @@ description it was written from, so be strict there. Keep a side list of ids you
 Once all 40 rows are labeled: `venv\Scripts\python -m evals.run_judge_calibration --dry-run`, then without
 `--dry-run`. It writes `results/judge_calibration.json` (agreement, kappa with a bootstrap interval, recall and
 precision for "unsupported", per-source-kind agreement) and `_rows.json` (ids, labels, verdicts; no text).
+
+## Dedup eval dataset (roadmap Step 5)
+
+`python -m evals.make_dedup_cases` freezes cases of ~8 articles each (`fixtures/dedup_cases.json`, titles,
+300-char snippets and summaries only) and writes a blank `labels/dedup_cases_template.csv`. Case kinds: `real`
+(a suspected duplicate pair found by word overlap), `hard_negative` (same topic, probably different event),
+`control` (no suspected pair) and `synthetic` (hand-written rewrites listed in `fixtures/dedup_synthetic.json` as
+`{source_url, title, summary, language?}`; the builder adds each next to its real source article).
+
+Labeling rule, same as `prompts/dedup_prompt.txt`: the same specific story is a duplicate, even across outlets
+and languages and even with a different focus or opinion (price vs. benchmarks of one release; a report vs. a critical
+take); the same company or broad topic alone is not. In `duplicate_group` put the same label (`g1`, `g2`, ...) on
+articles that are duplicates of each other; leave unique ones blank. Put `?` in `note` for an ambiguous article
+(excluded from the metrics) and `t` for same topic but a different angle (borderline: kept out of the strict gold and
+reported separately). Gold labels are written by hand only. `evals.dedup_labels.load_dedup_gold` validates
+the file and lists cases not yet touched.

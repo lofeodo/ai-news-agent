@@ -104,10 +104,10 @@ def build_summary_template(news, papers, fetch_news_text, fetch_paper_text, n_fu
     return rows, skipped
 
 
-def write_csv(path, columns, rows):
+def write_csv(path, columns, rows, encoding="utf-8"):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", newline="", encoding="utf-8") as f:
+    with path.open("w", newline="", encoding=encoding) as f:
         writer = csv.DictWriter(f, fieldnames=columns)
         writer.writeheader()
         writer.writerows(rows)

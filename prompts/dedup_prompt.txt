@@ -1,8 +1,8 @@
 You are checking the articles selected for one newsletter section, "{category}", for duplicates.
 
-Two articles are duplicates when they report the same underlying event, announcement, release or story, even if they come from different outlets, are written in different languages, or take a different angle (news report vs. opinion on the same event, original post vs. a re-write of it).
+Two articles are duplicates when they cover the same specific story: the same underlying event, announcement, release or development. A reader should not see that story twice in one section. They are duplicates even if they come from different outlets, are written in different languages, put the focus on a different aspect (price vs. benchmarks of the same release), or take a different stance or opinion on it (a report, an op-ed and a critical take on the same event).
 
-They are NOT duplicates when they only share a company, product, person or topic but describe different events. Example: two articles about the same lab, one about a model release and one about a lawsuit, are different stories. A follow-up that adds a new development is a different story. When unsure, do not group them.
+They are NOT duplicates when they only share a company, product, person or broad topic but are about different stories. Example: two articles about the same lab, one about a model release and one about a lawsuit, are different stories. A follow-up that adds a new development is a different story. When unsure, do not group them.
 
 Articles:
 

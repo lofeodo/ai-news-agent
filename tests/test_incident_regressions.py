@@ -236,3 +236,11 @@ def test_agent4_skips_a_newer_debug_run(monkeypatch):
 def test_agent4_test_send_may_use_a_debug_run(monkeypatch):
     monkeypatch.setattr(a4, "TEST_SEND_TO", "me@example.com")
     assert a4._load_latest_newsletter(FakeDb(_two_runs("debug"))).run_id == "debug_run"
+
+
+def test_healthcheck_checks_the_latest_release_run_not_a_newer_debug_run():
+    db = FakeDb({"pipeline_runs": {
+        "rel": {"started_at": (NOW - timedelta(hours=5)).isoformat()},
+        "dbg": {"started_at": (NOW - timedelta(hours=1)).isoformat(), "run_kind": "debug"},
+    }})
+    assert hc._latest_run_doc(db)[0] == "rel"

@@ -300,13 +300,13 @@ With `CLICK_TRACKING=true`, agent 4 stores the shipped articles for the run (`cl
 - **Auth:** Firebase Authentication (Google OAuth; ID tokens verified server-side with `firebase-admin`)
 - **Frontend:** Firebase Hosting (static, custom domain via Cloudflare DNS; vanilla HTML/JS + Firebase Auth JS SDK)
 - **Email:** SendGrid (custom domain `newsletter@lofeodo.com`, DKIM + SPF + DMARC)
-- **AI:** Anthropic Claude (`claude-haiku-4-5-20251001`) — scoring, filtering, summarization, composition
-- **External APIs:** ArXiv (via an HTTP proxy), Hacker News API, NewsAPI, GitHub API
+- **AI:** Anthropic Claude (`claude-haiku-4-5-20251001`) — scoring, filtering, summarization, composition; a stronger Claude model (`JUDGE_MODEL`) as the report-only summary judge
+- **External APIs:** Hugging Face Daily Papers, ArXiv (via an HTTP proxy), Hacker News (Algolia) API, NewsAPI, GitHub API, SendGrid (mail send and signed Event Webhook)
 - **HTTP framework:** FastAPI + uvicorn
 - **Agent graph:** LangGraph (inside agent 1b only — see [Inside agent 1b](#inside-agent-1b-langgraph)); the Anthropic SDK is used directly, no langchain
-- **Observability:** LangSmith tracing (opt-in, agent 1b)
-- **Testing / CI:** pytest (stubbed Claude client and fetcher, no network) run by GitHub Actions
-- **Key libraries:** `arxiv`, `pypdf`, `newspaper3k`, `slowapi`, `firebase-admin`, `langgraph`, `langsmith`
+- **Observability:** LangSmith tracing (opt-in; token and cost totals archived weekly onto the run document), drift tests and an online judge in the weekly health check
+- **Testing / CI:** pytest (stubbed Claude client and fetcher, no network or keys) run by GitHub Actions; an `evals/` package for on-demand paid evaluations
+- **Key libraries:** `arxiv`, `pypdf`, `newspaper3k`, `slowapi`, `firebase-admin`, `langgraph`, `langsmith`, `scipy`, `scikit-learn`
 
 ---
 
@@ -326,11 +326,20 @@ With `CLICK_TRACKING=true`, agent 4 stores the shipped articles for the run (`cl
 │   ├── auth_middleware.py          # Firebase ID token verification (FastAPI dependency)
 │   ├── agent1b_graph.py            # LangGraph implementation of agent1b (state, nodes, review loop)
 │   ├── article_fetch.py            # Shared article-text fetcher (agent1b review + agent2b)
-│   ├── tracing.py                  # Opt-in LangSmith tracing helpers
+│   ├── trending_papers.py          # Hugging Face Daily Papers shortlist for agent1a
+│   ├── spotlight_history.py        # Papers already spotlighted (Firestore / local file)
+│   ├── summary_sources.py          # Saves the text each summary was written from (for the judge)
+│   ├── judge.py / online_judge.py  # Summary-faithfulness judge and its weekly sampler (report-only)
+│   ├── drift.py / drift_history.py # Drift tests on agent1b output, token usage and judge rates
+│   ├── tracing.py / usage_archive.py / pricing.py  # LangSmith tracing, weekly usage archive, cost
+│   ├── click_links.py / click_counts.py / click_report.py / sendgrid_webhook.py  # Click signal
+│   ├── prompt_guard.py             # Guard text and sanitising for untrusted content in prompts
+│   ├── report_html.py              # Renders the health check report as newsletter-styled HTML
 │   ├── filter_tool.py              # Claude tool schemas for news categorization + review
 │   └── scoring_tool.py             # Claude tool schema for paper scoring
 ├── prompts/
-│   ├── scoring_rubric.txt          # 7-dimension paper scoring prompt
+│   ├── scoring_rubric.txt          # 8-dimension paper scoring prompt
+│   ├── judge_prompt.txt            # Summary-faithfulness judge prompt
 │   ├── paper_summary_prompt.txt    # Paper mini-review prompt
 │   ├── news_filter_prompt.txt      # News categorization prompt
 │   ├── news_filter_confidence_addendum.txt  # Adds the 1-5 confidence rubric (graph mode)
@@ -354,9 +363,10 @@ With `CLICK_TRACKING=true`, agent 4 stores the shipped articles for the run (`cl
 │   ├── style.css / fonts.css       # Shared styling
 │   ├── fonts/, images/             # Static assets
 │   └── latest.html                 # Written by agent3 each run
+├── evals/                          # Evaluation harnesses, frozen fixtures, labels, results/*.json (see evals/README.md)
 ├── tests/                          # pytest suite (stubbed Claude client + fetcher; no network or keys)
-│   ├── conftest.py / fakes.py      # Path setup; scripted fake Anthropic client and fetcher
-│   └── test_*.py                   # agent1b graph, shared fetcher, tracing
+│   ├── conftest.py / fakes*.py     # Path setup; scripted fake Anthropic client, fetcher and Firestore
+│   └── test_*.py                   # agents, graph, evals, drift, judge, click signal, injection defences
 ├── docs/
 │   ├── plans/                      # Implementation plans (e.g. langgraph-agent1b.md)
 │   └── decisions/                  # Architecture decision records (ADRs)
@@ -373,7 +383,7 @@ With `CLICK_TRACKING=true`, agent 4 stores the shipped articles for the run (`cl
 ├── firebase.json                   # Firebase Hosting config
 ├── firestore.indexes.json          # Firestore composite index definitions
 ├── requirements.txt
-└── requirements-dev.txt            # requirements.txt + pytest
+├── requirements-dev.txt            # requirements.txt + pytest and eval dependencies
 ```
 
 ---
@@ -388,7 +398,10 @@ Credentials (API keys and similar) are supplied to the services at runtime and a
 | `GCP_PROJECT_ID` | all agents | Google Cloud project ID |
 | `AGENT1B_MODE` | agent1b | `graph` (default, LangGraph) or `single_pass` (original linear code; rollback switch) |
 | `REVIEW_CONFIDENCE_THRESHOLD` / `REVIEW_MAX_ARTICLES` / `REVIEW_MAX_ITERATIONS` / `REVIEW_FETCH_TIMEOUT` | agent1b | Review-loop tuning (defaults `4` / `30` / `3` / `10`); see [Inside agent 1b](#inside-agent-1b-langgraph) |
-| `LANGSMITH_TRACING` / `LANGSMITH_PROJECT` | agent1b | Opt-in LangSmith tracing; a no-op without an API key |
+| `LANGSMITH_TRACING` / `LANGSMITH_PROJECT` | all Claude-calling agents | Opt-in LangSmith tracing; a no-op without an API key |
+| `CLICK_TRACKING` | agent4 | `true` turns on SendGrid click tracking and tags each email with the run id (default off) |
+| `TRENDING_LOOKBACK_DAYS` | agent1a | Days of Hugging Face Daily Papers considered for the shortlist (default `14`; a constant in `config.py`) |
+| `JUDGE_MAX_ITEMS` / `JUDGE_MAX_USD` | healthcheck | Summaries judged per weekly run and its hard cost cap (constants in `config.py`) |
 | `AGENT_NAME` | main.py | Selects which agent the Cloud Run container runs |
 | `TEST_RECIPIENT_EMAIL` | agent4 | Local mode: single send address |
 | `TEST_SEND_TO` | agent4 | Cloud mode override: skip subscriber list, send only here |

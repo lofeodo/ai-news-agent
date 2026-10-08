@@ -22,7 +22,7 @@ agent3 (`agents/agent3_compose.py`, `select_articles_for_category`) picks each s
 
 ## Step sequence
 
-- [ ] Step 1: Hard caps in code
+- [x] Step 1: Hard caps in code
 - [ ] Step 2: Dedup primitive (multi-turn, tool-based)
 - [ ] Step 3: Ranked fallback pool
 - [ ] Step 4: LangGraph dedup loop in agent3
@@ -75,23 +75,23 @@ Depends on: Steps 1 to 6.
 
 ## Step detail
 
-### Step 1 plan: hard caps in code (branch `feat/section-caps`)
-
-Current behavior (`agents/agent3_compose.py`): `select_articles_for_category` asks the model for a JSON array of indices, `parse_indices` filters out-of-range values, and the result is used as is. If parsing yields nothing, it falls back to the first 3 articles. The prompt (`prompts/article_selection_prompt.txt`) says default 3, hard max 6, and "include every [NAMED RELEASE] article (may reach 5 or more)". `ARTICLES_PER_CATEGORY_TARGET` (L23) is defined but unused.
-
-Design:
-1. `config.py`: add `SECTION_CAP_DEFAULT = 3` and `SECTION_CAPS = {"Model & Product Releases": 4, "Open Source & Tools": 4}`, plus `section_cap(category) -> int`. Keeping the caps in `config.py` makes them reachable by later steps (dedup loop, eval) without importing agent3.
-2. `agent3_compose.py`, in `select_articles_for_category`, after `parse_indices`: drop repeated indices (the model could return `[2, 2, 5]`, which would show the same article twice), then truncate to `section_cap(category)`. The model is asked for most valuable first, so truncation keeps the best. The empty-result fallback becomes `range(min(cap, len(ordered)))`.
-3. `prompts/article_selection_prompt.txt`: add a `{cap}` placeholder (the code passes it to `.format`; test templates like `"{category}{articles}"` ignore extra keys, so existing tests still work). Replace the "default 3 / hard max 6" rule with "pick at most {cap}; fewer is fine; do not pad". Reword the named-release paragraph: prefer the named releases, at least one per lab where the cap allows, never above {cap}. Keep the rest.
-4. Remove the dead `ARTICLES_PER_CATEGORY_TARGET`.
-5. Tests in `tests/test_selection_caps.py` using the fakes: model returns 6 indices for a 3-cap section (keeps the first 3), 6 for a 4-cap section (keeps 4), duplicated indices, out-of-range indices, empty response fallback respects the cap, `section_cap` values for all 7 categories, and a prompt check that `{cap}` is rendered.
-6. Run `venv\Scripts\python -m pytest -q`.
-7. Commit in small units: config + helper, enforcement + tests, prompt. Update this doc (move Step 1 to "Completed steps", tick the box) in the last commit.
-
-Verification: pytest green; a local run of `selection_test.py` is a manual script that makes real Claude calls, so it is only run if the owner asks.
-
-Open question for the owner: should the English-only pass use the same caps? Assumed yes (same function).
+(No step in progress. Step 2 gets its plan here when we start it.)
 
 ## Completed steps
 
-None yet.
+### Step 1: Hard caps in code
+
+Branch `feat/dedup-roadmap` (the work stayed on the branch that holds this doc rather than a separate `feat/section-caps`). Four commits.
+
+**Built.**
+- `config.py`: `SECTION_CAP_DEFAULT = 3`, `SECTION_CAPS` (Model & Product Releases 4, Open Source & Tools 4) and `section_cap(category)`. The caps live in config so the later dedup loop and the eval can read them without importing agent3.
+- `agents/agent3_compose.py`, `select_articles_for_category`: after `parse_indices`, repeated indices are collapsed (a model reply like `[2, 2, 5]` would otherwise show one article twice), then the list is truncated to the section's cap. The model is asked for most valuable first, so truncation keeps its best picks; a log line records when a cap trimmed a reply. The empty-reply fallback now takes the first `cap` articles instead of a hard-coded 3. The unused `ARTICLES_PER_CATEGORY_TARGET` constant was removed.
+- `prompts/article_selection_prompt.txt`: a `{cap}` placeholder, filled by the code. The old "default 3, go above 3 for major stories, hard max 6" rule and "include every [NAMED RELEASE] article (may reach 5 or more)" are gone. The prompt now says "at most {cap}", fewer is fine, and named releases are preferred (at least one per lab where the cap allows) but never push the section past the cap.
+- `tests/test_selection_caps.py` (19 tests): over-cap truncation for 3-cap and 4-cap sections, truncation keeps the model's first picks in order, under-cap replies untouched, repeated and out-of-range indices, repeats not eating the cap, empty-reply fallback respects the cap and the pool size, `section_cap` for all 7 categories and an unknown one, and the real prompt file renders the right cap.
+
+**Verified.** `venv\Scripts\python -m pytest -q`: 405 passed. No real Claude calls were made.
+
+**Caveats.**
+- Caps are enforced in code, so they hold even if the prompt is ignored. They apply to both selection passes (all-language and English-only), since both call the same function.
+- When a section has more `[NAMED RELEASE]` articles than its cap, the model's ordering decides which survive; there is no code-level guarantee of one per lab any more.
+- Nothing changes in production until agent3 is rebuilt and deployed (Step 8). Existing runs and stored newsletters are unaffected.

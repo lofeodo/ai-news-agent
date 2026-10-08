@@ -89,8 +89,10 @@ precision for "unsupported", per-source-kind agreement) and `_rows.json` (ids, l
 `control` (no suspected pair) and `synthetic` (hand-written rewrites listed in `fixtures/dedup_synthetic.json` as
 `{source_url, title, summary, language?}`; the builder adds each next to its real source article).
 
-Labeling rule, same as `prompts/dedup_prompt.txt`: the same event is a duplicate, even across outlets, languages
-and angles; the same company or topic alone is not. In `duplicate_group` put the same label (`g1`, `g2`, ...) on
+Labeling rule, same as `prompts/dedup_prompt.txt`: the same specific story is a duplicate, even across outlets
+and languages and even with a different focus or opinion (price vs. benchmarks of one release; a report vs. a critical
+take); the same company or broad topic alone is not. In `duplicate_group` put the same label (`g1`, `g2`, ...) on
 articles that are duplicates of each other; leave unique ones blank. Put `?` in `note` for an ambiguous article
-(excluded from the metrics). Gold labels are written by hand only. `evals.dedup_labels.load_dedup_gold` validates
+(excluded from the metrics) and `t` for same topic but a different angle (borderline: kept out of the strict gold and
+reported separately). Gold labels are written by hand only. `evals.dedup_labels.load_dedup_gold` validates
 the file and lists cases not yet touched.

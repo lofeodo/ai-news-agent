@@ -4,9 +4,11 @@ A case is one section plus ~8 articles. Suspected duplicate pairs are proposed b
 (stdlib only); the owner decides what is really a duplicate. `duplicate_group` is always written
 empty: gold labels are written by hand, never by a script.
 
-Labeling rule (same as prompts/dedup_prompt.txt): same event = duplicate, even across outlets,
-languages and angles; same company or topic alone is not. Put the same label (g1, g2, ...) on
-articles that are duplicates of each other; blank = unique; "?" in `note` = ambiguous, excluded.
+Labeling rule (same as prompts/dedup_prompt.txt): the same specific story is a duplicate, even across
+outlets and languages and even with a different focus or opinion; same company or broad topic alone is
+not. Put the same label (g1, g2, ...) on articles that are duplicates of each other; blank = unique;
+"?" in `note` = ambiguous, excluded; "t" in `note` = same topic, different angle (borderline, kept apart
+from the strict gold so results can be reported both ways).
 
 CMD:  python -m evals.make_dedup_cases shipped   (cases from past newsletters; needs data/shipped_picks.json
       from `python -m evals.fetch_shipped_picks`)

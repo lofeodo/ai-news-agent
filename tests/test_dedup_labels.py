@@ -65,3 +65,10 @@ def test_load_all_merges_sets_and_rejects_collisions(tmp_path):
     with pytest.raises(LabelError):
         load_all_gold([(lp, cp), (lp2, cp2)])
     assert load_all_gold([(lp, cp)]).groups == {"c1": [frozenset({"a", "b"})]}
+
+
+def test_t_note_is_borderline_not_a_group_member(tmp_path):
+    lp, cp = setup(tmp_path, [("c1", "a", "g1", ""), ("c1", "b", "g1", ""), ("c1", "c", "", "t")])
+    gold = load_dedup_gold(lp, cp)
+    assert gold.borderline == {"c1": {"c"}}
+    assert gold.groups == {"c1": [frozenset({"a", "b"})]} and gold.unlabeled_cases == ["c2"]

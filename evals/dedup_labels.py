@@ -1,7 +1,8 @@
 """Load the owner's dedup gold labels (evals/labels/dedup_cases_template.csv, filled in by hand).
 
 `duplicate_group`: the same label on articles that are duplicates; blank = unique.
-`note` == "?" marks an ambiguous article, excluded from the metrics.
+`note` == "?" marks an ambiguous article, excluded from the metrics. `note` == "t" marks same topic but a
+different angle: borderline, recorded in `Gold.borderline` and not part of any strict group.
 """
 import csv
 import json
@@ -25,6 +26,7 @@ class LabelError(ValueError):
 class Gold:
     groups: dict = field(default_factory=dict)      # case_id -> [frozenset(article_ids)]
     excluded: dict = field(default_factory=dict)    # case_id -> set(article_ids) marked "?"
+    borderline: dict = field(default_factory=dict)  # case_id -> set(article_ids) marked "t" (same topic, other angle)
     unlabeled_cases: list = field(default_factory=list)  # cases with no group label and no explicit sign-off
 
 
@@ -39,7 +41,7 @@ def load_dedup_gold(path=TEMPLATE_PATH, cases_path=CASES_PATH):
     with Path(path).open(newline="", encoding="utf-8-sig") as f:
         rows = list(csv.DictReader(f))
 
-    members, excluded, touched = {}, {}, set()
+    members, excluded, borderline, touched = {}, {}, {}, set()
     for r in rows:
         cid, aid = r["case_id"], _fix_id(r["article_id"])
         if cid not in known:
@@ -53,10 +55,12 @@ def load_dedup_gold(path=TEMPLATE_PATH, cases_path=CASES_PATH):
         if note == "?":
             excluded.setdefault(cid, set()).add(aid)
             continue
+        if note.lower() == "t":
+            borderline.setdefault(cid, set()).add(aid)
         if label:
             members.setdefault((cid, label), set()).add(aid)
 
-    gold = Gold(excluded=excluded)
+    gold = Gold(excluded=excluded, borderline=borderline)
     for (cid, label), ids in sorted(members.items()):
         if len(ids) < 2:
             raise LabelError(f"group {label!r} in case {cid!r} has only one article")
@@ -74,5 +78,6 @@ def load_all_gold(sources=((TEMPLATE_PATH, CASES_PATH), (SHIPPED_TEMPLATE_PATH, 
             raise LabelError(f"case id {cid!r} appears in two label sets")
         merged.groups.update(g.groups)
         merged.excluded.update(g.excluded)
+        merged.borderline.update(g.borderline)
         merged.unlabeled_cases += g.unlabeled_cases
     return merged

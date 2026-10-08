@@ -63,8 +63,7 @@ Each `pipeline_runs` doc has `run_kind`: `release` or `debug` (no field = releas
 
 - The orchestrator defaults to `debug`. The scheduled job `create-newsletter` must call `<orchestrator-url>/?kind=release`; if it does not, nothing publishes and the health check reports a stale run.
 - To try something, force-run the `create-newsletter-debug` job (same target, no `kind`, schedule that never fires): `gcloud scheduler jobs run create-newsletter-debug --location <region>`. Do not force-run `create-newsletter` for this, that is a release.
-- Preview a debug run in a browser tab: `https://<agent-subscriptions-url>/preview?run=latest&token=<ADMIN_TOKEN>` (newest composed run of any kind), or `?run=<run_id>`; add `&variant=1_1` for another variant. Without the token it is a 403.
-- To mail a debug run to yourself, run `agent4-test` (it has `TEST_SEND_TO`, so it may pick a debug run).
+- Preview a debug run: sign in to the site with an admin account (`ADMIN_EMAILS` on agent-subscriptions) and click **Debug run** in the top bar (or the toggle on the Latest Issue page). It shows the newest composed run of any kind; "Back to published" returns to the public issue.
 - To publish a debug run by hand (rare), set `run_kind` to `release` on its doc in the Firestore console.
 
 ## 3. Roll back

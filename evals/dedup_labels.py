@@ -11,6 +11,12 @@ from pathlib import Path
 from evals.make_dedup_cases import CASES_PATH, TEMPLATE_PATH
 
 
+def _fix_id(raw):
+    """Excel drops leading zeros from all-digit ids (051952554936 -> 51952554936); ids are 12 chars."""
+    raw = raw.strip()
+    return raw.zfill(12) if raw.isdigit() else raw
+
+
 class LabelError(ValueError):
     pass
 
@@ -35,7 +41,7 @@ def load_dedup_gold(path=TEMPLATE_PATH, cases_path=CASES_PATH):
 
     members, excluded, touched = {}, {}, set()
     for r in rows:
-        cid, aid = r["case_id"], r["article_id"].strip().zfill(12)   # Excel drops leading zeros from all-digit ids
+        cid, aid = r["case_id"], _fix_id(r["article_id"])
         if cid not in known:
             raise LabelError(f"unknown case {cid!r}")
         if aid not in known[cid]:

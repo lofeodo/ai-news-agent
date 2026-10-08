@@ -50,7 +50,7 @@ def test_template_labels_always_blank(tmp_path):
     rows = template_rows(cases)
     assert rows and all(r["duplicate_group"] == "" and r["note"] == "" for r in rows)
     cp, tp = write_outputs(cases, tmp_path / "c.json", tmp_path / "t.csv")
-    assert tp.read_text(encoding="utf-8").splitlines()[0] == ",".join(COLUMNS)
+    assert tp.read_text(encoding="utf-8-sig").splitlines()[0] == ",".join(COLUMNS)
 
 
 def test_synthetic_case_adds_rewrite_next_to_source():

@@ -82,3 +82,36 @@ def _no_markers(tmp_path):
     p = tmp_path / "plain.md"
     p.write_text("none", encoding="utf-8")
     return p
+
+
+def _generic_doc():
+    m = lambda v: {"value": v, "n": 40, "ci_low": 0.1, "ci_high": 0.9}
+    return {"name": "judge_calibration", "git_sha": "abc1234", "created_at": "2026-10-06T00:00:00", "cost_usd": 0.5,
+            "notes": "a note", "metrics": {"agreement": m(0.45), "cohens_kappa": m(0.04)}}
+
+
+def test_render_generic_formats_rates_and_kappa():
+    out = t.render_generic(_generic_doc())
+    assert "| agreement | 45% (10%–90%) | 40 |" in out
+    assert "| cohens kappa | 0.04 (0.10 to 0.90) | 40 |" in out
+    assert "evals/results/judge_calibration.json" in out and "> a note" in out
+
+
+def test_update_readme_generic_replaces_only_its_block(tmp_path):
+    readme = tmp_path / "README.md"
+    readme.write_text("a\n<!-- judge-calibration:start -->\nOLD\n<!-- judge-calibration:end -->\nb\n", encoding="utf-8")
+    t.update_readme_generic("judge-calibration", _generic_doc(), readme)
+    text = readme.read_text(encoding="utf-8")
+    assert "OLD" not in text and text.startswith("a\n") and text.endswith("b\n")
+    with pytest.raises(ValueError):
+        t.update_readme_generic("usage-drift-sim", _generic_doc(), readme)
+
+
+def test_checked_in_readme_has_generic_markers():
+    text = t.README.read_text(encoding="utf-8")
+    for name, _, _ in t.GENERIC_BLOCKS:
+        assert f"<!-- {name}:start -->" in text and f"<!-- {name}:end -->" in text
+
+
+def test_render_generic_can_omit_notes():
+    assert "a note" not in t.render_generic(_generic_doc(), notes=False)

@@ -12,18 +12,20 @@ ROOT = Path(__file__).resolve().parents[2]
 FONTS = ROOT / "public" / "newsletter" / "fonts"
 OUT_DIR = Path(__file__).resolve().parent
 
-W, H = 1280, 508
+W, H = 1280, 576
 PAD = 104   # left padding; the same distance is kept from the top and the bottom
 
 THEMES = {
     "dark": dict(bg="#0f0f0f", border="#2a2a2a", title="#c8b89a", tag="#e8e8e8", mark="#c8b89a",
                  net="#c8b89a", net_a=1.0, glow="#c8b89a", glow_a=0.20,
                  pill_a="#e6d6b4", pill_b="#c8b89a", pill_text="#0f0f0f", pill_ring="#c8b89a",
-                 shadow="#c8b89a", shadow_a=0.35, live="#1f9d4d"),
+                 shadow="#c8b89a", shadow_a=0.35, live="#1f9d4d",
+                 chip_line="#c8b89a", chip_text="#c8b89a"),
     "light": dict(bg="#fbf9f4", border="#e3dccd", title="#14110d", tag="#3d372e", mark="#14110d",
                   net="#8a7658", net_a=0.9, glow="#c8b89a", glow_a=0.30,
                   pill_a="#2a2520", pill_b="#0f0f0f", pill_text="#f1e6cf", pill_ring="#0f0f0f",
-                  shadow="#0f0f0f", shadow_a=0.28, live="#3fd477"),
+                  shadow="#0f0f0f", shadow_a=0.28, live="#3fd477",
+                  chip_line="#8a7658", chip_text="#5c4a2e"),
 }
 
 
@@ -55,9 +57,24 @@ def latent_field(t):
     return "\n    ".join(parts)
 
 
+CHIPS = ("MULTI-AGENT ORCHESTRATION", "LIVE MONITORING", "MEASURED EVALS", "CLOUD + CI")
+
+
+def chips(t, y):
+    """Small outlined pills describing what the project does; deliberately quiet next to the live-site pill."""
+    out, x = [], PAD
+    for label in CHIPS:
+        w = len(label) * 10.4 + 40
+        out.append(f'<g transform="translate({x:.0f},{y})"><rect width="{w:.0f}" height="36" rx="18" fill="none" '
+                   f'stroke="{t["chip_line"]}" stroke-opacity="0.7"/><text x="{w / 2:.0f}" y="23.5" text-anchor="middle" '
+                   f'class="chip">{label}</text></g>')
+        x += w + 14
+    return "\n  ".join(out)
+
+
 def build(name):
     t = THEMES[name]
-    pill_w, pill_h, pill_y = 800, 92, 358
+    pill_w, pill_h, pill_y = 800, 92, 428
     pill_cx, pill_cy = PAD + pill_w / 2, pill_y + pill_h / 2
     svg = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" aria-label="Latent SpaceMail: a weekly AI briefing, written and sent by a team of AI agents. Live site newsletter.lofeodo.com">
   <title>Latent SpaceMail</title>
@@ -68,6 +85,7 @@ def build(name):
       {font_face("IBM Plex Mono", "ibm-plex-mono-400.woff2")}
       .title{{font:600 108px 'Cormorant Garamond',Georgia,serif;fill:{t["title"]};letter-spacing:1px}}
       .tag{{font:italic 400 36px 'Cormorant Garamond',Georgia,serif;fill:{t["tag"]}}}
+      .chip{{font:400 15.5px 'IBM Plex Mono',Menlo,Consolas,monospace;fill:{t["chip_text"]};letter-spacing:1.3px}}
       .cta{{font:400 31px 'IBM Plex Mono',Menlo,Consolas,monospace;fill:{t["pill_text"]};letter-spacing:1.2px;font-weight:700}}
     </style>
     <radialGradient id="glow" cx="78%" cy="48%" r="55%">
@@ -95,6 +113,7 @@ def build(name):
   </g>
   <text x="{PAD - 4}" y="256" class="title">Latent SpaceMail</text>
   <text x="{PAD}" y="316" class="tag">A weekly AI briefing, written and sent by a team of AI agents.</text>
+  {chips(t, 356)}
   <a href="https://newsletter.lofeodo.com">
     <rect x="{PAD}" y="{pill_y + 10}" width="{pill_w}" height="{pill_h}" rx="{pill_h / 2}" fill="{t["shadow"]}" fill-opacity="{t["shadow_a"]}" filter="url(#drop)"/>
     <rect x="{PAD - 6}" y="{pill_y - 6}" width="{pill_w + 12}" height="{pill_h + 12}" rx="{(pill_h + 12) / 2}" fill="none" stroke="{t["pill_ring"]}" stroke-opacity="0.45" stroke-width="2"/>

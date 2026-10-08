@@ -75,7 +75,15 @@ Depends on: Steps 1 to 6.
 
 ## Step detail
 
-(No step in progress. Step 3 gets its plan here when we start it.)
+### Step 3: Ranked fallback pool (in progress)
+
+Branch `feat/dedup-fallback-pool`.
+
+- Selection reply becomes `{"selected": [...], "runners_up": [...]}` (indices, best first); a bare array still parses (no model runners-up). `parse_selection` drops runner-ups that are picks, repeated or out of range.
+- Deterministic top-up to `RUNNERS_UP_MAX` (6) from the rest of the section's pool: HN score descending (none last), then the neutral shuffled order. Pool stays within the section; each selection pass has its own.
+- `select_with_runners_up` returns `SelectionResult(picks, runners_up)`; `select_articles_for_category` stays a wrapper returning the picks, so existing callers are unchanged.
+- `take_fallback(picks, runners_up, removed)`: next runner-up, or None when the section is already at its cap after removals.
+- Tests in `tests/test_selection_pool.py`. Nothing consumes the pool until Step 4.
 
 ## Completed steps
 

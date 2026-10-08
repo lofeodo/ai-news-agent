@@ -2,7 +2,15 @@
 
 <div align="center">
 
-<a href="https://newsletter.lofeodo.com"><img alt="Live site: newsletter.lofeodo.com. Read it and subscribe" src="https://img.shields.io/badge/%F0%9F%9A%80%20%20LIVE%20SITE%20%20%E2%80%94%20%20READ%20IT%20%26%20SUBSCRIBE%20%20%E2%86%92%20%20-newsletter.lofeodo.com%20%20-ff3d81?style=for-the-badge&labelColor=6d4aff" width="900" /></a>
+<a href="https://newsletter.lofeodo.com"><img src="docs/assets/banner.svg" alt="Latent SpaceMail: a weekly AI briefing, written and sent by a team of AI agents. Live site: newsletter.lofeodo.com" width="100%"></a>
+
+<a href="https://github.com/lofeodo/ai-news-agent/actions/workflows/tests.yml"><img src="https://github.com/lofeodo/ai-news-agent/actions/workflows/tests.yml/badge.svg" alt="CI status"></a>
+<img src="https://img.shields.io/badge/python-3.11-3776ab?logo=python&logoColor=white" alt="Python 3.11">
+<img src="https://img.shields.io/badge/Google_Cloud_Run-4285f4?logo=googlecloud&logoColor=white" alt="Google Cloud Run">
+<img src="https://img.shields.io/badge/LangGraph-1c3c3c?logo=langchain&logoColor=white" alt="LangGraph">
+<img src="https://img.shields.io/badge/Claude-d97757?logo=anthropic&logoColor=white" alt="Anthropic Claude">
+<img src="https://img.shields.io/badge/SendGrid-1a82e2?logo=twilio&logoColor=white" alt="SendGrid">
+<img src="https://img.shields.io/badge/Firebase-ffca28?logo=firebase&logoColor=black" alt="Firebase">
 
 </div>
 

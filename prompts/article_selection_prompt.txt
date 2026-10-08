@@ -17,7 +17,9 @@ Selection rules:
 - Select at most {cap} articles. Fewer is fine: a section with one great story and nothing else notable can have 1 or 2. Do not pad with filler to reach {cap}.
 - List your selection in the order the articles should appear in the newsletter, most valuable first.
 
-Respond with ONLY a JSON array of selected indices:
-[2, 7, 14, 23]
+Runners-up. After your selection, also list up to {runners_up} runners-up: the next-best articles you would add if one of your picks turned out to be a duplicate or had to be dropped. Apply the same standards as for the picks and do not pad with filler; fewer is fine. Runners-up must not repeat a pick, and should be different stories from your picks. Most valuable first.
 
-No explanation. No preamble. Just the JSON array.
+Respond with ONLY a JSON object of indices:
+{{"selected": [2, 7, 14], "runners_up": [3, 9, 20]}}
+
+No explanation. No preamble. Just the JSON object.

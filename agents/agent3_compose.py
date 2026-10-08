@@ -8,12 +8,13 @@ import random
 import re
 import sys
 import time
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_XML_TAGS, neutralize_tags
 import tracing
-from config import DATA_DIR, SCORING_MODEL, GCP_PROJECT_ID, USE_FIRESTORE, FIRESTORE_COLLECTION, MAX_SCORE, newsletter_send_date, section_cap
+from config import DATA_DIR, SCORING_MODEL, GCP_PROJECT_ID, USE_FIRESTORE, FIRESTORE_COLLECTION, MAX_SCORE, newsletter_send_date, section_cap, RUNNERS_UP_MAX
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -158,14 +159,53 @@ def parse_indices(response_text: str, max_index: int) -> list[int]:
         return []
 
 
-def select_articles_for_category(
+def parse_selection(response_text: str, max_index: int) -> tuple[list[int], list[int]]:
+    """Parse the selection reply into (selected, runners_up) index lists.
+
+    Accepts {"selected": [...], "runners_up": [...]} or a bare array (no runners-up).
+    Repeats, out-of-range indices and runners-up that are also picks are dropped.
+    """
+    try:
+        clean = re.sub(r"```[a-z]*", "", response_text).strip()
+        data = json.loads(clean)
+    except Exception as e:
+        print(f"  [warn]   failed to parse indices: {e} — raw: {response_text[:100]}")
+        return [], []
+    if isinstance(data, dict):
+        raw_sel, raw_run = data.get("selected"), data.get("runners_up")
+    else:
+        raw_sel, raw_run = data, None
+
+    def valid(raw):
+        if not isinstance(raw, list):
+            return []
+        return list(dict.fromkeys(i for i in raw if isinstance(i, int) and not isinstance(i, bool) and 0 <= i < max_index))
+
+    selected = valid(raw_sel)
+    runners_up = [i for i in valid(raw_run) if i not in selected]
+    return selected, runners_up
+
+
+@dataclass
+class SelectionResult:
+    picks: list = field(default_factory=list)
+    runners_up: list = field(default_factory=list)   # ranked fallbacks, best first
+
+
+def _top_up_order(ordered: list, exclude: set) -> list[int]:
+    """Indices not in `exclude`, by HN score descending (none last), ties in shuffled order."""
+    rest = [i for i in range(len(ordered)) if i not in exclude]
+    return sorted(rest, key=lambda i: (ordered[i].get("hn_score") is None, -(ordered[i].get("hn_score") or 0), i))
+
+
+def select_with_runners_up(
     category: str,
     articles: list,
     prompt_template: str,
     client: anthropic.Anthropic,
-) -> list[dict]:
+) -> SelectionResult:
     if not articles:
-        return []
+        return SelectionResult()
 
     # Drop articles with no summary and no description — they would render as blank cards
     before = len(articles)
@@ -175,7 +215,7 @@ def select_articles_for_category(
         print(f"  [select] '{category}': dropped {dropped} article(s) with no content")
 
     if not articles:
-        return []
+        return SelectionResult()
 
     # Neutral order: list position must not carry a quality signal (sorting by HN put
     # every HN article above every NewsAPI one). Sorting by URL first removes the
@@ -185,7 +225,7 @@ def select_articles_for_category(
 
     formatted = format_articles_for_selection(ordered, category)
     cap       = section_cap(category)
-    prompt    = prompt_template.format(category=category, articles=formatted, cap=cap)
+    prompt    = prompt_template.format(category=category, articles=formatted, cap=cap, runners_up=RUNNERS_UP_MAX)
 
     response = claude_call_with_retry(
         client,
@@ -197,19 +237,50 @@ def select_articles_for_category(
 
     if not response.content:
         raise RuntimeError(f"Empty Claude response for article selection in '{category}'")
-    indices = parse_indices(response.content[0].text, len(ordered))
-
-    indices = list(dict.fromkeys(indices))  # a repeated index would show the same article twice
+    indices, runners = parse_selection(response.content[0].text, len(ordered))
 
     if not indices:
         print(f"  [warn]   no valid indices for '{category}' — falling back to first {cap}")
         indices = list(range(min(cap, len(ordered))))
+        runners = [i for i in runners if i not in indices]
 
+    trimmed = []
     if len(indices) > cap:
         print(f"  [select] '{category}': model picked {len(indices)}, capped at {cap}")
+        trimmed = indices[cap:]
         indices = indices[:cap]  # the model lists most valuable first
 
-    return [ordered[i] for i in indices]
+    # Pool order: picks the cap trimmed (the model liked them), the model's runners-up,
+    # then a deterministic top-up so the pool is as deep as the section allows.
+    pool = list(dict.fromkeys(trimmed + runners))[:RUNNERS_UP_MAX]
+    extra = _top_up_order(ordered, set(indices) | set(pool))[:RUNNERS_UP_MAX - len(pool)]
+    if extra:
+        print(f"  [select] '{category}': topped up runners-up with {len(extra)} by HN score")
+    pool += extra
+
+    return SelectionResult([ordered[i] for i in indices], [ordered[i] for i in pool])
+
+
+def select_articles_for_category(
+    category: str,
+    articles: list,
+    prompt_template: str,
+    client: anthropic.Anthropic,
+) -> list[dict]:
+    return select_with_runners_up(category, articles, prompt_template, client).picks
+
+
+def take_fallback(category: str, picks: list, runners_up: list, used=()):
+    """Next runner-up to add to a section, or None.
+
+    Only fills a gap: None when `picks` (the articles currently kept) already
+    reach the section's cap. Skips runners-up already kept or in `used`
+    (everything the dedup loop has already tried, removed ones included).
+    """
+    if len(picks) >= section_cap(category):
+        return None
+    taken = {id(a) for a in picks} | {id(a) for a in used}
+    return next((a for a in runners_up if id(a) not in taken), None)
 
 
 # ---------------------------------------------------------------------------

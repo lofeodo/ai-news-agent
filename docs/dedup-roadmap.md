@@ -24,7 +24,7 @@ agent3 (`agents/agent3_compose.py`, `select_articles_for_category`) picks each s
 
 - [x] Step 1: Hard caps in code
 - [x] Step 2: Dedup primitive (multi-turn, tool-based)
-- [ ] Step 3: Ranked fallback pool
+- [x] Step 3: Ranked fallback pool
 - [ ] Step 4: LangGraph dedup loop in agent3
 - [ ] Step 5: Dedup eval dataset
 - [ ] Step 6: Dedup eval harness (control vs Haiku vs Sonnet)
@@ -75,7 +75,7 @@ Depends on: Steps 1 to 6.
 
 ## Step detail
 
-(No step in progress. Step 3 gets its plan here when we start it.)
+(No step in progress. Step 4 gets its plan here when we start it.)
 
 ## Completed steps
 
@@ -114,3 +114,20 @@ Branch `feat/dedup-roadmap`. Commits: plan, tool schema/config/guard, primitive 
 - The prompts have never been sent to a real model; quality is unmeasured until the Step 6 eval.
 - Removed articles stay in the conversation context, so a candidate could be flagged against a removed article's number; Step 4 must map such a match back to the kept member of that group.
 - Nothing in agent3 uses this yet, so production is unchanged.
+
+### Step 3: Ranked fallback pool
+
+Branch `feat/dedup-fallback-pool`. Commits: plan, implementation with tests, this write-up.
+
+**Built.**
+- `prompts/article_selection_prompt.txt`: the reply is now `{"selected": [...], "runners_up": [...]}`, with a runners-up paragraph (same standards, no filler, different stories from the picks, most valuable first). `config.py`: `RUNNERS_UP_MAX = 6`.
+- `agents/agent3_compose.py`: `parse_selection` (object or bare array; repeats, out-of-range, bools and runners-up that are also picks dropped), `SelectionResult(picks, runners_up)`, and `select_with_runners_up`, which holds the old selection logic unchanged (blank-card filter, neutral shuffle, cap, empty-reply fallback). `select_articles_for_category` is now a wrapper returning `.picks`, so no existing caller changed.
+- Pool order: picks the cap trimmed (the model chose them), then the model's runners-up, then a deterministic top-up to 6 by HN score descending (unscored last), ties in shuffled order. The pool is drawn only from the section's own articles; each selection pass (all-language, English-only) builds its own.
+- `take_fallback(category, picks, runners_up, used=())`: next runner-up not already kept or used, or None when the kept picks already reach the section's cap. Changed from the planned `removed` argument: the caller passes the kept list and everything already tried, which is what Step 4's loop has.
+
+**Verified.** `tests/test_selection_pool.py` (17 tests); full suite 436 passed, no real Claude calls.
+
+**Caveats.**
+- The new reply format has never been sent to a real model; runners-up quality is unmeasured until the Step 6 eval. A model that ignores the format and returns a bare array still works (the top-up supplies the pool).
+- agent3 does not use the pool yet, so production output is unchanged. The one visible difference is a longer selection reply (slightly more output tokens per call).
+- The English-only pass can reuse a different pool than the all-language pass, by design.

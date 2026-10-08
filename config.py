@@ -40,6 +40,9 @@ def section_cap(category: str) -> int:
     return SECTION_CAPS.get(category, SECTION_CAP_DEFAULT)
 
 
+# Ranked runners-up kept per section and selection pass, for the dedup loop's fallbacks
+RUNNERS_UP_MAX = 6
+
 # Duplicate detection in agent3 (agents/dedup.py); Haiku until the dedup eval picks a winner
 DEDUP_MODEL = SCORING_MODEL
 DEDUP_MAX_TOKENS = 1000

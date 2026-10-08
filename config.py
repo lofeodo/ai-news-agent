@@ -46,6 +46,14 @@ RUNNERS_UP_MAX = 6
 # Duplicate detection in agent3 (agents/dedup.py); Haiku until the dedup eval picks a winner
 DEDUP_MODEL = SCORING_MODEL
 DEDUP_MAX_TOKENS = 1000
+# agent3 dedup loop (agents/agent3_dedup_graph.py): "graph" (default) or "off" (no-redeploy rollback)
+AGENT3_DEDUP_MODE = os.environ.get("AGENT3_DEDUP_MODE", "graph").strip().lower()
+if AGENT3_DEDUP_MODE not in ("graph", "off"):
+    raise ValueError(f"AGENT3_DEDUP_MODE must be 'graph' or 'off', got {AGENT3_DEDUP_MODE!r}")
+try:
+    DEDUP_MAX_ITERATIONS = max(1, int(os.environ.get("DEDUP_MAX_ITERATIONS", RUNNERS_UP_MAX)))  # fallback checks per section
+except ValueError:
+    DEDUP_MAX_ITERATIONS = RUNNERS_UP_MAX
 
 # Shared timing
 LOOKBACK_HOURS = 168    # 7 days — applies to both ArXiv and news fetching

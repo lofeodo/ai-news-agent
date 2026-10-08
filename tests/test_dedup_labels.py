@@ -55,3 +55,13 @@ def test_restores_leading_zero_dropped_by_excel(tmp_path):
     rows = ["c1,51952554936,t,s,real,g1,", "c1,000000000abc,t,s,real,g1,"]
     lp.write_text(HEADER + "\n".join(rows) + "\n", encoding="utf-8")
     assert load_dedup_gold(lp, cp).groups == {"c1": [frozenset({"051952554936", "000000000abc"})]}
+
+
+def test_load_all_merges_sets_and_rejects_collisions(tmp_path):
+    lp, cp = setup(tmp_path, [("c1", "a", "g1", ""), ("c1", "b", "g1", "")])
+    (tmp_path / "x").mkdir()
+    lp2, cp2 = setup(tmp_path / "x", [("c1", "a", "g1", ""), ("c1", "b", "g1", "")])
+    from evals.dedup_labels import load_all_gold
+    with pytest.raises(LabelError):
+        load_all_gold([(lp, cp), (lp2, cp2)])
+    assert load_all_gold([(lp, cp)]).groups == {"c1": [frozenset({"a", "b"})]}

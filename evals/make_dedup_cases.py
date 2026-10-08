@@ -8,7 +8,9 @@ Labeling rule (same as prompts/dedup_prompt.txt): same event = duplicate, even a
 languages and angles; same company or topic alone is not. Put the same label (g1, g2, ...) on
 articles that are duplicates of each other; blank = unique; "?" in `note` = ambiguous, excluded.
 
-CMD:  python -m evals.make_dedup_cases   (reads data/news_summaries.json and, if present,
+CMD:  python -m evals.make_dedup_cases shipped   (cases from past newsletters; needs data/shipped_picks.json
+      from `python -m evals.fetch_shipped_picks`)
+      python -m evals.make_dedup_cases   (reads data/news_summaries.json and, if present,
       evals/fixtures/dedup_synthetic.json; writes the fixture and evals/labels/dedup_cases_template.csv)
 """
 import json
@@ -178,7 +180,64 @@ def write_outputs(cases, cases_path=CASES_PATH, template_path=TEMPLATE_PATH):
     return cases_path, Path(template_path)
 
 
+SHIPPED_PICKS_PATH = Path("data") / "shipped_picks.json"
+SHIPPED_CASES_PATH = FIXTURES_DIR / "dedup_cases_shipped.json"
+SHIPPED_TEMPLATE_PATH = LABELS_DIR / "dedup_cases_shipped_template.csv"
+SHIPPED_SUSPECT_OVERLAP = 0.2   # loose on purpose: sections are small, the owner reads every one
+
+
+def build_shipped_cases(runs, n_controls=10, seed=0, exclude_urls=()):
+    """Cases from sections that actually shipped (evals.fetch_shipped_picks), one case per run and section.
+
+    `shipped`: some pair in the section has word overlap >= SHIPPED_SUSPECT_OVERLAP (reposts and same-site
+    pairs ignored). `shipped_control`: no such pair; n_controls of them are sampled so the gold is not
+    conditioned only on what the matcher flags. Sections sharing an article with `exclude_urls`, or with fewer
+    than 3 articles, are skipped.
+    """
+    rng = random.Random(seed)
+    suspect, quiet = [], []
+    for run in sorted(runs, key=lambda r: r["run_id"]):
+        for sec in run["sections"]:
+            arts = [a for a in sec["articles"] if a.get("url")]
+            if len(arts) < 3 or any(a["url"] in exclude_urls for a in arts):
+                continue
+            toks = [tokens(a) for a in arts]
+            hit = any(overlap(toks[i], toks[j]) >= SHIPPED_SUSPECT_OVERLAP and not is_repost(arts[i], arts[j])
+                      for i, j in combinations(range(len(arts)), 2))
+            (suspect if hit else quiet).append((run["run_id"], sec["category"], arts))
+    chosen = [("shipped", x) for x in suspect] + [("shipped_control", x) for x in rng.sample(quiet, min(n_controls, len(quiet)))]
+    cases = []
+    for n, (kind, (run_id, cat, arts)) in enumerate(chosen, start=1):
+        rows = [_entry(a) for a in arts]
+        rng.shuffle(rows)
+        cases.append({"case_id": f"ship{n:02d}", "kind": kind, "category": cat, "run_id": run_id, "articles": rows})
+    return cases
+
+
+def _refuse_if_labeled(template_path):
+    """Regenerating would wipe the owner's hand labels."""
+    p = Path(template_path)
+    if p.exists():
+        import csv
+        with p.open(newline="", encoding="utf-8-sig") as f:
+            if any((r.get("duplicate_group") or "").strip() or (r.get("note") or "").strip() for r in csv.DictReader(f)):
+                raise SystemExit(f"{p} already has labels; refusing to overwrite it")
+
+
+def main_shipped(**kwargs):
+    runs = json.loads(SHIPPED_PICKS_PATH.read_text(encoding="utf-8"))["runs"]
+    used = set()
+    if CASES_PATH.exists():
+        used = {a["url"] for c in json.loads(CASES_PATH.read_text(encoding="utf-8"))["cases"] for a in c["articles"]}
+    _refuse_if_labeled(SHIPPED_TEMPLATE_PATH)
+    cases = build_shipped_cases(runs, exclude_urls=used, **kwargs)
+    paths = write_outputs(cases, SHIPPED_CASES_PATH, SHIPPED_TEMPLATE_PATH)
+    from collections import Counter
+    print(dict(Counter(c["kind"] for c in cases)), "->", *paths)
+
+
 def main(data_dir="data", **kwargs):
+    _refuse_if_labeled(TEMPLATE_PATH)
     articles = json.loads((Path(data_dir) / "news_summaries.json").read_text(encoding="utf-8"))["articles"]
     cases = build_dedup_cases(articles, **kwargs)
     if SYNTHETIC_PATH.exists():
@@ -190,4 +249,5 @@ def main(data_dir="data", **kwargs):
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    main_shipped() if sys.argv[1:] == ["shipped"] else main()

@@ -73,3 +73,35 @@ def test_reposts_are_not_proposed_as_pairs():
     assert not is_repost(a, d)
     cases = build_dedup_cases([a, b] + pool()[:20], n_real=1, n_hard=0, n_control=0)
     assert cases == [] or not {"https://x.test/1", "https://x.test/2"} <= {x["url"] for x in cases[0]["articles"]}
+
+
+def _sec(cat, titles):
+    return {"category": cat, "articles": [art(f"{cat}{i}", t) | {"url": f"https://s{i}.test/{cat}/{i}"}
+                                           for i, t in enumerate(titles)]}
+
+
+def test_shipped_cases_flag_suspect_sections_and_sample_controls():
+    from evals.make_dedup_cases import build_shipped_cases
+    runs = [{"run_id": "r1", "sections": [
+        _sec("A", ["Acme launches Rocket model", "Acme Rocket model released today", "Totally unrelated tulips"]),
+        _sec("B", ["alpha beta gamma delta", "epsilon zeta eta theta", "iota kappa lambda mu"]),
+        _sec("C", ["only", "two"]),
+    ]}]
+    cases = build_shipped_cases(runs, n_controls=5)
+    kinds = {c["category"]: c["kind"] for c in cases}
+    assert kinds == {"A": "shipped", "B": "shipped_control"}      # C has fewer than 3 articles
+    assert all(c["run_id"] == "r1" for c in cases)
+    # sections that share an article with the already-labeled cases are left out
+    skip = build_shipped_cases(runs, exclude_urls={"https://s0.test/A/0"})
+    assert [c["category"] for c in skip] == ["B"]
+
+
+def test_regenerating_never_overwrites_labels(tmp_path):
+    import pytest
+    from evals.make_dedup_cases import _refuse_if_labeled
+    p = tmp_path / "t.csv"
+    p.write_text("case_id,article_id,title,snippet,kind,duplicate_group,note\nc,a,t,s,real,g1,\n", encoding="utf-8")
+    with pytest.raises(SystemExit):
+        _refuse_if_labeled(p)
+    p.write_text("case_id,article_id,title,snippet,kind,duplicate_group,note\nc,a,t,s,real,,\n", encoding="utf-8")
+    _refuse_if_labeled(p)

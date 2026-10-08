@@ -8,7 +8,7 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from evals.make_dedup_cases import CASES_PATH, TEMPLATE_PATH
+from evals.make_dedup_cases import CASES_PATH, SHIPPED_CASES_PATH, SHIPPED_TEMPLATE_PATH, TEMPLATE_PATH
 
 
 def _fix_id(raw):
@@ -63,3 +63,16 @@ def load_dedup_gold(path=TEMPLATE_PATH, cases_path=CASES_PATH):
         gold.groups.setdefault(cid, []).append(frozenset(ids))
     gold.unlabeled_cases = sorted(set(known) - touched)
     return gold
+
+
+def load_all_gold(sources=((TEMPLATE_PATH, CASES_PATH), (SHIPPED_TEMPLATE_PATH, SHIPPED_CASES_PATH))):
+    """Gold from every labeled set (mined pool cases and shipped-section cases), merged; case ids don't collide."""
+    merged = Gold()
+    for labels, cases in sources:
+        g = load_dedup_gold(labels, cases)
+        for cid in g.groups.keys() & merged.groups.keys():
+            raise LabelError(f"case id {cid!r} appears in two label sets")
+        merged.groups.update(g.groups)
+        merged.excluded.update(g.excluded)
+        merged.unlabeled_cases += g.unlabeled_cases
+    return merged

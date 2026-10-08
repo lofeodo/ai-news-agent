@@ -40,7 +40,7 @@ Coordination happens at two levels on purpose:
 - **Between agents:** Pub/Sub events plus the Firestore `agent2_completions` counter. Each agent is its own Cloud Run service, so the join (agent 2a + 2b → agent 3) has to work across separate instances, and each stage keeps its own retries, timeouts and scaling.
 - **Inside an agent:** LangGraph, where a stage has real internal control flow. Today that is agent 1b only. Local mode and cloud mode run the same graph code — `orchestrator.py` just calls each agent's `run()`.
 
-Why LangGraph is *not* used across agents: [docs/decisions/0001-langgraph-inside-agents.md](docs/decisions/0001-langgraph-inside-agents.md).
+Why LangGraph is *not* used across agents: [docs/decisions/0001-langgraph-inside-agents.md](decisions/0001-langgraph-inside-agents.md).
 
 ## Inside agent 1b (LangGraph)
 

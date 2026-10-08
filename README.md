@@ -369,7 +369,8 @@ With `CLICK_TRACKING=true`, agent 4 stores the shipped articles for the run (`cl
 │   └── test_*.py                   # agents, graph, evals, drift, judge, click signal, injection defences
 ├── docs/
 │   ├── plans/                      # Implementation plans (e.g. langgraph-agent1b.md)
-│   └── decisions/                  # Architecture decision records (ADRs)
+│   ├── decisions/                  # Architecture decision records (ADRs)
+│   └── history/                    # Archived working log of the evaluation and monitoring work
 ├── .github/workflows/tests.yml     # CI: pytest on push and pull request (no secrets)
 ├── selection_test.py               # Manual script (real Claude calls) — NOT collected by pytest
 ├── pytest.ini                      # Restricts pytest to tests/

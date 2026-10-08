@@ -47,8 +47,6 @@ def test_latest_results_path_ignores_rows_files(tmp_path):
     assert t.latest_results_path(tmp_path / "missing") is None
 
 
-def test_checked_in_readme_has_markers():
-    assert START in t.README.read_text(encoding="utf-8") and END in t.README.read_text(encoding="utf-8")
 
 
 def _inj_doc(name, ok_rate, attempted=None):
@@ -107,10 +105,17 @@ def test_update_readme_generic_replaces_only_its_block(tmp_path):
         t.update_readme_generic("usage-drift-sim", _generic_doc(), readme)
 
 
-def test_checked_in_readme_has_generic_markers():
-    text = t.README.read_text(encoding="utf-8")
+def _has_block(path, name):
+    text = path.read_text(encoding="utf-8")
+    return f"<!-- {name}:start -->" in text and f"<!-- {name}:end -->" in text
+
+
+def test_checked_in_docs_have_every_generated_block():
     for name, _, _ in t.GENERIC_BLOCKS:
-        assert f"<!-- {name}:start -->" in text and f"<!-- {name}:end -->" in text
+        assert _has_block(t.DOCS / "monitoring.md", name), name
+    for name in ("review-eval", "injection-eval"):
+        assert _has_block(t.DOCS / "evaluation.md", name), name
+
 
 
 def test_render_generic_can_omit_notes():

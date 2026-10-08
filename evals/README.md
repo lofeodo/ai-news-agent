@@ -1,6 +1,6 @@
 # evals
 
-Shared infrastructure for the evaluation, monitoring and security steps in `docs/IMPROVEMENT_ROADMAP.md`.
+Shared infrastructure for the evaluation, monitoring and security steps in `docs/history/IMPROVEMENT_ROADMAP.md`.
 Every number the repo's docs quote must come from a results file written here.
 
 ## Layout

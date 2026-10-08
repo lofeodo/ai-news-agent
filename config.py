@@ -39,6 +39,11 @@ SECTION_CAPS = {
 def section_cap(category: str) -> int:
     return SECTION_CAPS.get(category, SECTION_CAP_DEFAULT)
 
+
+# Duplicate detection in agent3 (agents/dedup.py); Haiku until the dedup eval picks a winner
+DEDUP_MODEL = SCORING_MODEL
+DEDUP_MAX_TOKENS = 1000
+
 # Shared timing
 LOOKBACK_HOURS = 168    # 7 days — applies to both ArXiv and news fetching
 

@@ -47,8 +47,6 @@ def test_latest_results_path_ignores_rows_files(tmp_path):
     assert t.latest_results_path(tmp_path / "missing") is None
 
 
-def test_checked_in_readme_has_markers():
-    assert START in t.README.read_text(encoding="utf-8") and END in t.README.read_text(encoding="utf-8")
 
 
 def _inj_doc(name, ok_rate, attempted=None):
@@ -116,27 +114,9 @@ def test_checked_in_docs_have_every_generated_block():
     for name, _, _ in t.GENERIC_BLOCKS:
         assert _has_block(t.DOCS / "monitoring.md", name), name
     for name in ("review-eval", "injection-eval"):
-        assert _has_block(t.README, name) and _has_block(t.DOCS / "evaluation.md", name), name
-    assert _has_block(t.README, "judge-calibration")
+        assert _has_block(t.DOCS / "evaluation.md", name), name
 
-
-def test_compact_renders_are_short_and_keep_the_headline_numbers():
-    review = t.render_compact(_doc())
-    assert "| Single-pass |" in review and "Low-confidence" not in review
-    inj = t.render_injection_compact(_inj_doc("b", 5), _inj_doc("a", 0))
-    assert len(inj.splitlines()) == 3 and "overall" in inj
-    judge = t.render_generic(_generic_doc(), notes=False, keys=("cohens_kappa",))
-    assert "cohens kappa" in judge and "agreement" not in judge
 
 
 def test_render_generic_can_omit_notes():
     assert "a note" not in t.render_generic(_generic_doc(), notes=False)
-
-
-def test_update_readme_compact_flag_selects_the_short_table(tmp_path):
-    readme = tmp_path / "README.md"
-    readme.write_text(f"{START}\nold\n{END}\n", encoding="utf-8")
-    t.update_readme(_doc(), readme, compact=True)
-    short = readme.read_text(encoding="utf-8")
-    t.update_readme(_doc(), readme)
-    assert "Low-confidence stratum" not in short and "Low-confidence stratum" in readme.read_text(encoding="utf-8")

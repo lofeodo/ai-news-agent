@@ -53,9 +53,19 @@ Invoke-RestMethod -Method Post -Uri $url -Headers @{Authorization="Bearer $tok"}
 Rules of thumb (from the code, not from a test run):
 - Services: `agent1a`, `agent1b`, `agent2a`, `agent2b`, `agent3`, `agent4`, `orchestrator`, `healthcheck`.
 - To re-run agent 3 or later on an existing run, the earlier stages' outputs must already be on the run doc.
-- agent 4 selects its own newsletter (the newest `newsletter_composed` run) and takes no run id. It refuses anything older than 24 hours, so a re-send is only possible within a day of agent 3 finishing, and a refusal writes an error onto that run's doc. Do not trigger `agent4-test` between runs.
+- agent 4 selects its own newsletter (the newest `newsletter_composed` **release** run, see section 2b) and takes no run id. It refuses anything older than 24 hours, so a re-send is only possible within a day of agent 3 finishing, and a refusal writes an error onto that run's doc. Do not trigger `agent4-test` between runs.
 - Test sends: `TEST_SEND_TO` on the service skips the subscriber list.
 - A manual run started after 07:30 is bounded only by the 1-hour cap.
+
+## 2b. Release vs debug runs, and previewing a debug run
+
+Each `pipeline_runs` doc has `run_kind`: `release` or `debug` (no field = release, for old runs). The public site preview, agent 4's send and the health check only follow release runs, so a debug run can never replace the published issue or be mailed to subscribers.
+
+- The orchestrator defaults to `debug`. The scheduled job `create-newsletter` must call `<orchestrator-url>/?kind=release`; if it does not, nothing publishes and the health check reports a stale run.
+- To try something, force-run the `create-newsletter-debug` job (same target, no `kind`, schedule that never fires): `gcloud scheduler jobs run create-newsletter-debug --location <region>`. Do not force-run `create-newsletter` for this, that is a release.
+- Preview a debug run in a browser tab: `https://<agent-subscriptions-url>/preview?run=latest&token=<ADMIN_TOKEN>` (newest composed run of any kind), or `?run=<run_id>`; add `&variant=1_1` for another variant. Without the token it is a 403.
+- To mail a debug run to yourself, run `agent4-test` (it has `TEST_SEND_TO`, so it may pick a debug run).
+- To publish a debug run by hand (rare), set `run_kind` to `release` on its doc in the Firestore console.
 
 ## 3. Roll back
 

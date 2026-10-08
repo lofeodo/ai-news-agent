@@ -21,7 +21,7 @@ A weekly AI briefing, written and sent by a team of AI agents: one spotlight res
 - **Measured, not claimed**: evaluation results are generated from scripts, with confidence intervals.
 - **Real cloud operations**: Cloud Run, Cloud Build, GitHub Actions CI, secrets management and no-redeploy rollback switches.
 
-## How it works
+## ⚙️ How it works
 
 Stage-by-stage detail: [docs/architecture.md](docs/architecture.md)
 
@@ -59,7 +59,11 @@ flowchart LR
 | **4** Send | Sends each subscriber their personalized version through SendGrid on Monday morning. |
 | **Health checks** | A draft check on Sunday and a send check on Monday email a report on every run. |
 
-## Agentic orchestration
+Agents hand work to each other through Pub/Sub; Firestore holds each run's state. Cloud Scheduler triggers the pipeline, the send and both health checks.
+
+<img src="docs/assets/newsletter-showcase.png" alt="The latest composed newsletter on desktop and on a phone" width="100%">
+
+## 🕸️ Agentic orchestration
 
 - **Between agents:** Pub/Sub events plus a Firestore counter that joins agents 2a and 2b before agent 3 starts.
 - **Inside an agent:** agent 1b is a LangGraph graph that sends low-confidence articles to a small tool-using review loop.
@@ -87,22 +91,26 @@ flowchart LR
 
 Why LangGraph runs inside agents but not between them: [ADR 0001](docs/decisions/0001-langgraph-inside-agents.md).
 
-## Live monitoring
+## 📡 Live monitoring
 
 Every weekly run ends in an email report to the maintainer, whether or not anything is wrong, so a missing email is itself a signal.
 
 | Signal | What it watches | Response |
 |---|---|---|
-| **Health checks** | Every pipeline stage, the composed newsletter and delivery | Email report: all clear or problem detected |
-| **Failure recording and watchdog** | Agent errors and hung or crashed runs | Written to Firestore; hung runs are killed |
-| **Drift** | Agent 1b's confidence, category mix and review rate | Flagged only for large, significant shifts |
-| **Token and cost** | LangSmith token and cost totals per run | Flagged on big jumps versus prior weeks |
-| **Summary judge** | A weekly sample of summaries checked against their sources | Report only (see Results) |
-| **Click signal** | Aggregate link clicks, with no subscriber data | Informational section in the report |
+| 🟢 **Health checks** | Every pipeline stage, the composed newsletter and delivery | Email report: all clear or problem detected |
+| 🟢 **Failure recording and watchdog** | Agent errors and hung or crashed runs | Written to Firestore; hung runs are killed |
+| 🔵 **Drift** | Agent 1b's confidence, category mix and review rate | Flagged only for large, significant shifts |
+| 🔵 **Token and cost** | LangSmith token and cost totals per run | Flagged on big jumps versus prior weeks |
+| ⚪ **Summary judge** | A weekly sample of summaries checked against their sources | Report only (see Results) |
+| ⚪ **Click signal** | Aggregate link clicks, with no subscriber data | Informational section in the report |
+
+🟢 acts on failures &nbsp; 🔵 flags large shifts &nbsp; ⚪ informational only
+
+<img src="docs/assets/healthcheck-showcase.png" alt="An example health check email: all clear" width="100%">
 
 Details: [docs/monitoring.md](docs/monitoring.md)
 
-## Cloud, CI and operations
+## ☁️ Cloud, CI and operations
 
 | Area | What's in place |
 |---|---|
@@ -116,7 +124,7 @@ Details: [docs/monitoring.md](docs/monitoring.md)
 
 Deployment and local setup: [docs/development.md](docs/development.md)
 
-## Results
+## 📊 Results
 
 All charts below are generated from `evals/results/*.json` by `python -m evals.make_readme_table`, never drawn or typed by hand. Each has its table in [docs/evaluation.md](docs/evaluation.md).
 
@@ -140,7 +148,7 @@ A second Claude model checks a weekly sample of summaries against the text they 
 
 Full results and caveats: [docs/evaluation.md](docs/evaluation.md)
 
-## Documentation
+## 📚 Documentation
 
 - [Architecture](docs/architecture.md): stage-by-stage detail, orchestration and the subscription system
 - [Design decisions](docs/design-decisions.md): why the system is built this way

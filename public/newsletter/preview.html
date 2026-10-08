@@ -127,6 +127,22 @@
     }
     .topbar__account-link:hover { color: var(--accent); }
 
+    .topbar__debug {
+      display: none;
+      font: inherit;
+      font-size: 0.68rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: none;
+      border: 1px solid var(--accent);
+      border-radius: 3px;
+      padding: 4px 10px;
+      cursor: pointer;
+    }
+    .topbar__debug:hover { background: rgba(200, 184, 154, 0.12); }
+    .topbar__debug[aria-pressed="true"] { background: var(--accent); color: #0f0f0f; }
+
     .preview-frame {
       position: fixed;
       top: 48px; left: 0; right: 0; bottom: 0;
@@ -156,6 +172,8 @@
       </span>
     </div>
     <div class="topbar__right">
+      <!-- Admins only: toggles between the published issue and the newest run of any kind -->
+      <button type="button" class="topbar__debug" id="debug-toggle" aria-pressed="false">Debug run</button>
       <!-- Shown when signed in -->
       <div class="topbar__account" id="topbar-account">
         <a href="/preferences.html" class="topbar__account-link">Preferences</a>
@@ -173,11 +191,67 @@
   ></iframe>
 
   <script type="module">
-    import { auth, onAuthStateChanged } from './auth.js';
-    onAuthStateChanged(auth, (user) => {
+    import { auth, onAuthStateChanged, authFetch } from './auth.js';
+
+    const API = (() => {
+      const h = location.hostname;
+      if (h === 'localhost' || h === '127.0.0.1') return 'http://localhost:8000';
+      return 'https://agent-subscriptions-zozrn33sna-nn.a.run.app';
+    })();
+    const frame  = document.getElementById('preview-frame');
+    const toggle = document.getElementById('debug-toggle');
+    const label  = document.querySelector('.topbar__label');
+    const badge  = document.querySelector('.topbar__badge');
+    const publicSrc = frame.getAttribute('src');
+    let debugOn = false;
+
+    async function showDebug() {
+      toggle.disabled = true;
+      try {
+        const res = await authFetch(`${API}/auth/admin/preview?run=latest`);
+        if (!res.ok) throw new Error(res.status);
+        const run = await res.json();
+        frame.removeAttribute('src');
+        frame.srcdoc = run.html;
+        label.textContent = `${run.run_kind} run`;
+        label.title = run.run_id;
+        badge.style.display = 'none';
+        toggle.setAttribute('aria-pressed', 'true');
+        toggle.textContent = 'Back to published';
+        debugOn = true;
+      } catch (e) {
+        console.error('[preview] debug run failed:', e);
+        toggle.textContent = 'No run found';
+      } finally {
+        toggle.disabled = false;
+      }
+    }
+
+    function showPublic() {
+      frame.removeAttribute('srcdoc');
+      frame.src = publicSrc;
+      label.textContent = 'Latest Issue';
+      label.removeAttribute('title');
+      badge.style.display = '';
+      toggle.setAttribute('aria-pressed', 'false');
+      toggle.textContent = 'Debug run';
+      debugOn = false;
+    }
+
+    toggle.addEventListener('click', () => (debugOn ? showPublic() : showDebug()));
+
+    onAuthStateChanged(auth, async (user) => {
       if (user && user.emailVerified) {
         document.getElementById('topbar-cta').style.display     = 'none';
         document.getElementById('topbar-account').style.display = 'flex';
+        try {
+          const res = await authFetch(`${API}/auth/me`);
+          const me  = res.ok ? await res.json() : null;
+          if (me?.is_admin) {
+            toggle.style.display = 'inline-block';
+            if (new URLSearchParams(location.search).get('debug') === '1') showDebug();
+          }
+        } catch (e) { console.error('[preview] /auth/me failed:', e); }
       }
     });
   </script>

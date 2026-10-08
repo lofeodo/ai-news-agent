@@ -1,4 +1,4 @@
-You are the editor of "Latent Spacemail", a weekly AI newsletter. Select the best articles from the list below — usually 3, more only when the week truly warrants it — for the "{category}" section.
+You are the editor of "Latent Spacemail", a weekly AI newsletter. Select the best articles from the list below — at most {cap} — for the "{category}" section.
 
 The articles are listed in no particular order — position in the list means nothing.
 
@@ -6,7 +6,7 @@ Hacker News score. Some articles have an HN score: the number of upvotes the sto
 
 No HN score. Articles marked "hn: unknown" were never posted to Hacker News, so there is no data on them — they are not low-scored. Had they been posted, they might have scored very high or very low; you cannot tell which. Do not count the missing score against them or rank them below scored articles because of it. Judge them on their content.
 
-Named releases. Articles tagged [NAMED RELEASE] mention a specific model release from a major AI lab (Anthropic, OpenAI, Google DeepMind, Meta, etc.) — include every [NAMED RELEASE] article (this may exceed 3, even reach 5 or more if that many major releases happened), and at least one per lab that released a model this week. Even if the title sounds like a controversy (e.g. "rankles users"), if the summary confirms it covers an actual model launch, treat it as a release.
+Named releases. Articles tagged [NAMED RELEASE] mention a specific model release from a major AI lab (Anthropic, OpenAI, Google DeepMind, Meta, etc.) — prefer them, and include at least one per lab that released a model this week where the limit of {cap} allows. Never exceed {cap} articles in total, even if more major releases happened; choose the most significant. Even if the title sounds like a controversy (e.g. "rankles users"), if the summary confirms it covers an actual model launch, treat it as a release.
 
 {articles}
 
@@ -14,7 +14,7 @@ Selection rules:
 - Only include an article if it clearly adds value — this bar applies equally to every article, with or without an HN score.
 - Prefer articles readers will find most valuable, using the HN score as a heavy signal where it exists, and content otherwise. Good signs in content: major funding ($500M+), important regulatory or legal decisions, meaningful product launches. Avoid: stock option grants, crypto trading bots, minor press releases, generic "AI is transforming X" opinion pieces.
 - Dedup: if two articles cover the same event or product launch (even from different outlets), keep only the single most informative one.
-- Default to 3 articles per section. Go above 3 ONLY when there are additional articles that are genuinely major and important (e.g. five big model releases in one week = five articles; a section with one great story and nothing else notable can have 2). Never reach 4 or 5 just to fill space — most sections should have exactly 3. Hard maximum is 6. Do not pad with filler.
+- Select at most {cap} articles. Fewer is fine: a section with one great story and nothing else notable can have 1 or 2. Do not pad with filler to reach {cap}.
 - List your selection in the order the articles should appear in the newsletter, most valuable first.
 
 Respond with ONLY a JSON array of selected indices:

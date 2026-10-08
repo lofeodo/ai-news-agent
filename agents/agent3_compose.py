@@ -13,14 +13,13 @@ from datetime import datetime, timezone
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_XML_TAGS, neutralize_tags
 import tracing
-from config import DATA_DIR, SCORING_MODEL, GCP_PROJECT_ID, USE_FIRESTORE, FIRESTORE_COLLECTION, MAX_SCORE, newsletter_send_date
+from config import DATA_DIR, SCORING_MODEL, GCP_PROJECT_ID, USE_FIRESTORE, FIRESTORE_COLLECTION, MAX_SCORE, newsletter_send_date, section_cap
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
 NEWSLETTER_NAME              = "Latent SpaceMail"
-ARTICLES_PER_CATEGORY_TARGET = "3 (more only for major stories)"
 
 NEWS_CATEGORIES = [
     "Model & Product Releases",
@@ -185,7 +184,8 @@ def select_articles_for_category(
     random.Random(category).shuffle(ordered)
 
     formatted = format_articles_for_selection(ordered, category)
-    prompt    = prompt_template.format(category=category, articles=formatted)
+    cap       = section_cap(category)
+    prompt    = prompt_template.format(category=category, articles=formatted, cap=cap)
 
     response = claude_call_with_retry(
         client,
@@ -199,9 +199,15 @@ def select_articles_for_category(
         raise RuntimeError(f"Empty Claude response for article selection in '{category}'")
     indices = parse_indices(response.content[0].text, len(ordered))
 
+    indices = list(dict.fromkeys(indices))  # a repeated index would show the same article twice
+
     if not indices:
-        print(f"  [warn]   no valid indices for '{category}' — falling back to first 3")
-        indices = list(range(min(3, len(ordered))))
+        print(f"  [warn]   no valid indices for '{category}' — falling back to first {cap}")
+        indices = list(range(min(cap, len(ordered))))
+
+    if len(indices) > cap:
+        print(f"  [select] '{category}': model picked {len(indices)}, capped at {cap}")
+        indices = indices[:cap]  # the model lists most valuable first
 
     return [ordered[i] for i in indices]
 

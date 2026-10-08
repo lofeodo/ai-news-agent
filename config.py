@@ -28,6 +28,22 @@ FILTER_MAX_TOKENS = 4000    # used for news filtering — up to 100 index+catego
 PAPER_SUMMARY_MAX_TOKENS = 110   # 2-3 sentence hook (~35 words); a cut-off reply is trimmed to its last full sentence
 NEWS_SUMMARY_MAX_TOKENS  = 200   # 2-3 sentences
 
+# Hard cap on articles per newsletter section, enforced in code by agent3
+SECTION_CAP_DEFAULT = 3
+SECTION_CAPS = {
+    "Model & Product Releases": 4,
+    "Open Source & Tools": 4,
+}
+
+
+def section_cap(category: str) -> int:
+    return SECTION_CAPS.get(category, SECTION_CAP_DEFAULT)
+
+
+# Duplicate detection in agent3 (agents/dedup.py); Haiku until the dedup eval picks a winner
+DEDUP_MODEL = SCORING_MODEL
+DEDUP_MAX_TOKENS = 1000
+
 # Shared timing
 LOOKBACK_HOURS = 168    # 7 days — applies to both ArXiv and news fetching
 

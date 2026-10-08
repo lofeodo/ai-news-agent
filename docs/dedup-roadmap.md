@@ -75,7 +75,31 @@ Depends on: Steps 1 to 6.
 
 ## Step detail
 
-(No step in progress. Step 2 gets its plan here when we start it.)
+### Step 2: Dedup primitive (in progress)
+
+**Goal.** `agents/dedup.py`: one multi-turn conversation per (section, selection pass). Turn 1 sends all selected articles and gets duplicate groups back. Each later turn sends one new article and gets back which earlier articles it duplicates. Nothing in agent3 changes in this step, so production behavior is unchanged.
+
+**Design.**
+- `config.py`: `DEDUP_MODEL = SCORING_MODEL` (Haiku until the Step 6 eval). The model is also a constructor parameter so the eval can pass Sonnet.
+- Tool schema in `agents/dedup_tool.py` (style of `filter_tool.py`): `report_duplicates` with `groups: [{indices: [int], reason: str}]`. A group is two or more articles reporting the same underlying event or announcement (different outlets, languages or angles still count). An empty `groups` means no duplicates. Same company or same topic with a different event is *not* a duplicate.
+- `prompts/dedup_prompt.txt` (turn 1) and `prompts/dedup_candidate_prompt.txt` (later turns), plus `GUARD_DEDUP` in `prompt_guard.py`. Articles use the same `<article_N>` format and `neutralize_tags` as selection (title plus first 300 chars of summary/description).
+- API (no agent3 imports, so Step 4 can import it without a cycle):
+  - `DuplicateGroup(indices: tuple[int, ...], reason: str)`
+  - `DedupConversation(client, model=DEDUP_MODEL, create=None)`; `create` defaults to `client.messages.create` so Step 4 can inject agent3's `claude_call_with_retry` wrapper.
+  - `.start(articles) -> list[DuplicateGroup]` numbers articles 0..n-1.
+  - `.add(article) -> DuplicateGroup | None` numbers it n, n+1, ...; returns the group (earlier indices plus the new one) or None. Numbering is stable for the whole conversation, so Step 4 maps indices back to its own list; removed articles stay in the conversation context.
+  - `.usage` (input/output tokens) for cost reporting in the eval.
+  - Which member of a group to keep is not decided here (Step 4's policy).
+- Message shape: user (articles) -> assistant `tool_use` -> user `[tool_result "recorded", then candidate text]` -> ... The tool_result block comes first in the user content.
+- `tool_choice` stays `auto`, with the prompt saying to always call the tool: `claude-sonnet-5-5` returns a 400 on a forced tool (see the judge note in CLAUDE.md) and the eval needs a Sonnet arm. If no tool call comes back, retry once, then raise.
+- Model output is validated, never trusted: drop non-int and out-of-range indices, dedupe within a group, drop groups under 2 members, merge groups that share an index; on a candidate turn keep only the group containing the new index.
+- Failure: raises `DedupError` (API error, no tool call twice, malformed input). The primitive does not swallow it; Step 4 catches it and degrades to the undeduped selection, per the locked failure policy.
+
+**Files.** New: `agents/dedup.py`, `agents/dedup_tool.py`, the two prompts, `tests/test_dedup.py`. Edited: `config.py`, `agents/prompt_guard.py`, `tests/fakes.py` (a `ScriptedClient` returning queued responses and recording each call's `messages`/`model`).
+
+**Tests** (no network): group found on turn 1; empty groups; `add` sends only the new article (earlier titles absent from the new turn, history preserved, tool_result first); `add` match / None; stable numbering across several `add`s; invalid indices, singleton and overlapping groups; no tool call -> one retry then `DedupError`; API exception -> `DedupError`; `model` param reaches the call; `tool_choice` is `auto`; injected tags in a title are neutralized; real prompt files render; usage accumulates. Full suite stays green (405 passed before this step).
+
+**Out of scope.** Wiring into agent3, fallback pool, LangGraph, audit log, eval data. A real-model smoke check belongs to Step 6.
 
 ## Completed steps
 

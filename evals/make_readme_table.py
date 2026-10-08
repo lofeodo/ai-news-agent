@@ -3,7 +3,9 @@
 CMD:  venv\\Scripts\\python -m evals.make_readme_table
 Rewrites the block between <!-- review-eval:start --> and <!-- review-eval:end --> (latest review eval) and the
 block between <!-- injection-eval:start --> and <!-- injection-eval:end --> (injection_eval_baseline vs
-injection_eval_after) in README.md.
+injection_eval_after) in docs/evaluation.md.
+It also fills the generic metric tables in GENERIC_BLOCKS (judge calibration and the drift simulations), each
+between <!-- NAME:start --> and <!-- NAME:end --> markers.
 """
 import re
 import sys
@@ -14,6 +16,15 @@ from evals import results
 README = Path(__file__).resolve().parent.parent / "README.md"
 START, END = "<!-- review-eval:start -->", "<!-- review-eval:end -->"
 INJ_START, INJ_END = "<!-- injection-eval:start -->", "<!-- injection-eval:end -->"
+
+# (marker name, results file stem, show the file's notes?): one generic "metric | value | n" table per file.
+# The simulation notes are long and describe assumptions, which the README states in its own prose instead.
+GENERIC_BLOCKS = (
+    ("judge-calibration", "judge_calibration", True),
+    ("judge-drift-sim", "judge_drift_simulation", False),
+    ("drift-null-sim", "drift_null_simulation", False),
+    ("usage-drift-sim", "usage_drift_simulation", False),
+)
 
 # (label, metric key). Anything missing from the results file is skipped.
 _ACCURACY = (
@@ -120,17 +131,60 @@ def update_readme_injection(baseline, after, readme=README):
     Path(readme).write_text(pattern.sub(lambda _: block, text, count=1), encoding="utf-8")
 
 
+def render_generic(doc, notes=True, keys=None):
+    """Every metric of a results file as a row; values print as percentages except kappa, a plain number."""
+    lines = [f"Generated from `evals/results/{doc['name']}.json` (git `{doc['git_sha']}`, "
+             f"{doc['created_at'][:10]}, cost ${doc['cost_usd']}). 95% intervals in parentheses.", "",
+             "| Metric | Value | n |", "|---|---|---|"]
+    for key, m in doc["metrics"].items():
+        if keys is not None and key not in keys:
+            continue
+        if key == "cohens_kappa":
+            ci = f" ({m['ci_low']:.2f} to {m['ci_high']:.2f})" if m.get("ci_low") is not None else ""
+            value = f"{m['value']:.2f}{ci}"
+        else:
+            value = _pct(m)
+        lines.append(f"| {key.replace('_', ' ')} | {value} | {m['n']} |")
+    if notes and doc.get("notes"):
+        lines += ["", f"> {doc['notes']}"]
+    return "\n".join(lines)
+
+
+def update_readme_generic(name, doc, readme=README, notes=True, keys=None):
+    start, end = f"<!-- {name}:start -->", f"<!-- {name}:end -->"
+    text = Path(readme).read_text(encoding="utf-8")
+    pattern = re.compile(re.escape(start) + r".*?" + re.escape(end), re.S)
+    if not pattern.search(text):
+        raise ValueError(f"{readme} has no {start} ... {end} block")
+    block = f"{start}\n{render_generic(doc, notes, keys)}\n{end}"
+    Path(readme).write_text(pattern.sub(lambda _: block, text, count=1), encoding="utf-8")
+
+
+ROOT = README.parent
+DOCS = ROOT / "docs"
+
+
 def main():
+    """Full tables go to docs/; the README shows the charts that evals.make_charts writes from the same results."""
+    from evals import make_charts
+
     path = latest_results_path()
     if path is None:
         print("no evals/results/review_eval_*.json found; run evals.run_review_eval first")
         return 1
-    update_readme(results.read_results(path))
-    print(f"README.md updated from {path.name}")
+    update_readme(results.read_results(path), DOCS / "evaluation.md")
+    print(f"docs/evaluation.md updated from {path.name}")
     base, after = (results.RESULTS_DIR / f"injection_eval_{n}.json" for n in ("baseline", "after"))
     if base.exists() and after.exists():
-        update_readme_injection(results.read_results(base), results.read_results(after))
-        print("README.md updated from injection_eval_baseline.json and injection_eval_after.json")
+        update_readme_injection(results.read_results(base), results.read_results(after), DOCS / "evaluation.md")
+        print("docs/evaluation.md updated from injection_eval_baseline.json and injection_eval_after.json")
+    for name, stem, notes in GENERIC_BLOCKS:
+        path = results.RESULTS_DIR / f"{stem}.json"
+        if path.exists():
+            update_readme_generic(name, results.read_results(path), DOCS / "monitoring.md", notes=notes)
+            print(f"docs/monitoring.md updated from {path.name}")
+    for chart in make_charts.write_all():
+        print(f"wrote {chart.name}")
     return 0
 
 

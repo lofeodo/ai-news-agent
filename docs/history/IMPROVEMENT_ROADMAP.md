@@ -1,6 +1,8 @@
-# Latent SpaceMail improvement roadmap (TEMPORARY)
+# Latent SpaceMail improvement roadmap (ARCHIVED)
 
-Temporary working doc. It tracks a series of improvements to this repo, one step at a time. It is deleted or archived in the final step. The repo is public, so everything committed is public: keep docs honest and polished, and never commit secrets, subscriber data, or real email addresses.
+> **Archived 2026-10-08.** This is the finished working log of the improvement series, kept for the dated detail behind each result. Step 8 (postmortems and runbook) was dropped and will not be done; the two Optional steps were not started. The README is the current description of the project; this file is no longer updated.
+
+Original intro: a working doc that tracked a series of improvements to this repo, one step at a time. The repo is public, so everything committed is public: keep docs honest and polished, and never commit secrets, subscriber data, or real email addresses.
 
 Purpose: make Latent SpaceMail defensible in technical interviews for LLM systems roles by adding evaluation, monitoring, security testing and operational write-ups on top of the existing LangGraph work. Every claim the repo makes must be backed by a number produced by a script.
 
@@ -32,10 +34,10 @@ Purpose: make Latent SpaceMail defensible in technical interviews for LLM system
 - [x] Step 5b: Token and cost monitoring (LangSmith, weekly summary and drift alert)
 - [x] Step 6: Online judge (calibrated weekly scoring and alerting). Built, calibrated and recorded; the judge did not validate against the owner's labels (kappa 0.04), so it ships report-only. Deployed 2026-10-06; its weekly path is first exercised on the 2026-10-12 run
 - [~] Step 7: Click-through signal (SendGrid). Built, tested and deployed 2026-10-06; no real click has been counted yet, first tracked send is 2026-10-12 (see "Completed steps")
-- [x] Step 8: Postmortems and runbook. Written and tested on branch `docs/postmortems-runbook`; ready for owner review
+- [~] Step 8: Postmortems and runbook. DEPRECATED, dropped as a step and not to be done
 - [ ] Optional A: Model card and privacy review (Law 25 / GDPR)
 - [ ] Optional B: Agent 2b verify loop (generate, verify, retry or fall back)
-- [ ] Step 9: Results, README, CLAUDE.md, retire this doc
+- [x] Step 9: Results, README, CLAUDE.md, retire this doc. README and CLAUDE.md updated, this file archived to `docs/history/`
 
 ## Workflow rules
 

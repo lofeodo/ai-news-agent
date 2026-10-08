@@ -1,6 +1,11 @@
 <div align="center">
 
-<a href="https://newsletter.lofeodo.com"><img src="docs/assets/banner.svg" alt="Latent SpaceMail: a weekly AI briefing, written and sent by a team of AI agents. Live site: newsletter.lofeodo.com" width="100%"></a>
+<a href="https://newsletter.lofeodo.com">
+<picture>
+<source media="(prefers-color-scheme: dark)" srcset="docs/assets/banner-dark.svg">
+<img src="docs/assets/banner-light.svg" alt="Latent SpaceMail: a weekly AI briefing, written and sent by a team of AI agents. Live site: newsletter.lofeodo.com" width="100%">
+</picture>
+</a>
 
 <a href="https://github.com/lofeodo/ai-news-agent/actions/workflows/tests.yml"><img src="https://github.com/lofeodo/ai-news-agent/actions/workflows/tests.yml/badge.svg" alt="CI status"></a>
 <img src="https://img.shields.io/badge/python-3.11-3776ab?logo=python&logoColor=white" alt="Python 3.11">

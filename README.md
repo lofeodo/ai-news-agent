@@ -2,9 +2,7 @@
 
 <div align="center">
 
-## 🌐 [**Read it and subscribe → newsletter.lofeodo.com**](https://newsletter.lofeodo.com)
-
-<a href="https://newsletter.lofeodo.com"><img alt="Live site: newsletter.lofeodo.com" src="https://img.shields.io/badge/LIVE_SITE-newsletter.lofeodo.com-6d4aff?style=for-the-badge" /></a>
+<a href="https://newsletter.lofeodo.com"><img alt="Live site: newsletter.lofeodo.com. Read it and subscribe" src="https://img.shields.io/badge/%F0%9F%9A%80%20%20LIVE%20SITE%20%E2%80%94%20READ%20IT%20%26%20SUBSCRIBE%20%E2%86%92-newsletter.lofeodo.com-ff3d81?style=for-the-badge&labelColor=6d4aff" height="64" /></a>
 
 </div>
 

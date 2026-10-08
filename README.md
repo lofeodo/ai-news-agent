@@ -42,8 +42,16 @@ flowchart TB
     A4 --> FSP
 
     FAN ~~~ CS3
-    CS3["☁️ Cloud Scheduler — 1:15 PM Sunday (draft check) + 7:10 AM Monday (send check)"] --> HC["Health Check\nFind latest run · diagnose\nemail alert if unhealthy"]
-    FSP --> HC
+    CS3["☁️ Cloud Scheduler — 1:15 PM Sunday"] --> HCD["Draft health check
+All stages through agent 3 ran?
+Four variants, placeholders, subject date
+email report"]
+    CS4["☁️ Cloud Scheduler — 7:10 AM Monday"] --> HCS["Send health check
+Every stage + delivery
+Sent count, failures, clicks
+email report"]
+    FSP --> HCD
+    FSP --> HCS
 ```
 
 ---

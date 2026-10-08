@@ -25,7 +25,7 @@ agent3 (`agents/agent3_compose.py`, `select_articles_for_category`) picks each s
 - [x] Step 1: Hard caps in code
 - [x] Step 2: Dedup primitive (multi-turn, tool-based)
 - [x] Step 3: Ranked fallback pool
-- [ ] Step 4: LangGraph dedup loop in agent3
+- [x] Step 4: LangGraph dedup loop in agent3
 - [ ] Step 5: Dedup eval dataset
 - [ ] Step 6: Dedup eval harness (control vs Haiku vs Sonnet)
 - [ ] Step 7: Results in README and docs (later)
@@ -75,14 +75,7 @@ Depends on: Steps 1 to 6.
 
 ## Step detail
 
-### Step 4 plan (branch `feat/dedup-graph`)
-
-- New `agents/agent3_dedup_graph.py`: per-section LangGraph `check_start -> resolve -> refill -> finalize`, using `DedupConversation` and `take_fallback`. Keep policy: highest HN score, ties to the earliest pick. A fallback that matches a removed article is redirected to that article's kept member and dropped.
-- Any dedup error degrades to the original picks (audit status `degraded`); nothing raises out of `dedup_section()`.
-- `AGENT3_DEDUP_MODE=graph|off` (rollback) and `DEDUP_MAX_ITERATIONS` (default 6) in `config.py`.
-- agent3 `run()` dedups both selection passes; the English pass reuses the result when a category has no French articles.
-- LangSmith tracing; audit in `data/agent3_dedup_log.json`, Firestore `agent3_audits/{run_id}` and a small `agent3_dedup_summary` on the run doc.
-- Tests with an injected fake client (`tests/test_dedup_graph.py`); ADR `docs/decisions/0002-dedup-loop-in-agent3.md`.
+(No step in progress. Step 5 gets its plan here when we start it.)
 
 ## Completed steps
 
@@ -138,3 +131,22 @@ Branch `feat/dedup-fallback-pool`. Commits: plan, implementation with tests, thi
 - The new reply format has never been sent to a real model; runners-up quality is unmeasured until the Step 6 eval. A model that ignores the format and returns a bare array still works (the top-up supplies the pool).
 - agent3 does not use the pool yet, so production output is unchanged. The one visible difference is a longer selection reply (slightly more output tokens per call).
 - The English-only pass can reuse a different pool than the all-language pass, by design.
+
+### Step 4: LangGraph dedup loop in agent3
+
+Branch `feat/dedup-graph`. Commits: plan, graph module with tests, agent3 wiring with tests, this write-up and ADR 0002.
+
+**Built.**
+- `agents/agent3_dedup_graph.py`: `dedup_section(category, picks, runners_up, client, create, cfg, run_id, pass_name) -> DedupResult(picks, audit, usage)`, a per-section LangGraph `check_start -> resolve -> refill* -> finalize`. Keep policy: highest HN score, ties to the earliest pick. Refill takes one runner-up per visit via `take_fallback`, checks it with `DedupConversation.add`, and stops when the section is back to its original size, the pool is empty or `max_iterations` is reached (it never pads a section the model left short). A fallback flagged against a removed article is redirected to the kept member and dropped (the Step 2 caveat).
+- Any exception degrades to the original picks with audit status `degraded`; `dedup_section` never raises. Fewer than 2 picks skips the call (`skipped`).
+- `config.py`: `AGENT3_DEDUP_MODE` (`graph` default, `off` rollback, validated at import) and `DEDUP_MAX_ITERATIONS` (default 6).
+- `agents/agent3_compose.py`: `run()` uses `select_with_runners_up` then dedups both passes; when a category has no French articles the English pass reuses the deduped result. `claude_call_with_retry` is injected as the dedup `create`. `write_dedup_audit` writes `data/agent3_dedup_log.json` and, in cloud mode, Firestore `agent3_audits/{run_id}`; `build_run_doc_update` adds a counts-only `agent3_dedup_summary`.
+- LangSmith: run name `agent3_dedup`, tags `agent3`, `dedup`, metadata run id, category and pass.
+
+**Verified.** `tests/test_dedup_graph.py` (12) and `tests/test_agent3_dedup_integration.py` (3, `run()` end to end with a routing fake). Full suite 451 passed, no real Claude calls.
+
+**Caveats.**
+- Prompts and the loop have never run against a real model; dedup quality and cost are unmeasured until Steps 5-6.
+- Production is unchanged until agent3 is rebuilt and deployed (Step 8). The first deploy should be checked on a debug run (`agent3_dedup_summary`, `agent3_audits/{run_id}`).
+- A fallback that duplicates a kept article is simply dropped; a higher-HN fallback does not replace the kept one.
+- The extra `agent3_audits` Firestore collection has no TTL rule.

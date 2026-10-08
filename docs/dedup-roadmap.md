@@ -75,7 +75,26 @@ Depends on: Steps 1 to 6.
 
 ## Step detail
 
-(No step in progress. Step 5 gets its plan here when we start it.)
+### Step 5: Dedup eval dataset (in progress)
+
+Branch `feat/dedup-eval-dataset`. No Claude calls in this step.
+
+**Case shape.** One case = a section name plus an ordered list of articles (title, snippet, summary, HN score, language, source), the same fields `DedupConversation.start` reads. Gold = groups of article ids that cover the same event. The fallback path (`add`) is scored from the same cases by holding the last 1-2 articles out as candidates.
+
+**Case kinds (about 40 cases of 8-10 articles).**
+- `real` (~20): mined from the local 325-article pool (`data/news_summaries.json`). A seeded script proposes suspected duplicate pairs inside a category by title/summary token overlap (stdlib only), then builds a case around each pair plus same-category fillers.
+- `hard_negative` (~10): same company or topic, different event.
+- `synthetic` (~10): a real article plus a rewrite as a second outlet (other wording, French, other angle), flagged so results can be reported separately.
+- `control` (~5): no duplicates, to measure false removals.
+
+**Files.**
+- `evals/make_dedup_cases.py`: builder and CLI; writes `evals/fixtures/dedup_cases.json` (tracked: ids, titles, 300-char snippets, summaries; no full text) and `evals/labels/dedup_cases_template.csv`.
+- `evals/dedup_labels.py`: `load_dedup_gold(path)` returns `{case_id: [frozenset(article_ids), ...]}` and validates ids, singleton groups and completeness. Step 6 imports it.
+- Label CSV columns: `case_id, article_id, title, snippet, kind, duplicate_group, note`. The owner writes the same label (`g1`) on articles that are duplicates; blank means unique; `?` in `note` excludes an ambiguous article from the metrics.
+
+**Labeling rule** (same as `prompts/dedup_prompt.txt`): same event is a duplicate, even across outlets, languages and angles; same company or topic alone is not.
+
+**Rules.** Scripts never write gold labels; the owner labels by hand. Synthetic rewrites are drafts the owner confirms.
 
 ## Completed steps
 

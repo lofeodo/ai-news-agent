@@ -1,6 +1,8 @@
 # Latent SpaceMail
 
-A weekly agentic pipeline that automatically curates and delivers a morning AI briefing, combining selected AI-research papers from ArXiv with the top AI-industry news from live sources, as a personalized HTML email newsletter. Built on Google Cloud Platform with six specialized agents orchestrated via Pub/Sub and Firestore.
+**Live site: [newsletter.lofeodo.com](https://newsletter.lofeodo.com)**
+
+A weekly agentic pipeline that automatically curates and delivers a morning AI briefing, combining a spotlight AI-research paper with the top AI-industry news from live sources, as a personalized HTML email newsletter. Built on Google Cloud Platform with six specialized agents orchestrated via Pub/Sub and Firestore, and backed by evaluation and monitoring (drift detection, token/cost tracking, an LLM summary judge, a click signal) and a prompt-injection test suite.
 
 ---
 
@@ -18,7 +20,7 @@ flowchart TB
 
     CS1["☁️ Cloud Scheduler — 12 PM Sunday (draft)"] --> ORC["Orchestrator · Cloud Run"]
 
-    ORC -->|"Pub/Sub: pipeline-start"| A1A["Agent 1a\nFetch & score ArXiv papers\nup to 500 → 35 sampled → top 3"]
+    ORC -->|"Pub/Sub: pipeline-start"| A1A["Agent 1a\nHugging Face trending shortlist (35)\nscore on ArXiv PDFs → 1 spotlight paper"]
     ORC -->|"Pub/Sub: pipeline-start"| A1B["Agent 1b\nFetch HN + NewsAPI\nlanguage-filter → categorize"]
 
     A1A -->|"Pub/Sub: papers-scored"| A2A["Agent 2a\nDownload PDFs\nwrite paper mini-reviews"]

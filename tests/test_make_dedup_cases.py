@@ -1,5 +1,5 @@
-from evals.make_dedup_cases import (COLUMNS, build_dedup_cases, build_synthetic_cases, overlap, template_rows,
-                                    tokens, write_outputs)
+from evals.make_dedup_cases import (COLUMNS, build_dedup_cases, build_synthetic_cases, is_repost, overlap,
+                                    template_rows, tokens, write_outputs)
 
 
 def art(i, title, cat="Industry & Business", desc=""):
@@ -12,7 +12,8 @@ def pool():
              "kilo", "lima", "mike", "november", "oscar", "papa", "quebec", "romeo", "sierra", "tango"]
     items = [art(i, f"{w}one {w}two {w}three {w}four") for i, w in enumerate(words)]
     items.append(art(100, "Acme launches Rocket model today", desc="Acme released the Rocket model"))
-    items.append(art(101, "Acme Rocket model launched", desc="Acme released the Rocket model today"))
+    items.append(dict(art(101, "Acme Rocket model launched", desc="Acme released the Rocket model today"),
+                      url="https://other.test/101"))
     return items
 
 
@@ -27,7 +28,7 @@ def test_real_case_contains_suspected_pair_and_is_sized():
     assert len(cases) == 1
     c = cases[0]
     urls = {a["url"] for a in c["articles"]}
-    assert {"https://x.test/100", "https://x.test/101"} <= urls
+    assert {"https://x.test/100", "https://other.test/101"} <= urls
     assert len(c["articles"]) == 8 and c["kind"] == "real"
 
 
@@ -60,3 +61,15 @@ def test_synthetic_case_adds_rewrite_next_to_source():
     urls = [a["url"] for a in cases[0]["articles"]]
     assert "https://x.test/100" in urls and any(u.startswith("synthetic:") for u in urls)
     assert build_synthetic_cases([{"source_url": "nope", "title": "t", "summary": "s"}], items) == []
+
+
+def test_reposts_are_not_proposed_as_pairs():
+    a = art(1, "Anthropic vertical software rollout threatens builders")
+    b = art(2, "Anthropic Vertical Software Rollout Threatens Builders")
+    c = art(3, "Totally different headline words here")
+    c["url"] = "https://x.test/3"
+    assert is_repost(a, b)
+    d = dict(art(4, "Rollout of vertical software by Anthropic worries builders"), url="https://other.test/4")
+    assert not is_repost(a, d)
+    cases = build_dedup_cases([a, b] + pool()[:20], n_real=1, n_hard=0, n_control=0)
+    assert cases == [] or not {"https://x.test/1", "https://x.test/2"} <= {x["url"] for x in cases[0]["articles"]}

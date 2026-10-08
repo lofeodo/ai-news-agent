@@ -14,8 +14,10 @@ CMD:  python -m evals.make_dedup_cases   (reads data/news_summaries.json and, if
 import json
 import random
 import re
+from difflib import SequenceMatcher
 from itertools import combinations
 from pathlib import Path
+from urllib.parse import urlparse
 
 from evals.make_label_templates import LABELS_DIR, write_csv
 from evals.snapshot import FIXTURES_DIR, article_id, snippet
@@ -29,6 +31,7 @@ CASE_SIZE = 8
 DUP_OVERLAP = 0.5       # at or above: suspected duplicate
 NEG_OVERLAP = 0.25      # between this and DUP_OVERLAP: same topic, probably a hard negative
 FILLER_MAX_OVERLAP = 0.2
+TITLE_REPOST_RATIO = 0.85   # titles this alike are the same article reposted, not a second outlet's version
 _STOP = set("""about after again also another because been before being between both could does from have
 into just more most much only other over said says should some still than that their them then there these
 they this those through under very what when where which while will with without would your""".split())
@@ -44,6 +47,15 @@ def overlap(a, b):
     if not a or not b:
         return 0.0
     return len(a & b) / min(len(a), len(b))
+
+
+def is_repost(a, b):
+    """Same article syndicated or reposted (near-identical title or same site): not the cross-outlet case we test."""
+    ta, tb = (x.get("title", "").lower().strip() for x in (a, b))
+    if SequenceMatcher(None, ta, tb).ratio() >= TITLE_REPOST_RATIO:
+        return True
+    host = lambda x: urlparse(x["url"]).netloc.removeprefix("www.")
+    return host(a) == host(b)
 
 
 def _entry(a):
@@ -73,7 +85,7 @@ def build_dedup_cases(articles, n_real=20, n_hard=10, n_control=5, seed=0, size=
     for cat, items in sorted(by_cat.items()):
         for a, b in combinations(items, 2):
             s = overlap(toks[a["url"]], toks[b["url"]])
-            if s >= NEG_OVERLAP:
+            if s >= NEG_OVERLAP and not is_repost(a, b):
                 pairs.append((s, cat, a, b))
     pairs.sort(key=lambda p: (-p[0], p[2]["url"], p[3]["url"]))
 

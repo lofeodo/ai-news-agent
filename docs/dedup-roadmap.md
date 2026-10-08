@@ -75,7 +75,14 @@ Depends on: Steps 1 to 6.
 
 ## Step detail
 
-(No step in progress. Step 4 gets its plan here when we start it.)
+### Step 4 plan (branch `feat/dedup-graph`)
+
+- New `agents/agent3_dedup_graph.py`: per-section LangGraph `check_start -> resolve -> refill -> finalize`, using `DedupConversation` and `take_fallback`. Keep policy: highest HN score, ties to the earliest pick. A fallback that matches a removed article is redirected to that article's kept member and dropped.
+- Any dedup error degrades to the original picks (audit status `degraded`); nothing raises out of `dedup_section()`.
+- `AGENT3_DEDUP_MODE=graph|off` (rollback) and `DEDUP_MAX_ITERATIONS` (default 6) in `config.py`.
+- agent3 `run()` dedups both selection passes; the English pass reuses the result when a category has no French articles.
+- LangSmith tracing; audit in `data/agent3_dedup_log.json`, Firestore `agent3_audits/{run_id}` and a small `agent3_dedup_summary` on the run doc.
+- Tests with an injected fake client (`tests/test_dedup_graph.py`); ADR `docs/decisions/0002-dedup-loop-in-agent3.md`.
 
 ## Completed steps
 

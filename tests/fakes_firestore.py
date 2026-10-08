@@ -35,6 +35,9 @@ class _Query:
         assert op == "==", "the fake only supports equality filters"
         return _Query(self._store, self._name, self._limit, self._filters + ((field, value),))
 
+    def select(self, fields):
+        return self  # the fake always returns whole docs
+
     def limit(self, n):
         return _Query(self._store, self._name, n, self._filters)
 

@@ -1,6 +1,12 @@
 # Latent SpaceMail
 
-**Live site: [newsletter.lofeodo.com](https://newsletter.lofeodo.com)**
+<div align="center">
+
+## 🌐 [**Read it and subscribe → newsletter.lofeodo.com**](https://newsletter.lofeodo.com)
+
+<a href="https://newsletter.lofeodo.com"><img alt="Live site: newsletter.lofeodo.com" src="https://img.shields.io/badge/LIVE_SITE-newsletter.lofeodo.com-6d4aff?style=for-the-badge" /></a>
+
+</div>
 
 A weekly agentic pipeline that automatically curates and delivers a morning AI briefing, combining a spotlight AI-research paper with the top AI-industry news from live sources, as a personalized HTML email newsletter. Built on Google Cloud Platform with six specialized agents orchestrated via Pub/Sub and Firestore, and backed by evaluation and monitoring (drift detection, token/cost tracking, an LLM summary judge, a click signal) and a prompt-injection test suite.
 

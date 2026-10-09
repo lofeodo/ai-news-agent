@@ -103,7 +103,7 @@ OAUTH_EXCHANGE_CODES_COLLECTION = "oauth_exchange_codes"
 # and Google's redirect) — allowlist known frontend pages rather than trying
 # to validate arbitrary relative-URL syntax, which is an easy place to get an
 # open redirect wrong.
-ALLOWED_RETURN_PAGES = {"index.html", "preferences.html", "sections.html"}
+ALLOWED_RETURN_PAGES = {"index.html", "preferences.html", "sections.html", "preview.html", "share.html"}
 DEFAULT_RETURN_PAGE  = "preferences.html"
 
 DEFAULT_SECTIONS = [

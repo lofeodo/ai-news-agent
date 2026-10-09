@@ -73,9 +73,17 @@ export { onAuthStateChanged, signOut, signInWithCustomToken };
 // so it's attacker-visible/craftable. Allowlist known pages instead of trying
 // to validate arbitrary relative-URL syntax (an easy place to get an open
 // redirect wrong) — shared by login.html and auth-callback.html.
-const ALLOWED_RETURN_PAGES = ['index.html', 'preferences.html', 'sections.html'];
+const ALLOWED_RETURN_PAGES = ['index.html', 'preferences.html', 'sections.html', 'preview.html', 'share.html'];
 export function sanitizeReturnPage(value) {
   return ALLOWED_RETURN_PAGES.includes(value) ? value : 'preferences.html';
+}
+
+// The page the user is on now, if it may be a return target; otherwise null.
+// Lets every "Sign in" link send people back to where they were.
+export function currentReturnPage() {
+  let page = location.pathname.split('/').pop() || 'index.html';
+  if (!page.includes('.')) page += '.html';
+  return ALLOWED_RETURN_PAGES.includes(page) ? page : null;
 }
 
 export async function getIdToken() {

@@ -1,4 +1,4 @@
-import { auth, onAuthStateChanged, signOut, authFetch } from './auth.js';
+import { auth, onAuthStateChanged, signOut, authFetch, currentReturnPage } from './auth.js';
 
 const API = (() => {
   const h = location.hostname;
@@ -27,6 +27,9 @@ const signinEl   = document.getElementById('topbar-signin');
 const emailEl    = document.getElementById('topbar-email');
 const tierEl     = document.getElementById('topbar-tier');
 const signoutBtn = document.getElementById('topbar-signout');
+
+const returnPage = currentReturnPage();
+if (signinEl && returnPage) signinEl.href = `/login.html?returnUrl=${returnPage}`;
 
 function showSignedIn(email, tier) {
   if (signinEl) signinEl.style.display = 'none';

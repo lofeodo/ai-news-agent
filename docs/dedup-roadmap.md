@@ -27,7 +27,7 @@ agent3 (`agents/agent3_compose.py`, `select_articles_for_category`) picks each s
 - [x] Step 3: Ranked fallback pool
 - [x] Step 4: LangGraph dedup loop in agent3
 - [x] Step 5: Dedup eval dataset
-- [ ] Step 6: Dedup eval harness (control vs Haiku vs Sonnet)
+- [x] Step 6: Dedup eval harness (control vs Haiku vs Sonnet)
 - [ ] Step 7: Results in README and docs (later)
 - [ ] Step 8: Deploy and verify on a debug run
 
@@ -75,7 +75,7 @@ Depends on: Steps 1 to 6.
 
 ## Step detail
 
-(No step in progress. Step 6 gets its plan here when we start it.)
+(No step in progress. Step 7 gets its plan here when we start it.)
 
 ## Completed steps
 
@@ -176,3 +176,32 @@ The shipped set shows that real duplicates reached readers before this step exis
 - Only the first-turn check (`start`) is directly scored. The fallback path (`add`) can be scored by holding articles out of these cases.
 - Cases were built from a single week's pool.
 
+
+### Step 6: Dedup eval harness
+
+Branch `feat/dedup-eval-harness`. Commits: scoring module, runner, this write-up with the first results.
+
+**Built.**
+- `evals/dedup_eval.py` (pure scoring) and `evals/run_dedup_eval.py` (runner), following the review eval: `--dry-run`, `--approve`, `--arms`, `--repeats` (default 3), `CostGuard`, results in `evals/results/dedup_eval_<date>.json` plus a `_rows.json`. Arms: control (removes nothing), Haiku (`SCORING_MODEL`), Sonnet (`JUDGE_MODEL`). Each model arm runs `DedupConversation.start` and the production `keep_index` on every case; a `DedupError` is recorded as a failed run (nothing removed).
+- Metrics: duplicate recall (gold pairs found), false-removal rate, false-group rate, residual duplicate rate, exact case match, failure rate, tokens and latency, per-kind breakdowns and a paired Sonnet-vs-Haiku comparison. Strict treats borderline `t` articles as unique; broad ignores pairs and removals involving them.
+- Tests: `tests/test_evals_dedup_eval.py` (17), `tests/test_evals_run_dedup_eval.py` (8). Full suite 494 passed.
+
+**Result (2026-10-08 run: 57 cases, 29 gold groups, 3 repeats per model, cost $1.40; the estimate was $1.17, so the estimator runs low).**
+
+| | control | Haiku | Sonnet |
+|---|---|---|---|
+| Duplicate recall | 0% | 99% (94-100) | 94% (87-97) |
+| False removal, strict | 0% | 2.2% | 1.8% |
+| Residual duplicates | 100% | 1.1% | 6.9% |
+| False groups, strict / broad | n/a | 19% / 3% | 16% / 0% |
+| Failed runs | 0 | 0 | 0 |
+| Mean seconds per case | 0 | 4.1 | 1.8 |
+
+Paired, per item: Haiku wins 6 of 7 recall disagreements; Sonnet wins 10 of 10 false-removal disagreements. The recall intervals overlap, so the harness's rule picks the cheaper Haiku.
+
+**Caveats.**
+- 29 groups is small and repeats are pooled (not independent), so the intervals are optimistic. This does not separate the models firmly.
+- Most "false groups" are borderline same-topic pairs: 19% strict falls to 3% broad. Whether grouping those is acceptable in production is the owner's call and affects the model choice (Sonnet is stricter there).
+- Only the first-turn check is scored, not the refill path.
+- The cost estimator under-counted by about 20%; raise `_TOKENS_PER_ARTICLE` or the output budget before the next run.
+- Nothing is deployed; production dedup still defaults to Haiku (`DEDUP_MODEL`).

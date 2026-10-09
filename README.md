@@ -149,6 +149,12 @@ A second Claude model checks a weekly sample of summaries against the text they 
 
 <img src="docs/assets/chart-judge-kappa.svg" alt="Kappa of the summary judge against the working bar" width="100%">
 
+### Duplicate removal
+
+Agent 3 checks each section's picks for the same story told by several outlets and swaps duplicates for the next-best article. On 57 hand-labeled article sets (33 duplicate groups), both Haiku and Sonnet found roughly nine in ten duplicates and removed a unique article in under 1% of cases; the intervals overlap, so the cheaper Haiku stays. Small sample, and only the first check is scored, not the replacement path.
+
+<img src="docs/assets/chart-dedup.svg" alt="Bar charts: duplicate recall and duplicates left in the section for control, Haiku and Sonnet, with 95% intervals" width="100%">
+
 Full results and caveats: [docs/evaluation.md](docs/evaluation.md)
 
 ## 📚 Documentation
@@ -156,7 +162,7 @@ Full results and caveats: [docs/evaluation.md](docs/evaluation.md)
 - [Architecture](docs/architecture.md): stage-by-stage detail, orchestration and the subscription system
 - [Design decisions](docs/design-decisions.md): why the system is built this way
 - [Monitoring](docs/monitoring.md): health checks, drift, cost, judge and click signal
-- [Evaluation](docs/evaluation.md): full review-loop and prompt-injection results
+- [Evaluation](docs/evaluation.md): full review-loop, prompt-injection and duplicate-removal results
 - [Configuration](docs/configuration.md): environment variables
 - [Local development and deployment](docs/development.md)
 - [Repository structure](docs/repository-structure.md)

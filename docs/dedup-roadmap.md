@@ -28,7 +28,7 @@ agent3 (`agents/agent3_compose.py`, `select_articles_for_category`) picks each s
 - [x] Step 4: LangGraph dedup loop in agent3
 - [x] Step 5: Dedup eval dataset
 - [x] Step 6: Dedup eval harness (control vs Haiku vs Sonnet)
-- [ ] Step 7: Results in README and docs (later)
+- [x] Step 7: Results in README and docs
 - [ ] Step 8: Deploy and verify on a debug run
 
 ## Steps at a glance
@@ -75,7 +75,7 @@ Depends on: Steps 1 to 6.
 
 ## Step detail
 
-(No step in progress. Step 7 gets its plan here when we start it.)
+(No step in progress. Step 8 gets its plan here when we start it.)
 
 ## Completed steps
 
@@ -208,3 +208,18 @@ Paired, per item: Sonnet wins 9 and loses 6 recall items (111 ties); on false re
 - Only the first-turn check is scored, not the refill path.
 - The cost estimator is now padded above measured usage (worst case $2.19 vs $1.49 actual), so it needs `--approve`.
 - Nothing is deployed; production dedup still defaults to Haiku (`DEDUP_MODEL`).
+
+### Step 7: Results in README and docs
+
+Branch `feat/dedup-results-docs`. No Claude calls.
+
+**Built.**
+- `evals/make_readme_table.py`: `latest_dedup_path()` (latest `dedup_eval_*.json`, `_rows` skipped, so the 2026-10-08 old-rule run is never rendered), `render_dedup()` and `update_readme_dedup()`; `main()` fills the `<!-- dedup-eval:start/end -->` block in `docs/evaluation.md` (new section "Does duplicate removal work?"): one row per arm with Wilson intervals, the paired Sonnet-vs-Haiku lines and the file's notes.
+- `evals/make_charts.py`: `dedup_svg()` writes `docs/assets/chart-dedup.svg` (duplicate recall and duplicates left, control/Haiku/Sonnet, with intervals and an overlap note).
+- README: `### Duplicate removal` under Results with the chart; the Documentation line mentions the new results.
+- Tests added to `tests/test_evals_make_readme_table.py` and `tests/test_evals_make_charts.py`.
+
+**Caveats.**
+- The README prose gives the numbers loosely ("roughly nine in ten", "under 1%"); recheck it if the eval is rerun.
+- False removal is in the table only; at about 0.5% it does not show on a 0-100% chart axis.
+- The chart was checked on desktop only; the browser tools timed out loading the SVG on the mobile emulations. It is a scaled SVG like the other three charts.

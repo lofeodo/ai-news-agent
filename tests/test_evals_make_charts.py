@@ -69,3 +69,28 @@ def test_write_all_skips_missing_results_and_writes_the_rest(tmp_path):
     results.write_results(doc, tmp_path)
     written = c.write_all(tmp_path, out)
     assert [p.name for p in written] == ["chart-judge-kappa.svg"]
+
+
+def _dedup(overlap=True):
+    m = {}
+    for arm, v, lo, hi in (("control", 0.0, 0.0, 0.03), ("haiku", 0.9, 0.84, 0.94),
+                           ("sonnet", 0.93 if overlap else 0.99, 0.87 if overlap else 0.97, 0.96 if overlap else 1.0)):
+        m[f"duplicate_recall__{arm}"] = _m(v, 126, lo, hi)
+        m[f"residual_duplicate_rate__{arm}"] = _m(1 - v, 99, max(0, 1 - hi), 1 - lo)
+    return {"metrics": m}
+
+
+def test_dedup_svg_parses_and_notes_overlap():
+    svg = c.dedup_svg(_dedup())
+    _parses(svg)
+    assert "Duplicate removal" in svg and "Sonnet 93%" in svg and "no measurable difference" in svg
+    assert "do not overlap" in c.dedup_svg(_dedup(overlap=False))
+
+
+def test_write_all_emits_dedup_chart(tmp_path):
+    import json
+    doc = {"schema_version": 1, "name": "dedup_eval_2026-10-09", "created_at": "x", "git_sha": "x", "model": "m",
+           "cost_usd": 0, "notes": "", "metrics": _dedup()["metrics"]}
+    (tmp_path / "dedup_eval_2026-10-09.json").write_text(json.dumps(doc))
+    out = tmp_path / "out"
+    assert [p.name for p in c.write_all(tmp_path, out)] == ["chart-dedup.svg"]

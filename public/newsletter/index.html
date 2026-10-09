@@ -17,6 +17,7 @@
   <link rel="preload" href="/fonts/cormorant-garamond-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="fonts.css">
   <link rel="stylesheet" href="style.css?v=6">
+  <link rel="stylesheet" href="topbar.css">
 </head>
 <body>
   <canvas id="bg-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;will-change:transform;"></canvas>
@@ -26,7 +27,7 @@
       <img src="/images/logo-mark.svg" alt="" height="26" width="26" fetchpriority="high">
     </a>
     <nav class="topbar__nav" aria-label="Main">
-      <a href="/preview.html" class="topbar__nav-link" data-href="/preview.html">Latest Issue</a>
+      <a href="/preview.html" class="topbar__nav-link" data-href="/preview.html">Latest Issue<span class="topbar__live"><span class="topbar__live-dot"></span>Live</span></a>
       <a href="/sections.html" class="topbar__nav-link" data-href="/sections.html" id="topbar-sections">Customize</a>
       <a href="/preferences.html" class="topbar__nav-link" data-href="/preferences.html">Preferences</a>
     </nav>

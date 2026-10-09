@@ -41,7 +41,7 @@ function showAdminLink(isAdmin) {
   if (!nav) return;
   let link = document.getElementById('topbar-debug');
   if (!isAdmin) { link?.remove(); return; }
-  if (link) return;
+  if (link || document.getElementById('debug-toggle')) return;  // preview.html has its own toggle
   link = document.createElement('a');
   link.id = 'topbar-debug';
   link.className = 'topbar__nav-link';

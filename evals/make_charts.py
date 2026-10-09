@@ -162,6 +162,48 @@ def judge_kappa_svg(doc):
     return _svg(W, H, "\n".join(parts), "Summary judge calibration", desc)
 
 
+# ---------------------------------------------------------------- duplicate removal
+_DEDUP_ARMS = (("Control", "control", "#6b7280"), ("Haiku", "haiku", "#4f46e5"), ("Sonnet", "sonnet", "#7c3aed"))
+_DEDUP_PANELS = (("Duplicate recall", "duplicate_recall", "higher is better"),
+                 ("Duplicates left in the section", "residual_duplicate_rate", "lower is better"))
+
+
+def dedup_svg(doc):
+    m = doc["metrics"]
+    W, H = 880, 340
+    y0, y1 = 100, 270                       # y0 = 100%, y1 = 0%
+    ys = lambda v: y1 - (y1 - y0) * v
+    parts = ['<text x="28" y="40" font-size="20" font-weight="600" class="s">Duplicate removal by arm</text>',
+             '<text x="28" y="62" font-size="13" class="m">Control removes nothing. Hand-labeled article sets, Wilson 95% intervals</text>']
+    desc = []
+    for p, (title, key, hint) in enumerate(_DEDUP_PANELS):
+        px0, px1 = (90, 420) if p == 0 else (500, 840)
+        parts.append(f'<text x="{px0}" y="88" font-size="14" font-weight="600">{escape(title)} <tspan class="m" font-weight="400">({hint})</tspan></text>')
+        for v in (0, .5, 1):
+            parts.append(f'<line x1="{px0}" x2="{px1}" y1="{ys(v):.1f}" y2="{ys(v):.1f}" stroke="{GRID}"/>'
+                         f'<text x="{px0 - 8}" y="{ys(v) + 4:.1f}" font-size="11" text-anchor="end" class="m">{_pct(v)}</text>')
+        bars = [(label, m[f"{key}__{arm}"], color) for label, arm, color in _DEDUP_ARMS if f"{key}__{arm}" in m]
+        slot = (px1 - px0) / max(len(bars), 1)
+        for i, (label, d, color) in enumerate(bars):
+            if d.get("value") is None:
+                continue
+            cx, w, top = px0 + slot * (i + .5), 64, ys(d["value"])
+            parts.append(f'<rect x="{cx - w / 2:.1f}" y="{top:.1f}" width="{w}" height="{max(y1 - top, 1):.1f}" rx="5" fill="{color}"/>')
+            lo, hi = ys(d["ci_low"]), ys(d["ci_high"])
+            parts.append(f'<g stroke="{TEXT}" stroke-width="2"><line x1="{cx:.1f}" x2="{cx:.1f}" y1="{lo:.1f}" y2="{hi:.1f}"/>'
+                         f'<line x1="{cx - 8:.1f}" x2="{cx + 8:.1f}" y1="{lo:.1f}" y2="{lo:.1f}"/>'
+                         f'<line x1="{cx - 8:.1f}" x2="{cx + 8:.1f}" y1="{hi:.1f}" y2="{hi:.1f}"/></g>')
+            parts.append(f'<text x="{cx:.1f}" y="{min(hi, top) - 8:.1f}" font-size="14" font-weight="700" text-anchor="middle">{_pct(d["value"])}</text>')
+            parts.append(f'<text x="{cx:.1f}" y="{y1 + 20}" font-size="13" text-anchor="middle">{label}</text>')
+            desc.append(f"{title}, {label} {_pct(d['value'])}")
+    pair = [m.get(f"duplicate_recall__{a}") for a in ("haiku", "sonnet")]
+    if all(pair):
+        note = ("Haiku and Sonnet intervals overlap: no measurable difference" if _overlap(*pair)
+                else "Haiku and Sonnet intervals do not overlap: see docs/evaluation.md")
+        parts.append(f'<text x="{W - 28}" y="40" font-size="13" text-anchor="end" class="m">{note}</text>')
+    return _svg(W, H, "\n".join(parts), "Duplicate removal", "; ".join(desc))
+
+
 # ---------------------------------------------------------------- driver
 def write_all(results_dir=results.RESULTS_DIR, out_dir=ASSETS):
     """Write every chart whose results file exists; returns the list of files written."""
@@ -179,6 +221,9 @@ def write_all(results_dir=results.RESULTS_DIR, out_dir=ASSETS):
     base, after = (Path(results_dir) / f"injection_eval_{n}.json" for n in ("baseline", "after"))
     if base.exists() and after.exists():
         emit("chart-injection.svg", injection_svg(results.read_results(base), results.read_results(after)))
+    dedups = sorted(p for p in Path(results_dir).glob("dedup_eval_*.json") if not p.stem.endswith("_rows"))
+    if dedups:
+        emit("chart-dedup.svg", dedup_svg(results.read_results(dedups[-1])))
     judge = Path(results_dir) / "judge_calibration.json"
     if judge.exists():
         emit("chart-judge-kappa.svg", judge_kappa_svg(results.read_results(judge)))

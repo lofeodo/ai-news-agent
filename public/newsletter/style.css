@@ -235,9 +235,9 @@ body::after {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  max-width: 640px;
+  max-width: 520px;
   margin-bottom: 20px;
-  padding: 20px 26px 20px 22px;
+  padding: 20px 22px 20px 20px;
   border: 1px solid rgba(200,184,154,0.55);
   border-left: 5px solid var(--accent);
   background: linear-gradient(90deg, rgba(200,184,154,0.16), rgba(200,184,154,0.05));
@@ -273,13 +273,15 @@ body::after {
   50%       { opacity: 0.45; box-shadow: 0 0 2px rgba(200,184,154,0.3); }
 }
 .issue-teaser__label {
-  font-size: 0.8rem;
+  font-size: 0.72rem;
+  white-space: nowrap;
   color: var(--accent);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 .issue-teaser__title {
-  font-size: 1.1rem;
+  font-size: 1rem;
+  white-space: nowrap;
   color: var(--text);
   letter-spacing: 0.02em;
 }

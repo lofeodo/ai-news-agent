@@ -29,7 +29,7 @@ agent3 (`agents/agent3_compose.py`, `select_articles_for_category`) picks each s
 - [x] Step 5: Dedup eval dataset
 - [x] Step 6: Dedup eval harness (control vs Haiku vs Sonnet)
 - [x] Step 7: Results in README and docs
-- [ ] Step 8: Deploy and verify on a debug run
+- [x] Step 8: Deploy and verify on a debug run
 
 ## Steps at a glance
 
@@ -75,7 +75,7 @@ Depends on: Steps 1 to 6.
 
 ## Step detail
 
-(No step in progress. Step 8 gets its plan here when we start it.)
+(No step in progress. The roadmap is complete.)
 
 ## Completed steps
 
@@ -149,7 +149,7 @@ Branch `feat/dedup-graph`. Commits: plan, graph module with tests, agent3 wiring
 - Prompts and the loop have never run against a real model; dedup quality and cost are unmeasured until Steps 5-6.
 - Production is unchanged until agent3 is rebuilt and deployed (Step 8). The first deploy should be checked on a debug run (`agent3_dedup_summary`, `agent3_audits/{run_id}`).
 - A fallback that duplicates a kept article is simply dropped; a higher-HN fallback does not replace the kept one.
-- The extra `agent3_audits` Firestore collection has no TTL rule.
+- The extra `agent3_audits` Firestore collection has no TTL rule. Decided in Step 8: none planned (one small doc per week, and the docs carry no `expires_at` field a rule could use).
 
 ### Step 5: Dedup eval dataset
 
@@ -223,3 +223,21 @@ Branch `feat/dedup-results-docs`. No Claude calls.
 - The README prose gives the numbers loosely ("roughly nine in ten", "under 1%"); recheck it if the eval is rerun.
 - False removal is in the table only; at about 0.5% it does not show on a 0-100% chart axis.
 - The chart was checked on desktop only; the browser tools timed out loading the SVG on the mobile emulations. It is a scaled SVG like the other three charts.
+
+### Step 8: Deploy and verify
+
+Branch `docs/dedup-step8-writeup`. Deployed 2026-10-09.
+
+**Done.**
+- Rebuilt every image from `main` (`cloudbuild.yaml`) and updated all 10 Cloud Run services with `--image`. agent3 is on `agent3-00053-6jt` (previous revision `agent3-00051-p6n`). An earlier partial build had first deployed only agent3 and moved the `:latest` tags of agent1b and agent4 without deploying them, so everything was rebuilt and deployed together to keep the services in step. The services had not been deployed since the roadmap started, so this shipped everything merged since, not just dedup.
+- Forced a debug run (`2026-10-09T131810Z`) and checked it. `agent3_dedup_summary`: 13 sections checked, 1 duplicate removed, 1 fallback added, 0 degraded, about 19k input and 4k output Haiku tokens (roughly $0.04 at list prices, estimated from the token counts). No agent1a or agent3 errors. Link counts per section fit the caps (4 for Model & Product Releases and Open Source & Tools, 3 elsewhere) in all four variants. The run doc was about 361 KB, well under the 1 MiB cap. The owner reviewed the run in the debug preview and approved it.
+- Production dedup model stays Haiku (`DEDUP_MODEL`), as the Step 6 harness chose.
+
+**Found along the way.**
+- A paused Cloud Scheduler job cannot be force-run (`Job.state must be ENABLED for RunJob`), so `docs/runbook.md` was wrong. It now documents calling the orchestrator directly with an identity token, which leaves the job paused.
+- Debug runs recorded their spotlight paper in `spotlighted_papers`, which would have barred that paper from the release run. agent1a now skips recording on debug runs (`spotlight_history.is_debug_run`; a missing doc, read failure or local run counts as release). The two debug-run entries were deleted by hand and agent1a was redeployed (`agent1a-00049-g72`).
+
+**Caveats.**
+- Dedup quality in production is judged from one debug run: one duplicate removed, which I did not read article by article (the owner reviewed the run). The eval numbers (Step 7) remain the evidence for quality.
+- The first release run with dedup is Sunday 2026-10-11. Check its `agent3_dedup_summary` and `agent3_audits/{run_id}` the same way.
+- Calling the orchestrator directly (the runbook's new method) was suggested but not tested.

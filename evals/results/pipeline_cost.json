@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "name": "pipeline_cost",
+  "created_at": "2026-10-09T13:59:24.755197+00:00",
+  "git_sha": "3a4d2e1",
+  "model": "claude-haiku-4-5",
+  "cost_usd": 0.0,
+  "notes": "Mean over 2 archived runs (min and max in place of an interval). LangSmith's price estimate for Claude calls only; hosting, SendGrid and the proxy are not included.",
+  "metrics": {
+    "cost_usd__agent1a": {
+      "value": 0.46913449999999995,
+      "n": 2,
+      "ci_low": 0.4674729999999999,
+      "ci_high": 0.470796
+    },
+    "calls__agent1a": {
+      "value": 35.0,
+      "n": 2,
+      "ci_low": 35,
+      "ci_high": 35
+    },
+    "tokens__agent1a": {
+      "value": 422554.5,
+      "n": 2,
+      "ci_low": 421149,
+      "ci_high": 423960
+    },
+    "cost_usd__agent1b": {
+      "value": 0.6465884999999999,
+      "n": 2,
+      "ci_low": 0.6320410000000001,
+      "ci_high": 0.6611359999999997
+    },
+    "calls__agent1b": {
+      "value": 129.5,
+      "n": 2,
+      "ci_low": 127,
+      "ci_high": 132
+    },
+    "tokens__agent1b": {
+      "value": 478772.5,
+      "n": 2,
+      "ci_low": 467445,
+      "ci_high": 490100
+    },
+    "cost_usd__agent2a": {
+      "value": 0.015615,
+      "n": 2,
+      "ci_low": 0.010333,
+      "ci_high": 0.020897
+    },
+    "calls__agent2a": {
+      "value": 1.5,
+      "n": 2,
+      "ci_low": 1,
+      "ci_high": 2
+    },
+    "tokens__agent2a": {
+      "value": 15125.0,
+      "n": 2,
+      "ci_low": 9941,
+      "ci_high": 20309
+    },
+    "cost_usd__agent2b": {
+      "value": 0.8354074999999999,
+      "n": 2,
+      "ci_low": 0.8151740000000002,
+      "ci_high": 0.8556409999999997
+    },
+    "calls__agent2b": {
+      "value": 489.5,
+      "n": 2,
+      "ci_low": 471,
+      "ci_high": 508
+    },
+    "tokens__agent2b": {
+      "value": 669359.5,
+      "n": 2,
+      "ci_low": 653974,
+      "ci_high": 684745
+    },
+    "cost_usd__agent3": {
+      "value": 0.11661149999999998,
+      "n": 2,
+      "ci_low": 0.11350099999999999,
+      "ci_high": 0.11972199999999998
+    },
+    "calls__agent3": {
+      "value": 14.5,
+      "n": 2,
+      "ci_low": 14,
+      "ci_high": 15
+    },
+    "tokens__agent3": {
+      "value": 115165.5,
+      "n": 2,
+      "ci_low": 111957,
+      "ci_high": 118374
+    },
+    "cost_usd__total": {
+      "value": 2.0833569999999995,
+      "n": 2,
+      "ci_low": 2.052409,
+      "ci_high": 2.114304999999999
+    },
+    "calls__total": {
+      "value": 670.0,
+      "n": 2,
+      "ci_low": 650,
+      "ci_high": 690
+    }
+  }
+}

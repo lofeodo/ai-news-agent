@@ -204,6 +204,49 @@ def dedup_svg(doc):
     return _svg(W, H, "\n".join(parts), "Duplicate removal", "; ".join(desc))
 
 
+# ---------------------------------------------------------------- pipeline cost
+_COST_STEPS = (("agent1a", "Agent 1a", "Pick paper", "#4f46e5"), ("agent1b", "Agent 1b", "Fetch news", "#7c3aed"),
+               ("agent2a", "Agent 2a", "Summarize paper", "#0ea5e9"), ("agent2b", "Agent 2b", "Summarize news", "#059669"),
+               ("agent3", "Agent 3", "Compose", "#d97706"))
+
+
+def pipeline_cost_svg(doc):
+    m = doc["metrics"]
+    n = m["cost_usd__total"]["n"]
+    total = m["cost_usd__total"]["value"]
+    steps = [(label, role, color, m[f"cost_usd__{a}"]["value"], m[f"calls__{a}"]["value"])
+             for a, label, role, color in _COST_STEPS if f"cost_usd__{a}" in m]
+    W, row_h, top = 880, 40, 168
+    H = top + row_h * len(steps) + 36
+    bx0, bx1 = 28, 852
+    x0, x1 = 230, 640
+    peak = max(c for *_, c, _ in steps)
+    parts = [f'<text x="28" y="40" font-size="20" font-weight="600" class="s">Claude cost of one weekly issue</text>',
+             f'<text x="28" y="62" font-size="13" class="m">Mean of {n} archived runs, LangSmith price estimate, Claude calls only</text>',
+             f'<text x="{W - 28}" y="40" font-size="26" font-weight="700" text-anchor="end">${total:.2f}</text>',
+             f'<text x="{W - 28}" y="62" font-size="13" text-anchor="end" class="m">about ${total * 52 / 12:.0f} a month</text>']
+    cx = bx0
+    for label, _, color, cost, _ in steps:           # the whole pipeline as one stacked bar
+        w = (bx1 - bx0) * cost / total
+        parts.append(f'<rect x="{cx:.1f}" y="84" width="{max(w - 2, 1):.1f}" height="34" rx="5" fill="{color}"/>')
+        if w > 70:
+            parts.append(f'<text x="{cx + w / 2:.1f}" y="106" font-size="13" font-weight="600" text-anchor="middle">{cost / total:.0%}</text>')
+        cx += w
+    parts.append(f'<text x="28" y="140" font-size="12" class="m">Share of the weekly total, by step</text>')
+    for i, (label, role, color, cost, calls) in enumerate(steps):
+        y = top + i * row_h
+        parts.append(f'<rect x="28" y="{y + 8}" width="12" height="12" rx="3" fill="{color}"/>'
+                     f'<text x="48" y="{y + 19}" font-size="14" font-weight="600">{label}</text>'
+                     f'<text x="118" y="{y + 19}" font-size="13" class="m">{role}</text>')
+        w = max((x1 - x0) * cost / peak, 2)
+        parts.append(f'<rect x="{x0}" y="{y + 5}" width="{w:.1f}" height="18" rx="4" fill="{color}"/>'
+                     f'<text x="{x0 + w + 10:.1f}" y="{y + 19}" font-size="14" font-weight="700">${cost:.2f} <tspan class="m" font-weight="400">{cost / total:.0%}</tspan></text>'
+                     f'<text x="{bx1}" y="{y + 19}" font-size="13" text-anchor="end" class="m">{calls:,.0f} Claude calls</text>')
+    parts.append(f'<text x="28" y="{H - 14}" font-size="12" class="m">Hosting, SendGrid and the proxy are not included.</text>')
+    desc = "; ".join(f"{label} ${cost:.2f}" for label, _, _, cost, _ in steps)
+    return _svg(W, H, "\n".join(parts), "Pipeline cost per step", f"Total ${total:.2f} per issue. {desc}")
+
+
 # ---------------------------------------------------------------- driver
 def write_all(results_dir=results.RESULTS_DIR, out_dir=ASSETS):
     """Write every chart whose results file exists; returns the list of files written."""
@@ -227,6 +270,9 @@ def write_all(results_dir=results.RESULTS_DIR, out_dir=ASSETS):
     judge = Path(results_dir) / "judge_calibration.json"
     if judge.exists():
         emit("chart-judge-kappa.svg", judge_kappa_svg(results.read_results(judge)))
+    cost = Path(results_dir) / "pipeline_cost.json"
+    if cost.exists():
+        emit("chart-cost.svg", pipeline_cost_svg(results.read_results(cost)))
     return written
 
 

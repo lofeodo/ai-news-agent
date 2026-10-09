@@ -69,7 +69,7 @@ Agents hand work to each other through Pub/Sub; Firestore holds each run's state
 ## 🕸️ Agentic orchestration
 
 - **Between agents:** Pub/Sub events plus a Firestore counter that joins agents 2a and 2b before agent 3 starts.
-- **Inside an agent:** agent 1b is a LangGraph graph that sends low-confidence articles to a small tool-using review loop.
+- **Inside an agent:** agent 1b is a LangGraph graph that sends low-confidence articles to a small tool-using review loop, and agent 3 runs a duplicate-removal graph on each section's picks.
 - **Failure handling:** every agent records its errors to Firestore, a watchdog kills hung runs, and the crash-prone agent 2b retries in an isolated process.
 - **Rollback:** `AGENT1B_MODE=single_pass` restores the original linear code without a redeploy.
 
@@ -92,7 +92,28 @@ flowchart LR
     class FIN out
 ```
 
-Why LangGraph runs inside agents but not between them: [ADR 0001](docs/decisions/0001-langgraph-inside-agents.md).
+Agent 3 has a second, smaller graph that removes duplicate stories from each section's picks, once per section and selection pass. One Claude call checks all the picks, the highest-scoring article of each duplicate group is kept, and replacements from the ranked runners-up are checked one at a time until the section is back to its size. Any error falls back to the original picks, and `AGENT3_DEDUP_MODE=off` disables it without a redeploy.
+
+```mermaid
+%%{init: {"themeVariables": {"fontSize": "16px"}, "flowchart": {"nodeSpacing": 28, "rankSpacing": 44, "padding": 10, "curve": "basis"}}}%%
+flowchart LR
+    SEL["<b>Select</b><br/>picks + ranked<br/>runners-up"] --> CHK["<b>Check</b><br/>one call finds<br/>duplicate groups"]
+    CHK -->|"none found"| FIN["<b>Finalize</b><br/>section + audit log"]
+    CHK -->|"duplicates"| RES["<b>Resolve</b><br/>keep top HN score,<br/>drop the rest"]
+    RES -->|"section full"| FIN
+    RES -->|"gap to fill"| REF["<b>Refill</b><br/>check next runner-up<br/>against all seen"]
+    REF -->|"still a gap"| REF
+    REF -->|"full, or out of<br/>runners-up or tries"| FIN
+
+    classDef step fill:#4f46e5,stroke:#312e81,color:#fff
+    classDef loop fill:#7c3aed,stroke:#4c1d95,color:#fff
+    classDef out fill:#059669,stroke:#065f46,color:#fff
+    class SEL,CHK step
+    class RES,REF loop
+    class FIN out
+```
+
+Why LangGraph runs inside agents but not between them: [ADR 0001](docs/decisions/0001-langgraph-inside-agents.md) and [ADR 0002](docs/decisions/0002-dedup-loop-in-agent3.md).
 
 ## 📡 Live monitoring
 

@@ -129,3 +129,37 @@ def test_truncated_summary_is_trimmed_to_its_last_full_sentence():
 
     out = a2a.summarize_paper({"title": "t"}, "x", "{title}{text}", Cut("First idea. Second idea! And a third that gets cu"))
     assert out == "First idea. Second idea!"
+
+
+class _Snap:
+    def __init__(self, data):
+        self._d, self.exists = data, data is not None
+
+    def to_dict(self):
+        return self._d
+
+
+class _Db:
+    def __init__(self, data=None, boom=False):
+        self._d, self._boom = data, boom
+
+    def collection(self, name):
+        assert name == "pipeline_runs"
+        return self
+
+    def document(self, run_id):
+        return self
+
+    def get(self):
+        if self._boom:
+            raise RuntimeError("firestore down")
+        return _Snap(self._d)
+
+
+def test_is_debug_run_only_for_flagged_cloud_runs():
+    assert sh.is_debug_run(True, "p", "r", db=_Db({"run_kind": "debug"})) is True
+    assert sh.is_debug_run(True, "p", "r", db=_Db({"run_kind": "release"})) is False
+    assert sh.is_debug_run(True, "p", "r", db=_Db({"started_at": "x"})) is False   # older docs count as release
+    assert sh.is_debug_run(True, "p", "r", db=_Db(None)) is False                  # no doc
+    assert sh.is_debug_run(True, "p", "r", db=_Db(boom=True)) is False             # read failure -> release
+    assert sh.is_debug_run(False, "p", "r", db=_Db({"run_kind": "debug"})) is False  # local mode

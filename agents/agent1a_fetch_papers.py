@@ -303,10 +303,14 @@ def run(run_id: str):
             print(f"{i}. [{scores.get('total', '?')}/{MAX_SCORE}] {paper['title']}")
             print(f"   {scores.get('reasoning', '')}\n")
 
-        recorded = spotlight_history.record_spotlight(
-            [{"arxiv_id": trending_papers.base_arxiv_id(p["id"]), "title": p["title"]} for p in top_papers],
-            run_id, USE_FIRESTORE, GCP_PROJECT_ID, DATA_DIR)
-        print(f"[spotlight] recorded {recorded} spotlighted paper(s)", flush=True)
+        if spotlight_history.is_debug_run(USE_FIRESTORE, GCP_PROJECT_ID, run_id):
+            print("[spotlight] debug run: not recording the spotlight, so a release run can still pick these papers",
+                  flush=True)
+        else:
+            recorded = spotlight_history.record_spotlight(
+                [{"arxiv_id": trending_papers.base_arxiv_id(p["id"]), "title": p["title"]} for p in top_papers],
+                run_id, USE_FIRESTORE, GCP_PROJECT_ID, DATA_DIR)
+            print(f"[spotlight] recorded {recorded} spotlighted paper(s)", flush=True)
 
         os.makedirs(DATA_DIR, exist_ok=True)
         out_path = os.path.join(DATA_DIR, "scored_papers.json")

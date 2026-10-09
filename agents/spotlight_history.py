@@ -11,6 +11,8 @@ import json
 import os
 from datetime import datetime, timezone
 
+import run_kind
+
 COLLECTION = "spotlighted_papers"
 
 
@@ -35,6 +37,23 @@ def load_seen_ids(use_firestore: bool, project: str, data_dir: str, run_id: str 
     except Exception as e:
         print(f"[spotlight] could not load history, continuing without it: {e}", flush=True)
         return set()
+
+
+def is_debug_run(use_firestore: bool, project: str, run_id: str, db=None) -> bool:
+    """True if this run's pipeline_runs doc is flagged debug. Debug runs must not record their pick, or a
+    paper chosen while trying something would be barred from the release run. Local mode has no run doc and
+    counts as release; so does a missing doc or a read failure (the pre-existing behavior)."""
+    if not use_firestore:
+        return False
+    try:
+        if db is None:
+            from google.cloud import firestore
+            db = firestore.Client(project=project)
+        snap = db.collection("pipeline_runs").document(run_id).get()
+        return not run_kind.is_release(snap.to_dict() if snap.exists else None)
+    except Exception as e:
+        print(f"[spotlight] could not read run kind, treating as release: {e}", flush=True)
+        return False
 
 
 def record_spotlight(papers: list[dict], run_id: str, use_firestore: bool, project: str, data_dir: str) -> int:

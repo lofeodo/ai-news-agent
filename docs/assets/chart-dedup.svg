@@ -1,40 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 340" width="880" height="340" role="img" aria-label="Duplicate removal. Duplicate recall, Control 0%; Duplicate recall, Haiku 90%; Duplicate recall, Sonnet 93%; Duplicates left in the section, Control 100%; Duplicates left in the section, Haiku 7%; Duplicates left in the section, Sonnet 9%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 350" width="880" height="350" role="img" aria-label="Duplicate removal. Duplicate recall, Control 0%; Duplicate recall, Haiku 90%; Duplicate recall, Sonnet 93%; Duplicates left in the section, Control 100%; Duplicates left in the section, Haiku 7%; Duplicates left in the section, Sonnet 9%">
 <title>Duplicate removal</title><desc>Duplicate recall, Control 0%; Duplicate recall, Haiku 90%; Duplicate recall, Sonnet 93%; Duplicates left in the section, Control 100%; Duplicates left in the section, Haiku 7%; Duplicates left in the section, Sonnet 9%</desc>
 <style>text{font-family:system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;fill:#e8e8e8} .m{fill:#8b8b8b} .s{fill:#c8b89a}</style>
-<rect x="0.5" y="0.5" width="879" height="339" rx="14" fill="#161616" stroke="#2a2a2a"/>
+<rect x="0.5" y="0.5" width="879" height="349" rx="14" fill="#161616" stroke="#2a2a2a"/>
 <text x="28" y="40" font-size="20" font-weight="600" class="s">Duplicate removal by arm</text>
 <text x="28" y="62" font-size="13" class="m">Control removes nothing. Hand-labeled article sets, Wilson 95% intervals</text>
 <text x="90" y="88" font-size="14" font-weight="600">Duplicate recall <tspan class="m" font-weight="400">(higher is better)</tspan></text>
-<line x1="90" x2="420" y1="270.0" y2="270.0" stroke="#2a2a2a"/><text x="82" y="274.0" font-size="11" text-anchor="end" class="m">0%</text>
-<line x1="90" x2="420" y1="185.0" y2="185.0" stroke="#2a2a2a"/><text x="82" y="189.0" font-size="11" text-anchor="end" class="m">50%</text>
-<line x1="90" x2="420" y1="100.0" y2="100.0" stroke="#2a2a2a"/><text x="82" y="104.0" font-size="11" text-anchor="end" class="m">100%</text>
-<rect x="113.0" y="270.0" width="64" height="1.0" rx="5" fill="#6b7280"/>
-<g stroke="#e8e8e8" stroke-width="2"><line x1="145.0" x2="145.0" y1="270.0" y2="265.0"/><line x1="137.0" x2="153.0" y1="270.0" y2="270.0"/><line x1="137.0" x2="153.0" y1="265.0" y2="265.0"/></g>
-<text x="145.0" y="257.0" font-size="14" font-weight="700" text-anchor="middle">0%</text>
-<text x="145.0" y="290" font-size="13" text-anchor="middle">Control</text>
-<rect x="223.0" y="116.2" width="64" height="153.8" rx="5" fill="#4f46e5"/>
-<g stroke="#e8e8e8" stroke-width="2"><line x1="255.0" x2="255.0" y1="127.0" y2="109.4"/><line x1="247.0" x2="263.0" y1="127.0" y2="127.0"/><line x1="247.0" x2="263.0" y1="109.4" y2="109.4"/></g>
-<text x="255.0" y="101.4" font-size="14" font-weight="700" text-anchor="middle">90%</text>
-<text x="255.0" y="290" font-size="13" text-anchor="middle">Haiku</text>
-<rect x="333.0" y="112.1" width="64" height="157.9" rx="5" fill="#7c3aed"/>
-<g stroke="#e8e8e8" stroke-width="2"><line x1="365.0" x2="365.0" y1="122.1" y2="106.5"/><line x1="357.0" x2="373.0" y1="122.1" y2="122.1"/><line x1="357.0" x2="373.0" y1="106.5" y2="106.5"/></g>
-<text x="365.0" y="98.5" font-size="14" font-weight="700" text-anchor="middle">93%</text>
-<text x="365.0" y="290" font-size="13" text-anchor="middle">Sonnet</text>
+<line x1="90" x2="420" y1="280.0" y2="280.0" stroke="#2a2a2a"/><text x="82" y="284.0" font-size="11" text-anchor="end" class="m">0%</text>
+<line x1="90" x2="420" y1="202.0" y2="202.0" stroke="#2a2a2a"/><text x="82" y="206.0" font-size="11" text-anchor="end" class="m">50%</text>
+<line x1="90" x2="420" y1="124.0" y2="124.0" stroke="#2a2a2a"/><text x="82" y="128.0" font-size="11" text-anchor="end" class="m">100%</text>
+<rect x="113.0" y="280.0" width="64" height="1.0" rx="5" fill="#6b7280"/>
+<g stroke="#e8e8e8" stroke-width="2"><line x1="145.0" x2="145.0" y1="280.0" y2="275.4"/><line x1="137.0" x2="153.0" y1="280.0" y2="280.0"/><line x1="137.0" x2="153.0" y1="275.4" y2="275.4"/></g>
+<text x="145.0" y="267.4" font-size="14" font-weight="700" text-anchor="middle">0%</text>
+<text x="145.0" y="300" font-size="13" text-anchor="middle">Control</text>
+<rect x="223.0" y="138.9" width="64" height="141.1" rx="5" fill="#4f46e5"/>
+<g stroke="#e8e8e8" stroke-width="2"><line x1="255.0" x2="255.0" y1="148.8" y2="132.6"/><line x1="247.0" x2="263.0" y1="148.8" y2="148.8"/><line x1="247.0" x2="263.0" y1="132.6" y2="132.6"/></g>
+<text x="255.0" y="124.6" font-size="14" font-weight="700" text-anchor="middle">90%</text>
+<text x="255.0" y="300" font-size="13" text-anchor="middle">Haiku</text>
+<rect x="333.0" y="135.1" width="64" height="144.9" rx="5" fill="#7c3aed"/>
+<g stroke="#e8e8e8" stroke-width="2"><line x1="365.0" x2="365.0" y1="144.3" y2="129.9"/><line x1="357.0" x2="373.0" y1="144.3" y2="144.3"/><line x1="357.0" x2="373.0" y1="129.9" y2="129.9"/></g>
+<text x="365.0" y="121.9" font-size="14" font-weight="700" text-anchor="middle">93%</text>
+<text x="365.0" y="300" font-size="13" text-anchor="middle">Sonnet</text>
 <text x="500" y="88" font-size="14" font-weight="600">Duplicates left in the section <tspan class="m" font-weight="400">(lower is better)</tspan></text>
-<line x1="500" x2="840" y1="270.0" y2="270.0" stroke="#2a2a2a"/><text x="492" y="274.0" font-size="11" text-anchor="end" class="m">0%</text>
-<line x1="500" x2="840" y1="185.0" y2="185.0" stroke="#2a2a2a"/><text x="492" y="189.0" font-size="11" text-anchor="end" class="m">50%</text>
-<line x1="500" x2="840" y1="100.0" y2="100.0" stroke="#2a2a2a"/><text x="492" y="104.0" font-size="11" text-anchor="end" class="m">100%</text>
-<rect x="524.7" y="100.0" width="64" height="170.0" rx="5" fill="#6b7280"/>
-<g stroke="#e8e8e8" stroke-width="2"><line x1="556.7" x2="556.7" y1="106.4" y2="100.0"/><line x1="548.7" x2="564.7" y1="106.4" y2="106.4"/><line x1="548.7" x2="564.7" y1="100.0" y2="100.0"/></g>
-<text x="556.7" y="92.0" font-size="14" font-weight="700" text-anchor="middle">100%</text>
-<text x="556.7" y="290" font-size="13" text-anchor="middle">Control</text>
-<rect x="638.0" y="258.0" width="64" height="12.0" rx="5" fill="#4f46e5"/>
-<g stroke="#e8e8e8" stroke-width="2"><line x1="670.0" x2="670.0" y1="264.1" y2="246.4"/><line x1="662.0" x2="678.0" y1="264.1" y2="264.1"/><line x1="662.0" x2="678.0" y1="246.4" y2="246.4"/></g>
-<text x="670.0" y="238.4" font-size="14" font-weight="700" text-anchor="middle">7%</text>
-<text x="670.0" y="290" font-size="13" text-anchor="middle">Haiku</text>
-<rect x="751.3" y="254.5" width="64" height="15.5" rx="5" fill="#7c3aed"/>
-<g stroke="#e8e8e8" stroke-width="2"><line x1="783.3" x2="783.3" y1="261.7" y2="242.2"/><line x1="775.3" x2="791.3" y1="261.7" y2="261.7"/><line x1="775.3" x2="791.3" y1="242.2" y2="242.2"/></g>
-<text x="783.3" y="234.2" font-size="14" font-weight="700" text-anchor="middle">9%</text>
-<text x="783.3" y="290" font-size="13" text-anchor="middle">Sonnet</text>
+<line x1="500" x2="840" y1="280.0" y2="280.0" stroke="#2a2a2a"/><text x="492" y="284.0" font-size="11" text-anchor="end" class="m">0%</text>
+<line x1="500" x2="840" y1="202.0" y2="202.0" stroke="#2a2a2a"/><text x="492" y="206.0" font-size="11" text-anchor="end" class="m">50%</text>
+<line x1="500" x2="840" y1="124.0" y2="124.0" stroke="#2a2a2a"/><text x="492" y="128.0" font-size="11" text-anchor="end" class="m">100%</text>
+<rect x="524.7" y="124.0" width="64" height="156.0" rx="5" fill="#6b7280"/>
+<g stroke="#e8e8e8" stroke-width="2"><line x1="556.7" x2="556.7" y1="129.8" y2="124.0"/><line x1="548.7" x2="564.7" y1="129.8" y2="129.8"/><line x1="548.7" x2="564.7" y1="124.0" y2="124.0"/></g>
+<text x="556.7" y="116.0" font-size="14" font-weight="700" text-anchor="middle">100%</text>
+<text x="556.7" y="300" font-size="13" text-anchor="middle">Control</text>
+<rect x="638.0" y="269.0" width="64" height="11.0" rx="5" fill="#4f46e5"/>
+<g stroke="#e8e8e8" stroke-width="2"><line x1="670.0" x2="670.0" y1="274.6" y2="258.3"/><line x1="662.0" x2="678.0" y1="274.6" y2="274.6"/><line x1="662.0" x2="678.0" y1="258.3" y2="258.3"/></g>
+<text x="670.0" y="250.3" font-size="14" font-weight="700" text-anchor="middle">7%</text>
+<text x="670.0" y="300" font-size="13" text-anchor="middle">Haiku</text>
+<rect x="751.3" y="265.8" width="64" height="14.2" rx="5" fill="#7c3aed"/>
+<g stroke="#e8e8e8" stroke-width="2"><line x1="783.3" x2="783.3" y1="272.4" y2="254.4"/><line x1="775.3" x2="791.3" y1="272.4" y2="272.4"/><line x1="775.3" x2="791.3" y1="254.4" y2="254.4"/></g>
+<text x="783.3" y="246.4" font-size="14" font-weight="700" text-anchor="middle">9%</text>
+<text x="783.3" y="300" font-size="13" text-anchor="middle">Sonnet</text>
 <text x="852" y="40" font-size="13" text-anchor="end" class="m">Haiku and Sonnet intervals overlap: no measurable difference</text>
 </svg>

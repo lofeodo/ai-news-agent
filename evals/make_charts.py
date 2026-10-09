@@ -170,8 +170,8 @@ _DEDUP_PANELS = (("Duplicate recall", "duplicate_recall", "higher is better"),
 
 def dedup_svg(doc):
     m = doc["metrics"]
-    W, H = 880, 340
-    y0, y1 = 100, 270                       # y0 = 100%, y1 = 0%
+    W, H = 880, 350
+    y0, y1 = 124, 280                       # y0 = 100%, y1 = 0%
     ys = lambda v: y1 - (y1 - y0) * v
     parts = ['<text x="28" y="40" font-size="20" font-weight="600" class="s">Duplicate removal by arm</text>',
              '<text x="28" y="62" font-size="13" class="m">Control removes nothing. Hand-labeled article sets, Wilson 95% intervals</text>']

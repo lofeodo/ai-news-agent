@@ -93,6 +93,22 @@ Labeling rule, same as `prompts/dedup_prompt.txt`: the same specific story is a 
 and languages and even with a different focus or opinion (price vs. benchmarks of one release; a report vs. a critical
 take); the same company or broad topic alone is not. In `duplicate_group` put the same label (`g1`, `g2`, ...) on
 articles that are duplicates of each other; leave unique ones blank. Put `?` in `note` for an ambiguous article
-(excluded from the metrics) and `t` for same topic but a different angle (borderline: kept out of the strict gold and
-reported separately). Gold labels are written by hand only. `evals.dedup_labels.load_dedup_gold` validates
+(excluded from the metrics). `t` (same topic, different angle) is no longer used: since 2026-10-09 any angle on the
+same story is a duplicate and gets a group label, while a shared company alone is not. Gold labels are written by hand only. `evals.dedup_labels.load_dedup_gold` validates
 the file and lists cases not yet touched.
+
+## Dedup eval harness (roadmap Step 6)
+
+`python -m evals.run_dedup_eval --dry-run` prints the case and gold counts and a worst-case cost; without
+`--dry-run` it makes real Claude calls (refused above 2 USD unless `--approve`). Arms: `control` (removes nothing),
+`haiku` (`config.SCORING_MODEL`) and `sonnet` (`config.JUDGE_MODEL`); `--arms` picks a subset and `--repeats`
+(default 3) sets runs per case per model. Each model arm runs the production first-turn check
+(`DedupConversation.start`) and the production keep policy (`keep_index`). The refill path is not scored.
+Scoring lives in `evals/dedup_eval.py` (pure); output is `results/dedup_eval_<date>.json` plus a `_rows.json` with
+every run's groups and removals.
+
+Metrics, all with Wilson intervals: `duplicate_recall` (gold duplicate pairs found), `false_removal_rate`
+(wrongly removed articles over articles that should stay), `false_group_rate` (predicted pairs not in the gold),
+`residual_duplicate_rate` (gold groups still with 2+ articles), `case_exact_match`, `failure_rate`, tokens and
+latency, and a paired Sonnet-vs-Haiku comparison. `strict` treats borderline `t` articles as unique; `broad`
+ignores pairs and removals involving them. Repeats of one case are not independent, so intervals are optimistic.

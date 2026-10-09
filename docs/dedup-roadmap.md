@@ -27,7 +27,7 @@ agent3 (`agents/agent3_compose.py`, `select_articles_for_category`) picks each s
 - [x] Step 3: Ranked fallback pool
 - [x] Step 4: LangGraph dedup loop in agent3
 - [x] Step 5: Dedup eval dataset
-- [ ] Step 6: Dedup eval harness (control vs Haiku vs Sonnet)
+- [x] Step 6: Dedup eval harness (control vs Haiku vs Sonnet)
 - [ ] Step 7: Results in README and docs (later)
 - [ ] Step 8: Deploy and verify on a debug run
 
@@ -75,7 +75,7 @@ Depends on: Steps 1 to 6.
 
 ## Step detail
 
-(No step in progress. Step 6 gets its plan here when we start it.)
+(No step in progress. Step 7 gets its plan here when we start it.)
 
 ## Completed steps
 
@@ -176,3 +176,35 @@ The shipped set shows that real duplicates reached readers before this step exis
 - Only the first-turn check (`start`) is directly scored. The fallback path (`add`) can be scored by holding articles out of these cases.
 - Cases were built from a single week's pool.
 
+
+### Step 6: Dedup eval harness
+
+Branch `feat/dedup-eval-harness`. Commits: scoring module, runner, this write-up with the first results.
+
+**Built.**
+- `evals/dedup_eval.py` (pure scoring) and `evals/run_dedup_eval.py` (runner), following the review eval: `--dry-run`, `--approve`, `--arms`, `--repeats` (default 3), `CostGuard`, results in `evals/results/dedup_eval_<date>.json` plus a `_rows.json`. Arms: control (removes nothing), Haiku (`SCORING_MODEL`), Sonnet (`JUDGE_MODEL`). Each model arm runs `DedupConversation.start` and the production `keep_index` on every case; a `DedupError` is recorded as a failed run (nothing removed).
+- Metrics: duplicate recall (gold pairs found), false-removal rate, false-group rate, residual duplicate rate, exact case match, failure rate, tokens and latency, per-kind breakdowns and a paired Sonnet-vs-Haiku comparison. Strict treats borderline `t` articles as unique; broad ignores pairs and removals involving them.
+- Tests: `tests/test_evals_dedup_eval.py` (17), `tests/test_evals_run_dedup_eval.py` (8). Full suite 494 passed.
+
+**Rule change (2026-10-09).** After the first run the owner decided that same topic, different angle pairs ARE duplicates ("same story, any angle"), while a shared company alone is not (one company can have many different stories). The 10 `t` articles were folded into duplicate groups: 4 new groups (Bezos/Prometheus funding, Sentra/Linx Claude Compliance API, the AI "rogue incident" commentary pair, the falling token prices pair) and 2 articles that joined existing EU labeling groups, so gold is now 33 groups in 31 cases and nothing is borderline; the strict and broad columns are equal. `prompts/dedup_prompt.txt` and `dedup_candidate_prompt.txt` were reworded to match (angle never matters; commentary and bigger pieces that report the same news count; one company can have many stories) and the eval was rerun. The 2026-10-08 results file stays in `evals/results/` as the run under the old rule and old prompt (recall Haiku 99% / Sonnet 94%, but 16-19% "false groups" that were really the borderline pairs).
+
+**Result (2026-10-09 run: 57 cases, 33 gold groups, 3 repeats per model, cost $1.49).**
+
+| | control | Haiku | Sonnet |
+|---|---|---|---|
+| Duplicate recall | 0% | 90.5% | 92.9% |
+| False removal | 0% | 0.4% | 0.6% |
+| False groups | n/a | 6.6% | 7.1% |
+| Residual duplicates | 100% | 7.1% | 9.1% |
+| Exact case match | 46% | 93% | 91% |
+| Failed runs | 0 | 0 | 0 |
+| Mean seconds per case | 0 | 4.3 | 1.8 |
+
+Paired, per item: Sonnet wins 9 and loses 6 recall items (111 ties); on false removals Sonnet wins 2 and loses 4 (867 ties). The intervals overlap, so there is no clear winner and the harness's rule picks the cheaper Haiku. Misses are concentrated: Haiku misses the Sentra/Linx pair and the ship13 EU group in all 3 runs; Sonnet misses the Sentra/Linx pair, the token-prices pair and the `hard09` group in all 3 runs.
+
+**Caveats.**
+- 33 groups is small and repeats are pooled (not independent), so the intervals are optimistic and do not separate the models.
+- The harder, more subjective pairs (two vendors announcing the same kind of integration) are where both models miss; that is a labeling-judgment question as much as a model one.
+- Only the first-turn check is scored, not the refill path.
+- The cost estimator is now padded above measured usage (worst case $2.19 vs $1.49 actual), so it needs `--approve`.
+- Nothing is deployed; production dedup still defaults to Haiku (`DEDUP_MODEL`).

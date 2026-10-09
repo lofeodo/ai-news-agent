@@ -1,0 +1,517 @@
+{
+  "schema_version": 1,
+  "name": "dedup_eval_2026-10-08",
+  "created_at": "2026-10-08T20:16:02.205975+00:00",
+  "git_sha": "370cb69",
+  "model": "claude-haiku-4-5-20251001 vs claude-sonnet-5-5",
+  "cost_usd": 1.3992,
+  "notes": "No clear winner (recall haiku 0.99 (0.94-1.00) vs sonnet 0.94 (0.87-0.97); false removal haiku 0.022 vs sonnet 0.018); the Wilson 95% intervals overlap, so prefer the cheaper haiku unless its false removals are worse. The gold set has few duplicate groups, so intervals are wide. 3 repeats per model arm, pooled; repeats of one case are not independent, so the Wilson intervals are optimistic. Only the first-turn check (start) is scored; the refill path is not. Strict treats borderline `t` articles as unique, broad ignores pairs and removals involving them. Fixtures hold 300-char snippets and summaries, as the detector saw in production.",
+  "metrics": {
+    "duplicate_recall__control": {
+      "value": 0.0,
+      "n": 99,
+      "ci_low": 0.0,
+      "ci_high": 0.037353212067827386
+    },
+    "false_removal_rate_strict__control": {
+      "value": 0.0,
+      "n": 990,
+      "ci_low": 0.0,
+      "ci_high": 0.0038652632033005074
+    },
+    "false_removal_rate_broad__control": {
+      "value": 0.0,
+      "n": 960,
+      "ci_low": 0.0,
+      "ci_high": 0.003985571263342763
+    },
+    "false_group_rate_strict__control": {
+      "value": null,
+      "n": 0,
+      "ci_low": 0.0,
+      "ci_high": 1.0
+    },
+    "false_group_rate_broad__control": {
+      "value": null,
+      "n": 0,
+      "ci_low": 0.0,
+      "ci_high": 1.0
+    },
+    "residual_duplicate_rate__control": {
+      "value": 1.0,
+      "n": 87,
+      "ci_low": 0.9577124930558796,
+      "ci_high": 1.0
+    },
+    "case_exact_match__control": {
+      "value": 0.5263157894736842,
+      "n": 171,
+      "ci_low": 0.45172481088344973,
+      "ci_high": 0.5997503944866325
+    },
+    "failure_rate__control": {
+      "value": 0.0,
+      "n": 171,
+      "ci_low": 0.0,
+      "ci_high": 0.021971097968438207
+    },
+    "duplicate_recall__control__control": {
+      "value": null,
+      "n": 0,
+      "ci_low": 0.0,
+      "ci_high": 1.0
+    },
+    "false_removal_rate_strict__control__control": {
+      "value": 0.0,
+      "n": 120,
+      "ci_low": 0.0,
+      "ci_high": 0.031019166418703482
+    },
+    "residual_duplicate_rate__control__control": {
+      "value": null,
+      "n": 0,
+      "ci_low": 0.0,
+      "ci_high": 1.0
+    },
+    "duplicate_recall__control__hard_negative": {
+      "value": 0.0,
+      "n": 24,
+      "ci_low": 0.0,
+      "ci_high": 0.1379762046749802
+    },
+    "false_removal_rate_strict__control__hard_negative": {
+      "value": 0.0,
+      "n": 216,
+      "ci_low": 0.0,
+      "ci_high": 0.01747376878456431
+    },
+    "residual_duplicate_rate__control__hard_negative": {
+      "value": 1.0,
+      "n": 24,
+      "ci_low": 0.8620237953250198,
+      "ci_high": 1.0
+    },
+    "duplicate_recall__control__real": {
+      "value": 0.0,
+      "n": 6,
+      "ci_low": 0.0,
+      "ci_high": 0.3903342879021653
+    },
+    "false_removal_rate_strict__control__real": {
+      "value": 0.0,
+      "n": 42,
+      "ci_low": 0.0,
+      "ci_high": 0.08379879086570391
+    },
+    "residual_duplicate_rate__control__real": {
+      "value": 1.0,
+      "n": 6,
+      "ci_low": 0.6096657120978346,
+      "ci_high": 1.0
+    },
+    "duplicate_recall__control__shipped": {
+      "value": 0.0,
+      "n": 60,
+      "ci_low": 0.0,
+      "ci_high": 0.06017185214208986
+    },
+    "false_removal_rate_strict__control__shipped": {
+      "value": 0.0,
+      "n": 495,
+      "ci_low": 0.0,
+      "ci_high": 0.007700760938707215
+    },
+    "residual_duplicate_rate__control__shipped": {
+      "value": 1.0,
+      "n": 48,
+      "ci_low": 0.9258998703338825,
+      "ci_high": 1.0
+    },
+    "duplicate_recall__control__shipped_control": {
+      "value": 0.0,
+      "n": 9,
+      "ci_low": 0.0,
+      "ci_high": 0.29914504841954404
+    },
+    "false_removal_rate_strict__control__shipped_control": {
+      "value": 0.0,
+      "n": 117,
+      "ci_low": 0.0,
+      "ci_high": 0.03178924566273338
+    },
+    "residual_duplicate_rate__control__shipped_control": {
+      "value": 1.0,
+      "n": 9,
+      "ci_low": 0.7008549515804559,
+      "ci_high": 1.0
+    },
+    "tokens_input__control": {
+      "value": 0,
+      "n": 171,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "tokens_output__control": {
+      "value": 0,
+      "n": 171,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "seconds_mean__control": {
+      "value": 0.0,
+      "n": 171,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "seconds_p95__control": {
+      "value": 0.0,
+      "n": 171,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "duplicate_recall__haiku": {
+      "value": 0.98989898989899,
+      "n": 99,
+      "ci_low": 0.9449846853541272,
+      "ci_high": 0.9982146927208299
+    },
+    "false_removal_rate_strict__haiku": {
+      "value": 0.022222222222222223,
+      "n": 990,
+      "ci_low": 0.014720354754732651,
+      "ci_high": 0.03341756341731006
+    },
+    "false_removal_rate_broad__haiku": {
+      "value": 0.013541666666666667,
+      "n": 960,
+      "ci_low": 0.007930685157714437,
+      "ci_high": 0.023030276883912792
+    },
+    "false_group_rate_strict__haiku": {
+      "value": 0.19008264462809918,
+      "n": 121,
+      "ci_low": 0.13013427646380266,
+      "ci_high": 0.2691037594540558
+    },
+    "false_group_rate_broad__haiku": {
+      "value": 0.0297029702970297,
+      "n": 101,
+      "ci_low": 0.010152480650585535,
+      "ci_high": 0.08371743427997216
+    },
+    "residual_duplicate_rate__haiku": {
+      "value": 0.011494252873563218,
+      "n": 87,
+      "ci_low": 0.0020319077375923027,
+      "ci_high": 0.06227197835723791
+    },
+    "case_exact_match__haiku": {
+      "value": 0.9064327485380117,
+      "n": 171,
+      "ci_low": 0.8534216537257586,
+      "ci_high": 0.9415842958788443
+    },
+    "failure_rate__haiku": {
+      "value": 0.0,
+      "n": 171,
+      "ci_low": 0.0,
+      "ci_high": 0.021971097968438207
+    },
+    "duplicate_recall__haiku__control": {
+      "value": null,
+      "n": 0,
+      "ci_low": 0.0,
+      "ci_high": 1.0
+    },
+    "false_removal_rate_strict__haiku__control": {
+      "value": 0.008333333333333333,
+      "n": 120,
+      "ci_low": 0.0014725557333420888,
+      "ci_high": 0.04569629124504967
+    },
+    "residual_duplicate_rate__haiku__control": {
+      "value": null,
+      "n": 0,
+      "ci_low": 0.0,
+      "ci_high": 1.0
+    },
+    "duplicate_recall__haiku__hard_negative": {
+      "value": 1.0,
+      "n": 24,
+      "ci_low": 0.8620237953250198,
+      "ci_high": 1.0
+    },
+    "false_removal_rate_strict__haiku__hard_negative": {
+      "value": 0.013888888888888888,
+      "n": 216,
+      "ci_low": 0.00473451726297602,
+      "ci_high": 0.04003164683312817
+    },
+    "residual_duplicate_rate__haiku__hard_negative": {
+      "value": 0.0,
+      "n": 24,
+      "ci_low": 0.0,
+      "ci_high": 0.1379762046749802
+    },
+    "duplicate_recall__haiku__real": {
+      "value": 1.0,
+      "n": 6,
+      "ci_low": 0.6096657120978346,
+      "ci_high": 1.0
+    },
+    "false_removal_rate_strict__haiku__real": {
+      "value": 0.0,
+      "n": 42,
+      "ci_low": 0.0,
+      "ci_high": 0.08379879086570391
+    },
+    "residual_duplicate_rate__haiku__real": {
+      "value": 0.0,
+      "n": 6,
+      "ci_low": 0.0,
+      "ci_high": 0.3903342879021653
+    },
+    "duplicate_recall__haiku__shipped": {
+      "value": 0.9833333333333333,
+      "n": 60,
+      "ci_low": 0.9114487027240994,
+      "ci_high": 0.9970518402052138
+    },
+    "false_removal_rate_strict__haiku__shipped": {
+      "value": 0.030303030303030304,
+      "n": 495,
+      "ci_low": 0.018448537019779956,
+      "ci_high": 0.0493915717408238
+    },
+    "residual_duplicate_rate__haiku__shipped": {
+      "value": 0.020833333333333332,
+      "n": 48,
+      "ci_low": 0.003687110977510663,
+      "ci_high": 0.1089921799525186
+    },
+    "duplicate_recall__haiku__shipped_control": {
+      "value": 1.0,
+      "n": 9,
+      "ci_low": 0.7008549515804559,
+      "ci_high": 1.0
+    },
+    "false_removal_rate_strict__haiku__shipped_control": {
+      "value": 0.02564102564102564,
+      "n": 117,
+      "ci_low": 0.008758055703820156,
+      "ci_high": 0.07268302351467049
+    },
+    "residual_duplicate_rate__haiku__shipped_control": {
+      "value": 0.0,
+      "n": 9,
+      "ci_low": 0.0,
+      "ci_high": 0.29914504841954404
+    },
+    "tokens_input__haiku": {
+      "value": 273900,
+      "n": 171,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "tokens_output__haiku": {
+      "value": 66549,
+      "n": 171,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "seconds_mean__haiku": {
+      "value": 4.065,
+      "n": 171,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "seconds_p95__haiku": {
+      "value": 5.437,
+      "n": 171,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "duplicate_recall__sonnet": {
+      "value": 0.9393939393939394,
+      "n": 99,
+      "ci_low": 0.8740321262351004,
+      "ci_high": 0.9719302025537785
+    },
+    "false_removal_rate_strict__sonnet": {
+      "value": 0.01818181818181818,
+      "n": 990,
+      "ci_low": 0.011531352374793667,
+      "ci_high": 0.02855699216656864
+    },
+    "false_removal_rate_broad__sonnet": {
+      "value": 0.015625,
+      "n": 960,
+      "ci_low": 0.009491493213442594,
+      "ci_high": 0.02561952894792071
+    },
+    "false_group_rate_strict__sonnet": {
+      "value": 0.16216216216216217,
+      "n": 111,
+      "ci_low": 0.10510773837466894,
+      "ci_high": 0.2418180080397854
+    },
+    "false_group_rate_broad__sonnet": {
+      "value": 0.0,
+      "n": 93,
+      "ci_low": 0.0,
+      "ci_high": 0.03966750261173514
+    },
+    "residual_duplicate_rate__sonnet": {
+      "value": 0.06896551724137931,
+      "n": 87,
+      "ci_low": 0.031988839442576765,
+      "ci_high": 0.14239694240580283
+    },
+    "case_exact_match__sonnet": {
+      "value": 0.9122807017543859,
+      "n": 171,
+      "ci_low": 0.8603239467592791,
+      "ci_high": 0.9461209373720085
+    },
+    "failure_rate__sonnet": {
+      "value": 0.0,
+      "n": 171,
+      "ci_low": 0.0,
+      "ci_high": 0.021971097968438207
+    },
+    "duplicate_recall__sonnet__control": {
+      "value": null,
+      "n": 0,
+      "ci_low": 0.0,
+      "ci_high": 1.0
+    },
+    "false_removal_rate_strict__sonnet__control": {
+      "value": 0.0,
+      "n": 120,
+      "ci_low": 0.0,
+      "ci_high": 0.031019166418703482
+    },
+    "residual_duplicate_rate__sonnet__control": {
+      "value": null,
+      "n": 0,
+      "ci_low": 0.0,
+      "ci_high": 1.0
+    },
+    "duplicate_recall__sonnet__hard_negative": {
+      "value": 0.875,
+      "n": 24,
+      "ci_low": 0.6899611872949993,
+      "ci_high": 0.9565566591987658
+    },
+    "false_removal_rate_strict__sonnet__hard_negative": {
+      "value": 0.013888888888888888,
+      "n": 216,
+      "ci_low": 0.00473451726297602,
+      "ci_high": 0.04003164683312817
+    },
+    "residual_duplicate_rate__sonnet__hard_negative": {
+      "value": 0.125,
+      "n": 24,
+      "ci_low": 0.04344334080123441,
+      "ci_high": 0.3100388127050007
+    },
+    "duplicate_recall__sonnet__real": {
+      "value": 1.0,
+      "n": 6,
+      "ci_low": 0.6096657120978346,
+      "ci_high": 1.0
+    },
+    "false_removal_rate_strict__sonnet__real": {
+      "value": 0.0,
+      "n": 42,
+      "ci_low": 0.0,
+      "ci_high": 0.08379879086570391
+    },
+    "residual_duplicate_rate__sonnet__real": {
+      "value": 0.0,
+      "n": 6,
+      "ci_low": 0.0,
+      "ci_high": 0.3903342879021653
+    },
+    "duplicate_recall__sonnet__shipped": {
+      "value": 0.95,
+      "n": 60,
+      "ci_low": 0.8629948352365148,
+      "ci_high": 0.9828504978356044
+    },
+    "false_removal_rate_strict__sonnet__shipped": {
+      "value": 0.030303030303030304,
+      "n": 495,
+      "ci_low": 0.018448537019779956,
+      "ci_high": 0.0493915717408238
+    },
+    "residual_duplicate_rate__sonnet__shipped": {
+      "value": 0.0625,
+      "n": 48,
+      "ci_low": 0.0214832329083893,
+      "ci_high": 0.1683543805494635
+    },
+    "duplicate_recall__sonnet__shipped_control": {
+      "value": 1.0,
+      "n": 9,
+      "ci_low": 0.7008549515804559,
+      "ci_high": 1.0
+    },
+    "false_removal_rate_strict__sonnet__shipped_control": {
+      "value": 0.0,
+      "n": 117,
+      "ci_low": 0.0,
+      "ci_high": 0.03178924566273338
+    },
+    "residual_duplicate_rate__sonnet__shipped_control": {
+      "value": 0.0,
+      "n": 9,
+      "ci_low": 0.0,
+      "ci_high": 0.29914504841954404
+    },
+    "tokens_input__sonnet": {
+      "value": 313788,
+      "n": 171,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "tokens_output__sonnet": {
+      "value": 16501,
+      "n": 171,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "seconds_mean__sonnet": {
+      "value": 1.814,
+      "n": 171,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "seconds_p95__sonnet": {
+      "value": 3.927,
+      "n": 171,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "paired_recall_sonnet_vs_haiku": {
+      "value": 0.14285714285714285,
+      "n": 7,
+      "ci_low": 0.02567962434474358,
+      "ci_high": 0.5131278292743189,
+      "wins": 1,
+      "losses": 6,
+      "ties": 92,
+      "items": 99
+    },
+    "paired_false_removal_sonnet_vs_haiku": {
+      "value": 1.0,
+      "n": 10,
+      "ci_low": 0.7224672001371109,
+      "ci_high": 1.0,
+      "wins": 10,
+      "losses": 0,
+      "ties": 893,
+      "items": 903
+    }
+  }
+}

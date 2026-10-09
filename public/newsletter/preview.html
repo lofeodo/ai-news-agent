@@ -37,13 +37,31 @@
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       gap: 16px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
     }
+    .topbar::-webkit-scrollbar { display: none; }
+    .topbar > * { flex-shrink: 0; }
+
+    .topbar__nav { display: flex; align-items: center; gap: 4px; }
+    .topbar__nav-link {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 5px 10px;
+      white-space: nowrap;
+      transition: color 0.15s;
+    }
+    .topbar__nav-link:hover, .topbar__nav-link.active { color: var(--accent); }
 
     .topbar__left {
       display: flex;
       align-items: center;
       gap: 12px;
-      min-width: 0;
+      margin-right: auto;
     }
 
     .topbar__logo {
@@ -153,8 +171,8 @@
     }
 
     @media (max-width: 600px) {
-      .topbar { padding: 0 12px; }
-      .topbar__badge { display: none; }
+      .topbar { padding: 0 12px; gap: 8px; }
+      .topbar__badge, .topbar__label { display: none; }
     }
   </style>
 </head>
@@ -171,6 +189,11 @@
         Live
       </span>
     </div>
+    <nav class="topbar__nav" aria-label="Main">
+      <a href="/preview.html" class="topbar__nav-link active">Latest Issue</a>
+      <a href="/sections.html" class="topbar__nav-link">Customize</a>
+      <a href="/preferences.html" class="topbar__nav-link">Preferences</a>
+    </nav>
     <div class="topbar__right">
       <!-- Admins only: toggles between the published issue and the newest run of any kind -->
       <button type="button" class="topbar__debug" id="debug-toggle" aria-pressed="false">Debug run</button>

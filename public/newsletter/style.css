@@ -131,22 +131,41 @@
 .topbar__github {
   display: inline-flex;
   align-items: center;
-  color: #8b8b8b;
-  transition: color 0.15s;
+  gap: 7px;
+  color: #d8d0c2;
+  border: 1px solid #5a5448;
+  padding: 5px 11px;
+  font-family: 'Menlo', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
   text-decoration: none;
 }
-.topbar__github:hover { color: #c8b89a; }
+.topbar__github:hover { color: #c8b89a; border-color: #c8b89a; background: rgba(200,184,154,0.08); }
 .topbar__github svg {
-  width: 14px; height: 14px;
+  width: 17px; height: 17px;
   fill: currentColor;
 }
+
+/* If the bar's contents are wider than the screen, scroll sideways instead of
+   clipping or wrapping. Children keep their natural width. */
+.topbar {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.topbar::-webkit-scrollbar { display: none; }
+.topbar > * { flex-shrink: 0; }
 
 @media (max-width: 600px) {
   .topbar { padding: 0 12px; gap: 8px; }
   .topbar__nav-link { display: none !important; }
   .topbar__nav-link.active { display: block !important; }
   .topbar__auth-email { max-width: 90px; }
-  .topbar__github { display: none; }
+  .topbar__github-label { display: none; }
+  .topbar__github { padding: 6px; }
 }
 
 :root {
@@ -216,12 +235,12 @@ body::after {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  max-width: 520px;
-  margin-bottom: 16px;
-  padding: 14px 20px 14px 16px;
-  border: 1px solid rgba(200,184,154,0.30);
-  border-left: 3px solid var(--accent);
-  background: rgba(200,184,154,0.04);
+  max-width: 640px;
+  margin-bottom: 20px;
+  padding: 20px 26px 20px 22px;
+  border: 1px solid rgba(200,184,154,0.55);
+  border-left: 5px solid var(--accent);
+  background: linear-gradient(90deg, rgba(200,184,154,0.16), rgba(200,184,154,0.05));
   text-decoration: none;
   font-family: var(--font);
   color: var(--muted);
@@ -229,10 +248,10 @@ body::after {
   box-shadow: 0 0 0 1px rgba(200,184,154,0.03), inset 0 1px 0 rgba(200,184,154,0.06);
 }
 .issue-teaser:hover {
-  border-color: rgba(200,184,154,0.55);
+  border-color: rgba(200,184,154,0.8);
   border-left-color: var(--accent);
-  background: rgba(200,184,154,0.08);
-  box-shadow: 0 0 24px rgba(200,184,154,0.10), inset 0 1px 0 rgba(200,184,154,0.10);
+  background: linear-gradient(90deg, rgba(200,184,154,0.24), rgba(200,184,154,0.08));
+  box-shadow: 0 0 32px rgba(200,184,154,0.22), inset 0 1px 0 rgba(200,184,154,0.14);
 }
 .issue-teaser__left {
   display: flex;
@@ -241,8 +260,8 @@ body::after {
 }
 .issue-teaser__dot {
   display: inline-block;
-  width: 7px;
-  height: 7px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: var(--accent);
   box-shadow: 0 0 8px rgba(200,184,154,0.8);
@@ -254,19 +273,20 @@ body::after {
   50%       { opacity: 0.45; box-shadow: 0 0 2px rgba(200,184,154,0.3); }
 }
 .issue-teaser__label {
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   color: var(--accent);
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 .issue-teaser__title {
-  font-size: 0.88rem;
+  font-size: 1.1rem;
   color: var(--text);
   letter-spacing: 0.02em;
 }
 .issue-teaser__arrow {
   color: var(--accent);
-  font-size: 0.88rem;
+  font-size: 1rem;
+  font-weight: 700;
   letter-spacing: 0.02em;
   transition: transform 0.2s;
   flex-shrink: 0;
@@ -1069,9 +1089,10 @@ input[type="password"]:focus {
     margin-top: 16px;
   }
   .issue-teaser {
-    padding: 10px 14px 10px 12px;
+    padding: 12px 14px 12px 12px;
     margin-bottom: 12px;
   }
+  .issue-teaser__title { font-size: 0.9rem; }
   .issue-teaser__label {
     display: none;
   }
@@ -1285,25 +1306,33 @@ input[type="password"]:focus {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: transparent;
-  color: #c8b89a;
+  background: #c8b89a;
+  color: #0a0a0a;
   border: 1px solid #c8b89a;
   border-radius: 999px;
-  padding: 4px 12px;
+  padding: 7px 18px;
   font-family: 'Menlo', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
-  font-size: 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s, color 0.15s;
+  animation: share-glow 2.8s ease-in-out infinite;
+  transition: background 0.15s, color 0.15s, transform 0.15s;
 }
-.share-btn:hover { background: #c8b89a; color: #0a0a0a; }
-.share-btn svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.share-btn:hover { background: #e0d2b4; border-color: #e0d2b4; transform: translateY(-1px); animation: none; box-shadow: 0 0 18px rgba(200,184,154,0.55); }
+@keyframes share-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(200,184,154,0.0), 0 0 8px rgba(200,184,154,0.25); }
+  50%      { box-shadow: 0 0 0 4px rgba(200,184,154,0.12), 0 0 16px rgba(200,184,154,0.5); }
+}
+@media (prefers-reduced-motion: reduce) { .share-btn { animation: none; } }
+.share-btn svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .share-pop {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
+  /* fixed (positioned by share.js) so the scrolling topbar can't clip it */
+  position: fixed;
+  top: 54px;
+  right: 12px;
   z-index: 50;
   display: flex;
   flex-direction: column;

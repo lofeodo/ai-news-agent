@@ -1,5 +1,5 @@
 import os
-from fastapi import Header, HTTPException
+from fastapi import Depends, Header, HTTPException
 
 _firebase_initialized = False
 
@@ -21,7 +21,15 @@ async def get_current_user(authorization: str | None = Header(default=None)) -> 
     try:
         _ensure_firebase()
         from firebase_admin import auth
-        decoded = auth.verify_id_token(id_token)
+        decoded = auth.verify_id_token(id_token, check_revoked=True)
         return decoded
     except Exception:
         raise HTTPException(status_code=401, detail="invalid_token")
+
+
+async def get_verified_user(user: dict = Depends(get_current_user)) -> dict:
+    """Like get_current_user, but the sign-in provider must have verified the address."""
+    email = user.get("email")
+    if not user.get("email_verified") or not isinstance(email, str) or not email.strip():
+        raise HTTPException(status_code=403, detail="email_not_verified")
+    return user

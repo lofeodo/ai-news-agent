@@ -36,7 +36,7 @@ from slowapi.util import get_remote_address
 
 logger = logging.getLogger(__name__)
 
-from auth_middleware import get_current_user
+from auth_middleware import get_current_user, get_verified_user
 import click_counts
 import run_kind
 import sendgrid_webhook
@@ -124,8 +124,9 @@ def _is_admin(user: dict) -> bool:
     return bool(user.get("email_verified")) and user.get("email", "").lower() in ADMIN_EMAILS
 
 
-def _get_user_tier(email: str) -> str:
-    return "premium" if email in PREMIUM_EMAILS else "free"
+def _get_user_tier(user: dict) -> str:
+    email = (user.get("email") or "").lower()
+    return "premium" if user.get("email_verified") and email in PREMIUM_EMAILS else "free"
 
 
 # ---------------------------------------------------------------------------
@@ -759,7 +760,7 @@ async def admin_preview(
     request: Request,
     run: Annotated[str, Query(max_length=64)] = "latest",
     variant: Annotated[str, Query(max_length=8)] = "",
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(get_verified_user),
 ):
     """Admin only: any run, debug ones included. `run` is "latest" (newest composed run of any kind) or a run id."""
     if not _is_admin(user):
@@ -981,11 +982,17 @@ USERS_COLLECTION = "users"
 @limiter.limit("30/minute")
 async def auth_me(request: Request, user: dict = Depends(get_current_user)):
     """Return the current user's profile and subscription status."""
+    uid = user["uid"]
+    if not user.get("email_verified"):
+        return {
+            "uid": uid, "email": (user.get("email") or "").lower(),
+            "display_name": user.get("name"), "email_verified": False,
+            "subscribed": False, "prefs": {}, "tier": "free", "is_admin": False,
+        }
     db    = _db()
     email = user.get("email", "").lower()
-    uid   = user["uid"]
     now   = datetime.now(timezone.utc)
-    tier  = _get_user_tier(email)
+    tier  = _get_user_tier(user)
 
     db.collection(USERS_COLLECTION).document(uid).set({
         "email":        email,
@@ -1011,11 +1018,8 @@ async def auth_me(request: Request, user: dict = Depends(get_current_user)):
 
 @router.post("/auth/subscribe")
 @limiter.limit("10/minute")
-async def auth_subscribe(request: Request, user: dict = Depends(get_current_user)):
+async def auth_subscribe(request: Request, user: dict = Depends(get_verified_user)):
     """Subscribe the authenticated user. No confirmation email — account email is already verified."""
-    if not user.get("email_verified"):
-        raise HTTPException(status_code=403, detail="email_not_verified")
-
     try:
         body = await request.json()
     except Exception:
@@ -1076,7 +1080,7 @@ async def auth_subscribe(request: Request, user: dict = Depends(get_current_user
 
 @router.post("/auth/unsubscribe")
 @limiter.limit("10/minute")
-async def auth_unsubscribe(request: Request, user: dict = Depends(get_current_user)):
+async def auth_unsubscribe(request: Request, user: dict = Depends(get_verified_user)):
     """Unsubscribe the authenticated user."""
     db    = _db()
     email = user["email"].lower()
@@ -1266,11 +1270,11 @@ async def auth_google_exchange(request: Request, req: GoogleExchangeRequest) -> 
 
 @router.get("/auth/preferences")
 @limiter.limit("10/minute")
-async def auth_get_preferences(request: Request, user: dict = Depends(get_current_user)):
+async def auth_get_preferences(request: Request, user: dict = Depends(get_verified_user)):
     """Return the authenticated user's current preferences and tier."""
     db    = _db()
     email = user["email"].lower()
-    tier  = _get_user_tier(email)
+    tier  = _get_user_tier(user)
     doc   = db.collection(SUBSCRIBERS_COLLECTION).document(email).get()
     if not doc.exists or not doc.to_dict().get("active"):
         return {"subscribed": False, "prefs": {}, "tier": tier}
@@ -1283,7 +1287,7 @@ async def auth_get_preferences(request: Request, user: dict = Depends(get_curren
 async def auth_update_preferences(
     request: Request,
     req: AuthPreferencesUpdate,
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(get_verified_user),
 ):
     """Update the authenticated user's preferences."""
     db    = _db()
@@ -1307,11 +1311,11 @@ async def auth_update_preferences(
 async def auth_sections_refine(
     request: Request,
     req: SectionRefineRequest,
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(get_verified_user),
 ):
     """Use Claude to refine a free-form topic into a clean newsletter section title."""
     email = user.get("email", "").lower()
-    if _get_user_tier(email) != "premium":
+    if _get_user_tier(user) != "premium":
         raise HTTPException(status_code=403, detail="premium_required")
 
     raw = req.raw_topic.strip()
@@ -1341,10 +1345,10 @@ async def auth_sections_refine(
 
 @router.get("/auth/sections")
 @limiter.limit("10/minute")
-async def auth_get_sections(request: Request, user: dict = Depends(get_current_user)):
+async def auth_get_sections(request: Request, user: dict = Depends(get_verified_user)):
     """Return the user's section configuration (premium only)."""
     email = user.get("email", "").lower()
-    if _get_user_tier(email) != "premium":
+    if _get_user_tier(user) != "premium":
         raise HTTPException(status_code=403, detail="premium_required")
 
     uid      = user["uid"]
@@ -1359,11 +1363,11 @@ async def auth_get_sections(request: Request, user: dict = Depends(get_current_u
 async def auth_update_sections(
     request: Request,
     req: SectionConfigUpdate,
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(get_verified_user),
 ):
     """Save the user's section configuration (premium only)."""
     email = user.get("email", "").lower()
-    if _get_user_tier(email) != "premium":
+    if _get_user_tier(user) != "premium":
         raise HTTPException(status_code=403, detail="premium_required")
 
     if req.section_config.enabled_sections is not None:

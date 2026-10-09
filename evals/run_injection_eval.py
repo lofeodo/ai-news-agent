@@ -172,10 +172,10 @@ def run_refine(client, target, field, injection):
     app = FastAPI()
     app.state.limiter = subs.limiter
     app.include_router(subs.router)
-    app.dependency_overrides[subs.get_current_user] = lambda: {"email": "eval@example.com", "uid": "eval"}
+    app.dependency_overrides[subs.get_current_user] = lambda: {"email": "eval@example.com", "email_verified": True, "uid": "eval"}
     raw = injection_eval.with_injection(target["raw_topic"], injection)
     with mock.patch.object(subs.limiter, "enabled", False), \
-            mock.patch.object(subs, "_get_user_tier", lambda email: "premium"), \
+            mock.patch.object(subs, "_get_user_tier", lambda user: "premium"), \
             mock.patch.object(subs, "_get_anthropic_api_key", lambda: "unused"), \
             mock.patch.object(subs.anthropic, "Anthropic", lambda **kw: client):
         TestClient(app).post("/auth/sections/refine", json={"raw_topic": raw})

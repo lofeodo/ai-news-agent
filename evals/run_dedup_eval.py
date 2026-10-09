@@ -38,8 +38,8 @@ MAX_WORKERS = 5
 
 # Rough budgets used only for the pre-run estimate (actual usage is metered per call).
 _PROMPT_OVERHEAD_TOKENS = 600
-_TOKENS_PER_ARTICLE = 110       # title + 300-char summary + tags
-_OUT_TOKENS_PER_CASE = 120
+_TOKENS_PER_ARTICLE = 150       # title + 300-char summary + tags
+_OUT_TOKENS_PER_CASE = 400
 _TOKENIZER_FACTOR = {"sonnet": 1.3}   # Sonnet 5.5's tokenizer uses ~30% more tokens
 
 

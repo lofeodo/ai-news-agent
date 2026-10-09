@@ -103,7 +103,7 @@ def test_dry_run_makes_no_client_and_prints_estimate(monkeypatch, capsys):
     out = capsys.readouterr().out
     assert "estimated worst-case cost" in out
     assert "cases: 57" in out
-    assert "gold groups: 29" in out
+    assert "gold groups: 33" in out
 
 
 def test_unknown_arm_is_rejected():

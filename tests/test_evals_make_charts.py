@@ -94,3 +94,13 @@ def test_write_all_emits_dedup_chart(tmp_path):
     (tmp_path / "dedup_eval_2026-10-09.json").write_text(json.dumps(doc))
     out = tmp_path / "out"
     assert [p.name for p in c.write_all(tmp_path, out)] == ["chart-dedup.svg"]
+
+
+def test_pipeline_cost_chart_and_summary():
+    from evals import fetch_pipeline_cost, results
+
+    agents = {a: {"cost": 0.1, "calls": 2, "input": 10, "output": 5} for a in fetch_pipeline_cost.AGENTS}
+    usage = {"agents": agents, "total": {"cost": 0.5, "calls": 10}}
+    doc = results.build_results("pipeline_cost", "m", fetch_pipeline_cost.summarize([usage, usage]))
+    svg = c.pipeline_cost_svg(doc)
+    assert "$0.50" in svg and "Agent 2b" in svg

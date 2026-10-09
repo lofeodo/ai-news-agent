@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 404" width="880" height="404" role="img" aria-label="Pipeline cost per step. Total $2.08 per issue. Agent 1a $0.47; Agent 1b $0.65; Agent 2a $0.02; Agent 2b $0.84; Agent 3 $0.12">
+<title>Pipeline cost per step</title><desc>Total $2.08 per issue. Agent 1a $0.47; Agent 1b $0.65; Agent 2a $0.02; Agent 2b $0.84; Agent 3 $0.12</desc>
+<style>text{font-family:system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;fill:#e8e8e8} .m{fill:#8b8b8b} .s{fill:#c8b89a}</style>
+<rect x="0.5" y="0.5" width="879" height="403" rx="14" fill="#161616" stroke="#2a2a2a"/>
+<text x="28" y="40" font-size="20" font-weight="600" class="s">Claude cost of one weekly issue</text>
+<text x="28" y="62" font-size="13" class="m">Mean of 2 archived runs, LangSmith price estimate, Claude calls only</text>
+<text x="852" y="40" font-size="26" font-weight="700" text-anchor="end">$2.08</text>
+<text x="852" y="62" font-size="13" text-anchor="end" class="m">about $9 a month</text>
+<rect x="28.0" y="84" width="183.5" height="34" rx="5" fill="#4f46e5"/>
+<text x="120.8" y="106" font-size="13" font-weight="600" text-anchor="middle">23%</text>
+<rect x="213.5" y="84" width="253.7" height="34" rx="5" fill="#7c3aed"/>
+<text x="341.4" y="106" font-size="13" font-weight="600" text-anchor="middle">31%</text>
+<rect x="469.3" y="84" width="4.2" height="34" rx="5" fill="#0ea5e9"/>
+<rect x="475.5" y="84" width="328.4" height="34" rx="5" fill="#059669"/>
+<text x="640.7" y="106" font-size="13" font-weight="600" text-anchor="middle">40%</text>
+<rect x="805.9" y="84" width="44.1" height="34" rx="5" fill="#d97706"/>
+<text x="28" y="140" font-size="12" class="m">Share of the weekly total, by step</text>
+<rect x="28" y="176" width="12" height="12" rx="3" fill="#4f46e5"/><text x="48" y="187" font-size="14" font-weight="600">Agent 1a</text><text x="118" y="187" font-size="13" class="m">Pick paper</text>
+<rect x="230" y="173" width="230.2" height="18" rx="4" fill="#4f46e5"/><text x="470.2" y="187" font-size="14" font-weight="700">$0.47 <tspan class="m" font-weight="400">23%</tspan></text><text x="852" y="187" font-size="13" text-anchor="end" class="m">35 Claude calls</text>
+<rect x="28" y="216" width="12" height="12" rx="3" fill="#7c3aed"/><text x="48" y="227" font-size="14" font-weight="600">Agent 1b</text><text x="118" y="227" font-size="13" class="m">Fetch news</text>
+<rect x="230" y="213" width="317.3" height="18" rx="4" fill="#7c3aed"/><text x="557.3" y="227" font-size="14" font-weight="700">$0.65 <tspan class="m" font-weight="400">31%</tspan></text><text x="852" y="227" font-size="13" text-anchor="end" class="m">130 Claude calls</text>
+<rect x="28" y="256" width="12" height="12" rx="3" fill="#0ea5e9"/><text x="48" y="267" font-size="14" font-weight="600">Agent 2a</text><text x="118" y="267" font-size="13" class="m">Summarize paper</text>
+<rect x="230" y="253" width="7.7" height="18" rx="4" fill="#0ea5e9"/><text x="247.7" y="267" font-size="14" font-weight="700">$0.02 <tspan class="m" font-weight="400">1%</tspan></text><text x="852" y="267" font-size="13" text-anchor="end" class="m">2 Claude calls</text>
+<rect x="28" y="296" width="12" height="12" rx="3" fill="#059669"/><text x="48" y="307" font-size="14" font-weight="600">Agent 2b</text><text x="118" y="307" font-size="13" class="m">Summarize news</text>
+<rect x="230" y="293" width="410.0" height="18" rx="4" fill="#059669"/><text x="650.0" y="307" font-size="14" font-weight="700">$0.84 <tspan class="m" font-weight="400">40%</tspan></text><text x="852" y="307" font-size="13" text-anchor="end" class="m">490 Claude calls</text>
+<rect x="28" y="336" width="12" height="12" rx="3" fill="#d97706"/><text x="48" y="347" font-size="14" font-weight="600">Agent 3</text><text x="118" y="347" font-size="13" class="m">Compose</text>
+<rect x="230" y="333" width="57.2" height="18" rx="4" fill="#d97706"/><text x="297.2" y="347" font-size="14" font-weight="700">$0.12 <tspan class="m" font-weight="400">6%</tspan></text><text x="852" y="347" font-size="13" text-anchor="end" class="m">14 Claude calls</text>
+<text x="28" y="390" font-size="12" class="m">Hosting, SendGrid and the proxy are not included.</text>
+</svg>

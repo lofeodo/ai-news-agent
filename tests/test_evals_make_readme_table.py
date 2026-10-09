@@ -120,3 +120,45 @@ def test_checked_in_docs_have_every_generated_block():
 
 def test_render_generic_can_omit_notes():
     assert "a note" not in t.render_generic(_generic_doc(), notes=False)
+
+
+def _dedup_doc(name="dedup_eval_2026-10-09", paired=True):
+    def m(v, n=10):
+        return {"value": v, "n": n, "ci_low": 0.0, "ci_high": 1.0}
+    metrics = {}
+    for arm, rec in (("control", 0.0), ("haiku", 0.9), ("sonnet", 0.93)):
+        metrics.update({f"duplicate_recall__{arm}": m(rec), f"false_removal_rate_strict__{arm}": m(0.0),
+                        f"false_group_rate_strict__{arm}": m(None, 0) if arm == "control" else m(0.06),
+                        f"residual_duplicate_rate__{arm}": m(1 - rec), f"case_exact_match__{arm}": m(0.9),
+                        f"failure_rate__{arm}": m(0.0), f"seconds_mean__{arm}": {"value": 2.0, "n": 10}})
+    if paired:
+        metrics["paired_recall_sonnet_vs_haiku"] = {"wins": 9, "losses": 6, "ties": 111, "items": 126}
+    return {"name": name, "git_sha": "abc", "created_at": "2026-10-09T00:00:00", "cost_usd": 1.5,
+            "notes": "no clear winner", "metrics": metrics}
+
+
+def test_render_dedup_rows_paired_and_n_a():
+    out = t.render_dedup(_dedup_doc())
+    for label in ("Control (removes nothing)", "Haiku", "Sonnet"):
+        assert f"| {label} |" in out
+    assert "n/a" in out and "9 wins, 6 losses, 111 ties out of 126" in out and "> no clear winner" in out
+    assert "False removal, Sonnet" not in out  # missing paired key tolerated
+    assert "paired_recall" not in t.render_dedup(_dedup_doc(paired=False)) and "wins" not in t.render_dedup(_dedup_doc(paired=False))
+
+
+def test_update_readme_dedup_block_and_markers(tmp_path):
+    readme = tmp_path / "e.md"
+    readme.write_text(f"a\n{t.DEDUP_START}\nOLD\n{t.DEDUP_END}\nb\n", encoding="utf-8")
+    t.update_readme_dedup(_dedup_doc(), readme)
+    text = readme.read_text(encoding="utf-8")
+    assert text.startswith("a\n") and text.endswith("b\n") and "OLD" not in text and "| Haiku |" in text
+    readme.write_text("none", encoding="utf-8")
+    with pytest.raises(ValueError):
+        t.update_readme_dedup(_dedup_doc(), readme)
+
+
+def test_latest_dedup_path_skips_rows(tmp_path):
+    for n in ("dedup_eval_2026-10-08.json", "dedup_eval_2026-10-09.json", "dedup_eval_2026-10-09_rows.json"):
+        (tmp_path / n).write_text("{}")
+    assert t.latest_dedup_path(tmp_path).name == "dedup_eval_2026-10-09.json"
+    assert t.latest_dedup_path(tmp_path / "missing") is None

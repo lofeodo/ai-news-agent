@@ -160,6 +160,52 @@ def update_readme_generic(name, doc, readme=README, notes=True, keys=None):
     Path(readme).write_text(pattern.sub(lambda _: block, text, count=1), encoding="utf-8")
 
 
+DEDUP_START, DEDUP_END = "<!-- dedup-eval:start -->", "<!-- dedup-eval:end -->"
+_DEDUP_ARMS = (("Control (removes nothing)", "control"), ("Haiku", "haiku"), ("Sonnet", "sonnet"))
+_DEDUP_COLUMNS = (("Duplicate recall", "duplicate_recall"), ("False removal", "false_removal_rate_strict"),
+                  ("False groups", "false_group_rate_strict"), ("Residual duplicates", "residual_duplicate_rate"),
+                  ("Exact case match", "case_exact_match"), ("Failed runs", "failure_rate"))
+
+
+def latest_dedup_path(directory=results.RESULTS_DIR):
+    paths = [p for p in sorted(Path(directory).glob("dedup_eval_*.json")) if not p.stem.endswith("_rows")]
+    return paths[-1] if paths else None
+
+
+def render_dedup(doc):
+    m = doc["metrics"]
+    lines = [f"Generated from `evals/results/{doc['name']}.json` (git `{doc['git_sha']}`, "
+             f"{doc['created_at'][:10]}, cost ${doc['cost_usd']}). Wilson 95% intervals in parentheses.", "",
+             "| Arm | " + " | ".join(c for c, _ in _DEDUP_COLUMNS) + " | Mean seconds per case |",
+             "|---|" + "---|" * (len(_DEDUP_COLUMNS) + 1)]
+    for label, arm in _DEDUP_ARMS:
+        if f"case_exact_match__{arm}" not in m:
+            continue
+        cells = [_pct(m[f"{key}__{arm}"]) if f"{key}__{arm}" in m else "n/a" for _, key in _DEDUP_COLUMNS]
+        secs = m.get(f"seconds_mean__{arm}")
+        cells.append(f"{secs['value']:.1f}" if secs else "n/a")
+        lines.append(f"| {label} | " + " | ".join(cells) + " |")
+    lines.append("")
+    for key, label in (("paired_recall_sonnet_vs_haiku", "Duplicate recall, Sonnet vs Haiku"),
+                       ("paired_false_removal_sonnet_vs_haiku", "False removal, Sonnet vs Haiku")):
+        p = m.get(key)
+        if p:
+            lines.append(f"- **{label}** (paired, per item): {p['wins']} wins, {p['losses']} losses, "
+                         f"{p['ties']} ties out of {p['items']}.")
+    if doc.get("notes"):
+        lines += ["", f"> {doc['notes']}"]
+    return "\n".join(lines)
+
+
+def update_readme_dedup(doc, readme=README):
+    text = Path(readme).read_text(encoding="utf-8")
+    pattern = re.compile(re.escape(DEDUP_START) + r".*?" + re.escape(DEDUP_END), re.S)
+    if not pattern.search(text):
+        raise ValueError(f"{readme} has no {DEDUP_START} ... {DEDUP_END} block")
+    block = f"{DEDUP_START}\n{render_dedup(doc)}\n{DEDUP_END}"
+    Path(readme).write_text(pattern.sub(lambda _: block, text, count=1), encoding="utf-8")
+
+
 ROOT = README.parent
 DOCS = ROOT / "docs"
 
@@ -178,6 +224,10 @@ def main():
     if base.exists() and after.exists():
         update_readme_injection(results.read_results(base), results.read_results(after), DOCS / "evaluation.md")
         print("docs/evaluation.md updated from injection_eval_baseline.json and injection_eval_after.json")
+    dedup = latest_dedup_path()
+    if dedup is not None:
+        update_readme_dedup(results.read_results(dedup), DOCS / "evaluation.md")
+        print(f"docs/evaluation.md updated from {dedup.name}")
     for name, stem, notes in GENERIC_BLOCKS:
         path = results.RESULTS_DIR / f"{stem}.json"
         if path.exists():

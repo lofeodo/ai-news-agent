@@ -75,6 +75,12 @@
       e.stopPropagation();
       if (await nativeShare()) return;
       pop.hidden = !pop.hidden;
+      if (!pop.hidden) {
+        // The pop is position:fixed (the topbar scrolls sideways and would clip it).
+        const r = btn.getBoundingClientRect();
+        pop.style.top = `${r.bottom + 8}px`;
+        pop.style.right = `${Math.max(8, window.innerWidth - r.right)}px`;
+      }
     });
     document.addEventListener('click', (e) => {
       if (!pop.hidden && !pop.contains(e.target)) pop.hidden = true;

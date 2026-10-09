@@ -8,6 +8,7 @@
   <link rel="icon" type="image/png" href="/images/logo-email.png">
   <link rel="preload" href="/__/firebase/init.json" as="fetch" crossorigin>
   <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="topbar.css">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -23,126 +24,6 @@
 
     html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); }
 
-    .topbar {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 20px;
-      height: 48px;
-      background: rgba(15, 15, 15, 0.94);
-      border-bottom: 1px solid var(--border);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      gap: 16px;
-    }
-
-    .topbar__left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      min-width: 0;
-    }
-
-    .topbar__logo {
-      display: inline-flex;
-      align-items: center;
-      opacity: 0.7;
-      transition: opacity 0.15s;
-      flex-shrink: 0;
-      text-decoration: none;
-    }
-    .topbar__logo:hover { opacity: 1; }
-    .topbar__logo img { display: block; }
-
-    .topbar__sep { color: var(--border); font-size: 0.78rem; }
-
-    .topbar__label {
-      font-size: 0.75rem;
-      color: var(--muted);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    .topbar__badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 0.7rem;
-      color: var(--accent);
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      padding: 3px 8px;
-      border: 1px solid rgba(200,184,154,0.25);
-      background: rgba(200,184,154,0.06);
-      flex-shrink: 0;
-    }
-    .topbar__badge-dot {
-      width: 5px; height: 5px;
-      border-radius: 50%;
-      background: var(--accent);
-      flex-shrink: 0;
-      animation: pulse-dot 2.2s ease-in-out infinite;
-    }
-    @keyframes pulse-dot {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.35; }
-    }
-
-    .topbar__right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-
-    .topbar__cta {
-      display: inline-flex;
-      align-items: center;
-      font-family: var(--font);
-      font-size: 0.72rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: #0f0f0f;
-      background: var(--accent);
-      text-decoration: none;
-      padding: 7px 14px;
-      transition: opacity 0.15s, box-shadow 0.2s;
-      white-space: nowrap;
-    }
-    .topbar__cta:hover { opacity: 0.88; box-shadow: 0 0 14px rgba(200,184,154,0.3); }
-
-    .topbar__account {
-      display: none;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.72rem;
-      color: var(--muted);
-    }
-    .topbar__account-link {
-      color: var(--muted);
-      text-decoration: none;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      font-size: 0.68rem;
-      transition: color 0.15s;
-    }
-    .topbar__account-link:hover { color: var(--accent); }
-
-    .topbar__debug {
-      display: none;
-      font: inherit;
-      font-size: 0.68rem;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--accent);
-      background: none;
-      border: 1px solid var(--accent);
-      border-radius: 3px;
-      padding: 4px 10px;
-      cursor: pointer;
-    }
-    .topbar__debug:hover { background: rgba(200, 184, 154, 0.12); }
-    .topbar__debug[aria-pressed="true"] { background: var(--accent); color: #0f0f0f; }
-
     .preview-frame {
       position: fixed;
       top: 48px; left: 0; right: 0; bottom: 0;
@@ -152,34 +33,37 @@
       background: #060606;
     }
 
-    @media (max-width: 600px) {
-      .topbar { padding: 0 12px; }
-      .topbar__badge { display: none; }
-    }
   </style>
 </head>
 <body>
   <header class="topbar">
-    <div class="topbar__left">
-      <a class="topbar__logo" href="/" aria-label="Latent SpaceMail home">
-        <img src="/images/logo-mark.svg" alt="" height="26" width="26" fetchpriority="high">
-      </a>
-      <span class="topbar__sep">/</span>
-      <span class="topbar__label">Latest Issue</span>
-      <span class="topbar__badge">
-        <span class="topbar__badge-dot"></span>
-        Live
-      </span>
-    </div>
+    <a href="/" class="topbar__logo" aria-label="Latent SpaceMail home">
+      <img src="/images/logo-mark.svg" alt="" height="26" width="26" fetchpriority="high">
+    </a>
+    <nav class="topbar__nav" aria-label="Main">
+      <a href="/preview.html" class="topbar__nav-link" data-href="/preview.html">Latest Issue<span class="topbar__live"><span class="topbar__live-dot"></span>Live</span></a>
+      <a href="/sections.html" class="topbar__nav-link" data-href="/sections.html" id="topbar-sections">Customize</a>
+      <a href="/preferences.html" class="topbar__nav-link" data-href="/preferences.html">Preferences</a>
+    </nav>
     <div class="topbar__right">
-      <!-- Admins only: toggles between the published issue and the newest run of any kind -->
       <button type="button" class="topbar__debug" id="debug-toggle" aria-pressed="false">Debug run</button>
-      <!-- Shown when signed in -->
-      <div class="topbar__account" id="topbar-account">
-        <a href="/preferences.html" class="topbar__account-link">Preferences</a>
+      <div class="topbar__auth" id="topbar-auth" style="display:none">
+        <span class="topbar__auth-dot"></span>
+        <span class="topbar__auth-email" id="topbar-email"></span>
+        <span class="topbar__auth-tier" id="topbar-tier" style="display:none">◆ Premium</span>
+        <button type="button" class="topbar__signout" id="topbar-signout">Sign out</button>
       </div>
-      <!-- Shown when signed out -->
-      <a class="topbar__cta" href="/login.html" id="topbar-cta">Get started →</a>
+      <a href="/login.html?returnUrl=preview.html" class="topbar__signin" id="topbar-signin">Sign in →</a>
+      <span class="share-wrap">
+        <button type="button" class="share-btn" id="share-btn" aria-label="Share Latent SpaceMail">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v14"/></svg>
+          Share
+        </button>
+      </span>
+      <a href="https://github.com/lofeodo/ai-news-agent" target="_blank" rel="noopener" class="topbar__github" aria-label="View source on GitHub">
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+        <span class="topbar__github-label">GitHub</span>
+      </a>
     </div>
   </header>
 
@@ -190,6 +74,9 @@
     title="Latest Latent SpaceMail issue"
   ></iframe>
 
+  <script src="share.js"></script>
+  <script>LSMShare.attachButton(document.getElementById('share-btn'));</script>
+  <script type="module" src="nav.js"></script>
   <script type="module">
     import { auth, onAuthStateChanged, authFetch } from './auth.js';
 
@@ -200,8 +87,7 @@
     })();
     const frame  = document.getElementById('preview-frame');
     const toggle = document.getElementById('debug-toggle');
-    const label  = document.querySelector('.topbar__label');
-    const badge  = document.querySelector('.topbar__badge');
+    const navLink = document.querySelector('.topbar__nav-link.active') || document.querySelector('.topbar__nav-link[data-href="/preview.html"]');
     const publicSrc = frame.getAttribute('src');
     let debugOn = false;
 
@@ -213,9 +99,7 @@
         const run = await res.json();
         frame.removeAttribute('src');
         frame.srcdoc = run.html;
-        label.textContent = `${run.run_kind} run`;
-        label.title = run.run_id;
-        badge.style.display = 'none';
+        if (navLink) navLink.title = `${run.run_kind} run ${run.run_id}`;
         toggle.setAttribute('aria-pressed', 'true');
         toggle.textContent = 'Back to published';
         debugOn = true;
@@ -230,9 +114,7 @@
     function showPublic() {
       frame.removeAttribute('srcdoc');
       frame.src = publicSrc;
-      label.textContent = 'Latest Issue';
-      label.removeAttribute('title');
-      badge.style.display = '';
+      if (navLink) navLink.removeAttribute('title');
       toggle.setAttribute('aria-pressed', 'false');
       toggle.textContent = 'Debug run';
       debugOn = false;
@@ -242,8 +124,6 @@
 
     onAuthStateChanged(auth, async (user) => {
       if (user && user.emailVerified) {
-        document.getElementById('topbar-cta').style.display     = 'none';
-        document.getElementById('topbar-account').style.display = 'flex';
         try {
           const res = await authFetch(`${API}/auth/me`);
           const me  = res.ok ? await res.json() : null;

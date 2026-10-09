@@ -75,7 +75,7 @@ export { onAuthStateChanged, signOut, signInWithCustomToken };
 // redirect wrong) — shared by login.html and auth-callback.html.
 const ALLOWED_RETURN_PAGES = ['index.html', 'preferences.html', 'sections.html', 'preview.html', 'share.html'];
 export function sanitizeReturnPage(value) {
-  return ALLOWED_RETURN_PAGES.includes(value) ? value : 'preferences.html';
+  return ALLOWED_RETURN_PAGES.includes(value) ? value : 'index.html';
 }
 
 // The page the user is on now, if it may be a return target; otherwise null.

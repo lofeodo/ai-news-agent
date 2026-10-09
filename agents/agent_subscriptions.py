@@ -104,7 +104,7 @@ OAUTH_EXCHANGE_CODES_COLLECTION = "oauth_exchange_codes"
 # to validate arbitrary relative-URL syntax, which is an easy place to get an
 # open redirect wrong.
 ALLOWED_RETURN_PAGES = {"index.html", "preferences.html", "sections.html", "preview.html", "share.html"}
-DEFAULT_RETURN_PAGE  = "preferences.html"
+DEFAULT_RETURN_PAGE  = "index.html"
 
 DEFAULT_SECTIONS = [
     "Model & Product Releases",

@@ -1,0 +1,7434 @@
+[
+  {
+    "case_id": "real01",
+    "kind": "real",
+    "category": "Safety & Alignment",
+    "article_ids": [
+      "4eacf7c1670c",
+      "d67b8ab0978f",
+      "169fd62cf130",
+      "47dedc114b8b",
+      "4c06c9e9cf43",
+      "1602ba773b11",
+      "dc67749bd95c",
+      "704f9d695e19"
+    ],
+    "hn": {
+      "4eacf7c1670c": null,
+      "d67b8ab0978f": null,
+      "169fd62cf130": null,
+      "47dedc114b8b": null,
+      "4c06c9e9cf43": null,
+      "1602ba773b11": null,
+      "dc67749bd95c": null,
+      "704f9d695e19": null
+    },
+    "gold_groups": [
+      [
+        "169fd62cf130",
+        "4c06c9e9cf43"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "169fd62cf130",
+              "4c06c9e9cf43"
+            ]
+          ],
+          "removed": [
+            "4c06c9e9cf43"
+          ],
+          "failed": false,
+          "input_tokens": 1786,
+          "output_tokens": 531,
+          "seconds": 6.007
+        },
+        {
+          "groups": [
+            [
+              "169fd62cf130",
+              "4c06c9e9cf43"
+            ]
+          ],
+          "removed": [
+            "4c06c9e9cf43"
+          ],
+          "failed": false,
+          "input_tokens": 1786,
+          "output_tokens": 567,
+          "seconds": 6.475
+        },
+        {
+          "groups": [
+            [
+              "169fd62cf130",
+              "4c06c9e9cf43"
+            ]
+          ],
+          "removed": [
+            "4c06c9e9cf43"
+          ],
+          "failed": false,
+          "input_tokens": 1786,
+          "output_tokens": 484,
+          "seconds": 5.397
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "169fd62cf130",
+              "4c06c9e9cf43"
+            ]
+          ],
+          "removed": [
+            "4c06c9e9cf43"
+          ],
+          "failed": false,
+          "input_tokens": 2065,
+          "output_tokens": 97,
+          "seconds": 1.815
+        },
+        {
+          "groups": [
+            [
+              "169fd62cf130",
+              "4c06c9e9cf43"
+            ]
+          ],
+          "removed": [
+            "4c06c9e9cf43"
+          ],
+          "failed": false,
+          "input_tokens": 2065,
+          "output_tokens": 97,
+          "seconds": 1.807
+        },
+        {
+          "groups": [
+            [
+              "169fd62cf130",
+              "4c06c9e9cf43"
+            ]
+          ],
+          "removed": [
+            "4c06c9e9cf43"
+          ],
+          "failed": false,
+          "input_tokens": 2065,
+          "output_tokens": 97,
+          "seconds": 1.369
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "real02",
+    "kind": "real",
+    "category": "Model & Product Releases",
+    "article_ids": [
+      "101cdd0a84e7",
+      "08c5c1b43de6",
+      "01206f7212ca",
+      "a2a7c0357f0f",
+      "01945e4a5941",
+      "c02b15ee722d",
+      "7845cc1d4d8c",
+      "219ff8488ca5"
+    ],
+    "hn": {
+      "101cdd0a84e7": null,
+      "08c5c1b43de6": null,
+      "01206f7212ca": null,
+      "a2a7c0357f0f": null,
+      "01945e4a5941": 53,
+      "c02b15ee722d": null,
+      "7845cc1d4d8c": null,
+      "219ff8488ca5": null
+    },
+    "gold_groups": [
+      [
+        "101cdd0a84e7",
+        "c02b15ee722d"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "101cdd0a84e7",
+              "c02b15ee722d"
+            ]
+          ],
+          "removed": [
+            "c02b15ee722d"
+          ],
+          "failed": false,
+          "input_tokens": 1763,
+          "output_tokens": 481,
+          "seconds": 4.792
+        },
+        {
+          "groups": [
+            [
+              "101cdd0a84e7",
+              "c02b15ee722d"
+            ]
+          ],
+          "removed": [
+            "c02b15ee722d"
+          ],
+          "failed": false,
+          "input_tokens": 1763,
+          "output_tokens": 389,
+          "seconds": 4.143
+        },
+        {
+          "groups": [
+            [
+              "101cdd0a84e7",
+              "c02b15ee722d"
+            ]
+          ],
+          "removed": [
+            "c02b15ee722d"
+          ],
+          "failed": false,
+          "input_tokens": 1763,
+          "output_tokens": 371,
+          "seconds": 4.175
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "101cdd0a84e7",
+              "c02b15ee722d"
+            ]
+          ],
+          "removed": [
+            "c02b15ee722d"
+          ],
+          "failed": false,
+          "input_tokens": 2105,
+          "output_tokens": 100,
+          "seconds": 1.441
+        },
+        {
+          "groups": [
+            [
+              "101cdd0a84e7",
+              "c02b15ee722d"
+            ]
+          ],
+          "removed": [
+            "c02b15ee722d"
+          ],
+          "failed": false,
+          "input_tokens": 2105,
+          "output_tokens": 96,
+          "seconds": 1.428
+        },
+        {
+          "groups": [
+            [
+              "101cdd0a84e7",
+              "c02b15ee722d"
+            ]
+          ],
+          "removed": [
+            "c02b15ee722d"
+          ],
+          "failed": false,
+          "input_tokens": 2105,
+          "output_tokens": 96,
+          "seconds": 2.501
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "hard01",
+    "kind": "hard_negative",
+    "category": "Open Source & Tools",
+    "article_ids": [
+      "dd09b1de56e1",
+      "3e883a0fc5b4",
+      "1244c1340611",
+      "16ad76958824",
+      "cab787b63606",
+      "051952554936",
+      "525a5570de9b",
+      "3e831dea8320"
+    ],
+    "hn": {
+      "dd09b1de56e1": null,
+      "3e883a0fc5b4": null,
+      "1244c1340611": null,
+      "16ad76958824": 65,
+      "cab787b63606": null,
+      "051952554936": null,
+      "525a5570de9b": 468,
+      "3e831dea8320": 119
+    },
+    "gold_groups": [],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1777,
+          "output_tokens": 433,
+          "seconds": 4.544
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1777,
+          "output_tokens": 499,
+          "seconds": 5.229
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1777,
+          "output_tokens": 458,
+          "seconds": 4.736
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2051,
+          "output_tokens": 52,
+          "seconds": 1.303
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2051,
+          "output_tokens": 52,
+          "seconds": 1.295
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2051,
+          "output_tokens": 52,
+          "seconds": 1.182
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "hard02",
+    "kind": "hard_negative",
+    "category": "Industry & Business",
+    "article_ids": [
+      "4fa724f45047",
+      "c54b7cea46a6",
+      "8c5d90e877f3",
+      "56575fcd767a",
+      "7391585e142c",
+      "548480b6c80e",
+      "aca7f4c0f704",
+      "dd160a6cdc35"
+    ],
+    "hn": {
+      "4fa724f45047": null,
+      "c54b7cea46a6": null,
+      "8c5d90e877f3": null,
+      "56575fcd767a": null,
+      "7391585e142c": null,
+      "548480b6c80e": null,
+      "aca7f4c0f704": null,
+      "dd160a6cdc35": null
+    },
+    "gold_groups": [
+      [
+        "7391585e142c",
+        "dd160a6cdc35"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "7391585e142c",
+              "dd160a6cdc35"
+            ]
+          ],
+          "removed": [
+            "dd160a6cdc35"
+          ],
+          "failed": false,
+          "input_tokens": 1837,
+          "output_tokens": 395,
+          "seconds": 3.787
+        },
+        {
+          "groups": [
+            [
+              "7391585e142c",
+              "dd160a6cdc35"
+            ]
+          ],
+          "removed": [
+            "dd160a6cdc35"
+          ],
+          "failed": false,
+          "input_tokens": 1837,
+          "output_tokens": 419,
+          "seconds": 3.943
+        },
+        {
+          "groups": [
+            [
+              "7391585e142c",
+              "dd160a6cdc35"
+            ]
+          ],
+          "removed": [
+            "dd160a6cdc35"
+          ],
+          "failed": false,
+          "input_tokens": 1837,
+          "output_tokens": 382,
+          "seconds": 3.384
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "7391585e142c",
+              "dd160a6cdc35"
+            ]
+          ],
+          "removed": [
+            "dd160a6cdc35"
+          ],
+          "failed": false,
+          "input_tokens": 2182,
+          "output_tokens": 206,
+          "seconds": 2.055
+        },
+        {
+          "groups": [
+            [
+              "7391585e142c",
+              "dd160a6cdc35"
+            ]
+          ],
+          "removed": [
+            "dd160a6cdc35"
+          ],
+          "failed": false,
+          "input_tokens": 2182,
+          "output_tokens": 237,
+          "seconds": 2.272
+        },
+        {
+          "groups": [
+            [
+              "7391585e142c",
+              "dd160a6cdc35"
+            ]
+          ],
+          "removed": [
+            "dd160a6cdc35"
+          ],
+          "failed": false,
+          "input_tokens": 2182,
+          "output_tokens": 334,
+          "seconds": 2.919
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "hard03",
+    "kind": "hard_negative",
+    "category": "Model & Product Releases",
+    "article_ids": [
+      "30371dab1480",
+      "22adccf60db1",
+      "c2298f008e05",
+      "77b4a2ca0890",
+      "844cbdc07b4b",
+      "0b309db8bc2a",
+      "1f049ce1104e",
+      "40283cc7b131"
+    ],
+    "hn": {
+      "30371dab1480": null,
+      "22adccf60db1": null,
+      "c2298f008e05": null,
+      "77b4a2ca0890": null,
+      "844cbdc07b4b": null,
+      "0b309db8bc2a": null,
+      "1f049ce1104e": null,
+      "40283cc7b131": null
+    },
+    "gold_groups": [
+      [
+        "1f049ce1104e",
+        "844cbdc07b4b"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "844cbdc07b4b",
+              "1f049ce1104e"
+            ]
+          ],
+          "removed": [
+            "1f049ce1104e"
+          ],
+          "failed": false,
+          "input_tokens": 1883,
+          "output_tokens": 389,
+          "seconds": 4.093
+        },
+        {
+          "groups": [
+            [
+              "844cbdc07b4b",
+              "1f049ce1104e"
+            ]
+          ],
+          "removed": [
+            "1f049ce1104e"
+          ],
+          "failed": false,
+          "input_tokens": 1883,
+          "output_tokens": 382,
+          "seconds": 3.917
+        },
+        {
+          "groups": [
+            [
+              "844cbdc07b4b",
+              "1f049ce1104e"
+            ]
+          ],
+          "removed": [
+            "1f049ce1104e"
+          ],
+          "failed": false,
+          "input_tokens": 1883,
+          "output_tokens": 427,
+          "seconds": 4.306
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "844cbdc07b4b",
+              "1f049ce1104e"
+            ]
+          ],
+          "removed": [
+            "1f049ce1104e"
+          ],
+          "failed": false,
+          "input_tokens": 2223,
+          "output_tokens": 99,
+          "seconds": 1.397
+        },
+        {
+          "groups": [
+            [
+              "844cbdc07b4b",
+              "1f049ce1104e"
+            ]
+          ],
+          "removed": [
+            "1f049ce1104e"
+          ],
+          "failed": false,
+          "input_tokens": 2223,
+          "output_tokens": 96,
+          "seconds": 1.409
+        },
+        {
+          "groups": [
+            [
+              "844cbdc07b4b",
+              "1f049ce1104e"
+            ]
+          ],
+          "removed": [
+            "1f049ce1104e"
+          ],
+          "failed": false,
+          "input_tokens": 2223,
+          "output_tokens": 96,
+          "seconds": 1.367
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "hard04",
+    "kind": "hard_negative",
+    "category": "Policy, Law & Regulation",
+    "article_ids": [
+      "6ee9f04f99db",
+      "351c9f9249b0",
+      "1cb48a760b1c",
+      "700bcb79b85b",
+      "a9cc3ebc585f",
+      "c8548c3dcbd1",
+      "cdb2e42680cb",
+      "010775959c6d"
+    ],
+    "hn": {
+      "6ee9f04f99db": null,
+      "351c9f9249b0": null,
+      "1cb48a760b1c": 111,
+      "700bcb79b85b": null,
+      "a9cc3ebc585f": null,
+      "c8548c3dcbd1": null,
+      "cdb2e42680cb": null,
+      "010775959c6d": null
+    },
+    "gold_groups": [
+      [
+        "351c9f9249b0",
+        "700bcb79b85b"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "351c9f9249b0",
+              "700bcb79b85b"
+            ]
+          ],
+          "removed": [
+            "700bcb79b85b"
+          ],
+          "failed": false,
+          "input_tokens": 1760,
+          "output_tokens": 443,
+          "seconds": 4.526
+        },
+        {
+          "groups": [
+            [
+              "351c9f9249b0",
+              "700bcb79b85b"
+            ]
+          ],
+          "removed": [
+            "700bcb79b85b"
+          ],
+          "failed": false,
+          "input_tokens": 1760,
+          "output_tokens": 400,
+          "seconds": 3.823
+        },
+        {
+          "groups": [
+            [
+              "351c9f9249b0",
+              "700bcb79b85b"
+            ]
+          ],
+          "removed": [
+            "700bcb79b85b"
+          ],
+          "failed": false,
+          "input_tokens": 1760,
+          "output_tokens": 386,
+          "seconds": 4.246
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "351c9f9249b0",
+              "700bcb79b85b"
+            ]
+          ],
+          "removed": [
+            "700bcb79b85b"
+          ],
+          "failed": false,
+          "input_tokens": 2115,
+          "output_tokens": 103,
+          "seconds": 1.434
+        },
+        {
+          "groups": [
+            [
+              "351c9f9249b0",
+              "700bcb79b85b"
+            ]
+          ],
+          "removed": [
+            "700bcb79b85b"
+          ],
+          "failed": false,
+          "input_tokens": 2115,
+          "output_tokens": 103,
+          "seconds": 1.919
+        },
+        {
+          "groups": [
+            [
+              "351c9f9249b0",
+              "700bcb79b85b"
+            ]
+          ],
+          "removed": [
+            "700bcb79b85b"
+          ],
+          "failed": false,
+          "input_tokens": 2115,
+          "output_tokens": 103,
+          "seconds": 2.195
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "hard05",
+    "kind": "hard_negative",
+    "category": "Policy, Law & Regulation",
+    "article_ids": [
+      "c8ddc685d19b",
+      "c3ed67867cdf",
+      "470f03733038",
+      "c65f3ec1f603",
+      "a332ad8074df",
+      "aedae65722fd",
+      "71e2b3320ae7",
+      "c639fc2fae6f"
+    ],
+    "hn": {
+      "c8ddc685d19b": null,
+      "c3ed67867cdf": null,
+      "470f03733038": null,
+      "c65f3ec1f603": null,
+      "a332ad8074df": null,
+      "aedae65722fd": null,
+      "71e2b3320ae7": null,
+      "c639fc2fae6f": 454
+    },
+    "gold_groups": [
+      [
+        "71e2b3320ae7",
+        "c3ed67867cdf"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "c3ed67867cdf",
+              "71e2b3320ae7"
+            ]
+          ],
+          "removed": [
+            "71e2b3320ae7"
+          ],
+          "failed": false,
+          "input_tokens": 1845,
+          "output_tokens": 489,
+          "seconds": 4.799
+        },
+        {
+          "groups": [
+            [
+              "c3ed67867cdf",
+              "71e2b3320ae7"
+            ]
+          ],
+          "removed": [
+            "71e2b3320ae7"
+          ],
+          "failed": false,
+          "input_tokens": 1845,
+          "output_tokens": 391,
+          "seconds": 3.872
+        },
+        {
+          "groups": [
+            [
+              "c3ed67867cdf",
+              "71e2b3320ae7"
+            ]
+          ],
+          "removed": [
+            "71e2b3320ae7"
+          ],
+          "failed": false,
+          "input_tokens": 1845,
+          "output_tokens": 462,
+          "seconds": 4.861
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "c3ed67867cdf",
+              "71e2b3320ae7"
+            ]
+          ],
+          "removed": [
+            "71e2b3320ae7"
+          ],
+          "failed": false,
+          "input_tokens": 2181,
+          "output_tokens": 102,
+          "seconds": 1.41
+        },
+        {
+          "groups": [
+            [
+              "c3ed67867cdf",
+              "71e2b3320ae7"
+            ]
+          ],
+          "removed": [
+            "71e2b3320ae7"
+          ],
+          "failed": false,
+          "input_tokens": 2181,
+          "output_tokens": 101,
+          "seconds": 1.392
+        },
+        {
+          "groups": [
+            [
+              "c3ed67867cdf",
+              "71e2b3320ae7"
+            ]
+          ],
+          "removed": [
+            "71e2b3320ae7"
+          ],
+          "failed": false,
+          "input_tokens": 2181,
+          "output_tokens": 102,
+          "seconds": 1.338
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "hard06",
+    "kind": "hard_negative",
+    "category": "Industry & Business",
+    "article_ids": [
+      "8b4b015316cb",
+      "79699d0bd75b",
+      "98c28ba88613",
+      "081aaab94b67",
+      "fa263a7209a1",
+      "27e001fdae0c",
+      "4371a8a79c60",
+      "56fa7a516a18"
+    ],
+    "hn": {
+      "8b4b015316cb": null,
+      "79699d0bd75b": null,
+      "98c28ba88613": null,
+      "081aaab94b67": null,
+      "fa263a7209a1": null,
+      "27e001fdae0c": null,
+      "4371a8a79c60": null,
+      "56fa7a516a18": null
+    },
+    "gold_groups": [
+      [
+        "27e001fdae0c",
+        "79699d0bd75b"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "79699d0bd75b",
+              "27e001fdae0c"
+            ]
+          ],
+          "removed": [
+            "27e001fdae0c"
+          ],
+          "failed": false,
+          "input_tokens": 1726,
+          "output_tokens": 443,
+          "seconds": 4.681
+        },
+        {
+          "groups": [
+            [
+              "79699d0bd75b",
+              "27e001fdae0c"
+            ]
+          ],
+          "removed": [
+            "27e001fdae0c"
+          ],
+          "failed": false,
+          "input_tokens": 1726,
+          "output_tokens": 444,
+          "seconds": 4.533
+        },
+        {
+          "groups": [
+            [
+              "79699d0bd75b",
+              "27e001fdae0c"
+            ]
+          ],
+          "removed": [
+            "27e001fdae0c"
+          ],
+          "failed": false,
+          "input_tokens": 1726,
+          "output_tokens": 416,
+          "seconds": 4.228
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "79699d0bd75b",
+              "27e001fdae0c"
+            ]
+          ],
+          "removed": [
+            "27e001fdae0c"
+          ],
+          "failed": false,
+          "input_tokens": 2025,
+          "output_tokens": 99,
+          "seconds": 1.41
+        },
+        {
+          "groups": [
+            [
+              "79699d0bd75b",
+              "27e001fdae0c"
+            ]
+          ],
+          "removed": [
+            "27e001fdae0c"
+          ],
+          "failed": false,
+          "input_tokens": 2025,
+          "output_tokens": 99,
+          "seconds": 1.31
+        },
+        {
+          "groups": [
+            [
+              "79699d0bd75b",
+              "27e001fdae0c"
+            ]
+          ],
+          "removed": [
+            "27e001fdae0c"
+          ],
+          "failed": false,
+          "input_tokens": 2025,
+          "output_tokens": 99,
+          "seconds": 1.354
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "hard07",
+    "kind": "hard_negative",
+    "category": "Safety & Alignment",
+    "article_ids": [
+      "5844fe1120e4",
+      "6e5b27f2ec45",
+      "1022b310ec80",
+      "a3ea24e61cb4",
+      "137404ea2ad3",
+      "698000b3acfe",
+      "179ab8185fb4",
+      "9b732adcc58f"
+    ],
+    "hn": {
+      "5844fe1120e4": null,
+      "6e5b27f2ec45": null,
+      "1022b310ec80": null,
+      "a3ea24e61cb4": null,
+      "137404ea2ad3": null,
+      "698000b3acfe": null,
+      "179ab8185fb4": null,
+      "9b732adcc58f": null
+    },
+    "gold_groups": [
+      [
+        "5844fe1120e4",
+        "9b732adcc58f"
+      ],
+      [
+        "1022b310ec80",
+        "137404ea2ad3"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "5844fe1120e4",
+              "9b732adcc58f"
+            ],
+            [
+              "1022b310ec80",
+              "137404ea2ad3"
+            ]
+          ],
+          "removed": [
+            "9b732adcc58f",
+            "137404ea2ad3"
+          ],
+          "failed": false,
+          "input_tokens": 1824,
+          "output_tokens": 620,
+          "seconds": 6.438
+        },
+        {
+          "groups": [
+            [
+              "5844fe1120e4",
+              "9b732adcc58f"
+            ],
+            [
+              "1022b310ec80",
+              "137404ea2ad3"
+            ]
+          ],
+          "removed": [
+            "9b732adcc58f",
+            "137404ea2ad3"
+          ],
+          "failed": false,
+          "input_tokens": 1824,
+          "output_tokens": 490,
+          "seconds": 4.969
+        },
+        {
+          "groups": [
+            [
+              "5844fe1120e4",
+              "9b732adcc58f"
+            ],
+            [
+              "1022b310ec80",
+              "137404ea2ad3"
+            ]
+          ],
+          "removed": [
+            "9b732adcc58f",
+            "137404ea2ad3"
+          ],
+          "failed": false,
+          "input_tokens": 1824,
+          "output_tokens": 474,
+          "seconds": 4.521
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "5844fe1120e4",
+              "9b732adcc58f"
+            ],
+            [
+              "1022b310ec80",
+              "137404ea2ad3"
+            ]
+          ],
+          "removed": [
+            "9b732adcc58f",
+            "137404ea2ad3"
+          ],
+          "failed": false,
+          "input_tokens": 2180,
+          "output_tokens": 166,
+          "seconds": 1.832
+        },
+        {
+          "groups": [
+            [
+              "5844fe1120e4",
+              "9b732adcc58f"
+            ],
+            [
+              "1022b310ec80",
+              "137404ea2ad3"
+            ]
+          ],
+          "removed": [
+            "9b732adcc58f",
+            "137404ea2ad3"
+          ],
+          "failed": false,
+          "input_tokens": 2180,
+          "output_tokens": 169,
+          "seconds": 1.875
+        },
+        {
+          "groups": [
+            [
+              "5844fe1120e4",
+              "9b732adcc58f"
+            ],
+            [
+              "1022b310ec80",
+              "137404ea2ad3"
+            ]
+          ],
+          "removed": [
+            "9b732adcc58f",
+            "137404ea2ad3"
+          ],
+          "failed": false,
+          "input_tokens": 2180,
+          "output_tokens": 163,
+          "seconds": 1.802
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "hard08",
+    "kind": "hard_negative",
+    "category": "Policy, Law & Regulation",
+    "article_ids": [
+      "30eb58a1f23a",
+      "9f8010acb46c",
+      "b0d10e8dabf2",
+      "50a1d9221492",
+      "f0f065412afb",
+      "9b184f4d94d3",
+      "be28edf843ed",
+      "01424f2ce0ca"
+    ],
+    "hn": {
+      "30eb58a1f23a": null,
+      "9f8010acb46c": null,
+      "b0d10e8dabf2": 3043,
+      "50a1d9221492": null,
+      "f0f065412afb": null,
+      "9b184f4d94d3": null,
+      "be28edf843ed": null,
+      "01424f2ce0ca": null
+    },
+    "gold_groups": [
+      [
+        "01424f2ce0ca",
+        "9b184f4d94d3"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "9b184f4d94d3",
+              "01424f2ce0ca"
+            ]
+          ],
+          "removed": [
+            "01424f2ce0ca"
+          ],
+          "failed": false,
+          "input_tokens": 1755,
+          "output_tokens": 481,
+          "seconds": 4.921
+        },
+        {
+          "groups": [
+            [
+              "9b184f4d94d3",
+              "01424f2ce0ca"
+            ]
+          ],
+          "removed": [
+            "01424f2ce0ca"
+          ],
+          "failed": false,
+          "input_tokens": 1755,
+          "output_tokens": 478,
+          "seconds": 4.636
+        },
+        {
+          "groups": [
+            [
+              "9b184f4d94d3",
+              "01424f2ce0ca"
+            ]
+          ],
+          "removed": [
+            "01424f2ce0ca"
+          ],
+          "failed": false,
+          "input_tokens": 1755,
+          "output_tokens": 487,
+          "seconds": 4.946
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "9b184f4d94d3",
+              "01424f2ce0ca"
+            ]
+          ],
+          "removed": [
+            "01424f2ce0ca"
+          ],
+          "failed": false,
+          "input_tokens": 2061,
+          "output_tokens": 110,
+          "seconds": 1.469
+        },
+        {
+          "groups": [
+            [
+              "9b184f4d94d3",
+              "01424f2ce0ca"
+            ]
+          ],
+          "removed": [
+            "01424f2ce0ca"
+          ],
+          "failed": false,
+          "input_tokens": 2061,
+          "output_tokens": 110,
+          "seconds": 1.528
+        },
+        {
+          "groups": [
+            [
+              "9b184f4d94d3",
+              "01424f2ce0ca"
+            ]
+          ],
+          "removed": [
+            "01424f2ce0ca"
+          ],
+          "failed": false,
+          "input_tokens": 2061,
+          "output_tokens": 108,
+          "seconds": 1.538
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "hard09",
+    "kind": "hard_negative",
+    "category": "Industry & Business",
+    "article_ids": [
+      "0ee577cedf3b",
+      "7472e40658cb",
+      "ee4a4ca11366",
+      "3173deafc815",
+      "160af48dee38",
+      "83c83215d801",
+      "b5efb235c988",
+      "8cff572da36e"
+    ],
+    "hn": {
+      "0ee577cedf3b": null,
+      "7472e40658cb": null,
+      "ee4a4ca11366": null,
+      "3173deafc815": null,
+      "160af48dee38": null,
+      "83c83215d801": null,
+      "b5efb235c988": null,
+      "8cff572da36e": null
+    },
+    "gold_groups": [
+      [
+        "160af48dee38",
+        "3173deafc815"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "3173deafc815",
+              "160af48dee38"
+            ]
+          ],
+          "removed": [
+            "160af48dee38"
+          ],
+          "failed": false,
+          "input_tokens": 1783,
+          "output_tokens": 397,
+          "seconds": 4.418
+        },
+        {
+          "groups": [
+            [
+              "3173deafc815",
+              "160af48dee38"
+            ]
+          ],
+          "removed": [
+            "160af48dee38"
+          ],
+          "failed": false,
+          "input_tokens": 1783,
+          "output_tokens": 344,
+          "seconds": 3.73
+        },
+        {
+          "groups": [
+            [
+              "3173deafc815",
+              "160af48dee38"
+            ]
+          ],
+          "removed": [
+            "160af48dee38"
+          ],
+          "failed": false,
+          "input_tokens": 1783,
+          "output_tokens": 460,
+          "seconds": 4.895
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2079,
+          "output_tokens": 218,
+          "seconds": 2.253
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2079,
+          "output_tokens": 271,
+          "seconds": 2.675
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2079,
+          "output_tokens": 296,
+          "seconds": 2.688
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "hard10",
+    "kind": "hard_negative",
+    "category": "Industry & Business",
+    "article_ids": [
+      "c8eaf8476ba9",
+      "c0d89e8d4f10",
+      "f5fb64a21cec",
+      "b2ed338fca4f",
+      "3b208a714e6b",
+      "ac2d3bcc5c77",
+      "2d28a3a260b3",
+      "3175931b2fbd"
+    ],
+    "hn": {
+      "c8eaf8476ba9": null,
+      "c0d89e8d4f10": null,
+      "f5fb64a21cec": null,
+      "b2ed338fca4f": null,
+      "3b208a714e6b": null,
+      "ac2d3bcc5c77": null,
+      "2d28a3a260b3": null,
+      "3175931b2fbd": null
+    },
+    "gold_groups": [
+      [
+        "2d28a3a260b3",
+        "ac2d3bcc5c77"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1785,
+          "output_tokens": 420,
+          "seconds": 4.522
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1785,
+          "output_tokens": 326,
+          "seconds": 3.519
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1785,
+          "output_tokens": 321,
+          "seconds": 3.303
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2133,
+          "output_tokens": 194,
+          "seconds": 2.024
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2133,
+          "output_tokens": 134,
+          "seconds": 1.703
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2133,
+          "output_tokens": 175,
+          "seconds": 1.984
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "control01",
+    "kind": "control",
+    "category": "Industry & Business",
+    "article_ids": [
+      "587a599e2147",
+      "ec597f53a606",
+      "5a467a83ba10",
+      "14f69cc3aa02",
+      "d0a7368d53bf",
+      "02989ddf9ac8",
+      "12ac078a3e17",
+      "823c09d3a300"
+    ],
+    "hn": {
+      "587a599e2147": null,
+      "ec597f53a606": null,
+      "5a467a83ba10": null,
+      "14f69cc3aa02": null,
+      "d0a7368d53bf": null,
+      "02989ddf9ac8": null,
+      "12ac078a3e17": null,
+      "823c09d3a300": null
+    },
+    "gold_groups": [],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1768,
+          "output_tokens": 376,
+          "seconds": 3.796
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1768,
+          "output_tokens": 380,
+          "seconds": 3.841
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1768,
+          "output_tokens": 361,
+          "seconds": 3.912
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2099,
+          "output_tokens": 52,
+          "seconds": 1.125
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2099,
+          "output_tokens": 52,
+          "seconds": 1.296
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2099,
+          "output_tokens": 52,
+          "seconds": 1.414
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "control02",
+    "kind": "control",
+    "category": "Industry & Business",
+    "article_ids": [
+      "38575eddae43",
+      "5c67ae46df5f",
+      "e505dde2909d",
+      "232b5811776c",
+      "84628058bad2",
+      "34976f6243f1",
+      "b325bab1743b",
+      "07f93813583f"
+    ],
+    "hn": {
+      "38575eddae43": null,
+      "5c67ae46df5f": null,
+      "e505dde2909d": null,
+      "232b5811776c": null,
+      "84628058bad2": null,
+      "34976f6243f1": null,
+      "b325bab1743b": null,
+      "07f93813583f": null
+    },
+    "gold_groups": [],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1768,
+          "output_tokens": 407,
+          "seconds": 4.364
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1768,
+          "output_tokens": 395,
+          "seconds": 4.036
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1768,
+          "output_tokens": 417,
+          "seconds": 4.273
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2074,
+          "output_tokens": 52,
+          "seconds": 1.229
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2074,
+          "output_tokens": 52,
+          "seconds": 1.235
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2074,
+          "output_tokens": 52,
+          "seconds": 1.253
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "control03",
+    "kind": "control",
+    "category": "Industry & Business",
+    "article_ids": [
+      "3d669c242afb",
+      "60ee5845aac4",
+      "0d6c8a43970b",
+      "37450c797b66",
+      "baeb84b781cf",
+      "1ebf7645d167",
+      "ddf1ab8f080c",
+      "11ae982487b8"
+    ],
+    "hn": {
+      "3d669c242afb": null,
+      "60ee5845aac4": null,
+      "0d6c8a43970b": null,
+      "37450c797b66": null,
+      "baeb84b781cf": null,
+      "1ebf7645d167": null,
+      "ddf1ab8f080c": null,
+      "11ae982487b8": null
+    },
+    "gold_groups": [],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1884,
+          "output_tokens": 414,
+          "seconds": 4.66
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1884,
+          "output_tokens": 418,
+          "seconds": 4.463
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1884,
+          "output_tokens": 398,
+          "seconds": 4.155
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2205,
+          "output_tokens": 52,
+          "seconds": 1.253
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2205,
+          "output_tokens": 52,
+          "seconds": 1.24
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2205,
+          "output_tokens": 52,
+          "seconds": 1.163
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "control04",
+    "kind": "control",
+    "category": "Industry & Business",
+    "article_ids": [
+      "aba461661e44",
+      "d3bb048b2ea1",
+      "cfed8e5c75b8",
+      "1b77a9c57295",
+      "4c246a3b068a",
+      "298e6eae107d",
+      "2526c63ffcd9",
+      "f2121efd7eff"
+    ],
+    "hn": {
+      "aba461661e44": null,
+      "d3bb048b2ea1": 222,
+      "cfed8e5c75b8": null,
+      "1b77a9c57295": null,
+      "4c246a3b068a": null,
+      "298e6eae107d": null,
+      "2526c63ffcd9": null,
+      "f2121efd7eff": null
+    },
+    "gold_groups": [],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1886,
+          "output_tokens": 435,
+          "seconds": 4.622
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1886,
+          "output_tokens": 307,
+          "seconds": 3.069
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1886,
+          "output_tokens": 380,
+          "seconds": 3.778
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2209,
+          "output_tokens": 52,
+          "seconds": 1.291
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2209,
+          "output_tokens": 52,
+          "seconds": 1.198
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2209,
+          "output_tokens": 52,
+          "seconds": 1.249
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "control05",
+    "kind": "control",
+    "category": "Industry & Business",
+    "article_ids": [
+      "9d4f473cfe0d",
+      "cb00edf9c91f",
+      "065fca0b8bb5",
+      "55edb50f796a",
+      "ae0de658fe8e",
+      "2bc0918c2e3c",
+      "32a71d81c172",
+      "752ec464e725"
+    ],
+    "hn": {
+      "9d4f473cfe0d": null,
+      "cb00edf9c91f": null,
+      "065fca0b8bb5": null,
+      "55edb50f796a": null,
+      "ae0de658fe8e": null,
+      "2bc0918c2e3c": null,
+      "32a71d81c172": null,
+      "752ec464e725": null
+    },
+    "gold_groups": [],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1909,
+          "output_tokens": 438,
+          "seconds": 4.573
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1909,
+          "output_tokens": 453,
+          "seconds": 4.751
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1909,
+          "output_tokens": 500,
+          "seconds": 5.465
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2283,
+          "output_tokens": 198,
+          "seconds": 2.084
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2283,
+          "output_tokens": 185,
+          "seconds": 2.112
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2283,
+          "output_tokens": 185,
+          "seconds": 2.283
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship01",
+    "kind": "shipped",
+    "category": "Industry & Business",
+    "article_ids": [
+      "bd5e53fb6b33",
+      "8f4f45f8d41e",
+      "5c559c3c267c",
+      "de39f0b08aee",
+      "2640daf27530",
+      "c47f80a4012f",
+      "12aa705edcc6"
+    ],
+    "hn": {
+      "bd5e53fb6b33": null,
+      "8f4f45f8d41e": 5,
+      "5c559c3c267c": null,
+      "de39f0b08aee": null,
+      "2640daf27530": null,
+      "c47f80a4012f": null,
+      "12aa705edcc6": null
+    },
+    "gold_groups": [],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1717,
+          "output_tokens": 458,
+          "seconds": 4.899
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1717,
+          "output_tokens": 399,
+          "seconds": 4.038
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1717,
+          "output_tokens": 377,
+          "seconds": 4.259
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1996,
+          "output_tokens": 52,
+          "seconds": 1.205
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1996,
+          "output_tokens": 52,
+          "seconds": 1.272
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1996,
+          "output_tokens": 52,
+          "seconds": 1.247
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship02",
+    "kind": "shipped",
+    "category": "Policy, Law & Regulation",
+    "article_ids": [
+      "3c5468441f9b",
+      "3405c0253332",
+      "c6b3fa19626e",
+      "f2a1639d3d73",
+      "c9bff80b636d",
+      "9950540b48f2",
+      "8c781d458518"
+    ],
+    "hn": {
+      "3c5468441f9b": null,
+      "3405c0253332": null,
+      "c6b3fa19626e": null,
+      "f2a1639d3d73": null,
+      "c9bff80b636d": null,
+      "9950540b48f2": null,
+      "8c781d458518": null
+    },
+    "gold_groups": [],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1703,
+          "output_tokens": 410,
+          "seconds": 4.198
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1703,
+          "output_tokens": 484,
+          "seconds": 5.059
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1703,
+          "output_tokens": 438,
+          "seconds": 4.601
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1990,
+          "output_tokens": 308,
+          "seconds": 2.705
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1990,
+          "output_tokens": 261,
+          "seconds": 2.47
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1990,
+          "output_tokens": 310,
+          "seconds": 2.88
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship03",
+    "kind": "shipped",
+    "category": "Safety & Alignment",
+    "article_ids": [
+      "0cfd2c07ef61",
+      "9edf1f392901",
+      "8bbb11dcec3a",
+      "7e9ffc3a6038",
+      "a27f8f0b5280"
+    ],
+    "hn": {
+      "0cfd2c07ef61": null,
+      "9edf1f392901": null,
+      "8bbb11dcec3a": null,
+      "7e9ffc3a6038": 319,
+      "a27f8f0b5280": null
+    },
+    "gold_groups": [],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1529,
+          "output_tokens": 364,
+          "seconds": 3.825
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1529,
+          "output_tokens": 379,
+          "seconds": 3.9
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1529,
+          "output_tokens": 387,
+          "seconds": 3.955
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1712,
+          "output_tokens": 52,
+          "seconds": 6.33
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1712,
+          "output_tokens": 52,
+          "seconds": 1.01
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1712,
+          "output_tokens": 52,
+          "seconds": 1.134
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship04",
+    "kind": "shipped",
+    "category": "Society & Culture",
+    "article_ids": [
+      "b753c4b13a45",
+      "007c51203eb2",
+      "19a1f4fedef2",
+      "66e1681815b8",
+      "23ad3caa0270",
+      "26585be11bc2"
+    ],
+    "hn": {
+      "b753c4b13a45": null,
+      "007c51203eb2": 5,
+      "19a1f4fedef2": null,
+      "66e1681815b8": null,
+      "23ad3caa0270": null,
+      "26585be11bc2": null
+    },
+    "gold_groups": [
+      [
+        "23ad3caa0270",
+        "b753c4b13a45"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "b753c4b13a45",
+              "23ad3caa0270"
+            ]
+          ],
+          "removed": [
+            "23ad3caa0270"
+          ],
+          "failed": false,
+          "input_tokens": 1542,
+          "output_tokens": 449,
+          "seconds": 4.966
+        },
+        {
+          "groups": [
+            [
+              "b753c4b13a45",
+              "23ad3caa0270"
+            ]
+          ],
+          "removed": [
+            "23ad3caa0270"
+          ],
+          "failed": false,
+          "input_tokens": 1542,
+          "output_tokens": 453,
+          "seconds": 4.707
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1542,
+          "output_tokens": 443,
+          "seconds": 5.11
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "b753c4b13a45",
+              "23ad3caa0270"
+            ]
+          ],
+          "removed": [
+            "23ad3caa0270"
+          ],
+          "failed": false,
+          "input_tokens": 1730,
+          "output_tokens": 102,
+          "seconds": 1.502
+        },
+        {
+          "groups": [
+            [
+              "b753c4b13a45",
+              "23ad3caa0270"
+            ]
+          ],
+          "removed": [
+            "23ad3caa0270"
+          ],
+          "failed": false,
+          "input_tokens": 1730,
+          "output_tokens": 107,
+          "seconds": 1.583
+        },
+        {
+          "groups": [
+            [
+              "b753c4b13a45",
+              "23ad3caa0270"
+            ]
+          ],
+          "removed": [
+            "23ad3caa0270"
+          ],
+          "failed": false,
+          "input_tokens": 1730,
+          "output_tokens": 102,
+          "seconds": 1.57
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship05",
+    "kind": "shipped",
+    "category": "Model & Product Releases",
+    "article_ids": [
+      "1b27cda45d31",
+      "4f4c2bd39a3c",
+      "4e3cf39352df",
+      "a065fef0f0f1",
+      "43a3ebe411dc"
+    ],
+    "hn": {
+      "1b27cda45d31": null,
+      "4f4c2bd39a3c": 206,
+      "4e3cf39352df": null,
+      "a065fef0f0f1": null,
+      "43a3ebe411dc": null
+    },
+    "gold_groups": [
+      [
+        "43a3ebe411dc",
+        "a065fef0f0f1"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "a065fef0f0f1",
+              "43a3ebe411dc"
+            ]
+          ],
+          "removed": [
+            "43a3ebe411dc"
+          ],
+          "failed": false,
+          "input_tokens": 1576,
+          "output_tokens": 416,
+          "seconds": 4.363
+        },
+        {
+          "groups": [
+            [
+              "a065fef0f0f1",
+              "43a3ebe411dc"
+            ]
+          ],
+          "removed": [
+            "43a3ebe411dc"
+          ],
+          "failed": false,
+          "input_tokens": 1576,
+          "output_tokens": 387,
+          "seconds": 4.465
+        },
+        {
+          "groups": [
+            [
+              "a065fef0f0f1",
+              "43a3ebe411dc"
+            ]
+          ],
+          "removed": [
+            "43a3ebe411dc"
+          ],
+          "failed": false,
+          "input_tokens": 1576,
+          "output_tokens": 393,
+          "seconds": 4.352
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "a065fef0f0f1",
+              "43a3ebe411dc"
+            ]
+          ],
+          "removed": [
+            "43a3ebe411dc"
+          ],
+          "failed": false,
+          "input_tokens": 1788,
+          "output_tokens": 103,
+          "seconds": 2.349
+        },
+        {
+          "groups": [
+            [
+              "a065fef0f0f1",
+              "43a3ebe411dc"
+            ]
+          ],
+          "removed": [
+            "43a3ebe411dc"
+          ],
+          "failed": false,
+          "input_tokens": 1788,
+          "output_tokens": 95,
+          "seconds": 1.481
+        },
+        {
+          "groups": [
+            [
+              "a065fef0f0f1",
+              "43a3ebe411dc"
+            ]
+          ],
+          "removed": [
+            "43a3ebe411dc"
+          ],
+          "failed": false,
+          "input_tokens": 1788,
+          "output_tokens": 99,
+          "seconds": 1.461
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship06",
+    "kind": "shipped",
+    "category": "Industry & Business",
+    "article_ids": [
+      "e40fb10169fa",
+      "f09c45b3e691",
+      "93b68f4e1c3c",
+      "43f1fa27b59c",
+      "7c8335df3230"
+    ],
+    "hn": {
+      "e40fb10169fa": 365,
+      "f09c45b3e691": null,
+      "93b68f4e1c3c": null,
+      "43f1fa27b59c": null,
+      "7c8335df3230": null
+    },
+    "gold_groups": [
+      [
+        "7c8335df3230",
+        "93b68f4e1c3c"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "93b68f4e1c3c",
+              "7c8335df3230"
+            ]
+          ],
+          "removed": [
+            "7c8335df3230"
+          ],
+          "failed": false,
+          "input_tokens": 1569,
+          "output_tokens": 413,
+          "seconds": 4.26
+        },
+        {
+          "groups": [
+            [
+              "93b68f4e1c3c",
+              "7c8335df3230"
+            ]
+          ],
+          "removed": [
+            "7c8335df3230"
+          ],
+          "failed": false,
+          "input_tokens": 1569,
+          "output_tokens": 404,
+          "seconds": 4.319
+        },
+        {
+          "groups": [
+            [
+              "93b68f4e1c3c",
+              "7c8335df3230"
+            ]
+          ],
+          "removed": [
+            "7c8335df3230"
+          ],
+          "failed": false,
+          "input_tokens": 1569,
+          "output_tokens": 445,
+          "seconds": 4.591
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "93b68f4e1c3c",
+              "7c8335df3230"
+            ]
+          ],
+          "removed": [
+            "7c8335df3230"
+          ],
+          "failed": false,
+          "input_tokens": 1769,
+          "output_tokens": 98,
+          "seconds": 1.477
+        },
+        {
+          "groups": [
+            [
+              "93b68f4e1c3c",
+              "7c8335df3230"
+            ]
+          ],
+          "removed": [
+            "7c8335df3230"
+          ],
+          "failed": false,
+          "input_tokens": 1769,
+          "output_tokens": 112,
+          "seconds": 1.679
+        },
+        {
+          "groups": [
+            [
+              "93b68f4e1c3c",
+              "7c8335df3230"
+            ]
+          ],
+          "removed": [
+            "7c8335df3230"
+          ],
+          "failed": false,
+          "input_tokens": 1769,
+          "output_tokens": 106,
+          "seconds": 5.205
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship07",
+    "kind": "shipped",
+    "category": "Canada & Montreal",
+    "article_ids": [
+      "846afbae42a8",
+      "c506811f2af7",
+      "18a307966ea7"
+    ],
+    "hn": {
+      "846afbae42a8": null,
+      "c506811f2af7": null,
+      "18a307966ea7": null
+    },
+    "gold_groups": [
+      [
+        "846afbae42a8",
+        "c506811f2af7"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "846afbae42a8",
+              "c506811f2af7"
+            ]
+          ],
+          "removed": [
+            "c506811f2af7"
+          ],
+          "failed": false,
+          "input_tokens": 1316,
+          "output_tokens": 87,
+          "seconds": 1.06
+        },
+        {
+          "groups": [
+            [
+              "846afbae42a8",
+              "c506811f2af7"
+            ]
+          ],
+          "removed": [
+            "c506811f2af7"
+          ],
+          "failed": false,
+          "input_tokens": 1316,
+          "output_tokens": 308,
+          "seconds": 3.345
+        },
+        {
+          "groups": [
+            [
+              "846afbae42a8",
+              "c506811f2af7"
+            ]
+          ],
+          "removed": [
+            "c506811f2af7"
+          ],
+          "failed": false,
+          "input_tokens": 1316,
+          "output_tokens": 87,
+          "seconds": 1.084
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "846afbae42a8",
+              "c506811f2af7"
+            ]
+          ],
+          "removed": [
+            "c506811f2af7"
+          ],
+          "failed": false,
+          "input_tokens": 1418,
+          "output_tokens": 99,
+          "seconds": 1.538
+        },
+        {
+          "groups": [
+            [
+              "846afbae42a8",
+              "c506811f2af7"
+            ]
+          ],
+          "removed": [
+            "c506811f2af7"
+          ],
+          "failed": false,
+          "input_tokens": 1418,
+          "output_tokens": 99,
+          "seconds": 1.465
+        },
+        {
+          "groups": [
+            [
+              "846afbae42a8",
+              "c506811f2af7"
+            ]
+          ],
+          "removed": [
+            "c506811f2af7"
+          ],
+          "failed": false,
+          "input_tokens": 1418,
+          "output_tokens": 99,
+          "seconds": 1.434
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship08",
+    "kind": "shipped",
+    "category": "Open Source & Tools",
+    "article_ids": [
+      "863cbd4586c2",
+      "744e46690412",
+      "5051d31999f6",
+      "45da52ae09b4"
+    ],
+    "hn": {
+      "863cbd4586c2": null,
+      "744e46690412": 556,
+      "5051d31999f6": 133,
+      "45da52ae09b4": 743
+    },
+    "gold_groups": [],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1431,
+          "output_tokens": 410,
+          "seconds": 4.385
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1431,
+          "output_tokens": 418,
+          "seconds": 4.004
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1431,
+          "output_tokens": 411,
+          "seconds": 3.974
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1566,
+          "output_tokens": 52,
+          "seconds": 1.269
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1566,
+          "output_tokens": 52,
+          "seconds": 1.304
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1566,
+          "output_tokens": 52,
+          "seconds": 1.251
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship09",
+    "kind": "shipped",
+    "category": "Model & Product Releases",
+    "article_ids": [
+      "2cc591e2af4f",
+      "1dd906848ea1",
+      "63d75a952728",
+      "642cc8350e58",
+      "5bef305cc904",
+      "813e4f4194f5"
+    ],
+    "hn": {
+      "2cc591e2af4f": null,
+      "1dd906848ea1": null,
+      "63d75a952728": null,
+      "642cc8350e58": null,
+      "5bef305cc904": null,
+      "813e4f4194f5": null
+    },
+    "gold_groups": [
+      [
+        "2cc591e2af4f",
+        "5bef305cc904"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "2cc591e2af4f",
+              "5bef305cc904"
+            ]
+          ],
+          "removed": [
+            "5bef305cc904"
+          ],
+          "failed": false,
+          "input_tokens": 1719,
+          "output_tokens": 340,
+          "seconds": 3.635
+        },
+        {
+          "groups": [
+            [
+              "2cc591e2af4f",
+              "5bef305cc904"
+            ]
+          ],
+          "removed": [
+            "5bef305cc904"
+          ],
+          "failed": false,
+          "input_tokens": 1719,
+          "output_tokens": 387,
+          "seconds": 4.036
+        },
+        {
+          "groups": [
+            [
+              "2cc591e2af4f",
+              "5bef305cc904"
+            ]
+          ],
+          "removed": [
+            "5bef305cc904"
+          ],
+          "failed": false,
+          "input_tokens": 1719,
+          "output_tokens": 394,
+          "seconds": 3.827
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "2cc591e2af4f",
+              "5bef305cc904"
+            ]
+          ],
+          "removed": [
+            "5bef305cc904"
+          ],
+          "failed": false,
+          "input_tokens": 1969,
+          "output_tokens": 96,
+          "seconds": 1.5
+        },
+        {
+          "groups": [
+            [
+              "2cc591e2af4f",
+              "5bef305cc904"
+            ]
+          ],
+          "removed": [
+            "5bef305cc904"
+          ],
+          "failed": false,
+          "input_tokens": 1969,
+          "output_tokens": 111,
+          "seconds": 1.788
+        },
+        {
+          "groups": [
+            [
+              "2cc591e2af4f",
+              "5bef305cc904"
+            ]
+          ],
+          "removed": [
+            "5bef305cc904"
+          ],
+          "failed": false,
+          "input_tokens": 1969,
+          "output_tokens": 104,
+          "seconds": 1.663
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship10",
+    "kind": "shipped",
+    "category": "Open Source & Tools",
+    "article_ids": [
+      "7372d8cb937a",
+      "86873e4234fe",
+      "072711527d0c",
+      "5d1487ccbccb",
+      "16b138d9f3a3"
+    ],
+    "hn": {
+      "7372d8cb937a": 302,
+      "86873e4234fe": 4,
+      "072711527d0c": null,
+      "5d1487ccbccb": 402,
+      "16b138d9f3a3": 206
+    },
+    "gold_groups": [],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1545,
+          "output_tokens": 443,
+          "seconds": 4.539
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1545,
+          "output_tokens": 396,
+          "seconds": 4.117
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1545,
+          "output_tokens": 416,
+          "seconds": 4.468
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1718,
+          "output_tokens": 52,
+          "seconds": 1.24
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1718,
+          "output_tokens": 52,
+          "seconds": 1.375
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1718,
+          "output_tokens": 52,
+          "seconds": 1.233
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship11",
+    "kind": "shipped",
+    "category": "Safety & Alignment",
+    "article_ids": [
+      "09dd995d0ff1",
+      "ab126693a794",
+      "f734d1441cad",
+      "b459d8247f89"
+    ],
+    "hn": {
+      "09dd995d0ff1": null,
+      "ab126693a794": null,
+      "f734d1441cad": null,
+      "b459d8247f89": null
+    },
+    "gold_groups": [
+      [
+        "ab126693a794",
+        "b459d8247f89",
+        "f734d1441cad"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "ab126693a794",
+              "f734d1441cad",
+              "b459d8247f89"
+            ]
+          ],
+          "removed": [
+            "f734d1441cad",
+            "b459d8247f89"
+          ],
+          "failed": false,
+          "input_tokens": 1452,
+          "output_tokens": 415,
+          "seconds": 4.428
+        },
+        {
+          "groups": [
+            [
+              "ab126693a794",
+              "f734d1441cad",
+              "b459d8247f89"
+            ]
+          ],
+          "removed": [
+            "f734d1441cad",
+            "b459d8247f89"
+          ],
+          "failed": false,
+          "input_tokens": 1452,
+          "output_tokens": 405,
+          "seconds": 4.237
+        },
+        {
+          "groups": [
+            [
+              "ab126693a794",
+              "f734d1441cad",
+              "b459d8247f89"
+            ]
+          ],
+          "removed": [
+            "f734d1441cad",
+            "b459d8247f89"
+          ],
+          "failed": false,
+          "input_tokens": 1452,
+          "output_tokens": 351,
+          "seconds": 3.587
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "ab126693a794",
+              "f734d1441cad",
+              "b459d8247f89"
+            ]
+          ],
+          "removed": [
+            "f734d1441cad",
+            "b459d8247f89"
+          ],
+          "failed": false,
+          "input_tokens": 1616,
+          "output_tokens": 117,
+          "seconds": 3.712
+        },
+        {
+          "groups": [
+            [
+              "ab126693a794",
+              "f734d1441cad",
+              "b459d8247f89"
+            ]
+          ],
+          "removed": [
+            "f734d1441cad",
+            "b459d8247f89"
+          ],
+          "failed": false,
+          "input_tokens": 1616,
+          "output_tokens": 115,
+          "seconds": 2.606
+        },
+        {
+          "groups": [
+            [
+              "ab126693a794",
+              "f734d1441cad",
+              "b459d8247f89"
+            ]
+          ],
+          "removed": [
+            "f734d1441cad",
+            "b459d8247f89"
+          ],
+          "failed": false,
+          "input_tokens": 1616,
+          "output_tokens": 117,
+          "seconds": 1.526
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship12",
+    "kind": "shipped",
+    "category": "Industry & Business",
+    "article_ids": [
+      "65cc0c3f4190",
+      "4d17de38e223",
+      "694ac7f9d653",
+      "1b3a4cdffab4",
+      "93cdaaf417f0",
+      "a50e5ef2ad72"
+    ],
+    "hn": {
+      "65cc0c3f4190": null,
+      "4d17de38e223": null,
+      "694ac7f9d653": null,
+      "1b3a4cdffab4": null,
+      "93cdaaf417f0": null,
+      "a50e5ef2ad72": null
+    },
+    "gold_groups": [],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1647,
+          "output_tokens": 385,
+          "seconds": 3.866
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1647,
+          "output_tokens": 384,
+          "seconds": 3.851
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1647,
+          "output_tokens": 501,
+          "seconds": 5.098
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1917,
+          "output_tokens": 111,
+          "seconds": 1.615
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1917,
+          "output_tokens": 118,
+          "seconds": 1.678
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1917,
+          "output_tokens": 113,
+          "seconds": 1.8
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship13",
+    "kind": "shipped",
+    "category": "Policy, Law & Regulation",
+    "article_ids": [
+      "92c0ed19d16b",
+      "630d102c672d",
+      "3260c87d9292",
+      "850ec56742f6",
+      "83d6b3597786"
+    ],
+    "hn": {
+      "92c0ed19d16b": null,
+      "630d102c672d": null,
+      "3260c87d9292": null,
+      "850ec56742f6": null,
+      "83d6b3597786": 3
+    },
+    "gold_groups": [
+      [
+        "3260c87d9292",
+        "630d102c672d",
+        "83d6b3597786"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "630d102c672d",
+              "3260c87d9292"
+            ]
+          ],
+          "removed": [
+            "3260c87d9292"
+          ],
+          "failed": false,
+          "input_tokens": 1484,
+          "output_tokens": 445,
+          "seconds": 4.219
+        },
+        {
+          "groups": [
+            [
+              "630d102c672d",
+              "3260c87d9292"
+            ]
+          ],
+          "removed": [
+            "3260c87d9292"
+          ],
+          "failed": false,
+          "input_tokens": 1484,
+          "output_tokens": 437,
+          "seconds": 4.399
+        },
+        {
+          "groups": [
+            [
+              "630d102c672d",
+              "3260c87d9292"
+            ]
+          ],
+          "removed": [
+            "3260c87d9292"
+          ],
+          "failed": false,
+          "input_tokens": 1484,
+          "output_tokens": 481,
+          "seconds": 4.715
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "630d102c672d",
+              "3260c87d9292",
+              "83d6b3597786"
+            ]
+          ],
+          "removed": [
+            "630d102c672d",
+            "3260c87d9292"
+          ],
+          "failed": false,
+          "input_tokens": 1677,
+          "output_tokens": 309,
+          "seconds": 2.736
+        },
+        {
+          "groups": [
+            [
+              "630d102c672d",
+              "3260c87d9292",
+              "83d6b3597786"
+            ]
+          ],
+          "removed": [
+            "630d102c672d",
+            "3260c87d9292"
+          ],
+          "failed": false,
+          "input_tokens": 1677,
+          "output_tokens": 243,
+          "seconds": 2.425
+        },
+        {
+          "groups": [
+            [
+              "630d102c672d",
+              "3260c87d9292",
+              "83d6b3597786"
+            ]
+          ],
+          "removed": [
+            "630d102c672d",
+            "3260c87d9292"
+          ],
+          "failed": false,
+          "input_tokens": 1677,
+          "output_tokens": 248,
+          "seconds": 2.376
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship14",
+    "kind": "shipped",
+    "category": "Open Source & Tools",
+    "article_ids": [
+      "974d536836f2",
+      "f693e1b0e35b",
+      "ea10becd1521",
+      "ec6ff41e0c9b",
+      "91795cf32ccd"
+    ],
+    "hn": {
+      "974d536836f2": null,
+      "f693e1b0e35b": 50,
+      "ea10becd1521": null,
+      "ec6ff41e0c9b": null,
+      "91795cf32ccd": 207
+    },
+    "gold_groups": [],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1519,
+          "output_tokens": 326,
+          "seconds": 3.298
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1519,
+          "output_tokens": 376,
+          "seconds": 3.847
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1519,
+          "output_tokens": 386,
+          "seconds": 3.814
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1689,
+          "output_tokens": 52,
+          "seconds": 1.148
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1689,
+          "output_tokens": 52,
+          "seconds": 1.159
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1689,
+          "output_tokens": 52,
+          "seconds": 1.28
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship15",
+    "kind": "shipped",
+    "category": "Policy, Law & Regulation",
+    "article_ids": [
+      "b5f4f85cf249",
+      "6c1e630465fb",
+      "5c3623041e3b",
+      "6324503805bf",
+      "5d72c179d0f5",
+      "7bfce763664f",
+      "b6dc4751a2b3",
+      "c7435cf44180",
+      "6ccfde5e788f"
+    ],
+    "hn": {
+      "b5f4f85cf249": null,
+      "6c1e630465fb": null,
+      "5c3623041e3b": null,
+      "6324503805bf": null,
+      "5d72c179d0f5": null,
+      "7bfce763664f": null,
+      "b6dc4751a2b3": null,
+      "c7435cf44180": null,
+      "6ccfde5e788f": null
+    },
+    "gold_groups": [
+      [
+        "5c3623041e3b",
+        "5d72c179d0f5",
+        "6c1e630465fb",
+        "b6dc4751a2b3"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "6c1e630465fb",
+              "5c3623041e3b",
+              "5d72c179d0f5",
+              "b6dc4751a2b3"
+            ]
+          ],
+          "removed": [
+            "5c3623041e3b",
+            "5d72c179d0f5",
+            "b6dc4751a2b3"
+          ],
+          "failed": false,
+          "input_tokens": 1969,
+          "output_tokens": 511,
+          "seconds": 5.181
+        },
+        {
+          "groups": [
+            [
+              "6c1e630465fb",
+              "5c3623041e3b",
+              "5d72c179d0f5",
+              "b6dc4751a2b3"
+            ]
+          ],
+          "removed": [
+            "5c3623041e3b",
+            "5d72c179d0f5",
+            "b6dc4751a2b3"
+          ],
+          "failed": false,
+          "input_tokens": 1969,
+          "output_tokens": 487,
+          "seconds": 5.012
+        },
+        {
+          "groups": [
+            [
+              "6c1e630465fb",
+              "5c3623041e3b",
+              "5d72c179d0f5",
+              "b6dc4751a2b3"
+            ]
+          ],
+          "removed": [
+            "5c3623041e3b",
+            "5d72c179d0f5",
+            "b6dc4751a2b3"
+          ],
+          "failed": false,
+          "input_tokens": 1969,
+          "output_tokens": 498,
+          "seconds": 5.209
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "6c1e630465fb",
+              "5c3623041e3b",
+              "5d72c179d0f5",
+              "b6dc4751a2b3"
+            ]
+          ],
+          "removed": [
+            "5c3623041e3b",
+            "5d72c179d0f5",
+            "b6dc4751a2b3"
+          ],
+          "failed": false,
+          "input_tokens": 2363,
+          "output_tokens": 107,
+          "seconds": 1.732
+        },
+        {
+          "groups": [
+            [
+              "6c1e630465fb",
+              "5c3623041e3b",
+              "5d72c179d0f5",
+              "b6dc4751a2b3"
+            ]
+          ],
+          "removed": [
+            "5c3623041e3b",
+            "5d72c179d0f5",
+            "b6dc4751a2b3"
+          ],
+          "failed": false,
+          "input_tokens": 2363,
+          "output_tokens": 104,
+          "seconds": 1.665
+        },
+        {
+          "groups": [
+            [
+              "6c1e630465fb",
+              "5c3623041e3b",
+              "5d72c179d0f5",
+              "b6dc4751a2b3"
+            ]
+          ],
+          "removed": [
+            "5c3623041e3b",
+            "5d72c179d0f5",
+            "b6dc4751a2b3"
+          ],
+          "failed": false,
+          "input_tokens": 2363,
+          "output_tokens": 108,
+          "seconds": 1.211
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship16",
+    "kind": "shipped",
+    "category": "Safety & Alignment",
+    "article_ids": [
+      "e2a3f5a2aaea",
+      "32aab1e02878",
+      "47028cd678a1",
+      "c8cf9e7a67e1",
+      "f31c2448aa6c",
+      "53e36f0b33a5",
+      "5be700f138c8"
+    ],
+    "hn": {
+      "e2a3f5a2aaea": null,
+      "32aab1e02878": null,
+      "47028cd678a1": 53,
+      "c8cf9e7a67e1": null,
+      "f31c2448aa6c": null,
+      "53e36f0b33a5": null,
+      "5be700f138c8": null
+    },
+    "gold_groups": [
+      [
+        "32aab1e02878",
+        "c8cf9e7a67e1"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "32aab1e02878",
+              "c8cf9e7a67e1"
+            ]
+          ],
+          "removed": [
+            "c8cf9e7a67e1"
+          ],
+          "failed": false,
+          "input_tokens": 1730,
+          "output_tokens": 540,
+          "seconds": 5.23
+        },
+        {
+          "groups": [
+            [
+              "32aab1e02878",
+              "c8cf9e7a67e1"
+            ]
+          ],
+          "removed": [
+            "c8cf9e7a67e1"
+          ],
+          "failed": false,
+          "input_tokens": 1730,
+          "output_tokens": 471,
+          "seconds": 4.656
+        },
+        {
+          "groups": [
+            [
+              "32aab1e02878",
+              "c8cf9e7a67e1"
+            ]
+          ],
+          "removed": [
+            "c8cf9e7a67e1"
+          ],
+          "failed": false,
+          "input_tokens": 1730,
+          "output_tokens": 420,
+          "seconds": 4.419
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "32aab1e02878",
+              "c8cf9e7a67e1"
+            ]
+          ],
+          "removed": [
+            "c8cf9e7a67e1"
+          ],
+          "failed": false,
+          "input_tokens": 2016,
+          "output_tokens": 108,
+          "seconds": 4.48
+        },
+        {
+          "groups": [
+            [
+              "32aab1e02878",
+              "c8cf9e7a67e1"
+            ]
+          ],
+          "removed": [
+            "c8cf9e7a67e1"
+          ],
+          "failed": false,
+          "input_tokens": 2016,
+          "output_tokens": 111,
+          "seconds": 3.985
+        },
+        {
+          "groups": [
+            [
+              "32aab1e02878",
+              "c8cf9e7a67e1"
+            ]
+          ],
+          "removed": [
+            "c8cf9e7a67e1"
+          ],
+          "failed": false,
+          "input_tokens": 2016,
+          "output_tokens": 112,
+          "seconds": 1.469
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship17",
+    "kind": "shipped",
+    "category": "Model & Product Releases",
+    "article_ids": [
+      "cf1d2b81fef8",
+      "460651c9bcfe",
+      "9da9989ecc0c",
+      "fb8caf546818",
+      "69669daef825",
+      "92e79bff52cf"
+    ],
+    "hn": {
+      "cf1d2b81fef8": 333,
+      "460651c9bcfe": null,
+      "9da9989ecc0c": 117,
+      "fb8caf546818": null,
+      "69669daef825": 434,
+      "92e79bff52cf": null
+    },
+    "gold_groups": [
+      [
+        "92e79bff52cf",
+        "fb8caf546818"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "fb8caf546818",
+              "92e79bff52cf"
+            ]
+          ],
+          "removed": [
+            "92e79bff52cf"
+          ],
+          "failed": false,
+          "input_tokens": 1730,
+          "output_tokens": 487,
+          "seconds": 4.795
+        },
+        {
+          "groups": [
+            [
+              "fb8caf546818",
+              "92e79bff52cf"
+            ]
+          ],
+          "removed": [
+            "92e79bff52cf"
+          ],
+          "failed": false,
+          "input_tokens": 1730,
+          "output_tokens": 494,
+          "seconds": 4.885
+        },
+        {
+          "groups": [
+            [
+              "fb8caf546818",
+              "92e79bff52cf"
+            ]
+          ],
+          "removed": [
+            "92e79bff52cf"
+          ],
+          "failed": false,
+          "input_tokens": 1730,
+          "output_tokens": 470,
+          "seconds": 4.932
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "fb8caf546818",
+              "92e79bff52cf"
+            ]
+          ],
+          "removed": [
+            "92e79bff52cf"
+          ],
+          "failed": false,
+          "input_tokens": 1950,
+          "output_tokens": 237,
+          "seconds": 2.079
+        },
+        {
+          "groups": [
+            [
+              "fb8caf546818",
+              "92e79bff52cf"
+            ]
+          ],
+          "removed": [
+            "92e79bff52cf"
+          ],
+          "failed": false,
+          "input_tokens": 1950,
+          "output_tokens": 243,
+          "seconds": 2.314
+        },
+        {
+          "groups": [
+            [
+              "fb8caf546818",
+              "92e79bff52cf"
+            ]
+          ],
+          "removed": [
+            "92e79bff52cf"
+          ],
+          "failed": false,
+          "input_tokens": 1950,
+          "output_tokens": 215,
+          "seconds": 2.142
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship18",
+    "kind": "shipped",
+    "category": "Policy, Law & Regulation",
+    "article_ids": [
+      "8589927f258c",
+      "db65b145aaf8",
+      "bf0dda7e45d1",
+      "18f1aaf9f688",
+      "8e10c98735ba",
+      "733dc5e01ce1"
+    ],
+    "hn": {
+      "8589927f258c": null,
+      "db65b145aaf8": null,
+      "bf0dda7e45d1": null,
+      "18f1aaf9f688": null,
+      "8e10c98735ba": 391,
+      "733dc5e01ce1": null
+    },
+    "gold_groups": [
+      [
+        "733dc5e01ce1",
+        "bf0dda7e45d1"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "bf0dda7e45d1",
+              "733dc5e01ce1"
+            ]
+          ],
+          "removed": [
+            "733dc5e01ce1"
+          ],
+          "failed": false,
+          "input_tokens": 1606,
+          "output_tokens": 475,
+          "seconds": 4.793
+        },
+        {
+          "groups": [
+            [
+              "bf0dda7e45d1",
+              "733dc5e01ce1"
+            ]
+          ],
+          "removed": [
+            "733dc5e01ce1"
+          ],
+          "failed": false,
+          "input_tokens": 1606,
+          "output_tokens": 458,
+          "seconds": 4.633
+        },
+        {
+          "groups": [
+            [
+              "bf0dda7e45d1",
+              "733dc5e01ce1"
+            ]
+          ],
+          "removed": [
+            "733dc5e01ce1"
+          ],
+          "failed": false,
+          "input_tokens": 1606,
+          "output_tokens": 419,
+          "seconds": 4.304
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "bf0dda7e45d1",
+              "733dc5e01ce1"
+            ]
+          ],
+          "removed": [
+            "733dc5e01ce1"
+          ],
+          "failed": false,
+          "input_tokens": 1837,
+          "output_tokens": 104,
+          "seconds": 1.614
+        },
+        {
+          "groups": [
+            [
+              "bf0dda7e45d1",
+              "733dc5e01ce1"
+            ]
+          ],
+          "removed": [
+            "733dc5e01ce1"
+          ],
+          "failed": false,
+          "input_tokens": 1837,
+          "output_tokens": 104,
+          "seconds": 1.657
+        },
+        {
+          "groups": [
+            [
+              "bf0dda7e45d1",
+              "733dc5e01ce1"
+            ]
+          ],
+          "removed": [
+            "733dc5e01ce1"
+          ],
+          "failed": false,
+          "input_tokens": 1837,
+          "output_tokens": 104,
+          "seconds": 1.697
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship19",
+    "kind": "shipped",
+    "category": "Policy, Law & Regulation",
+    "article_ids": [
+      "8f8f19f9332b",
+      "96a0ee9c33ca",
+      "41413ff6b1b1",
+      "dad82e5b88a5",
+      "3a22c8221657",
+      "341b981f7f7a"
+    ],
+    "hn": {
+      "8f8f19f9332b": null,
+      "96a0ee9c33ca": null,
+      "41413ff6b1b1": null,
+      "dad82e5b88a5": null,
+      "3a22c8221657": null,
+      "341b981f7f7a": null
+    },
+    "gold_groups": [
+      [
+        "96a0ee9c33ca",
+        "dad82e5b88a5"
+      ],
+      [
+        "3a22c8221657",
+        "41413ff6b1b1"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "96a0ee9c33ca",
+              "dad82e5b88a5"
+            ],
+            [
+              "41413ff6b1b1",
+              "3a22c8221657"
+            ]
+          ],
+          "removed": [
+            "dad82e5b88a5",
+            "3a22c8221657"
+          ],
+          "failed": false,
+          "input_tokens": 1616,
+          "output_tokens": 473,
+          "seconds": 4.67
+        },
+        {
+          "groups": [
+            [
+              "96a0ee9c33ca",
+              "dad82e5b88a5"
+            ],
+            [
+              "41413ff6b1b1",
+              "3a22c8221657"
+            ]
+          ],
+          "removed": [
+            "dad82e5b88a5",
+            "3a22c8221657"
+          ],
+          "failed": false,
+          "input_tokens": 1616,
+          "output_tokens": 409,
+          "seconds": 3.84
+        },
+        {
+          "groups": [
+            [
+              "96a0ee9c33ca",
+              "dad82e5b88a5"
+            ],
+            [
+              "41413ff6b1b1",
+              "3a22c8221657"
+            ]
+          ],
+          "removed": [
+            "dad82e5b88a5",
+            "3a22c8221657"
+          ],
+          "failed": false,
+          "input_tokens": 1616,
+          "output_tokens": 420,
+          "seconds": 4.109
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "96a0ee9c33ca",
+              "dad82e5b88a5"
+            ],
+            [
+              "41413ff6b1b1",
+              "3a22c8221657"
+            ]
+          ],
+          "removed": [
+            "dad82e5b88a5",
+            "3a22c8221657"
+          ],
+          "failed": false,
+          "input_tokens": 1887,
+          "output_tokens": 155,
+          "seconds": 2.209
+        },
+        {
+          "groups": [
+            [
+              "96a0ee9c33ca",
+              "dad82e5b88a5"
+            ],
+            [
+              "41413ff6b1b1",
+              "3a22c8221657"
+            ]
+          ],
+          "removed": [
+            "dad82e5b88a5",
+            "3a22c8221657"
+          ],
+          "failed": false,
+          "input_tokens": 1887,
+          "output_tokens": 157,
+          "seconds": 1.855
+        },
+        {
+          "groups": [
+            [
+              "96a0ee9c33ca",
+              "dad82e5b88a5"
+            ],
+            [
+              "41413ff6b1b1",
+              "3a22c8221657"
+            ]
+          ],
+          "removed": [
+            "dad82e5b88a5",
+            "3a22c8221657"
+          ],
+          "failed": false,
+          "input_tokens": 1887,
+          "output_tokens": 160,
+          "seconds": 1.735
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship20",
+    "kind": "shipped",
+    "category": "Open Source & Tools",
+    "article_ids": [
+      "070246c7a009",
+      "9fc1cf8dd0c9",
+      "921e01226f2c",
+      "5d800f2558a1",
+      "ea087dc9487c"
+    ],
+    "hn": {
+      "070246c7a009": 1309,
+      "9fc1cf8dd0c9": 19,
+      "921e01226f2c": 106,
+      "5d800f2558a1": 139,
+      "ea087dc9487c": 495
+    },
+    "gold_groups": [],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1508,
+          "output_tokens": 373,
+          "seconds": 3.617
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1508,
+          "output_tokens": 456,
+          "seconds": 4.191
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1508,
+          "output_tokens": 393,
+          "seconds": 3.858
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1656,
+          "output_tokens": 52,
+          "seconds": 3.306
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1656,
+          "output_tokens": 52,
+          "seconds": 1.416
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1656,
+          "output_tokens": 52,
+          "seconds": 1.283
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship21",
+    "kind": "shipped",
+    "category": "Model & Product Releases",
+    "article_ids": [
+      "0c90c73c08cf",
+      "0f1ff99a4515",
+      "2bbd4da8914b",
+      "e3359762ea69",
+      "033b2bd03956"
+    ],
+    "hn": {
+      "0c90c73c08cf": 1804,
+      "0f1ff99a4515": 735,
+      "2bbd4da8914b": 331,
+      "e3359762ea69": 424,
+      "033b2bd03956": null
+    },
+    "gold_groups": [],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1531,
+          "output_tokens": 442,
+          "seconds": 4.508
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1531,
+          "output_tokens": 450,
+          "seconds": 4.26
+        },
+        {
+          "groups": [
+            [
+              "0c90c73c08cf",
+              "e3359762ea69"
+            ]
+          ],
+          "removed": [
+            "e3359762ea69"
+          ],
+          "failed": false,
+          "input_tokens": 1531,
+          "output_tokens": 530,
+          "seconds": 5.72
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1669,
+          "output_tokens": 156,
+          "seconds": 1.936
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1669,
+          "output_tokens": 52,
+          "seconds": 1.305
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1669,
+          "output_tokens": 176,
+          "seconds": 2.091
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship22",
+    "kind": "shipped",
+    "category": "Policy, Law & Regulation",
+    "article_ids": [
+      "2886d8572f92",
+      "58f5982d3852",
+      "5e8bd66ca873",
+      "3484652e09eb",
+      "ebb72919ea26",
+      "903b1128f9a0",
+      "422f82198929"
+    ],
+    "hn": {
+      "2886d8572f92": 394,
+      "58f5982d3852": 255,
+      "5e8bd66ca873": 498,
+      "3484652e09eb": null,
+      "ebb72919ea26": null,
+      "903b1128f9a0": 255,
+      "422f82198929": 623
+    },
+    "gold_groups": [
+      [
+        "58f5982d3852",
+        "903b1128f9a0"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "58f5982d3852",
+              "903b1128f9a0"
+            ]
+          ],
+          "removed": [
+            "903b1128f9a0"
+          ],
+          "failed": false,
+          "input_tokens": 1648,
+          "output_tokens": 450,
+          "seconds": 4.601
+        },
+        {
+          "groups": [
+            [
+              "58f5982d3852",
+              "903b1128f9a0"
+            ]
+          ],
+          "removed": [
+            "903b1128f9a0"
+          ],
+          "failed": false,
+          "input_tokens": 1648,
+          "output_tokens": 372,
+          "seconds": 3.984
+        },
+        {
+          "groups": [
+            [
+              "58f5982d3852",
+              "903b1128f9a0"
+            ]
+          ],
+          "removed": [
+            "903b1128f9a0"
+          ],
+          "failed": false,
+          "input_tokens": 1648,
+          "output_tokens": 425,
+          "seconds": 4.836
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "58f5982d3852",
+              "903b1128f9a0"
+            ]
+          ],
+          "removed": [
+            "903b1128f9a0"
+          ],
+          "failed": false,
+          "input_tokens": 1943,
+          "output_tokens": 99,
+          "seconds": 1.478
+        },
+        {
+          "groups": [
+            [
+              "58f5982d3852",
+              "903b1128f9a0"
+            ]
+          ],
+          "removed": [
+            "903b1128f9a0"
+          ],
+          "failed": false,
+          "input_tokens": 1943,
+          "output_tokens": 103,
+          "seconds": 1.517
+        },
+        {
+          "groups": [
+            [
+              "58f5982d3852",
+              "903b1128f9a0"
+            ]
+          ],
+          "removed": [
+            "903b1128f9a0"
+          ],
+          "failed": false,
+          "input_tokens": 1943,
+          "output_tokens": 102,
+          "seconds": 1.5
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship23",
+    "kind": "shipped",
+    "category": "Model & Product Releases",
+    "article_ids": [
+      "75fc276b3eca",
+      "e3359762ea69",
+      "975f57653267",
+      "50e18c541984",
+      "9f284effa55e",
+      "a365d26f319b",
+      "3e9b576df994"
+    ],
+    "hn": {
+      "75fc276b3eca": null,
+      "e3359762ea69": 430,
+      "975f57653267": 120,
+      "50e18c541984": 879,
+      "9f284effa55e": 205,
+      "a365d26f319b": 586,
+      "3e9b576df994": 77
+    },
+    "gold_groups": [
+      [
+        "3e9b576df994",
+        "75fc276b3eca"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "75fc276b3eca",
+              "3e9b576df994"
+            ],
+            [
+              "50e18c541984",
+              "9f284effa55e"
+            ]
+          ],
+          "removed": [
+            "75fc276b3eca",
+            "9f284effa55e"
+          ],
+          "failed": false,
+          "input_tokens": 1706,
+          "output_tokens": 492,
+          "seconds": 4.602
+        },
+        {
+          "groups": [
+            [
+              "75fc276b3eca",
+              "3e9b576df994"
+            ]
+          ],
+          "removed": [
+            "75fc276b3eca"
+          ],
+          "failed": false,
+          "input_tokens": 1706,
+          "output_tokens": 672,
+          "seconds": 6.65
+        },
+        {
+          "groups": [
+            [
+              "75fc276b3eca",
+              "3e9b576df994"
+            ]
+          ],
+          "removed": [
+            "75fc276b3eca"
+          ],
+          "failed": false,
+          "input_tokens": 1706,
+          "output_tokens": 563,
+          "seconds": 5.409
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "75fc276b3eca",
+              "3e9b576df994"
+            ]
+          ],
+          "removed": [
+            "75fc276b3eca"
+          ],
+          "failed": false,
+          "input_tokens": 1950,
+          "output_tokens": 109,
+          "seconds": 1.64
+        },
+        {
+          "groups": [
+            [
+              "75fc276b3eca",
+              "3e9b576df994"
+            ]
+          ],
+          "removed": [
+            "75fc276b3eca"
+          ],
+          "failed": false,
+          "input_tokens": 1950,
+          "output_tokens": 108,
+          "seconds": 1.468
+        },
+        {
+          "groups": [
+            [
+              "75fc276b3eca",
+              "3e9b576df994"
+            ]
+          ],
+          "removed": [
+            "75fc276b3eca"
+          ],
+          "failed": false,
+          "input_tokens": 1950,
+          "output_tokens": 109,
+          "seconds": 1.45
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship24",
+    "kind": "shipped",
+    "category": "Canada & Montreal",
+    "article_ids": [
+      "9aacc37b4d2b",
+      "9591bfc7b5e7",
+      "57b7641ad371",
+      "f9a40d6fb1da"
+    ],
+    "hn": {
+      "9aacc37b4d2b": null,
+      "9591bfc7b5e7": null,
+      "57b7641ad371": null,
+      "f9a40d6fb1da": null
+    },
+    "gold_groups": [],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1303,
+          "output_tokens": 386,
+          "seconds": 4.2
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1303,
+          "output_tokens": 329,
+          "seconds": 3.35
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1303,
+          "output_tokens": 334,
+          "seconds": 3.441
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1417,
+          "output_tokens": 52,
+          "seconds": 1.228
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1417,
+          "output_tokens": 52,
+          "seconds": 1.289
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1417,
+          "output_tokens": 52,
+          "seconds": 1.243
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship25",
+    "kind": "shipped",
+    "category": "Policy, Law & Regulation",
+    "article_ids": [
+      "9d35c805fb61",
+      "2cef15b9c2c6",
+      "f628fdf9e407",
+      "489333482e18",
+      "ce92721ad1b1",
+      "7d68a08898b4"
+    ],
+    "hn": {
+      "9d35c805fb61": 518,
+      "2cef15b9c2c6": 629,
+      "f628fdf9e407": 19,
+      "489333482e18": 71,
+      "ce92721ad1b1": 210,
+      "7d68a08898b4": 483
+    },
+    "gold_groups": [],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1569,
+          "output_tokens": 447,
+          "seconds": 4.582
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1569,
+          "output_tokens": 378,
+          "seconds": 3.882
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1569,
+          "output_tokens": 434,
+          "seconds": 4.326
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1812,
+          "output_tokens": 52,
+          "seconds": 1.312
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1812,
+          "output_tokens": 140,
+          "seconds": 1.773
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1812,
+          "output_tokens": 110,
+          "seconds": 1.594
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship26",
+    "kind": "shipped",
+    "category": "Open Source & Tools",
+    "article_ids": [
+      "ef05aea17ef0",
+      "5e33c235053c",
+      "8363c0e35e9b",
+      "14ff7162edc9",
+      "ebb2d7850d0e",
+      "bca476fd3463"
+    ],
+    "hn": {
+      "ef05aea17ef0": 413,
+      "5e33c235053c": 575,
+      "8363c0e35e9b": 15,
+      "14ff7162edc9": 104,
+      "ebb2d7850d0e": 636,
+      "bca476fd3463": 805
+    },
+    "gold_groups": [],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1684,
+          "output_tokens": 410,
+          "seconds": 4.097
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1684,
+          "output_tokens": 351,
+          "seconds": 3.597
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1684,
+          "output_tokens": 401,
+          "seconds": 4.12
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1899,
+          "output_tokens": 233,
+          "seconds": 2.844
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1899,
+          "output_tokens": 257,
+          "seconds": 2.447
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1899,
+          "output_tokens": 252,
+          "seconds": 2.267
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship27",
+    "kind": "shipped",
+    "category": "Open Source & Tools",
+    "article_ids": [
+      "ab5e6ca801d9",
+      "ef05aea17ef0",
+      "7ded5c03aba5",
+      "ebb2d7850d0e",
+      "9a14422b82b9",
+      "bca476fd3463"
+    ],
+    "hn": {
+      "ab5e6ca801d9": 409,
+      "ef05aea17ef0": 416,
+      "7ded5c03aba5": 549,
+      "ebb2d7850d0e": 641,
+      "9a14422b82b9": 423,
+      "bca476fd3463": 924
+    },
+    "gold_groups": [],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1672,
+          "output_tokens": 327,
+          "seconds": 3.513
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1672,
+          "output_tokens": 372,
+          "seconds": 3.571
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1672,
+          "output_tokens": 432,
+          "seconds": 4.102
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1858,
+          "output_tokens": 52,
+          "seconds": 1.58
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1858,
+          "output_tokens": 52,
+          "seconds": 1.253
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1858,
+          "output_tokens": 52,
+          "seconds": 1.273
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship28",
+    "kind": "shipped",
+    "category": "Model & Product Releases",
+    "article_ids": [
+      "ef05aea17ef0",
+      "979d52d891bb",
+      "6877981f8072",
+      "0c37d06bd5bf",
+      "8eda8214ccb1",
+      "a585154abde8",
+      "9a14422b82b9",
+      "4bb428a07b2a",
+      "735296b0e72c",
+      "37a7b07a68b5",
+      "ec9915c4fbdd",
+      "b4b1682fec94"
+    ],
+    "hn": {
+      "ef05aea17ef0": 416,
+      "979d52d891bb": 248,
+      "6877981f8072": 590,
+      "0c37d06bd5bf": null,
+      "8eda8214ccb1": 522,
+      "a585154abde8": 386,
+      "9a14422b82b9": 423,
+      "4bb428a07b2a": 935,
+      "735296b0e72c": null,
+      "37a7b07a68b5": null,
+      "ec9915c4fbdd": 490,
+      "b4b1682fec94": null
+    },
+    "gold_groups": [],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2264,
+          "output_tokens": 487,
+          "seconds": 5.21
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2264,
+          "output_tokens": 593,
+          "seconds": 6.223
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 2264,
+          "output_tokens": 513,
+          "seconds": 5.629
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "979d52d891bb",
+              "37a7b07a68b5"
+            ]
+          ],
+          "removed": [
+            "37a7b07a68b5"
+          ],
+          "failed": false,
+          "input_tokens": 2703,
+          "output_tokens": 91,
+          "seconds": 1.922
+        },
+        {
+          "groups": [
+            [
+              "979d52d891bb",
+              "37a7b07a68b5"
+            ]
+          ],
+          "removed": [
+            "37a7b07a68b5"
+          ],
+          "failed": false,
+          "input_tokens": 2703,
+          "output_tokens": 102,
+          "seconds": 2.16
+        },
+        {
+          "groups": [
+            [
+              "979d52d891bb",
+              "37a7b07a68b5"
+            ]
+          ],
+          "removed": [
+            "37a7b07a68b5"
+          ],
+          "failed": false,
+          "input_tokens": 2703,
+          "output_tokens": 95,
+          "seconds": 1.491
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship29",
+    "kind": "shipped",
+    "category": "Open Source & Tools",
+    "article_ids": [
+      "7ded5c03aba5",
+      "0d00e0302e98",
+      "ebb2d7850d0e",
+      "884bedec0123",
+      "dabfa79f68b8",
+      "1b35443cec6d",
+      "ab5e6ca801d9",
+      "14ff7162edc9",
+      "bca476fd3463",
+      "88fa00ee9c0e",
+      "19355795289b"
+    ],
+    "hn": {
+      "7ded5c03aba5": 549,
+      "0d00e0302e98": null,
+      "ebb2d7850d0e": 641,
+      "884bedec0123": 121,
+      "dabfa79f68b8": 339,
+      "1b35443cec6d": 81,
+      "ab5e6ca801d9": 423,
+      "14ff7162edc9": 106,
+      "bca476fd3463": 928,
+      "88fa00ee9c0e": null,
+      "19355795289b": 263
+    },
+    "gold_groups": [
+      [
+        "88fa00ee9c0e",
+        "ab5e6ca801d9"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "ab5e6ca801d9",
+              "88fa00ee9c0e"
+            ]
+          ],
+          "removed": [
+            "88fa00ee9c0e"
+          ],
+          "failed": false,
+          "input_tokens": 2146,
+          "output_tokens": 475,
+          "seconds": 4.928
+        },
+        {
+          "groups": [
+            [
+              "ab5e6ca801d9",
+              "88fa00ee9c0e"
+            ]
+          ],
+          "removed": [
+            "88fa00ee9c0e"
+          ],
+          "failed": false,
+          "input_tokens": 2146,
+          "output_tokens": 479,
+          "seconds": 5.038
+        },
+        {
+          "groups": [
+            [
+              "ab5e6ca801d9",
+              "88fa00ee9c0e"
+            ]
+          ],
+          "removed": [
+            "88fa00ee9c0e"
+          ],
+          "failed": false,
+          "input_tokens": 2146,
+          "output_tokens": 497,
+          "seconds": 5.309
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "ab5e6ca801d9",
+              "88fa00ee9c0e"
+            ]
+          ],
+          "removed": [
+            "88fa00ee9c0e"
+          ],
+          "failed": false,
+          "input_tokens": 2538,
+          "output_tokens": 95,
+          "seconds": 1.563
+        },
+        {
+          "groups": [
+            [
+              "ab5e6ca801d9",
+              "88fa00ee9c0e"
+            ]
+          ],
+          "removed": [
+            "88fa00ee9c0e"
+          ],
+          "failed": false,
+          "input_tokens": 2538,
+          "output_tokens": 95,
+          "seconds": 1.559
+        },
+        {
+          "groups": [
+            [
+              "ab5e6ca801d9",
+              "88fa00ee9c0e"
+            ]
+          ],
+          "removed": [
+            "88fa00ee9c0e"
+          ],
+          "failed": false,
+          "input_tokens": 2538,
+          "output_tokens": 95,
+          "seconds": 1.456
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship30",
+    "kind": "shipped",
+    "category": "Safety & Alignment",
+    "article_ids": [
+      "1d7f7f7e3c25",
+      "4ddef36b4b1e",
+      "4bd24b0014a2",
+      "c6c4feab0545",
+      "ab03c3553ea1",
+      "260f481c2a62",
+      "83913d49e914"
+    ],
+    "hn": {
+      "1d7f7f7e3c25": null,
+      "4ddef36b4b1e": null,
+      "4bd24b0014a2": null,
+      "c6c4feab0545": null,
+      "ab03c3553ea1": null,
+      "260f481c2a62": 423,
+      "83913d49e914": 268
+    },
+    "gold_groups": [
+      [
+        "260f481c2a62",
+        "ab03c3553ea1"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "4bd24b0014a2",
+              "ab03c3553ea1",
+              "83913d49e914"
+            ]
+          ],
+          "removed": [
+            "4bd24b0014a2",
+            "ab03c3553ea1"
+          ],
+          "failed": false,
+          "input_tokens": 1691,
+          "output_tokens": 458,
+          "seconds": 4.764
+        },
+        {
+          "groups": [
+            [
+              "4bd24b0014a2",
+              "ab03c3553ea1",
+              "260f481c2a62"
+            ]
+          ],
+          "removed": [
+            "4bd24b0014a2",
+            "ab03c3553ea1"
+          ],
+          "failed": false,
+          "input_tokens": 1691,
+          "output_tokens": 477,
+          "seconds": 5.18
+        },
+        {
+          "groups": [
+            [
+              "4bd24b0014a2",
+              "ab03c3553ea1"
+            ]
+          ],
+          "removed": [
+            "ab03c3553ea1"
+          ],
+          "failed": false,
+          "input_tokens": 1691,
+          "output_tokens": 428,
+          "seconds": 4.702
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "4bd24b0014a2",
+              "ab03c3553ea1",
+              "260f481c2a62"
+            ]
+          ],
+          "removed": [
+            "4bd24b0014a2",
+            "ab03c3553ea1"
+          ],
+          "failed": false,
+          "input_tokens": 2001,
+          "output_tokens": 552,
+          "seconds": 4.767
+        },
+        {
+          "groups": [
+            [
+              "4bd24b0014a2",
+              "ab03c3553ea1",
+              "260f481c2a62"
+            ]
+          ],
+          "removed": [
+            "4bd24b0014a2",
+            "ab03c3553ea1"
+          ],
+          "failed": false,
+          "input_tokens": 2001,
+          "output_tokens": 540,
+          "seconds": 4.939
+        },
+        {
+          "groups": [
+            [
+              "4bd24b0014a2",
+              "ab03c3553ea1",
+              "260f481c2a62"
+            ]
+          ],
+          "removed": [
+            "4bd24b0014a2",
+            "ab03c3553ea1"
+          ],
+          "failed": false,
+          "input_tokens": 2001,
+          "output_tokens": 598,
+          "seconds": 5.553
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship31",
+    "kind": "shipped_control",
+    "category": "Model & Product Releases",
+    "article_ids": [
+      "b311cc820708",
+      "a71d48912a44",
+      "7a9c3923525f"
+    ],
+    "hn": {
+      "b311cc820708": null,
+      "a71d48912a44": null,
+      "7a9c3923525f": null
+    },
+    "gold_groups": [
+      [
+        "7a9c3923525f",
+        "b311cc820708"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "b311cc820708",
+              "7a9c3923525f"
+            ]
+          ],
+          "removed": [
+            "7a9c3923525f"
+          ],
+          "failed": false,
+          "input_tokens": 1379,
+          "output_tokens": 355,
+          "seconds": 3.557
+        },
+        {
+          "groups": [
+            [
+              "b311cc820708",
+              "7a9c3923525f"
+            ]
+          ],
+          "removed": [
+            "7a9c3923525f"
+          ],
+          "failed": false,
+          "input_tokens": 1379,
+          "output_tokens": 343,
+          "seconds": 3.455
+        },
+        {
+          "groups": [
+            [
+              "b311cc820708",
+              "7a9c3923525f"
+            ]
+          ],
+          "removed": [
+            "7a9c3923525f"
+          ],
+          "failed": false,
+          "input_tokens": 1379,
+          "output_tokens": 343,
+          "seconds": 3.515
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "b311cc820708",
+              "7a9c3923525f"
+            ]
+          ],
+          "removed": [
+            "7a9c3923525f"
+          ],
+          "failed": false,
+          "input_tokens": 1461,
+          "output_tokens": 94,
+          "seconds": 1.483
+        },
+        {
+          "groups": [
+            [
+              "b311cc820708",
+              "7a9c3923525f"
+            ]
+          ],
+          "removed": [
+            "7a9c3923525f"
+          ],
+          "failed": false,
+          "input_tokens": 1461,
+          "output_tokens": 94,
+          "seconds": 1.586
+        },
+        {
+          "groups": [
+            [
+              "b311cc820708",
+              "7a9c3923525f"
+            ]
+          ],
+          "removed": [
+            "7a9c3923525f"
+          ],
+          "failed": false,
+          "input_tokens": 1461,
+          "output_tokens": 94,
+          "seconds": 1.678
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship32",
+    "kind": "shipped_control",
+    "category": "Canada & Montreal",
+    "article_ids": [
+      "e40c07ae51ad",
+      "b164d21c7525",
+      "230395e7e1e7"
+    ],
+    "hn": {
+      "e40c07ae51ad": null,
+      "b164d21c7525": null,
+      "230395e7e1e7": null
+    },
+    "gold_groups": [],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1312,
+          "output_tokens": 253,
+          "seconds": 2.715
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1312,
+          "output_tokens": 268,
+          "seconds": 3.123
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1312,
+          "output_tokens": 247,
+          "seconds": 2.718
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1400,
+          "output_tokens": 52,
+          "seconds": 1.217
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1400,
+          "output_tokens": 52,
+          "seconds": 1.247
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1400,
+          "output_tokens": 52,
+          "seconds": 1.268
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship33",
+    "kind": "shipped_control",
+    "category": "Society & Culture",
+    "article_ids": [
+      "064435cfcb3b",
+      "acc0f3def671",
+      "136deb813b06"
+    ],
+    "hn": {
+      "064435cfcb3b": 434,
+      "acc0f3def671": 407,
+      "136deb813b06": null
+    },
+    "gold_groups": [],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1310,
+          "output_tokens": 250,
+          "seconds": 2.848
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1310,
+          "output_tokens": 293,
+          "seconds": 3.298
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1310,
+          "output_tokens": 234,
+          "seconds": 2.807
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1393,
+          "output_tokens": 52,
+          "seconds": 1.248
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1393,
+          "output_tokens": 52,
+          "seconds": 1.189
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1393,
+          "output_tokens": 52,
+          "seconds": 1.144
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship34",
+    "kind": "shipped_control",
+    "category": "Canada & Montreal",
+    "article_ids": [
+      "d7b48b176e12",
+      "b6f2ff3910a7",
+      "01faae58acae"
+    ],
+    "hn": {
+      "d7b48b176e12": null,
+      "b6f2ff3910a7": null,
+      "01faae58acae": null
+    },
+    "gold_groups": [],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1343,
+          "output_tokens": 244,
+          "seconds": 2.957
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1343,
+          "output_tokens": 280,
+          "seconds": 3.148
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1343,
+          "output_tokens": 247,
+          "seconds": 2.847
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1448,
+          "output_tokens": 52,
+          "seconds": 1.215
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1448,
+          "output_tokens": 52,
+          "seconds": 1.191
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1448,
+          "output_tokens": 52,
+          "seconds": 1.282
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship35",
+    "kind": "shipped_control",
+    "category": "Canada & Montreal",
+    "article_ids": [
+      "75f3e7070ab6",
+      "751adbecc428",
+      "06ca018705d4"
+    ],
+    "hn": {
+      "75f3e7070ab6": null,
+      "751adbecc428": null,
+      "06ca018705d4": null
+    },
+    "gold_groups": [
+      [
+        "06ca018705d4",
+        "751adbecc428"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "751adbecc428",
+              "06ca018705d4"
+            ]
+          ],
+          "removed": [
+            "06ca018705d4"
+          ],
+          "failed": false,
+          "input_tokens": 1454,
+          "output_tokens": 363,
+          "seconds": 3.873
+        },
+        {
+          "groups": [
+            [
+              "751adbecc428",
+              "06ca018705d4"
+            ]
+          ],
+          "removed": [
+            "06ca018705d4"
+          ],
+          "failed": false,
+          "input_tokens": 1454,
+          "output_tokens": 353,
+          "seconds": 3.459
+        },
+        {
+          "groups": [
+            [
+              "751adbecc428",
+              "06ca018705d4"
+            ]
+          ],
+          "removed": [
+            "06ca018705d4"
+          ],
+          "failed": false,
+          "input_tokens": 1454,
+          "output_tokens": 374,
+          "seconds": 4.073
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "751adbecc428",
+              "06ca018705d4"
+            ]
+          ],
+          "removed": [
+            "06ca018705d4"
+          ],
+          "failed": false,
+          "input_tokens": 1537,
+          "output_tokens": 109,
+          "seconds": 1.561
+        },
+        {
+          "groups": [
+            [
+              "751adbecc428",
+              "06ca018705d4"
+            ]
+          ],
+          "removed": [
+            "06ca018705d4"
+          ],
+          "failed": false,
+          "input_tokens": 1537,
+          "output_tokens": 119,
+          "seconds": 1.524
+        },
+        {
+          "groups": [
+            [
+              "751adbecc428",
+              "06ca018705d4"
+            ]
+          ],
+          "removed": [
+            "06ca018705d4"
+          ],
+          "failed": false,
+          "input_tokens": 1537,
+          "output_tokens": 113,
+          "seconds": 1.543
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship36",
+    "kind": "shipped_control",
+    "category": "Open Source & Tools",
+    "article_ids": [
+      "be1bf06843ed",
+      "3a1289007274",
+      "ee9d433be831",
+      "6a1376019d3b",
+      "044ae0d836d8",
+      "ce8cf993721a"
+    ],
+    "hn": {
+      "be1bf06843ed": 690,
+      "3a1289007274": 185,
+      "ee9d433be831": 413,
+      "6a1376019d3b": 116,
+      "044ae0d836d8": 658,
+      "ce8cf993721a": null
+    },
+    "gold_groups": [],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1567,
+          "output_tokens": 450,
+          "seconds": 4.641
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1567,
+          "output_tokens": 645,
+          "seconds": 5.562
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1567,
+          "output_tokens": 357,
+          "seconds": 3.667
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1755,
+          "output_tokens": 52,
+          "seconds": 1.098
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1755,
+          "output_tokens": 52,
+          "seconds": 1.182
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1755,
+          "output_tokens": 52,
+          "seconds": 1.307
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship37",
+    "kind": "shipped_control",
+    "category": "Safety & Alignment",
+    "article_ids": [
+      "01ed0b9abf5a",
+      "11e53012d665",
+      "9a00b6225bb9",
+      "7fe057b32c89",
+      "b969bdd1d6cf"
+    ],
+    "hn": {
+      "01ed0b9abf5a": null,
+      "11e53012d665": null,
+      "9a00b6225bb9": null,
+      "7fe057b32c89": null,
+      "b969bdd1d6cf": null
+    },
+    "gold_groups": [
+      [
+        "01ed0b9abf5a",
+        "9a00b6225bb9"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "01ed0b9abf5a",
+              "9a00b6225bb9"
+            ]
+          ],
+          "removed": [
+            "9a00b6225bb9"
+          ],
+          "failed": false,
+          "input_tokens": 1512,
+          "output_tokens": 421,
+          "seconds": 4.239
+        },
+        {
+          "groups": [
+            [
+              "01ed0b9abf5a",
+              "9a00b6225bb9"
+            ]
+          ],
+          "removed": [
+            "9a00b6225bb9"
+          ],
+          "failed": false,
+          "input_tokens": 1512,
+          "output_tokens": 347,
+          "seconds": 3.6
+        },
+        {
+          "groups": [
+            [
+              "01ed0b9abf5a",
+              "9a00b6225bb9"
+            ]
+          ],
+          "removed": [
+            "9a00b6225bb9"
+          ],
+          "failed": false,
+          "input_tokens": 1512,
+          "output_tokens": 308,
+          "seconds": 3.556
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [
+            [
+              "01ed0b9abf5a",
+              "9a00b6225bb9"
+            ]
+          ],
+          "removed": [
+            "9a00b6225bb9"
+          ],
+          "failed": false,
+          "input_tokens": 1697,
+          "output_tokens": 102,
+          "seconds": 1.456
+        },
+        {
+          "groups": [
+            [
+              "01ed0b9abf5a",
+              "9a00b6225bb9"
+            ]
+          ],
+          "removed": [
+            "9a00b6225bb9"
+          ],
+          "failed": false,
+          "input_tokens": 1697,
+          "output_tokens": 102,
+          "seconds": 1.506
+        },
+        {
+          "groups": [
+            [
+              "01ed0b9abf5a",
+              "9a00b6225bb9"
+            ]
+          ],
+          "removed": [
+            "9a00b6225bb9"
+          ],
+          "failed": false,
+          "input_tokens": 1697,
+          "output_tokens": 102,
+          "seconds": 1.547
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship38",
+    "kind": "shipped_control",
+    "category": "Society & Culture",
+    "article_ids": [
+      "c4193be2973d",
+      "018815976457",
+      "e1ace0713f1a",
+      "a8bc31d9b101",
+      "305acdc99760",
+      "e934305eb2e9"
+    ],
+    "hn": {
+      "c4193be2973d": null,
+      "018815976457": null,
+      "e1ace0713f1a": null,
+      "a8bc31d9b101": null,
+      "305acdc99760": null,
+      "e934305eb2e9": null
+    },
+    "gold_groups": [],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1651,
+          "output_tokens": 339,
+          "seconds": 3.501
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1651,
+          "output_tokens": 334,
+          "seconds": 3.534
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1651,
+          "output_tokens": 383,
+          "seconds": 4.335
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1911,
+          "output_tokens": 52,
+          "seconds": 1.247
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1911,
+          "output_tokens": 52,
+          "seconds": 1.274
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1911,
+          "output_tokens": 52,
+          "seconds": 1.296
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship39",
+    "kind": "shipped_control",
+    "category": "Industry & Business",
+    "article_ids": [
+      "40bcab1d83bc",
+      "53b64e9e55aa",
+      "8c79cd7d02d1",
+      "edd60673360d",
+      "e04ccb3e3a75"
+    ],
+    "hn": {
+      "40bcab1d83bc": 143,
+      "53b64e9e55aa": 81,
+      "8c79cd7d02d1": 70,
+      "edd60673360d": 232,
+      "e04ccb3e3a75": 353
+    },
+    "gold_groups": [
+      [
+        "53b64e9e55aa",
+        "e04ccb3e3a75"
+      ]
+    ],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [
+            [
+              "53b64e9e55aa",
+              "e04ccb3e3a75"
+            ]
+          ],
+          "removed": [
+            "53b64e9e55aa"
+          ],
+          "failed": false,
+          "input_tokens": 1467,
+          "output_tokens": 351,
+          "seconds": 3.086
+        },
+        {
+          "groups": [
+            [
+              "53b64e9e55aa",
+              "e04ccb3e3a75"
+            ]
+          ],
+          "removed": [
+            "53b64e9e55aa"
+          ],
+          "failed": false,
+          "input_tokens": 1467,
+          "output_tokens": 362,
+          "seconds": 3.675
+        },
+        {
+          "groups": [
+            [
+              "53b64e9e55aa",
+              "e04ccb3e3a75"
+            ]
+          ],
+          "removed": [
+            "53b64e9e55aa"
+          ],
+          "failed": false,
+          "input_tokens": 1467,
+          "output_tokens": 309,
+          "seconds": 5.091
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1636,
+          "output_tokens": 320,
+          "seconds": 2.971
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1636,
+          "output_tokens": 292,
+          "seconds": 2.956
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1636,
+          "output_tokens": 52,
+          "seconds": 1.194
+        }
+      ]
+    }
+  },
+  {
+    "case_id": "ship40",
+    "kind": "shipped_control",
+    "category": "Industry & Business",
+    "article_ids": [
+      "bb541ac986c0",
+      "5e5e9a2312fe",
+      "a6eb03a2966b",
+      "5a52e86d2084",
+      "80bfa7628b02"
+    ],
+    "hn": {
+      "bb541ac986c0": null,
+      "5e5e9a2312fe": null,
+      "a6eb03a2966b": null,
+      "5a52e86d2084": null,
+      "80bfa7628b02": null
+    },
+    "gold_groups": [],
+    "borderline": [],
+    "runs": {
+      "control": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "seconds": 0.0
+        }
+      ],
+      "haiku": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1579,
+          "output_tokens": 333,
+          "seconds": 3.469
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1579,
+          "output_tokens": 347,
+          "seconds": 3.503
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1579,
+          "output_tokens": 340,
+          "seconds": 3.564
+        }
+      ],
+      "sonnet": [
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1796,
+          "output_tokens": 52,
+          "seconds": 1.351
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1796,
+          "output_tokens": 52,
+          "seconds": 1.284
+        },
+        {
+          "groups": [],
+          "removed": [],
+          "failed": false,
+          "input_tokens": 1796,
+          "output_tokens": 52,
+          "seconds": 1.358
+        }
+      ]
+    }
+  }
+]

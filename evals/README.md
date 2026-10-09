@@ -93,8 +93,8 @@ Labeling rule, same as `prompts/dedup_prompt.txt`: the same specific story is a 
 and languages and even with a different focus or opinion (price vs. benchmarks of one release; a report vs. a critical
 take); the same company or broad topic alone is not. In `duplicate_group` put the same label (`g1`, `g2`, ...) on
 articles that are duplicates of each other; leave unique ones blank. Put `?` in `note` for an ambiguous article
-(excluded from the metrics) and `t` for same topic but a different angle (borderline: kept out of the strict gold and
-reported separately). Gold labels are written by hand only. `evals.dedup_labels.load_dedup_gold` validates
+(excluded from the metrics). `t` (same topic, different angle) is no longer used: since 2026-10-09 any angle on the
+same story is a duplicate and gets a group label, while a shared company alone is not. Gold labels are written by hand only. `evals.dedup_labels.load_dedup_gold` validates
 the file and lists cases not yet touched.
 
 ## Dedup eval harness (roadmap Step 6)

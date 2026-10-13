@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_NEWS_SUMMARY
+import stage_counter
 import summary_sources
 import tracing
 from config import (
@@ -97,32 +98,11 @@ def process_article(args: tuple) -> dict:
 # ---------------------------------------------------------------------------
 
 def increment_and_check(run_id: str) -> bool:
+    """Count this stage once on the run doc. True if this call made both agent2a and agent2b done.
+
+    Idempotent (see stage_counter.count_stage): a repeated or retried run never counts twice.
     """
-    Atomically increment agent2_completions in Firestore using a transaction.
-    Returns True if this agent pushed the count to 2 (both agent2a and agent2b done).
-
-    Idempotent: main.py may re-run agent2b after a crash, and an attempt that
-    dies after incrementing must not count twice — that would reach 2 before
-    agent2a finished and trigger agent3 without paper_summaries.
-    """
-    from google.cloud import firestore
-
-    db  = firestore.Client(project=GCP_PROJECT_ID)
-    ref = db.collection(FIRESTORE_COLLECTION).document(run_id)
-
-    @firestore.transactional
-    def _increment(transaction, ref):
-        snapshot = ref.get(transaction=transaction)
-        data     = snapshot.to_dict() or {}
-        if data.get("agent2b_counted"):
-            return data.get("agent2_completions", 0)
-        new_val  = data.get("agent2_completions", 0) + 1
-        transaction.update(ref, {"agent2_completions": new_val, "agent2b_counted": True})
-        return new_val
-
-    count = _increment(db.transaction(), ref)
-    print(f"[agent2b]  agent2_completions = {count}")
-    return count >= 2
+    return stage_counter.count_stage(run_id, "agent2b_counted")
 
 
 def _record_failure(run_id: str, agent_name: str, error: Exception) -> None:

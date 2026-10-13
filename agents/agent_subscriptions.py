@@ -116,7 +116,32 @@ DEFAULT_SECTIONS = [
     "Research Spotlights",
 ]
 
-limiter = Limiter(key_func=get_remote_address)
+_KEY_LOG_BUDGET = 20
+
+
+def _client_key(request: Request) -> str:
+    """Address the rate limiter counts against.
+
+    On Cloud Run the TCP peer is Google's front end, so get_remote_address would put every caller in one
+    bucket. The front end appends the real caller to X-Forwarded-For; entries before it are client-supplied
+    and untrusted, so only the last one is used. Anywhere else (local runs, tests) the peer address is used.
+    """
+    global _KEY_LOG_BUDGET
+    peer = get_remote_address(request)
+    key = peer
+    hops = 0
+    if os.environ.get("K_SERVICE"):
+        parts = [p.strip() for p in request.headers.get("x-forwarded-for", "").split(",") if p.strip()]
+        hops = len(parts)
+        if parts:
+            key = parts[-1]
+    if _KEY_LOG_BUDGET > 0:
+        _KEY_LOG_BUDGET -= 1
+        print(f"[subscriptions]  limiter key: forwarded hops={hops}, same as peer={key == peer}", flush=True)
+    return key
+
+
+limiter = Limiter(key_func=_client_key)
 router  = APIRouter()
 
 

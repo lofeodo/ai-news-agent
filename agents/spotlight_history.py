@@ -20,23 +20,31 @@ def _local_path(data_dir: str) -> str:
     return os.path.join(data_dir, "spotlighted_papers.json")
 
 
-def load_seen_ids(use_firestore: bool, project: str, data_dir: str, run_id: str | None = None) -> set[str]:
+class SeenIds(set):
+    """Ids already spotlighted. `failed` is True when the history could not be read, so the set is
+    empty for the wrong reason and the caller can say so."""
+    failed = False
+
+
+def load_seen_ids(use_firestore: bool, project: str, data_dir: str, run_id: str | None = None) -> SeenIds:
     """arXiv ids spotlighted by earlier runs. Papers recorded by `run_id` itself are excluded, so a
     retry of the same run re-selects instead of treating its own earlier pick as 'seen'."""
     try:
         if use_firestore:
             from google.cloud import firestore
             db = firestore.Client(project=project)
-            return {d.id for d in db.collection(COLLECTION).stream()
-                    if (d.to_dict() or {}).get("run_id") != run_id}
+            return SeenIds(d.id for d in db.collection(COLLECTION).stream()
+                           if (d.to_dict() or {}).get("run_id") != run_id)
         path = _local_path(data_dir)
         if not os.path.exists(path):
-            return set()
+            return SeenIds()
         with open(path, "r", encoding="utf-8") as f:
-            return {aid for aid, rec in json.load(f).items() if rec.get("run_id") != run_id}
+            return SeenIds(aid for aid, rec in json.load(f).items() if rec.get("run_id") != run_id)
     except Exception as e:
         print(f"[spotlight] could not load history, continuing without it: {e}", flush=True)
-        return set()
+        seen = SeenIds()
+        seen.failed = True
+        return seen
 
 
 def is_debug_run(use_firestore: bool, project: str, run_id: str, db=None) -> bool:

@@ -100,11 +100,12 @@ def fetch_papers():
     return papers
 
 
-def select_trending_papers(run_id: str):
+def select_trending_papers(run_id: str, seen: set | None = None):
     """The SAMPLE_SIZE most-upvoted HF Daily Papers of the last TRENDING_LOOKBACK_DAYS that no earlier
     run spotlighted. Returns papers carrying `upvotes` and `community_traction`; raises if HF or the
     arXiv lookup fails or yields too few papers (the caller falls back to the random sample)."""
-    seen = spotlight_history.load_seen_ids(USE_FIRESTORE, GCP_PROJECT_ID, DATA_DIR, run_id)
+    if seen is None:
+        seen = spotlight_history.load_seen_ids(USE_FIRESTORE, GCP_PROJECT_ID, DATA_DIR, run_id)
     print(f"[trending] {len(seen)} papers spotlighted before", flush=True)
 
     candidates = trending_papers.fetch_hf_candidates(HF_DAILY_PAPERS_URL, TRENDING_LOOKBACK_DAYS)
@@ -282,12 +283,18 @@ def run(run_id: str):
     start_time = datetime.now()
 
     try:
+        seen = spotlight_history.load_seen_ids(USE_FIRESTORE, GCP_PROJECT_ID, DATA_DIR, run_id)
+        warning = None
+        if seen.failed:
+            warning = "spotlight history could not be read, so a paper from an earlier week may repeat"
+            print(f"[spotlight] WARNING: {warning}", flush=True)
         try:
-            sampled = select_trending_papers(run_id)
+            sampled = select_trending_papers(run_id, seen)
             print(f"[trending] scoring the {len(sampled)} most-upvoted unspotlighted papers", flush=True)
         except Exception as e:
             print(f"[trending] falling back to a random sample of recent ArXiv papers: {e}", flush=True)
-            sampled = sample_papers(fetch_papers())
+            fresh = [p for p in fetch_papers() if trending_papers.base_arxiv_id(p["id"]) not in seen]
+            sampled = sample_papers(fresh)
         sampled = [{**p, "hf_url": trending_papers.hf_paper_url(p["id"])} for p in sampled]
         scored = score_all_papers(sampled)
 
@@ -340,6 +347,7 @@ def run(run_id: str):
                 {
                     "scored_papers": top_papers,
                     "paper_candidates": paper_candidates,
+                    **({"agent1a_warning": warning} if warning else {}),
                     # Aware UTC, not start_time.isoformat() — start_time is a
                     # naive local() timestamp used for elapsed-time math below;
                     # writing it here used to overwrite the orchestrator's

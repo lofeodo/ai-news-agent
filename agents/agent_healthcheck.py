@@ -171,6 +171,8 @@ def _diagnose(doc: dict, mode: str = "send") -> list[str]:
 def _notes(doc: dict, mode: str = "send") -> list[str]:
     """Things worth a line in the report that do not mark the run as unhealthy."""
     notes = []
+    if doc.get("agent1a_warning"):
+        notes.append(f"Paper selection: {doc['agent1a_warning']}.")
     summary = doc.get("agent4_send_summary") or {}
     total, sent, failed = summary.get("total", 0), summary.get("sent", 0), summary.get("failed", 0)
     if mode != "draft" and failed and sent and failed / total < config.SEND_FAILURE_ALERT_RATIO:

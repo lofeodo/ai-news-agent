@@ -56,6 +56,36 @@ def is_debug_run(use_firestore: bool, project: str, run_id: str, db=None) -> boo
         return False
 
 
+def unrecord_spotlight(arxiv_ids: list[str], run_id: str, use_firestore: bool, project: str, data_dir: str) -> int:
+    """Remove picks that `run_id` itself recorded (never another run's). Returns how many were removed."""
+    removed = 0
+    try:
+        if use_firestore:
+            from google.cloud import firestore
+            db = firestore.Client(project=project)
+            for aid in arxiv_ids:
+                ref = db.collection(COLLECTION).document(aid)
+                snap = ref.get()
+                if snap.exists and (snap.to_dict() or {}).get("run_id") == run_id:
+                    ref.delete()
+                    removed += 1
+        else:
+            path = _local_path(data_dir)
+            if not os.path.exists(path):
+                return 0
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            for aid in arxiv_ids:
+                if (data.get(aid) or {}).get("run_id") == run_id:
+                    del data[aid]
+                    removed += 1
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        print(f"[spotlight] could not remove spotlight record: {e}", flush=True)
+    return removed
+
+
 def record_spotlight(papers: list[dict], run_id: str, use_firestore: bool, project: str, data_dir: str) -> int:
     """papers: [{arxiv_id, title}]. Returns how many were recorded (0 on error)."""
     now = datetime.now(timezone.utc).isoformat()

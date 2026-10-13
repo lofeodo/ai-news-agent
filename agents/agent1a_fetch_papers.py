@@ -23,7 +23,7 @@ import spotlight_history
 import trending_papers
 from config import (
     MAX_FETCH, SAMPLE_SIZE, LOOKBACK_HOURS, DATA_DIR, SCORING_MODEL, MAX_TOKENS, WORD_CUTOFF,
-    GCP_PROJECT_ID, TOPIC_PAPERS_SCORED, USE_FIRESTORE, PAPERS_IN_NEWSLETTER,
+    GCP_PROJECT_ID, TOPIC_PAPERS_SCORED, USE_FIRESTORE, PAPERS_IN_NEWSLETTER, PAPER_FALLBACK_CANDIDATES,
     TRENDING_LOOKBACK_DAYS, HF_DAILY_PAPERS_URL, TRACTION_MAX_POINTS, MAX_SCORE,
 )
 
@@ -290,6 +290,7 @@ def run(run_id: str):
         successful = [r for r in scored if r["scores"] is not None]
         failed = [r for r in scored if r["scores"] is None]
         top_papers = successful[:PAPERS_IN_NEWSLETTER]
+        paper_candidates = successful[PAPERS_IN_NEWSLETTER:PAPERS_IN_NEWSLETTER + PAPER_FALLBACK_CANDIDATES]
 
         elapsed = (datetime.now() - start_time).total_seconds()
         print(f"\n--- Done in {elapsed:.1f}s ---")
@@ -322,6 +323,7 @@ def run(run_id: str):
                 "total_scored": len(successful),
                 "total_failed": len(failed),
                 "top_papers": top_papers,
+                "paper_candidates": paper_candidates,
                 "all_scored": scored
             }, f, indent=2, ensure_ascii=False)
 
@@ -333,6 +335,7 @@ def run(run_id: str):
             db.collection("pipeline_runs").document(run_id).set(
                 {
                     "scored_papers": top_papers,
+                    "paper_candidates": paper_candidates,
                     # Aware UTC, not start_time.isoformat() — start_time is a
                     # naive local() timestamp used for elapsed-time math below;
                     # writing it here used to overwrite the orchestrator's

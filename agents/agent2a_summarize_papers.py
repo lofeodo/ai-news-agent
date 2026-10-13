@@ -150,6 +150,78 @@ def validate_summary(summary: str, paper_id: str) -> bool:
 # Main
 # ---------------------------------------------------------------------------
 
+def _summarize_one(paper: dict, prompt_template: str, client) -> tuple[dict, dict | None]:
+    """Summarize one paper. Returns (result, source); source is None when the summary failed."""
+    paper_id = paper["id"].split("/")[-1]
+    print(f"{paper['title'][:80]}...")
+
+    text = download_and_extract(paper["pdf_url"], paper_id)
+    used_fallback = text is None
+    if used_fallback:
+        print(f"  [pdf]      using abstract+reasoning fallback")
+        text = fallback_text(paper)
+
+    try:
+        summary = summarize_paper(paper, text, prompt_template, client)
+    except Exception as e:
+        print(f"  [error]    {paper_id}: {e}")
+        return {**paper, "summary": None, "used_fallback": used_fallback, "summary_error": str(e)}, None
+
+    validate_summary(summary, paper_id)
+    source = {"ident": paper["id"], "title": paper["title"], "text": text, "used_fallback": used_fallback}
+    print(f"  [done]     ({'fallback' if used_fallback else 'full PDF'})")
+    return {
+        "id":            paper["id"],
+        "title":         paper["title"],
+        "authors":       paper["authors"],
+        "published":     paper["published"],
+        "pdf_url":       paper["pdf_url"],
+        "hf_url":        paper.get("hf_url"),
+        "categories":    paper["categories"],
+        "scores":        paper["scores"],
+        "summary":       summary,
+        "used_fallback": used_fallback,
+        "summary_error": None,
+    }, source
+
+
+def summarize_with_fallback(papers: list, candidates: list, prompt_template: str, client) -> tuple[list, list, bool]:
+    """Summarize the picks. If none of them gets a summary, try the next-best candidates in rank order and
+    ship the first that works. Raises if no paper at all can be summarized.
+    Returns (results, sources, replaced) where replaced says a candidate stood in for the picks."""
+    results, sources = [], []
+    for i, paper in enumerate(papers, 1):
+        print(f"[{i}/{len(papers)}] ", end="")
+        result, source = _summarize_one(paper, prompt_template, client)
+        results.append(result)
+        if source:
+            sources.append(source)
+    if any(r.get("summary") for r in results):
+        return results, sources, False
+
+    for i, paper in enumerate(candidates, 1):
+        print(f"[fallback {i}/{len(candidates)}] ", end="")
+        result, source = _summarize_one(paper, prompt_template, client)
+        if source:
+            return [result], [source], True
+    raise RuntimeError(f"no spotlight paper could be summarized ({len(papers)} picks, {len(candidates)} fallbacks tried)")
+
+
+def _swap_recorded_pick(run_id: str, picks: list, results: list) -> None:
+    """A fallback paper stands in for the top pick: record it as the spotlight and drop the pick.
+    Debug runs record nothing (see agent1a), so there is nothing to change for them."""
+    import spotlight_history
+    import trending_papers
+    if spotlight_history.is_debug_run(USE_FIRESTORE, GCP_PROJECT_ID, run_id):
+        return
+    spotlight_history.unrecord_spotlight([trending_papers.base_arxiv_id(p["id"]) for p in picks],
+                                         run_id, USE_FIRESTORE, GCP_PROJECT_ID, DATA_DIR)
+    spotlight_history.record_spotlight(
+        [{"arxiv_id": trending_papers.base_arxiv_id(r["id"]), "title": r["title"]} for r in results],
+        run_id, USE_FIRESTORE, GCP_PROJECT_ID, DATA_DIR)
+    print("[agent2a]  spotlight moved to the next-best paper", flush=True)
+
+
 def increment_and_check(run_id: str) -> bool:
     """Count this stage once on the run doc. True if this call made both agent2a and agent2b done.
 
@@ -193,55 +265,22 @@ def run(run_id: str):
             papers   = doc.get("scored_papers")
             if papers is None:
                 raise RuntimeError(f"[agent2a] 'scored_papers' missing from Firestore document run_id={run_id}")
+            candidates = doc.get("paper_candidates") or []
             print(f"[agent2a]  Loaded {len(papers)} papers from Firestore")
         else:
             in_path = os.path.join(DATA_DIR, "scored_papers.json")
             with open(in_path, "r", encoding="utf-8") as f:
                 scored = json.load(f)
             papers = scored["top_papers"]
+            candidates = scored.get("paper_candidates") or []
         print(f"Summarizing {len(papers)} papers...\n")
 
         client = tracing.make_client("agent2a", run_id)
-        results = []
-        sources = []
 
-        for i, paper in enumerate(papers, 1):
-            paper_id = paper["id"].split("/")[-1]
-            print(f"[{i}/{len(papers)}] {paper['title'][:80]}...")
+        results, sources, replaced = summarize_with_fallback(papers, candidates, prompt_template, client)
 
-            text = download_and_extract(paper["pdf_url"], paper_id)
-            used_fallback = text is None
-            if used_fallback:
-                print(f"  [pdf]      using abstract+reasoning fallback")
-                text = fallback_text(paper)
-
-            try:
-                summary = summarize_paper(paper, text, prompt_template, client)
-            except Exception as e:
-                print(f"  [error]    {paper_id}: {e}")
-                results.append({**paper, "summary": None, "used_fallback": used_fallback, "summary_error": str(e)})
-                continue
-
-            validate_summary(summary, paper_id)
-            sources.append({"ident": paper["id"], "title": paper["title"], "text": text,
-                            "used_fallback": used_fallback})
-
-            status = "fallback" if used_fallback else "full PDF"
-            print(f"  [done]     ({status})")
-
-            results.append({
-                "id":            paper["id"],
-                "title":         paper["title"],
-                "authors":       paper["authors"],
-                "published":     paper["published"],
-                "pdf_url":       paper["pdf_url"],
-                "hf_url":        paper.get("hf_url"),
-                "categories":    paper["categories"],
-                "scores":        paper["scores"],
-                "summary":       summary,
-                "used_fallback": used_fallback,
-                "summary_error": None,
-            })
+        if replaced:
+            _swap_recorded_pick(run_id, papers, results)
 
         elapsed = (datetime.now() - start_time).total_seconds()
         successful = [r for r in results if r["summary"]]

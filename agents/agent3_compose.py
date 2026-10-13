@@ -360,6 +360,14 @@ def _strip_markdown_headers(text: str) -> str:
     return re.sub(r"^#{1,6}\s+[^\n]*\n?", "", text, flags=re.MULTILINE).strip()
 
 
+def require_summarized_papers(papers: list) -> list:
+    """Keep only papers that have a summary; an issue with no summarized spotlight is not composed."""
+    kept = [p for p in papers if (p.get("summary") or "").strip()]
+    if not kept:
+        raise RuntimeError("[agent3] no spotlight paper has a summary")
+    return kept
+
+
 def render_paper_card(paper: dict) -> str:
     """The spotlight paper: a dark, amber-accented hero block, visually distinct from the white news cards."""
     scores       = paper.get("scores") or {}
@@ -867,6 +875,7 @@ def run(run_id: str, force: bool = False):
             papers      = paper_data["papers"]
             by_category = news_data["by_category"]
 
+        papers = require_summarized_papers(papers)
         client = tracing.make_client("agent3", run_id)
 
         print("\n=== Selecting articles per category ===")

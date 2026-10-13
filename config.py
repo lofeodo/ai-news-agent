@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 MAX_FETCH = 500              # safety ceiling for ArXiv API
 SAMPLE_SIZE = 35             # papers to score per week
 WORD_CUTOFF = 5000           # papers — covers method + results, excludes references (~6-7k tokens)
+PAPER_FALLBACK_CANDIDATES = 5   # next-best scored papers kept in case the top pick cannot be summarized
 PAPERS_IN_NEWSLETTER = 1     # how many top-scored papers appear in the newsletter (one spotlight per week)
 MIN_NEWS_ARTICLES = 40       # agent1b notes a thin pool when fewer articles are selected in total
 SEND_FAILURE_ALERT_RATIO = 0.02  # send check: this share of failed sends or more is a problem; fewer is informational

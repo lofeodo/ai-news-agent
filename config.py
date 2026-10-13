@@ -10,6 +10,7 @@ WORD_CUTOFF = 5000           # papers — covers method + results, excludes refe
 PAPERS_IN_NEWSLETTER = 1     # how many top-scored papers appear in the newsletter (one spotlight per week)
 MIN_NEWS_ARTICLES = 40       # agent1b notes a thin pool when fewer articles are selected in total
 SEND_FAILURE_ALERT_RATIO = 0.02  # send check: this share of failed sends or more is a problem; fewer is informational
+MIN_VARIANT_ARTICLES = 5         # draft check: each composed variant carries at least this many article links
 MIN_ARTICLES_PER_CATEGORY = 3    # ... or fewer than this in any one category
 ARTICLE_WORD_LIMIT = 1500 # news articles — most articles are under this anyway
 

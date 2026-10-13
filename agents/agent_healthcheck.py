@@ -47,6 +47,7 @@ CHECK_MODES = ("draft", "send")
 VARIANT_KEYS = ("0_0", "1_0", "0_1", "1_1")
 MIN_VARIANT_CHARS = 5000
 PLACEHOLDERS = ("{{UNSUBSCRIBE_URL}}", "{{PREFERENCES_URL}}")
+ARTICLE_LINK_MARKER = "Read&nbsp;&#8594;"   # the link text agent3 puts on every article card
 
 # (Firestore field, human label) — checked in pipeline order.
 EXPECTED_STAGES = [
@@ -110,6 +111,12 @@ def _check_composition(doc: dict) -> list[str]:
         for ph in PLACEHOLDERS:
             if ph not in html:
                 problems.append(f"newsletter variant {key} has no {ph} placeholder, so agent4 cannot personalize it")
+        if "<!-- SECTION:Research Spotlights -->" not in html:
+            problems.append(f"newsletter variant {key} has no spotlight paper section")
+        n_articles = html.count(ARTICLE_LINK_MARKER)
+        if n_articles < config.MIN_VARIANT_ARTICLES:
+            problems.append(f"newsletter variant {key} has only {n_articles} article links "
+                            f"(expected at least {config.MIN_VARIANT_ARTICLES})")
 
     subject = doc.get("newsletter_subject") or ""
     started_raw = doc.get("started_at")

@@ -82,3 +82,18 @@ def test_thin_news_pool_is_reported():
     assert "only 0 articles" in a1b.pool_warning({})
     doc = {**_composed_doc(), "agent1b_warning": "only 3 articles selected"}
     assert any("news pool is thin" in p for p in hc._diagnose(doc, "draft"))
+
+
+def _sent_doc(total, sent, failed):
+    return {**_composed_doc(), "agent4_send_summary": {"total": total, "sent": sent, "failed": failed}}
+
+
+def test_send_failures_below_two_percent_are_informational():
+    doc = _sent_doc(100, 99, 1)
+    assert hc._diagnose(doc, "send") == []
+    assert "1/100" in hc._notes(doc, "send")[0]
+
+
+def test_send_failures_at_or_above_two_percent_are_a_problem():
+    assert any("3/100" in p for p in hc._diagnose(_sent_doc(100, 97, 3), "send"))
+    assert any("0/50" in p for p in hc._diagnose(_sent_doc(50, 0, 50), "send"))

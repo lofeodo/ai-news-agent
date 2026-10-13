@@ -155,10 +155,20 @@ def _diagnose(doc: dict, mode: str = "send") -> list[str]:
         failed = send_summary.get("failed", 0)
         if total and sent == 0:
             problems.append(f"agent4 ran but sent 0/{total} emails (failed={failed})")
-        elif failed:
-            problems.append(f"agent4 had {failed}/{total} failed sends (informational, not necessarily a full failure)")
+        elif total and failed / total >= config.SEND_FAILURE_ALERT_RATIO:
+            problems.append(f"agent4 had {failed}/{total} failed sends")
 
     return problems
+
+
+def _notes(doc: dict, mode: str = "send") -> list[str]:
+    """Things worth a line in the report that do not mark the run as unhealthy."""
+    notes = []
+    summary = doc.get("agent4_send_summary") or {}
+    total, sent, failed = summary.get("total", 0), summary.get("sent", 0), summary.get("failed", 0)
+    if mode != "draft" and failed and sent and failed / total < config.SEND_FAILURE_ALERT_RATIO:
+        notes.append(f"{failed}/{total} sends failed (under {config.SEND_FAILURE_ALERT_RATIO:.0%}, informational).")
+    return notes
 
 
 def _format_drift(result: dict) -> str:
@@ -430,6 +440,9 @@ def _run(run_id: str, mode: str = "send") -> None:
         problems.append("summary faithfulness dropped versus the prior weeks (see the judge section below)")
     drift_text = (f"{_drift_section(db, checked_run_id, doc)}\n\n{_usage_section(db, checked_run_id, doc)}"
                   f"\n\n{judge_text}")
+    notes = _notes(doc, mode)
+    if notes:
+        drift_text = "\n".join(notes) + "\n\n" + drift_text
     if draft_only:
         drift_text = ("DRAFT CHECK: this verifies the newsletter composed properly. It sends Monday 7:00 AM; "
                       "delivery is checked by the Monday 7:10 send report.\n\n" + drift_text)

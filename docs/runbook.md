@@ -94,6 +94,12 @@ Which secret feeds which service is in the service definitions (`gcloud run serv
 
 For the Firebase Admin signing identity (Google Sign-In token exchange), see CLAUDE.md: it needs `roles/iam.serviceAccountTokenCreator` on the service account itself.
 
+## 4b. Sign-up pacing
+- Confirmation and link emails are paced per address and per day (`agents/mail_throttle.py`, settings in `docs/configuration.md`). A skipped mail still gets the normal answer on the page; the service logs `mail skipped: <reason>` and, at the daily ceiling, an ERROR line. If a real person says no mail arrived, check those lines first.
+- State lives in Firestore collections `mail_throttle` and `mail_budget`; clearing a doc resets that address or day.
+- One-time Firestore TTL rules (not yet created) keep these tidy: field `expires_at` on collection groups `subscribers` (never-confirmed sign-ups, 7 days), `mail_throttle` and `mail_budget`.
+- The rate limiter counts in each instance's memory, keyed on the last `X-Forwarded-For` entry on Cloud Run; the log line `limiter key: forwarded hops=N` shows what it saw.
+
 ## 5. Known gaps
 - No alarm on run document size.
 - The alert path shares SendGrid with the newsletter.

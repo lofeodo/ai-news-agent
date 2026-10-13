@@ -38,6 +38,7 @@ logger = logging.getLogger(__name__)
 
 from auth_middleware import get_current_user, get_verified_user
 import click_counts
+import mail_throttle
 import run_kind
 import sendgrid_webhook
 from prompt_guard import GUARD_TOPIC_REFINE, neutralize_tags
@@ -705,13 +706,19 @@ def subscribe(request: Request, req: SubscribeRequest):
     if doc.exists and doc.to_dict().get("active"):
         # Already active — tell them via email (NOT via the HTTP response,
         # which stays identical to the new-subscriber case).
-        _send_email(email, f"You're already subscribed to {NEWSLETTER_NAME}",
-                    _already_subscribed_email_html(doc.to_dict()["token"]))
+        if mail_throttle.allow_mail(db, email):
+            _send_email(email, f"You're already subscribed to {NEWSLETTER_NAME}",
+                        _already_subscribed_email_html(doc.to_dict()["token"]))
         return {"status": "ok"}
 
     # Enforce subscriber cap before accepting a new subscription.
     if _active_subscriber_count(db) >= MAX_SUBSCRIBERS:
         raise HTTPException(status_code=503, detail="service_unavailable")
+
+    # Paced per address: a refused call looks the same to the caller and changes nothing, so a stranger's
+    # pending confirmation link is not replaced by repeated requests either.
+    if not mail_throttle.allow_mail(db, email):
+        return {"status": "ok"}
 
     # New subscriber, or inactive one re-subscribing: (re)generate the token.
     # Note: regenerating invalidates links in previously sent emails — fine.
@@ -815,7 +822,7 @@ def request_unsubscribe(request: Request, req: EmailOnlyRequest):
     db  = _db()
     doc = db.collection(SUBSCRIBERS_COLLECTION).document(email).get()
 
-    if doc.exists and doc.to_dict().get("active"):
+    if doc.exists and doc.to_dict().get("active") and mail_throttle.allow_mail(db, email):
         _send_email(email, f"Confirm unsubscription from {NEWSLETTER_NAME}",
                     _unsubscribe_email_html(doc.to_dict()["token"]))
     # Same response whether or not the subscriber exists.
@@ -829,7 +836,7 @@ def request_preferences(request: Request, req: EmailOnlyRequest):
     db  = _db()
     doc = db.collection(SUBSCRIBERS_COLLECTION).document(email).get()
 
-    if doc.exists and doc.to_dict().get("active"):
+    if doc.exists and doc.to_dict().get("active") and mail_throttle.allow_mail(db, email):
         _send_email(email, f"Manage your {NEWSLETTER_NAME} preferences",
                     _preferences_email_html(doc.to_dict()["token"]))
     return {"status": "ok"}

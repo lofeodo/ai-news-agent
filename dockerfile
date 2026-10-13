@@ -1,6 +1,6 @@
 # Dockerfile
 #
-# Single Dockerfile for all five agents.
+# Single Dockerfile for every service (agents, orchestrator, subscriptions, health check).
 # Build with --build-arg AGENT_NAME=<name> to tag which agent this image runs.
 #
 # Example builds:
@@ -25,9 +25,14 @@ WORKDIR /app
 # --no-install-recommends keeps the layer small.
 # We clean up apt caches in the same RUN command to avoid bloating the layer.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libxml2-dev \
-    libxslt1-dev \
+    libxml2 \
+    libxslt1.1 \
     && rm -rf /var/lib/apt/lists/*
+
+# ── Unprivileged user ─────────────────────────────────────────────────────────
+# The app runs as "app" with its own home directory (newspaper3k keeps a cache
+# under ~/.newspaper_scraper).
+RUN useradd --create-home --uid 10001 app
 
 # ── Python dependencies ───────────────────────────────────────────────────────
 # Copy requirements.txt BEFORE the rest of the code.
@@ -39,7 +44,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # ── Application code ──────────────────────────────────────────────────────────
 # Copy everything else after deps. Changes to .py files won't invalidate
 # the expensive pip install layer above.
-COPY . .
+COPY --chown=app:app . .
+RUN mkdir -p /app/data && chown app:app /app /app/data
+USER app
 
 # ── Agent selection ───────────────────────────────────────────────────────────
 # ARG is a build-time variable. It gets baked into the image as an ENV var

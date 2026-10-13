@@ -115,7 +115,7 @@ def test_confirm_link_inside_window_still_works(api, monkeypatch):
     api.store["a@example.com"] = _sub(active=False, expires=FUTURE)
     api.client.get("/confirm", params={"token": "tok"})
     stored = api.store["a@example.com"]
-    assert stored["active"] is True and stored["token"] != "tok"
+    assert stored["active"] is True and stored["token"] == "tok"
 
 
 @pytest.fixture

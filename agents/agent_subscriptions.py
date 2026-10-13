@@ -16,6 +16,7 @@
 # Website-initiated endpoints ALWAYS return 200, whether or not the email
 # exists — otherwise the form becomes an oracle for checking who's subscribed.
 
+import functools
 import hmac
 import logging
 import os
@@ -76,6 +77,10 @@ EMAIL_RE = ids.EMAIL_RE
 # Token TTLs: short window for confirmation, long-lived for action links
 CONFIRM_TOKEN_TTL = timedelta(hours=48)
 ACTION_TOKEN_TTL  = timedelta(days=365)
+
+SENDGRID_TIMEOUT_SECONDS = float(os.environ.get("SENDGRID_TIMEOUT_SECONDS", "8"))
+REFINE_TIMEOUT_SECONDS   = 15
+RESPONSE_FLOOR_SECONDS   = float(os.environ.get("RESPONSE_FLOOR_SECONDS", "2.0"))
 
 # Admin token for the /stats endpoint (the endpoint is off while unset)
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "")
@@ -219,6 +224,21 @@ def _active_subscriber_count(db) -> int:
         return sum(1 for _ in col.where("active", "==", True).stream())
 
 
+def _claim_latest(db, ref) -> bool:
+    """Atomically mark the "last week's edition" mail as taken; True for exactly one caller."""
+    from google.cloud import firestore as _fs
+
+    @_fs.transactional
+    def _txn(transaction):
+        data = ref.get(transaction=transaction).to_dict() or {}
+        if data.get("latest_sent"):
+            return False
+        transaction.update(ref, {"latest_sent": True})
+        return True
+
+    return _txn(db.transaction())
+
+
 def _consume_once(db, collection: str, doc_id: str) -> dict | None:
     """Atomically read-and-delete a single-use doc. None if missing/expired.
 
@@ -312,6 +332,27 @@ def _get_sendgrid_webhook_public_key() -> str:
     return key
 
 
+def _hold_until(start: float, floor: float) -> None:
+    remaining = floor - (time.monotonic() - start)
+    if remaining > 0:
+        time.sleep(remaining)
+
+
+def steady_response_time(fn):
+    """Take at least RESPONSE_FLOOR_SECONDS, so the time a mail route takes does not depend on the address.
+
+    Slept inside the request on purpose: the service gets no CPU between requests, so a background send could stall.
+    """
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        start = time.monotonic()
+        try:
+            return fn(*args, **kwargs)
+        finally:
+            _hold_until(start, RESPONSE_FLOOR_SECONDS)
+    return wrapper
+
+
 def _send_email(to_email: str, subject: str, html_body: str) -> None:
     import json
     import urllib.request
@@ -332,7 +373,7 @@ def _send_email(to_email: str, subject: str, html_body: str) -> None:
         },
         method="POST",
     )
-    with urllib.request.urlopen(req) as resp:
+    with urllib.request.urlopen(req, timeout=SENDGRID_TIMEOUT_SECONDS) as resp:
         print(f"[subscriptions]  email sent — status {resp.status}", flush=True)
 
 
@@ -742,6 +783,7 @@ async def sendgrid_events(request: Request):
 
 @router.post("/subscribe")
 @limiter.limit("5/minute")
+@steady_response_time
 def subscribe(request: Request, req: SubscribeRequest):
     email = req.email.strip().lower()
     if not EMAIL_RE.match(email):
@@ -856,7 +898,7 @@ def newsletter_preview(request: Request):
 
 @router.get("/auth/admin/preview")
 @limiter.limit("30/minute")
-async def admin_preview(
+def admin_preview(
     request: Request,
     run: Annotated[str, Query(max_length=64)] = "latest",
     variant: Annotated[str, Query(max_length=8)] = "",
@@ -885,6 +927,7 @@ async def admin_preview(
 
 @router.post("/request-unsubscribe")
 @limiter.limit("5/minute")
+@steady_response_time
 def request_unsubscribe(request: Request, req: EmailOnlyRequest):
     email = ids.normalize_email(req.email)
     if email is None:
@@ -901,6 +944,7 @@ def request_unsubscribe(request: Request, req: EmailOnlyRequest):
 
 @router.post("/request-preferences")
 @limiter.limit("5/minute")
+@steady_response_time
 def request_preferences(request: Request, req: EmailOnlyRequest):
     email = ids.normalize_email(req.email)
     if email is None:
@@ -943,28 +987,32 @@ def confirm(
             status=503,
         )
 
-    # Rotate token to a long-lived action token on confirmation.
-    new_token  = secrets.token_urlsafe(32)
-    action_exp = datetime.now(timezone.utc) + ACTION_TOKEN_TTL
+    if data.get("active"):
+        # A repeat click, a double click or a mail scanner's visit: already done, nothing more to do.
+        return _full_page("Subscription confirmed 🎉",
+                          f"You'll receive {NEWSLETTER_NAME} every Monday morning.")
+
+    # The link's token stays: the same inbox holds it, and a second visit must still find the subscriber.
     from google.cloud import firestore as _fs
     doc.reference.update({
         "active":            True,
         "confirmed_at":      datetime.now(timezone.utc),   # CASL proof of consent
-        "token":             new_token,
-        "token_expires_at":  action_exp,
+        "token_expires_at":  datetime.now(timezone.utc) + ACTION_TOKEN_TTL,
         "expires_at":        _fs.DELETE_FIELD,
     })
     print("[subscriptions]  confirmed subscriber", flush=True)
 
-    # Send last week's newsletter if they asked for it (once — guard against
-    # double-clicks on the confirm link).
-    if data.get("send_latest") and not data.get("latest_sent"):
-        html = _latest_newsletter_html(db, unsubscribe_token=new_token, prefs=data.get("prefs") or {})
-        if html:
-            _send_email(data["email"],
-                        f"{NEWSLETTER_NAME} — last week's edition",
-                        html)
-            doc.reference.update({"latest_sent": True})
+    # Send last week's newsletter if they asked for it, once: the flag is claimed before sending.
+    if data.get("send_latest") and _claim_latest(db, doc.reference):
+        try:
+            html = _latest_newsletter_html(db, unsubscribe_token=data["token"], prefs=data.get("prefs") or {})
+            if html:
+                _send_email(data["email"], f"{NEWSLETTER_NAME} — last week's edition", html)
+            else:
+                doc.reference.update({"latest_sent": False})
+        except Exception:
+            doc.reference.update({"latest_sent": False})
+            raise
 
     return _full_page("Subscription confirmed 🎉",
                  f"You'll receive {NEWSLETTER_NAME} every Monday morning.")
@@ -1088,7 +1136,7 @@ USERS_COLLECTION = "users"
 
 @router.get("/auth/me")
 @limiter.limit("30/minute")
-async def auth_me(request: Request, user: dict = Depends(get_current_user)):
+def auth_me(request: Request, user: dict = Depends(get_current_user)):
     """Return the current user's profile and subscription status."""
     uid = user["uid"]
     if not user.get("email_verified"):
@@ -1102,13 +1150,16 @@ async def auth_me(request: Request, user: dict = Depends(get_current_user)):
     now   = datetime.now(timezone.utc)
     tier  = _get_user_tier(user)
 
-    db.collection(USERS_COLLECTION).document(uid).set({
+    user_ref = db.collection(USERS_COLLECTION).document(uid)
+    profile = {
         "email":        email,
         "display_name": user.get("name"),
         "provider":     _detect_provider(user),
-        "created_at":   now,
         "tier":         tier,
-    }, merge=True)
+    }
+    if not (user_ref.get().to_dict() or {}).get("created_at"):
+        profile["created_at"] = now
+    user_ref.set(profile, merge=True)
 
     sub_doc  = db.collection(SUBSCRIBERS_COLLECTION).document(email).get()
     sub_data = sub_doc.to_dict() if sub_doc.exists else None
@@ -1132,8 +1183,11 @@ async def auth_subscribe(request: Request, user: dict = Depends(get_verified_use
         body = await request.json()
     except Exception:
         body = {}
-    send_latest = bool(body.get("send_latest", False))
+    send_latest = bool(body.get("send_latest", False)) if isinstance(body, dict) else False
+    return await run_in_threadpool(_subscribe_account, user, send_latest)
 
+
+def _subscribe_account(user: dict, send_latest: bool) -> dict:
     db    = _db()
     email = user["email"].lower()
     uid   = user["uid"]
@@ -1192,7 +1246,7 @@ async def auth_subscribe(request: Request, user: dict = Depends(get_verified_use
 
 @router.post("/auth/unsubscribe")
 @limiter.limit("10/minute")
-async def auth_unsubscribe(request: Request, user: dict = Depends(get_verified_user)):
+def auth_unsubscribe(request: Request, user: dict = Depends(get_verified_user)):
     """Unsubscribe the authenticated user."""
     db    = _db()
     email = user["email"].lower()
@@ -1359,7 +1413,7 @@ def auth_google_callback(
 
 @router.post("/auth/google/exchange")
 @limiter.limit("10/minute")
-async def auth_google_exchange(request: Request, req: GoogleExchangeRequest) -> dict:
+def auth_google_exchange(request: Request, req: GoogleExchangeRequest) -> dict:
     """Redeem a one-time exchange code (minted by /auth/google/callback) for a
     Firebase custom token. This is the only step of the flow reached via
     fetch() rather than a top-level navigation, so it's the only one that
@@ -1382,7 +1436,7 @@ async def auth_google_exchange(request: Request, req: GoogleExchangeRequest) -> 
 
 @router.get("/auth/preferences")
 @limiter.limit("10/minute")
-async def auth_get_preferences(request: Request, user: dict = Depends(get_verified_user)):
+def auth_get_preferences(request: Request, user: dict = Depends(get_verified_user)):
     """Return the authenticated user's current preferences and tier."""
     db    = _db()
     email = user["email"].lower()
@@ -1396,7 +1450,7 @@ async def auth_get_preferences(request: Request, user: dict = Depends(get_verifi
 
 @router.post("/auth/preferences")
 @limiter.limit("10/minute")
-async def auth_update_preferences(
+def auth_update_preferences(
     request: Request,
     req: AuthPreferencesUpdate,
     user: dict = Depends(get_verified_user),
@@ -1420,7 +1474,7 @@ async def auth_update_preferences(
 
 @router.post("/auth/sections/refine")
 @limiter.limit("5/minute")
-async def auth_sections_refine(
+def auth_sections_refine(
     request: Request,
     req: SectionRefineRequest,
     user: dict = Depends(get_verified_user),
@@ -1432,7 +1486,7 @@ async def auth_sections_refine(
 
     raw = req.raw_topic.strip()
     try:
-        client = anthropic.Anthropic(api_key=_get_anthropic_api_key())
+        client = anthropic.Anthropic(api_key=_get_anthropic_api_key(), timeout=REFINE_TIMEOUT_SECONDS)
         message = client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=50,
@@ -1457,7 +1511,7 @@ async def auth_sections_refine(
 
 @router.get("/auth/sections")
 @limiter.limit("10/minute")
-async def auth_get_sections(request: Request, user: dict = Depends(get_verified_user)):
+def auth_get_sections(request: Request, user: dict = Depends(get_verified_user)):
     """Return the user's section configuration (premium only)."""
     email = user.get("email", "").lower()
     if _get_user_tier(user) != "premium":
@@ -1472,7 +1526,7 @@ async def auth_get_sections(request: Request, user: dict = Depends(get_verified_
 
 @router.post("/auth/sections")
 @limiter.limit("10/minute")
-async def auth_update_sections(
+def auth_update_sections(
     request: Request,
     req: SectionConfigUpdate,
     user: dict = Depends(get_verified_user),

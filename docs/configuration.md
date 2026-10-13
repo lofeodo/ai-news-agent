@@ -20,6 +20,7 @@ Credentials (API keys and similar) are supplied to the services at runtime and a
 | `ALLOWED_ORIGINS` | main.py (subscriptions) | Comma-separated CORS origins; required in production |
 | `MAILING_ADDRESS` | agent3 | Physical address in email footer (CASL compliance) |
 | `MAX_SUBSCRIBERS` | agent_subscriptions | Subscriber cap (default `40000`) |
+| `RESPONSE_FLOOR_SECONDS` / `SENDGRID_TIMEOUT_SECONDS` | agent_subscriptions | Minimum response time of the mail routes, and the timeout of outgoing mail calls (defaults `2.0` / `8`) |
 | `MAIL_COOLDOWN_SECONDS` / `MAIL_MAX_PER_ADDRESS_DAILY` | agent_subscriptions | Pacing of confirmation and link emails per address (defaults `60` / `5`) |
 | `MAIL_DAILY_CEILING` | agent_subscriptions | Daily ceiling on those emails (default `1000`); set a very high number to switch it off |
 | `ADMIN_TOKEN` | agent_subscriptions | Token for `GET /stats` (send as `Authorization: Bearer`); the route is off while unset. The home page uses the public `GET /spots` instead |

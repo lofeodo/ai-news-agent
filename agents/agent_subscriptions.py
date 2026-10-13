@@ -149,10 +149,12 @@ def _db():
     return _fs.Client(project=GCP_PROJECT_ID)
 
 
-def _find_by_token(db, token: str):
+def _find_by_token(db, token: str, enforce_expiry: bool = False):
     """Return the subscriber doc snapshot matching this token, or None.
 
-    Returns None if the token is missing, not found, or expired.
+    Returns None if the token is missing or not found. An expiry date only
+    counts for pending (inactive) subscribers or when enforce_expiry is set:
+    the links in sent newsletters keep working for active subscribers.
     """
     if not token:
         return None
@@ -167,7 +169,7 @@ def _find_by_token(db, token: str):
     doc  = docs[0]
     data = doc.to_dict()
     expires_at = data.get("token_expires_at")
-    if expires_at:
+    if expires_at and (enforce_expiry or not data.get("active")):
         now = datetime.now(timezone.utc)
         if getattr(expires_at, "tzinfo", None) is None:
             expires_at = expires_at.replace(tzinfo=timezone.utc)
@@ -822,7 +824,7 @@ def confirm(
         return _INVALID_LINK_PAGE
 
     db  = _db()
-    doc = _find_by_token(db, token)
+    doc = _find_by_token(db, token, enforce_expiry=True)
     if doc is None:
         return _INVALID_LINK_PAGE
 

@@ -65,6 +65,9 @@ SERVICE_BASE_URL  = os.environ.get("SERVICE_BASE_URL", "").rstrip("/")
 # magic link, which lands on a frontend page, not on this API.
 FRONTEND_BASE_URL = os.environ.get("FRONTEND_BASE_URL", "").rstrip("/")
 
+# A sign-up that is never confirmed is left to a Firestore TTL rule on this field (see docs/runbook.md).
+UNCONFIRMED_TTL = timedelta(days=7)
+
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 # Token TTLs: short window for confirmation, long-lived for action links
@@ -723,10 +726,11 @@ def subscribe(request: Request, req: SubscribeRequest):
     # New subscriber, or inactive one re-subscribing: (re)generate the token.
     # Note: regenerating invalidates links in previously sent emails — fine.
     token      = secrets.token_urlsafe(32)
-    expires_at = datetime.now(timezone.utc) + CONFIRM_TOKEN_TTL
-    ref.set({
+    now        = datetime.now(timezone.utc)
+    expires_at = now + CONFIRM_TOKEN_TTL
+    fields = {
         "email":            email,
-        "subscribed_at":    datetime.now(timezone.utc),
+        "subscribed_at":    now,
         "confirmed_at":     None,
         "active":           False,        # double opt-in: activated by /confirm
         "token":            token,
@@ -737,7 +741,14 @@ def subscribe(request: Request, req: SubscribeRequest):
             "include_french": req.prefs.include_french,
             "include_canada": req.prefs.include_canada,
         },
-    }, merge=True)
+    }
+    # Only a doc that was never confirmed may expire; a former subscriber's doc is the record of consent,
+    # so its confirmed_at is kept and it gets no expiry.
+    if doc.exists and doc.to_dict().get("confirmed_at"):
+        del fields["confirmed_at"]
+    else:
+        fields["expires_at"] = now + UNCONFIRMED_TTL
+    ref.set(fields, merge=True)
 
     _send_email(email, f"Confirm your subscription to {NEWSLETTER_NAME}",
                 _confirm_email_html(token))
@@ -874,11 +885,13 @@ def confirm(
     # Rotate token to a long-lived action token on confirmation.
     new_token  = secrets.token_urlsafe(32)
     action_exp = datetime.now(timezone.utc) + ACTION_TOKEN_TTL
+    from google.cloud import firestore as _fs
     doc.reference.update({
         "active":            True,
         "confirmed_at":      datetime.now(timezone.utc),   # CASL proof of consent
         "token":             new_token,
         "token_expires_at":  action_exp,
+        "expires_at":        _fs.DELETE_FIELD,
     })
     print("[subscriptions]  confirmed subscriber", flush=True)
 
@@ -1076,9 +1089,11 @@ async def auth_subscribe(request: Request, user: dict = Depends(get_verified_use
 
     token_val = secrets.token_urlsafe(32)
     if doc.exists:
+        from google.cloud import firestore as _fs
         ref.update({
             "active":           True,
             "confirmed_at":     now,
+            "expires_at":       _fs.DELETE_FIELD,
             "token":            token_val,
             "token_expires_at": now + ACTION_TOKEN_TTL,
             "uid":              uid,

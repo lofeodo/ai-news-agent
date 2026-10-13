@@ -116,3 +116,38 @@ def test_confirm_link_inside_window_still_works(api, monkeypatch):
     api.client.get("/confirm", params={"token": "tok"})
     stored = api.store["a@example.com"]
     assert stored["active"] is True and stored["token"] != "tok"
+
+
+@pytest.fixture
+def signed_in(api, monkeypatch):
+    from auth_middleware import get_verified_user
+    api.client.app.dependency_overrides[get_verified_user] = lambda: {"uid": "u1", "email": "a@example.com"}
+    monkeypatch.setattr(subs, "_active_subscriber_count", lambda db: 0)
+    return api
+
+
+def test_reactivation_stores_a_working_link(signed_in):
+    signed_in.store["a@example.com"] = _sub(token="old", active=False, expires=PAST)
+    assert signed_in.client.post("/auth/subscribe", json={}).json() == {"status": "ok"}
+    stored = signed_in.store["a@example.com"]
+    assert stored["active"] is True and stored["uid"] == "u1"
+    assert stored["token"] != "old"
+    assert stored["token_expires_at"] > NOW + timedelta(days=300)
+    assert signed_in.client.get("/preferences", params={"token": stored["token"]}).status_code == 200
+
+
+def test_reactivation_email_carries_the_new_link(signed_in, monkeypatch):
+    seen = {}
+    monkeypatch.setattr(subs, "_latest_newsletter_html",
+                        lambda db, unsubscribe_token, prefs=None: seen.setdefault("token", unsubscribe_token) and "<p>x</p>")
+    monkeypatch.setattr(subs, "_send_email", lambda *a, **k: None)
+    signed_in.store["a@example.com"] = _sub(token="old", active=False, expires=PAST)
+    signed_in.client.post("/auth/subscribe", json={"send_latest": True})
+    assert seen["token"] == signed_in.store["a@example.com"]["token"] != "old"
+
+
+def test_already_active_subscriber_keeps_link(signed_in):
+    signed_in.store["a@example.com"] = _sub(token="keep", active=True, expires=PAST)
+    assert signed_in.client.post("/auth/subscribe", json={}).json() == {"status": "already_subscribed"}
+    assert signed_in.store["a@example.com"]["token"] == "keep"
+    assert signed_in.store["a@example.com"]["token_expires_at"] == PAST

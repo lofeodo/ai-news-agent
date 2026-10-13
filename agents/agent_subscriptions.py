@@ -1045,11 +1045,13 @@ async def auth_subscribe(request: Request, user: dict = Depends(get_verified_use
     token_val = secrets.token_urlsafe(32)
     if doc.exists:
         ref.update({
-            "active":       True,
-            "confirmed_at": now,
-            "uid":          uid,
-            "send_latest":  send_latest,
-            "latest_sent":  False,
+            "active":           True,
+            "confirmed_at":     now,
+            "token":            token_val,
+            "token_expires_at": now + ACTION_TOKEN_TTL,
+            "uid":              uid,
+            "send_latest":      send_latest,
+            "latest_sent":      False,
         })
     else:
         ref.set({

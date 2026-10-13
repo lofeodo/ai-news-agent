@@ -827,8 +827,12 @@ def _record_failure(run_id: str, agent_name: str, error: Exception) -> None:
         print(f"[{agent_name}]  Failed to record failure to Firestore: {record_error}", flush=True)
 
 
-def run(run_id: str):
-    """Main agent logic. Called by main.py (Cloud Run) or orchestrator.py."""
+def run(run_id: str, force: bool = False):
+    """Main agent logic. Called by main.py (Cloud Run) or orchestrator.py.
+
+    In cloud mode a run that is already composed is left alone unless `force` is set: the first compose
+    shrinks the article pools on the run doc, so a second one would build from what is left.
+    """
     start_time = datetime.now()
 
     try:
@@ -847,6 +851,13 @@ def run(run_id: str):
             by_category = doc.get("news_summaries")
             if papers is None or by_category is None:
                 raise RuntimeError(f"[agent3] 'paper_summaries' or 'news_summaries' missing from Firestore document run_id={run_id}")
+            if doc.get("newsletter_composed"):
+                if not force:
+                    print(f"[agent3]  run {run_id} is already composed, skipping (pass force to recompose)", flush=True)
+                    return
+                if (doc.get("news_filtered") or {}).get("pruned_by_agent3"):
+                    print("[agent3]  WARNING: force on a composed run, whose article pools were already "
+                          "shrunk. Re-run agent2a and agent2b first or the issue is built from what is left.", flush=True)
             print(f"[agent3]  Loaded paper_summaries and news_summaries from Firestore")
         else:
             with open(os.path.join(DATA_DIR, "paper_summaries.json"), "r", encoding="utf-8") as f:

@@ -13,12 +13,13 @@
 # Triggered by a Cloud Scheduler job at 7:00 AM every Monday — separate from the
 # pipeline orchestrator, which drafts the newsletter the day before (Sunday 12:00).
 
+import hashlib
 import json
 import os
 import re
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import NamedTuple
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -41,6 +42,7 @@ NEWSLETTER_NAME      = "Latent SpaceMail"
 SENDER_EMAIL         = "newsletter@lofeodo.com"
 SENDER_NAME          = "Latent SpaceMail"
 SENDGRID_SECRET_NAME = "sendgrid-api-key"
+SENDGRID_TIMEOUT_SECONDS = 30
 USE_SECRET_MANAGER   = os.environ.get("USE_SECRET_MANAGER", "false").lower() == "true"
 
 # Public base URL of the agent-subscriptions service — used to build each
@@ -175,7 +177,7 @@ def send_email(api_key: str, to_email: str, html_body: str, subject: str, click_
         },
         method="POST",
     )
-    with urllib.request.urlopen(req) as resp:
+    with urllib.request.urlopen(req, timeout=SENDGRID_TIMEOUT_SECONDS) as resp:
         print(f"[sendgrid]  sent — status {resp.status}", flush=True)
 
 
@@ -367,6 +369,40 @@ def _apply_section_config(html: str, section_config: dict | None) -> str:
     return html
 
 
+# ---------------------------------------------------------------------------
+# Per-run sent markers
+# ---------------------------------------------------------------------------
+# pipeline_runs/{run_id}/sent/{sha256(email)}: written after each successful send so a re-run of
+# the same issue (after a crash or a partial failure) only mails the recipients not yet reached.
+# The id is a hash, so no address is stored in a document id. `expires_at` is for a Firestore TTL rule.
+
+SENT_MARKER_TTL_DAYS = 30
+
+
+def _recipient_id(email: str) -> str:
+    return hashlib.sha256(email.strip().lower().encode("utf-8")).hexdigest()
+
+
+def _failure_ref(email) -> str:
+    """Short stable reference for a recipient in logs and the run doc, so no address is stored there."""
+    return _recipient_id(email)[:12] if email else "<missing>"
+
+
+def _already_sent_ids(db, run_id: str) -> set:
+    return {snap.id for snap in db.collection(FIRESTORE_COLLECTION).document(run_id).collection("sent").stream()}
+
+
+def _mark_sent(db, run_id: str, email: str) -> None:
+    """Best effort: a failed marker write only means a re-run could mail this recipient a second time."""
+    try:
+        now = datetime.now(timezone.utc)
+        db.collection(FIRESTORE_COLLECTION).document(run_id).collection("sent").document(_recipient_id(email)).set(
+            {"sent_at": now.isoformat(), "expires_at": now + timedelta(days=SENT_MARKER_TTL_DAYS)}
+        )
+    except Exception as e:
+        print(f"  [warn]  could not record a sent marker: {type(e).__name__}", flush=True)
+
+
 class LoadedNewsletter(NamedTuple):
     variants: dict
     subject: str
@@ -461,6 +497,124 @@ def _record_failure(run_id: str, agent_name: str, error: Exception) -> None:
         print(f"[{agent_name}]  Failed to record failure to Firestore: {record_error}", flush=True)
 
 
+def _send_all(db, loaded: LoadedNewsletter, subscribers: list, start_time) -> None:
+    """The cloud-mode send loop and its summary. Errors propagate to run(), which records them."""
+    variants, subject = loaded.variants, loaded.subject
+
+    # Batch-load section configs for premium subscribers (those with a uid).
+    # Legacy/token-only subscribers have uid=None and skip this step.
+    uid_section_configs: dict = {}
+    if not TEST_SEND_TO:
+        try:
+            uid_section_configs = _load_user_section_configs(db, subscribers)
+            print(f"[agent4]  Section configs loaded for {len(uid_section_configs)} user(s)", flush=True)
+        except Exception as e:
+            print(f"  [warn]  failed to load section configs: {e} — using defaults", flush=True)
+
+    api_key = _get_sendgrid_api_key()
+    click_run_id = _prepare_click_tracking(db, loaded.run_id, loaded.doc) if CLICK_TRACKING else None
+
+    # Test sends (TEST_SEND_TO) never read or write markers, so one cannot mark a real subscriber's address.
+    use_markers  = not TEST_SEND_TO
+    already_sent = _already_sent_ids(db, loaded.run_id) if use_markers else set()
+    if already_sent:
+        print(f"[agent4]  resuming: {len(already_sent)} recipient(s) already sent for this run", flush=True)
+
+    sent         = 0
+    skipped      = 0  # reached by an earlier attempt of this run
+    failed       = 0
+    failures     = []  # list of {subscriber (short hash), error}
+
+    for sub in subscribers:
+        email = sub.get("email")
+        token = sub.get("token")
+        if not email or not token:
+            # Defensive: a malformed doc shouldn't exist, but never let it
+            # abort the loop. Skip and record.
+            failed += 1
+            failures.append({"subscriber": _failure_ref(email), "error": "missing email or token"})
+            print("  [warn]  skipping a subscriber doc with no email or token", flush=True)
+            continue
+
+        if use_markers and _recipient_id(email) in already_sent:
+            skipped += 1
+            continue
+
+        prefs = sub.get("prefs", {})
+        key   = _variant_key(prefs)
+        html  = variants.get(key) or variants.get("0_0", "")
+        if not html:
+            failed += 1
+            failures.append({"subscriber": _failure_ref(email), "error": f"no HTML for variant {key}"})
+            print(f"  [warn]  no HTML for variant {key}, skipping a subscriber", flush=True)
+            continue
+
+        # Apply per-subscriber section customization for premium accounts
+        uid = sub.get("uid")
+        if uid and uid in uid_section_configs:
+            try:
+                html = _apply_section_config(html, uid_section_configs[uid])
+            except Exception as e:
+                print(f"  [warn]  section config failed for {email}: {e} — using default", flush=True)
+
+        personalized = _personalize(html, token)
+        try:
+            send_email(api_key, email, personalized, subject, click_run_id=click_run_id)
+            sent += 1
+            if use_markers:
+                _mark_sent(db, loaded.run_id, email)
+        except Exception as e:
+            failed += 1
+            failures.append({"subscriber": _failure_ref(email), "error": str(e)[:200]})
+            print(f"  [error]  send failed: {e}", flush=True)
+            # Continue — one bad send must not abort the rest.
+
+    elapsed = (datetime.now() - start_time).total_seconds()
+
+    # Structured summary line — Cloud Logging parses stdout JSON into
+    # jsonPayload, making send history queryable:
+    #   gcloud logging read 'jsonPayload.event="send_summary"' ...
+    summary = {
+        "event":     "send_summary",
+        "service":   "agent4",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "total":     len(subscribers),
+        "sent":      sent + skipped,  # skipped ones were sent by an earlier attempt of this run
+        "already_sent": skipped,
+        "failed":    failed,
+        "failures":  failures,
+        "subject":   subject,
+        "elapsed_s": round(elapsed, 1),
+    }
+    print(json.dumps(summary), flush=True)
+
+    # Human-readable tail for the live log view.
+    print(f"\n--- agent4 done in {elapsed:.1f}s — sent {sent} (+{skipped} earlier), failed {failed} ---", flush=True)
+    # Always exit 0 (no raise): a nonzero exit would just create Scheduler
+    # noise with no useful retry behavior. Failures are logged loudly above.
+
+    # Record completion to Firestore — the stdout summary above is only
+    # visible in Cloud Logging, but a health check needs a queryable signal
+    # that the send actually ran (not just that composition succeeded).
+    try:
+        # Keyed on the composed run's doc (what the health check reads), not agent4's
+        # own invocation run_id, which belongs to no pipeline run.
+        fields = {
+            "agent4_send_summary": summary,
+            "agent4_completed_at": datetime.now(timezone.utc).isoformat(),
+        }
+        if loaded.doc.get("agent4_error"):
+            # An earlier attempt of this run failed and this one finished: drop the stale error so the
+            # send check does not flag a recovered run (same as agent2b's retry).
+            from google.cloud import firestore as _fs
+            fields["agent4_error"] = _fs.DELETE_FIELD
+            fields["agent4_failed_at"] = _fs.DELETE_FIELD
+        db.collection("pipeline_runs").document(loaded.run_id).set(fields, merge=True)
+        print(f"[agent4]  Recorded send_summary to Firestore (run_id={loaded.run_id})", flush=True)
+    except Exception as e:
+        print(f"[agent4]  Failed to record send_summary to Firestore: {e}", flush=True)
+
+
 def run(run_id: str):
     """Read newsletter HTML and send via SendGrid.
 
@@ -506,7 +660,6 @@ def run(run_id: str):
 
     try:
         loaded = _load_latest_newsletter(db)
-        variants, subject = loaded.variants, loaded.subject
 
         if TEST_SEND_TO:
             print(f"[agent4]  TEST_SEND_TO override — sending only to {TEST_SEND_TO}", flush=True)
@@ -524,100 +677,12 @@ def run(run_id: str):
         _record_failure(run_id, "agent4", e)
         raise
 
-    # Batch-load section configs for premium subscribers (those with a uid).
-    # Legacy/token-only subscribers have uid=None and skip this step.
-    uid_section_configs: dict = {}
-    if not TEST_SEND_TO:
-        try:
-            uid_section_configs = _load_user_section_configs(db, subscribers)
-            print(f"[agent4]  Section configs loaded for {len(uid_section_configs)} user(s)", flush=True)
-        except Exception as e:
-            print(f"  [warn]  failed to load section configs: {e} — using defaults", flush=True)
-
-    api_key = _get_sendgrid_api_key()
-    click_run_id = _prepare_click_tracking(db, loaded.run_id, loaded.doc) if CLICK_TRACKING else None
-
-    sent     = 0
-    failed   = 0
-    failures = []  # list of {email, error}
-
-    for sub in subscribers:
-        email = sub.get("email")
-        token = sub.get("token")
-        if not email or not token:
-            # Defensive: a malformed doc shouldn't exist, but never let it
-            # abort the loop. Skip and record.
-            failed += 1
-            failures.append({"email": email or "<missing>", "error": "missing email or token"})
-            print(f"  [warn]  skipping malformed subscriber doc: {sub}", flush=True)
-            continue
-
-        prefs = sub.get("prefs", {})
-        key   = _variant_key(prefs)
-        html  = variants.get(key) or variants.get("0_0", "")
-        if not html:
-            failed += 1
-            failures.append({"email": email, "error": f"no HTML for variant {key}"})
-            print(f"  [warn]  no HTML for variant {key}, skipping {email}", flush=True)
-            continue
-
-        # Apply per-subscriber section customization for premium accounts
-        uid = sub.get("uid")
-        if uid and uid in uid_section_configs:
-            try:
-                html = _apply_section_config(html, uid_section_configs[uid])
-            except Exception as e:
-                print(f"  [warn]  section config failed for {email}: {e} — using default", flush=True)
-
-        personalized = _personalize(html, token)
-        try:
-            send_email(api_key, email, personalized, subject, click_run_id=click_run_id)
-            sent += 1
-        except Exception as e:
-            failed += 1
-            failures.append({"email": email, "error": str(e)})
-            print(f"  [error]  send failed: {e}", flush=True)
-            # Continue — one bad send must not abort the rest.
-
-    elapsed = (datetime.now() - start_time).total_seconds()
-
-    # Structured summary line — Cloud Logging parses stdout JSON into
-    # jsonPayload, making send history queryable:
-    #   gcloud logging read 'jsonPayload.event="send_summary"' ...
-    summary = {
-        "event":     "send_summary",
-        "service":   "agent4",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "total":     len(subscribers),
-        "sent":      sent,
-        "failed":    failed,
-        "failures":  failures,
-        "subject":   subject,
-        "elapsed_s": round(elapsed, 1),
-    }
-    print(json.dumps(summary), flush=True)
-
-    # Human-readable tail for the live log view.
-    print(f"\n--- agent4 done in {elapsed:.1f}s — sent {sent}, failed {failed} ---", flush=True)
-    # Always exit 0 (no raise): a nonzero exit would just create Scheduler
-    # noise with no useful retry behavior. Failures are logged loudly above.
-
-    # Record completion to Firestore — the stdout summary above is only
-    # visible in Cloud Logging, but a health check needs a queryable signal
-    # that the send actually ran (not just that composition succeeded).
     try:
-        # Keyed on the composed run's doc (what the health check reads), not agent4's
-        # own invocation run_id, which belongs to no pipeline run.
-        db.collection("pipeline_runs").document(loaded.run_id).set(
-            {
-                "agent4_send_summary": summary,
-                "agent4_completed_at": datetime.now(timezone.utc).isoformat(),
-            },
-            merge=True
-        )
-        print(f"[agent4]  Recorded send_summary to Firestore (run_id={loaded.run_id})", flush=True)
+        _send_all(db, loaded, subscribers, start_time)
     except Exception as e:
-        print(f"[agent4]  Failed to record send_summary to Firestore: {e}", flush=True)
+        # On the composed run's doc, which is the one the health check reads.
+        _record_failure(loaded.run_id, "agent4", e)
+        raise
 
 
 if __name__ == "__main__":

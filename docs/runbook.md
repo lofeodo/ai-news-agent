@@ -53,6 +53,8 @@ Invoke-RestMethod -Method Post -Uri $url -Headers @{Authorization="Bearer $tok"}
 Rules of thumb (from the code, not from a test run):
 - Services: `agent1a`, `agent1b`, `agent2a`, `agent2b`, `agent3`, `agent4`, `orchestrator`, `healthcheck`.
 - To re-run agent 3 or later on an existing run, the earlier stages' outputs must already be on the run doc.
+- Running a stage twice is safe. agent 2a and 2b each count once per run, so a repeat never triggers agent 3. agent 3 skips a run that is already composed; its first compose shrinks the article pools on the run doc, so to recompose, re-run agent 2a and 2b first and then call agent 3 with `?force=1`.
+- agent 4 keeps a per-recipient record under `pipeline_runs/<run_id>/sent`, so a re-run (within 24 hours) mails only the people not yet reached; the summary's `already_sent` says how many were skipped. To mail everyone again, delete that subcollection. Test sends (`TEST_SEND_TO`) ignore the record.
 - agent 4 selects its own newsletter (the newest `newsletter_composed` **release** run, see section 2b) and takes no run id. It refuses anything older than 24 hours, so a re-send is only possible within a day of agent 3 finishing, and a refusal writes an error onto that run's doc. Do not trigger `agent4-test` between runs.
 - Test sends: `TEST_SEND_TO` on the service skips the subscriber list.
 - A manual run started after 07:30 is bounded only by the 1-hour cap.

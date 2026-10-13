@@ -42,13 +42,15 @@ def test_send_email_posts_the_built_payload(monkeypatch):
         def __exit__(self, *a):
             return False
 
-    def fake_urlopen(req):
+    def fake_urlopen(req, timeout=None):
+        sent["timeout"] = timeout
         sent["body"] = json.loads(req.data)
         return Resp()
 
     monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
     a4.send_email("k", "r@example.com", "<b>hi</b>", "Subj")
     assert "tracking_settings" not in sent["body"]
+    assert sent["timeout"] == a4.SENDGRID_TIMEOUT_SECONDS
     a4.send_email("k", "r@example.com", "<b>hi</b>", "Subj", click_run_id="RUN1")
     assert sent["body"]["tracking_settings"]["click_tracking"]["enable"] is True
 

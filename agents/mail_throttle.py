@@ -27,9 +27,9 @@ def _int_env(name: str, default: int) -> int:
 def _limits() -> dict:
     return {
         "cooldown":    _int_env("MAIL_COOLDOWN_SECONDS", 60),
-        "per_address": _int_env("MAIL_MAX_PER_ADDRESS_DAILY", 3),
-        "mail_ceiling": _int_env("MAIL_DAILY_CEILING", 200),
-        "activations": _int_env("MAX_NEW_SUBSCRIBERS_PER_DAY", 100),
+        "per_address": _int_env("MAIL_MAX_PER_ADDRESS_DAILY", 5),
+        "mail_ceiling": _int_env("MAIL_DAILY_CEILING", 1000),
+        "activations": _int_env("MAX_NEW_SUBSCRIBERS_PER_DAY", 2000),
     }
 
 

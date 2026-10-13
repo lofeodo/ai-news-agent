@@ -60,10 +60,10 @@ def test_a_second_mail_inside_the_cooldown_is_refused(db):
     assert mt.allow_mail(db, "a@example.com", T0 + timedelta(seconds=61))
 
 
-def test_the_fourth_mail_in_a_day_is_refused_and_the_next_day_resets(db):
-    for i in range(3):
+def test_the_sixth_mail_in_a_day_is_refused_and_the_next_day_resets(db):
+    for i in range(5):
         assert mt.allow_mail(db, "a@example.com", T0 + timedelta(minutes=5 * i))
-    assert not mt.allow_mail(db, "a@example.com", T0 + timedelta(minutes=20))
+    assert not mt.allow_mail(db, "a@example.com", T0 + timedelta(minutes=30))
     assert mt.allow_mail(db, "a@example.com", T0 + timedelta(days=1))
 
 

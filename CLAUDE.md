@@ -144,8 +144,8 @@ Some past incidents are written up in `docs/postmortems/` (index in its README) 
 - `POST /subscribe` — double opt-in; sends confirmation email.
 - `POST /request-unsubscribe` — sends unsubscribe confirmation email (always 200).
 - `POST /request-preferences` — sends preferences magic link email (always 200).
-- `GET /confirm?token=` — activates subscription and keeps the link's token, extending its expiry to 365d; opening the link again just shows the success page.
-- `GET /unsubscribe?token=` — deactivates subscription.
+- `GET /confirm?token=` — shows a page with a Confirm button (changes nothing). `POST /confirm?token=` (the button) activates the subscription and keeps the link's token, extending its expiry to 365d; repeating it just shows the success page.
+- `GET /unsubscribe?token=` — shows a page with an Unsubscribe button (changes nothing). `POST /unsubscribe?token=` (the button) deactivates the subscription.
 - `GET/POST /preferences?token=` — read or update preferences.
 
 **Other (no subscriber-auth model):**

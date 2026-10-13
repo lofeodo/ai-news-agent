@@ -205,10 +205,12 @@ def finalize_scores(scores: dict, paper: dict) -> dict:
 
 
 def score_with_retry(paper: dict, full_text: str, max_retries: int = 3) -> dict:
-    """Score with exponential backoff on rate limit errors."""
+    """Score with exponential backoff on rate limit errors. The concurrency slot is held only for
+    the call itself, never while waiting to retry."""
     for attempt in range(max_retries):
         try:
-            return score_paper(paper, full_text)
+            with _semaphore:
+                return score_paper(paper, full_text)
         except anthropic.RateLimitError:
             if attempt == max_retries - 1:
                 raise
@@ -221,13 +223,15 @@ def process_paper(paper: dict) -> dict:
     """Download, extract, and score a single paper. Returns merged result."""
     paper_id = paper["id"].split("/")[-1]
     try:
-        full_text = download_and_extract(paper["pdf_url"], paper_id)
+        try:
+            full_text = download_and_extract(paper["pdf_url"], paper_id)
+        except Exception as e:
+            print(f"  [pdf]      {paper_id}: {e}; scoring from the abstract", flush=True)
+            full_text = paper["abstract"]
 
-        print(f"  [semaphore-wait] {paper_id}", flush=True)
-        with _semaphore:
-            print(f"  [scoring]  {paper['title'][:60]}...", flush=True)
-            scores = score_with_retry(paper, full_text)
-            print(f"  [scoring-done] {paper_id}", flush=True)
+        print(f"  [scoring]  {paper['title'][:60]}...", flush=True)
+        scores = score_with_retry(paper, full_text)
+        print(f"  [scoring-done] {paper_id}", flush=True)
 
         print(f"  [done]     {paper['title'][:50]} → {scores.get('total', '?')}/{MAX_SCORE}", flush=True)
         return {**paper, "scores": scores, "error": None}

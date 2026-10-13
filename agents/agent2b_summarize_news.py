@@ -37,9 +37,11 @@ def _is_twitter_url(url: str) -> bool:
 # ---------------------------------------------------------------------------
 
 def claude_call_with_retry(client: anthropic.Anthropic, max_retries: int = 4, **kwargs) -> object:
+    """The concurrency slot is held for the call only, never while waiting to retry."""
     for attempt in range(max_retries):
         try:
-            return client.messages.create(**kwargs)
+            with _semaphore:
+                return client.messages.create(**kwargs)
         except anthropic.RateLimitError:
             if attempt == max_retries - 1:
                 raise
@@ -62,14 +64,13 @@ def summarize_article(article: dict, text: str | None, prompt_template: str, fal
         prompt = prompt_template.format(title=title, text=text, style_instruction=style_instruction)
 
     try:
-        with _semaphore:
-            response = claude_call_with_retry(
-                client,
-                model=SCORING_MODEL,
-                max_tokens=NEWS_SUMMARY_MAX_TOKENS,
-                system=GUARD_NEWS_SUMMARY,
-                messages=[{"role": "user", "content": prompt}]
-            )
+        response = claude_call_with_retry(
+            client,
+            model=SCORING_MODEL,
+            max_tokens=NEWS_SUMMARY_MAX_TOKENS,
+            system=GUARD_NEWS_SUMMARY,
+            messages=[{"role": "user", "content": prompt}]
+        )
         if not response.content:
             raise RuntimeError("Empty Claude response content")
         summary = response.content[0].text.strip()

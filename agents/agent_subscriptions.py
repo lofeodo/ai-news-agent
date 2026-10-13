@@ -16,11 +16,13 @@
 # Website-initiated endpoints ALWAYS return 200, whether or not the email
 # exists — otherwise the form becomes an oracle for checking who's subscribed.
 
+import hmac
 import logging
 import os
 import re
 import secrets
 import sys
+import time
 from datetime import datetime, timezone, timedelta
 from typing import Annotated
 from urllib.parse import urlencode
@@ -38,6 +40,7 @@ logger = logging.getLogger(__name__)
 
 from auth_middleware import get_current_user, get_verified_user
 import click_counts
+import mail_throttle
 import run_kind
 import sendgrid_webhook
 from prompt_guard import GUARD_TOPIC_REFINE, neutralize_tags
@@ -64,13 +67,16 @@ SERVICE_BASE_URL  = os.environ.get("SERVICE_BASE_URL", "").rstrip("/")
 # magic link, which lands on a frontend page, not on this API.
 FRONTEND_BASE_URL = os.environ.get("FRONTEND_BASE_URL", "").rstrip("/")
 
+# A sign-up that is never confirmed is left to a Firestore TTL rule on this field (see docs/runbook.md).
+UNCONFIRMED_TTL = timedelta(days=7)
+
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 # Token TTLs: short window for confirmation, long-lived for action links
 CONFIRM_TOKEN_TTL = timedelta(hours=48)
 ACTION_TOKEN_TTL  = timedelta(days=365)
 
-# Admin token for the /stats endpoint (no auth required if unset)
+# Admin token for the /stats endpoint (the endpoint is off while unset)
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "")
 
 # Comma-separated list of emails granted premium tier.
@@ -116,7 +122,32 @@ DEFAULT_SECTIONS = [
     "Research Spotlights",
 ]
 
-limiter = Limiter(key_func=get_remote_address)
+_KEY_LOG_BUDGET = 20
+
+
+def _client_key(request: Request) -> str:
+    """Address the rate limiter counts against.
+
+    On Cloud Run the TCP peer is Google's front end, so get_remote_address would put every caller in one
+    bucket. The front end appends the real caller to X-Forwarded-For; entries before it are client-supplied
+    and untrusted, so only the last one is used. Anywhere else (local runs, tests) the peer address is used.
+    """
+    global _KEY_LOG_BUDGET
+    peer = get_remote_address(request)
+    key = peer
+    hops = 0
+    if os.environ.get("K_SERVICE"):
+        parts = [p.strip() for p in request.headers.get("x-forwarded-for", "").split(",") if p.strip()]
+        hops = len(parts)
+        if parts:
+            key = parts[-1]
+    if _KEY_LOG_BUDGET > 0:
+        _KEY_LOG_BUDGET -= 1
+        print(f"[subscriptions]  limiter key: forwarded hops={hops}, same as peer={key == peer}", flush=True)
+    return key
+
+
+limiter = Limiter(key_func=_client_key)
 router  = APIRouter()
 
 
@@ -587,16 +618,38 @@ class GoogleExchangeRequest(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Public stats endpoint
+# Subscriber counts: public /spots, owner-only /stats
 # ---------------------------------------------------------------------------
 
+_SPOTS_CACHE: dict = {"at": 0.0, "value": None}
+SPOTS_CACHE_SECONDS = 60
+
+
+@router.get("/spots")
+@limiter.limit("60/minute")
+def get_spots(request: Request):
+    """Public subscriber count for the home page. Counts only; cached so page views don't each query Firestore."""
+    now = time.monotonic()
+    if _SPOTS_CACHE["value"] is None or now - _SPOTS_CACHE["at"] > SPOTS_CACHE_SECONDS:
+        _SPOTS_CACHE["value"] = {"active": _active_subscriber_count(_db()), "max": MAX_SUBSCRIBERS}
+        _SPOTS_CACHE["at"] = now
+    return _SPOTS_CACHE["value"]
+
+
 @router.get("/stats")
-def get_stats(token: Annotated[str, Query(max_length=128)] = ""):
-    if ADMIN_TOKEN and token != ADMIN_TOKEN:
+@limiter.limit("30/minute")
+def get_stats(
+    request: Request,
+    token: Annotated[str, Query(max_length=128)] = "",
+):
+    """Owner only. The token goes in an Authorization: Bearer header (the query parameter still works)."""
+    if not ADMIN_TOKEN:
+        return JSONResponse(status_code=404, content={"error": "not_found"})
+    auth = request.headers.get("authorization", "")
+    given = auth[7:].strip() if auth.lower().startswith("bearer ") else token
+    if not hmac.compare_digest(given.encode("utf-8"), ADMIN_TOKEN.encode("utf-8")):
         return JSONResponse(status_code=403, content={"error": "forbidden"})
-    db = _db()
-    count = _active_subscriber_count(db)
-    return {"active": count, "max": MAX_SUBSCRIBERS}
+    return {"active": _active_subscriber_count(_db()), "max": MAX_SUBSCRIBERS}
 
 
 # ---------------------------------------------------------------------------
@@ -680,21 +733,28 @@ def subscribe(request: Request, req: SubscribeRequest):
     if doc.exists and doc.to_dict().get("active"):
         # Already active — tell them via email (NOT via the HTTP response,
         # which stays identical to the new-subscriber case).
-        _send_email(email, f"You're already subscribed to {NEWSLETTER_NAME}",
-                    _already_subscribed_email_html(doc.to_dict()["token"]))
+        if mail_throttle.allow_mail(db, email):
+            _send_email(email, f"You're already subscribed to {NEWSLETTER_NAME}",
+                        _already_subscribed_email_html(doc.to_dict()["token"]))
         return {"status": "ok"}
 
     # Enforce subscriber cap before accepting a new subscription.
     if _active_subscriber_count(db) >= MAX_SUBSCRIBERS:
         raise HTTPException(status_code=503, detail="service_unavailable")
 
+    # Paced per address: a refused call looks the same to the caller and changes nothing, so a stranger's
+    # pending confirmation link is not replaced by repeated requests either.
+    if not mail_throttle.allow_mail(db, email):
+        return {"status": "ok"}
+
     # New subscriber, or inactive one re-subscribing: (re)generate the token.
     # Note: regenerating invalidates links in previously sent emails — fine.
     token      = secrets.token_urlsafe(32)
-    expires_at = datetime.now(timezone.utc) + CONFIRM_TOKEN_TTL
-    ref.set({
+    now        = datetime.now(timezone.utc)
+    expires_at = now + CONFIRM_TOKEN_TTL
+    fields = {
         "email":            email,
-        "subscribed_at":    datetime.now(timezone.utc),
+        "subscribed_at":    now,
         "confirmed_at":     None,
         "active":           False,        # double opt-in: activated by /confirm
         "token":            token,
@@ -705,7 +765,14 @@ def subscribe(request: Request, req: SubscribeRequest):
             "include_french": req.prefs.include_french,
             "include_canada": req.prefs.include_canada,
         },
-    }, merge=True)
+    }
+    # Only a doc that was never confirmed may expire; a former subscriber's doc is the record of consent,
+    # so its confirmed_at is kept and it gets no expiry.
+    if doc.exists and doc.to_dict().get("confirmed_at"):
+        del fields["confirmed_at"]
+    else:
+        fields["expires_at"] = now + UNCONFIRMED_TTL
+    ref.set(fields, merge=True)
 
     _send_email(email, f"Confirm your subscription to {NEWSLETTER_NAME}",
                 _confirm_email_html(token))
@@ -790,7 +857,7 @@ def request_unsubscribe(request: Request, req: EmailOnlyRequest):
     db  = _db()
     doc = db.collection(SUBSCRIBERS_COLLECTION).document(email).get()
 
-    if doc.exists and doc.to_dict().get("active"):
+    if doc.exists and doc.to_dict().get("active") and mail_throttle.allow_mail(db, email):
         _send_email(email, f"Confirm unsubscription from {NEWSLETTER_NAME}",
                     _unsubscribe_email_html(doc.to_dict()["token"]))
     # Same response whether or not the subscriber exists.
@@ -804,7 +871,7 @@ def request_preferences(request: Request, req: EmailOnlyRequest):
     db  = _db()
     doc = db.collection(SUBSCRIBERS_COLLECTION).document(email).get()
 
-    if doc.exists and doc.to_dict().get("active"):
+    if doc.exists and doc.to_dict().get("active") and mail_throttle.allow_mail(db, email):
         _send_email(email, f"Manage your {NEWSLETTER_NAME} preferences",
                     _preferences_email_html(doc.to_dict()["token"]))
     return {"status": "ok"}
@@ -842,11 +909,13 @@ def confirm(
     # Rotate token to a long-lived action token on confirmation.
     new_token  = secrets.token_urlsafe(32)
     action_exp = datetime.now(timezone.utc) + ACTION_TOKEN_TTL
+    from google.cloud import firestore as _fs
     doc.reference.update({
         "active":            True,
         "confirmed_at":      datetime.now(timezone.utc),   # CASL proof of consent
         "token":             new_token,
         "token_expires_at":  action_exp,
+        "expires_at":        _fs.DELETE_FIELD,
     })
     print("[subscriptions]  confirmed subscriber", flush=True)
 
@@ -1044,9 +1113,11 @@ async def auth_subscribe(request: Request, user: dict = Depends(get_verified_use
 
     token_val = secrets.token_urlsafe(32)
     if doc.exists:
+        from google.cloud import firestore as _fs
         ref.update({
             "active":           True,
             "confirmed_at":     now,
+            "expires_at":       _fs.DELETE_FIELD,
             "token":            token_val,
             "token_expires_at": now + ACTION_TOKEN_TTL,
             "uid":              uid,

@@ -605,9 +605,31 @@ class CustomSectionItem(BaseModel):
         return v
 
 
+MAX_ENABLED_SECTIONS = 20
+MAX_CUSTOM_SECTIONS  = 10
+
+
 class SectionConfig(BaseModel):
-    enabled_sections: list[str] | None = None
-    custom_sections:  list[CustomSectionItem] = []
+    enabled_sections: Annotated[list[str], Field(max_length=MAX_ENABLED_SECTIONS)] | None = None
+    custom_sections:  Annotated[list[CustomSectionItem], Field(max_length=MAX_CUSTOM_SECTIONS)] = []
+
+    @field_validator("enabled_sections")
+    @classmethod
+    def _unique_sections(cls, v):
+        return None if v is None else list(dict.fromkeys(v))
+
+    @field_validator("custom_sections")
+    @classmethod
+    def _unique_custom(cls, v):
+        seen_ids, seen_topics, out = set(), set(), []
+        for item in v:
+            topic = item.refined_topic.strip().lower()
+            if item.id in seen_ids or topic in seen_topics:
+                continue
+            seen_ids.add(item.id)
+            seen_topics.add(topic)
+            out.append(item)
+        return out
 
 
 class SectionConfigUpdate(BaseModel):
@@ -1460,7 +1482,7 @@ async def auth_update_sections(
 
     uid = user["uid"]
     db  = _db()
-    db.collection(USERS_COLLECTION).document(uid).update({
+    db.collection(USERS_COLLECTION).document(uid).set({
         "section_config": {
             "enabled_sections": req.section_config.enabled_sections,
             "custom_sections": [
@@ -1468,5 +1490,5 @@ async def auth_update_sections(
                 for cs in req.section_config.custom_sections
             ],
         }
-    })
+    }, merge=True)
     return {"status": "ok"}

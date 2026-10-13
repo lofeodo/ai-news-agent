@@ -91,21 +91,21 @@ def test_active_subscriber_link_after_expiry_date(api):
     r = api.client.post("/preferences", json={"token": "tok", "prefs": {"include_french": False, "include_canada": False}})
     assert r.status_code == 200
     assert api.store["a@example.com"]["prefs"]["include_french"] is False
-    api.client.get("/unsubscribe", params={"token": "tok"})
+    api.client.post("/unsubscribe", params={"token": "tok"})
     assert api.store["a@example.com"]["active"] is False
 
 
 def test_pending_sign_up_link_after_expiry_date(api):
     api.store["a@example.com"] = _sub(active=False, expires=PAST)
     assert api.client.get("/preferences", params={"token": "tok"}).status_code == 404
-    api.client.get("/unsubscribe", params={"token": "tok"})
+    api.client.post("/unsubscribe", params={"token": "tok"})
     assert api.store["a@example.com"]["active"] is False  # unchanged, link refused
 
 
 def test_confirm_link_checks_expiry_for_everyone(api):
     for active in (False, True):
         api.store["a@example.com"] = _sub(active=active, expires=PAST)
-        api.client.get("/confirm", params={"token": "tok"})
+        api.client.post("/confirm", params={"token": "tok"})
         assert api.store["a@example.com"]["token"] == "tok"
         assert api.store["a@example.com"]["token_expires_at"] == PAST
 
@@ -113,7 +113,7 @@ def test_confirm_link_checks_expiry_for_everyone(api):
 def test_confirm_link_inside_window_still_works(api, monkeypatch):
     monkeypatch.setattr(subs, "_active_subscriber_count", lambda db: 0)
     api.store["a@example.com"] = _sub(active=False, expires=FUTURE)
-    api.client.get("/confirm", params={"token": "tok"})
+    api.client.post("/confirm", params={"token": "tok"})
     stored = api.store["a@example.com"]
     assert stored["active"] is True and stored["token"] == "tok"
 

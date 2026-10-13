@@ -101,6 +101,8 @@
     const unsubBtn      = document.getElementById('unsub-btn');
     const unsubMsg      = document.getElementById('unsub-msg');
 
+    // Exactly one of the two sections is visible. If auth is slow the email form
+    // appears after 3 s; a signed-in user arriving later replaces it.
     let authResolved = false;
     const authTimeout = setTimeout(() => {
       if (!authResolved) showEmailFlow();
@@ -118,14 +120,16 @@
     });
 
     function showAccountFlow(user) {
-      loadingMsg.style.display    = 'none';
-      accountEmail.textContent    = user.email;
+      loadingMsg.style.display     = 'none';
+      emailSection.style.display   = 'none';
+      accountEmail.textContent     = user.email;
       accountSection.style.display = 'block';
     }
 
     function showEmailFlow() {
-      loadingMsg.style.display   = 'none';
-      emailSection.style.display = 'block';
+      loadingMsg.style.display     = 'none';
+      accountSection.style.display = 'none';
+      emailSection.style.display   = 'block';
     }
 
     // Account-based one-click unsubscribe
@@ -169,25 +173,25 @@
         if (!email) { showMsg('Please enter your email address.', 'error'); return; }
 
         btn.disabled = true;
-        const payload = { email };
-
-        // Optimistic UX — show confirmation immediately
-        form.reset();
-        showMsg("If that address is subscribed, we've sent you an unsubscribe link. Check your spam folder if you don't see it.", 'success');
 
         try {
           const res = await fetch(`${API}/request-unsubscribe`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
+            body: JSON.stringify({ email }),
           });
-          if (res.status === 422) {
-            showMsg("That doesn't look like a valid email address.", 'error');
-            btn.disabled = false;
+          if (res.ok) {
+            form.reset();
+            showMsg("If that address is subscribed, we've sent you an unsubscribe link. Check your spam folder if you don't see it.", 'success');
+            return;
           }
+          if (res.status === 422) showMsg("That doesn't look like a valid email address.", 'error');
+          else if (res.status === 429) showMsg('Too many requests. Please wait a minute and try again.', 'error');
+          else showMsg('Something went wrong. Please try again.', 'error');
         } catch {
-          // Network error — keep optimistic message
+          showMsg('Network problem. Please try again.', 'error');
         }
+        btn.disabled = false;
       });
     }
   </script>

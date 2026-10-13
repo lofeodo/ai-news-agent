@@ -68,3 +68,23 @@ def test_admin_sees_latest_debug_run_and_exact_run(client):
     assert client.seen == [False]
     exact = client.get("/auth/admin/preview?run=2026-10-08T124639Z").json()
     assert exact["run_id"] == "2026-10-08T124639Z" and "exact" in exact["html"]
+
+
+def test_preview_sends_embed_policy(client):
+    csp = client.get("/preview").headers["Content-Security-Policy"]
+    assert "default-src 'none'" in csp and "sandbox" in csp
+    for origin in ("latentspacemail.web.app", "latentspacemail.firebaseapp.com", "newsletter.lofeodo.com"):
+        assert origin in csp
+
+
+def test_empty_preview_sends_embed_policy(client, monkeypatch):
+    monkeypatch.setattr(run_kind, "latest_run", lambda *a, **k: None)
+    r = client.get("/preview")
+    assert r.status_code == 404 and r.headers["Content-Security-Policy"] == subs.PREVIEW_CSP
+
+
+def test_preview_page_frame_has_limited_sandbox():
+    from pathlib import Path
+    html = (Path(__file__).resolve().parent.parent / "public/newsletter/preview.html").read_text(encoding="utf-8")
+    assert 'sandbox="allow-popups allow-popups-to-escape-sandbox"' in html
+    assert "allow-scripts" not in html and "allow-same-origin" not in html

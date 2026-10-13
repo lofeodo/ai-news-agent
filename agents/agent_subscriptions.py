@@ -835,14 +835,22 @@ def _render_preview(data: dict, variant: str = "") -> str:
     return html
 
 
+PREVIEW_CSP = (
+    "default-src 'none'; img-src https: data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; "
+    "sandbox allow-popups allow-popups-to-escape-sandbox; "
+    "frame-ancestors https://latentspacemail.web.app https://latentspacemail.firebaseapp.com https://newsletter.lofeodo.com"
+)
+
+
 @router.get("/preview")
 @limiter.limit("30/minute")
 def newsletter_preview(request: Request):
     """Return the latest *release* newsletter HTML for embedding in the preview iframe. Debug runs are never shown."""
     doc = run_kind.latest_run(_db(), FIRESTORE_COLLECTION)
     if doc is None:
-        return HTMLResponse("<p>No issue available yet. Check back Monday!</p>", status_code=404)
-    headers = {"Content-Security-Policy": "frame-ancestors https://latentspacemail.web.app https://latentspacemail.firebaseapp.com https://newsletter.lofeodo.com"}
+        return HTMLResponse("<p>No issue available yet. Check back Monday!</p>", status_code=404,
+                            headers={"Content-Security-Policy": PREVIEW_CSP})
+    headers = {"Content-Security-Policy": PREVIEW_CSP}
     return HTMLResponse(content=_render_preview(doc.to_dict()), status_code=200, headers=headers)
 
 

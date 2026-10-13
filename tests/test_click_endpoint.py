@@ -197,3 +197,27 @@ def test_link_doc_is_read_once_across_requests(api):
     post(api, [click(), click(url=PAPER)])
     assert api.db.link_reads == 1
     assert counts(api)["clicks"] == {key_of(SHIPPED): 2, key_of(PAPER): 1}
+
+
+def test_prefetch_after_a_long_send_is_still_early():
+    import click_counts as cc
+    ev = {"timestamp": 10_000 + 60}
+    # old docs (no window fields): measured from the send start
+    assert cc.bucket_for(ev, 0) == "clicks"
+    # send ran 0..10_000 s; a scanner hit a late recipient 60 s after the last email left
+    assert cc.bucket_for(ev, 0, sent_end=10_000, send_complete=True) == "early"
+    assert cc.bucket_for({"timestamp": 10_000 + 600}, 0, sent_end=10_000, send_complete=True) == "clicks"
+    # send still running: inside the window counts as early, but only up to the cap
+    assert cc.bucket_for({"timestamp": 5_000}, 0, send_complete=False) == "early"
+    assert cc.bucket_for({"timestamp": cc.MAX_SEND_WINDOW_SECONDS + 600}, 0, send_complete=False) == "clicks"
+
+
+def test_rerun_keeps_the_original_send_start():
+    import click_counts as cc
+    from fakes_firestore import FakeDb
+    db = FakeDb()
+    cc.save_link_doc(db, "r1", {"k": {}}, 100)
+    cc.mark_send_complete(db, "r1", 500)
+    cc.save_link_doc(db, "r1", {"k": {}}, 9_000)
+    doc = cc.load_link_doc(db, "r1")
+    assert doc["sent_at"] == 100 and doc["send_complete"] is False

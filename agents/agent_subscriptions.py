@@ -16,11 +16,13 @@
 # Website-initiated endpoints ALWAYS return 200, whether or not the email
 # exists — otherwise the form becomes an oracle for checking who's subscribed.
 
+import hmac
 import logging
 import os
 import re
 import secrets
 import sys
+import time
 from datetime import datetime, timezone, timedelta
 from typing import Annotated
 from urllib.parse import urlencode
@@ -74,7 +76,7 @@ EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 CONFIRM_TOKEN_TTL = timedelta(hours=48)
 ACTION_TOKEN_TTL  = timedelta(days=365)
 
-# Admin token for the /stats endpoint (no auth required if unset)
+# Admin token for the /stats endpoint (the endpoint is off while unset)
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "")
 
 # Comma-separated list of emails granted premium tier.
@@ -616,16 +618,38 @@ class GoogleExchangeRequest(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Public stats endpoint
+# Subscriber counts: public /spots, owner-only /stats
 # ---------------------------------------------------------------------------
 
+_SPOTS_CACHE: dict = {"at": 0.0, "value": None}
+SPOTS_CACHE_SECONDS = 60
+
+
+@router.get("/spots")
+@limiter.limit("60/minute")
+def get_spots(request: Request):
+    """Public subscriber count for the home page. Counts only; cached so page views don't each query Firestore."""
+    now = time.monotonic()
+    if _SPOTS_CACHE["value"] is None or now - _SPOTS_CACHE["at"] > SPOTS_CACHE_SECONDS:
+        _SPOTS_CACHE["value"] = {"active": _active_subscriber_count(_db()), "max": MAX_SUBSCRIBERS}
+        _SPOTS_CACHE["at"] = now
+    return _SPOTS_CACHE["value"]
+
+
 @router.get("/stats")
-def get_stats(token: Annotated[str, Query(max_length=128)] = ""):
-    if ADMIN_TOKEN and token != ADMIN_TOKEN:
+@limiter.limit("30/minute")
+def get_stats(
+    request: Request,
+    token: Annotated[str, Query(max_length=128)] = "",
+):
+    """Owner only. The token goes in an Authorization: Bearer header (the query parameter still works)."""
+    if not ADMIN_TOKEN:
+        return JSONResponse(status_code=404, content={"error": "not_found"})
+    auth = request.headers.get("authorization", "")
+    given = auth[7:].strip() if auth.lower().startswith("bearer ") else token
+    if not hmac.compare_digest(given.encode("utf-8"), ADMIN_TOKEN.encode("utf-8")):
         return JSONResponse(status_code=403, content={"error": "forbidden"})
-    db = _db()
-    count = _active_subscriber_count(db)
-    return {"active": count, "max": MAX_SUBSCRIBERS}
+    return {"active": _active_subscriber_count(_db()), "max": MAX_SUBSCRIBERS}
 
 
 # ---------------------------------------------------------------------------

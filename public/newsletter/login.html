@@ -98,7 +98,7 @@
     // If already signed in, redirect immediately.
     onAuthStateChanged(auth, (user) => {
       if (user && user.emailVerified) {
-        location.href = returnUrl;
+        location.replace(returnUrl);
       }
     });
 

@@ -191,3 +191,43 @@ def test_failed_edition_mail_can_be_retried(monkeypatch):
     with pytest.raises(RuntimeError):
         client.get("/confirm", params={"token": "tok"})
     assert store["a@example.com"]["latest_sent"] is False
+
+
+# --- profile reads keep the first sign-up date ----------------------------------------------------
+
+def test_profile_read_keeps_first_created_at(monkeypatch):
+    from types import SimpleNamespace
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    import firebase_admin.auth as fb_auth
+
+    users = {}
+
+    def ref_for(kind, i):
+        def get():
+            d = (users.get(i) if kind == "users" else None)
+            return SimpleNamespace(exists=d is not None, to_dict=lambda: dict(d) if d else None)
+
+        def set_(data, merge=False):
+            users[i] = {**users.get(i, {}), **data} if merge else dict(data)
+        return SimpleNamespace(get=get, set=set_)
+
+    class Db:
+        def collection(self, name):
+            return SimpleNamespace(document=lambda i: ref_for(name, i))
+
+    monkeypatch.setattr(auth_middleware, "_ensure_firebase", lambda: None)
+    monkeypatch.setattr(fb_auth, "verify_id_token", lambda t, check_revoked=False: {
+        "uid": "u1", "email": "a@example.com", "email_verified": True})
+    monkeypatch.setattr(subs, "_db", lambda: Db())
+    monkeypatch.setattr(subs.limiter, "enabled", False)
+    app = FastAPI()
+    app.state.limiter = subs.limiter
+    app.include_router(subs.router)
+    client = TestClient(app)
+    h = {"Authorization": "Bearer t"}
+
+    assert client.get("/auth/me", headers=h).status_code == 200
+    first = users["u1"]["created_at"]
+    assert client.get("/auth/me", headers=h).status_code == 200
+    assert users["u1"]["created_at"] == first

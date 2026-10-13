@@ -1150,13 +1150,16 @@ def auth_me(request: Request, user: dict = Depends(get_current_user)):
     now   = datetime.now(timezone.utc)
     tier  = _get_user_tier(user)
 
-    db.collection(USERS_COLLECTION).document(uid).set({
+    user_ref = db.collection(USERS_COLLECTION).document(uid)
+    profile = {
         "email":        email,
         "display_name": user.get("name"),
         "provider":     _detect_provider(user),
-        "created_at":   now,
         "tier":         tier,
-    }, merge=True)
+    }
+    if not (user_ref.get().to_dict() or {}).get("created_at"):
+        profile["created_at"] = now
+    user_ref.set(profile, merge=True)
 
     sub_doc  = db.collection(SUBSCRIBERS_COLLECTION).document(email).get()
     sub_data = sub_doc.to_dict() if sub_doc.exists else None

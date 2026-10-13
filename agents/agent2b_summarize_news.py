@@ -123,6 +123,36 @@ def _record_failure(run_id: str, agent_name: str, error: Exception) -> None:
         print(f"[{agent_name}]  Failed to record failure to Firestore: {record_error}", flush=True)
 
 
+def assemble_results(by_category: dict, results_by_index: dict) -> tuple[dict, list, list]:
+    """Put each result back in its article's slot. Articles are matched by position, not URL,
+    so repeated or empty URLs cannot overwrite each other. Returns (by_category, flat list, sources)."""
+    summarized_by_category: dict[str, list] = {}
+    all_summarized: list = []
+    sources: list[dict] = []
+    seen_urls: set = set()
+    i = 0
+    for category, articles in by_category.items():
+        out = []
+        for a in articles:
+            result = results_by_index.get(i)
+            i += 1
+            if result is None:
+                result = {**a, "summary": None, "used_fallback": False, "summary_error": "not processed"}
+            else:
+                result = dict(result)
+                src = result.pop("_source", None)
+                url = result.get("url", "")
+                # The judge looks sources up by URL, so only the first article with a URL is stored.
+                if src and url and url not in seen_urls:
+                    seen_urls.add(url)
+                    sources.append({"ident": url, "title": result.get("title", ""), "text": src,
+                                    "used_fallback": result.get("used_fallback")})
+            out.append(result)
+            all_summarized.append(result)
+        summarized_by_category[category] = out
+    return summarized_by_category, all_summarized, sources
+
+
 def run(run_id: str):
     """Main agent logic. Called by main.py (Cloud Run) or orchestrator.py."""
     start_time = datetime.now()
@@ -160,39 +190,21 @@ def run(run_id: str):
         client = tracing.make_client("agent2b", run_id)
         tasks  = [(client, article, prompt_template, fallback_template, quebec_style) for article in all_articles]
 
-        results_by_url: dict[str, dict] = {}
-        sources: list[dict] = []
+        results_by_index: dict[int, dict] = {}
         done = 0
 
         with ThreadPoolExecutor(max_workers=MAX_FETCH_WORKERS) as executor:
-            future_to_article = {executor.submit(process_article, t): t[1] for t in tasks}
-            for future in as_completed(future_to_article):
-                result = future.result()
-                url    = result.get("url", "")
-                src    = result.pop("_source", None)
-                if src:
-                    sources.append({"ident": url, "title": result.get("title", ""), "text": src,
-                                    "used_fallback": result.get("used_fallback")})
-                results_by_url[url] = result
+            future_to_index = {executor.submit(process_article, t): i for i, t in enumerate(tasks)}
+            for future in as_completed(future_to_index):
+                results_by_index[future_to_index[future]] = future.result()
                 done += 1
                 if done % 50 == 0 or done == len(tasks):
-                    failed_so_far   = sum(1 for r in results_by_url.values() if not r.get("summary"))
-                    fallback_so_far = sum(1 for r in results_by_url.values() if r.get("used_fallback"))
+                    failed_so_far   = sum(1 for r in results_by_index.values() if not r.get("summary"))
+                    fallback_so_far = sum(1 for r in results_by_index.values() if r.get("used_fallback"))
                     print(f"  [{done}/{len(tasks)}] failed={failed_so_far} fallback={fallback_so_far}")
 
-        summarized_by_category: dict[str, list] = {}
-        for category, articles in by_category.items():
-            summarized_by_category[category] = [
-                results_by_url.get(a.get("url", ""), {
-                    **a,
-                    "summary":       None,
-                    "used_fallback": False,
-                    "summary_error": "not processed",
-                })
-                for a in articles
-            ]
+        summarized_by_category, all_summarized, sources = assemble_results(by_category, results_by_index)
 
-        all_summarized   = list(results_by_url.values())
         total_summarized = sum(1 for a in all_summarized if a.get("summary"))
         total_fallback   = sum(1 for a in all_summarized if a.get("used_fallback"))
         total_failed     = sum(1 for a in all_summarized if not a.get("summary"))

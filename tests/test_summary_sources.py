@@ -63,3 +63,20 @@ def test_summarize_article_returns_source_for_run_to_pop():
     assert r["_source"] == "full text"
     r = a2b.summarize_article({"title": "T", "url": "u", "description": "desc"}, None, "x", "{title}{description}{style_instruction}", "", C())
     assert r["_source"] == "desc" and r["used_fallback"] is True
+
+
+def test_assemble_results_keeps_repeated_and_empty_urls_apart():
+    by_category = {
+        "A": [{"title": "a1", "url": "u1"}, {"title": "a2", "url": "u1"}, {"title": "a3", "url": ""}],
+        "B": [{"title": "b1", "url": ""}, {"title": "b2", "url": "u2"}],
+    }
+    results = {i: {"title": t, "url": u, "summary": f"s{i}", "_source": f"src{i}"}
+               for i, (t, u) in enumerate([("a1", "u1"), ("a2", "u1"), ("a3", ""), ("b1", ""), ("b2", "u2")])}
+    del results[4]  # one article never came back
+    out, flat, sources = a2b.assemble_results(by_category, results)
+    assert [a["summary"] for a in out["A"]] == ["s0", "s1", "s2"]
+    assert out["B"][0]["summary"] == "s3"
+    assert out["B"][1]["summary"] is None and out["B"][1]["summary_error"] == "not processed"
+    assert len(flat) == 5
+    assert all("_source" not in a for a in flat)
+    assert [s["ident"] for s in sources] == ["u1"]

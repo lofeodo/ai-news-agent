@@ -19,9 +19,9 @@ Credentials (API keys and similar) are supplied to the services at runtime and a
 | `FRONTEND_BASE_URL` | agent3, agent4, agent_subscriptions | Public URL of the Firebase Hosting frontend — must be `https://newsletter.lofeodo.com` on every service that sets it; a mismatch here silently breaks the `{{PREFERENCES_URL}}` link in every sent newsletter |
 | `ALLOWED_ORIGINS` | main.py (subscriptions) | Comma-separated CORS origins; required in production |
 | `MAILING_ADDRESS` | agent3 | Physical address in email footer (CASL compliance) |
-| `MAX_SUBSCRIBERS` | agent_subscriptions | Subscriber cap (default `50000`) |
+| `MAX_SUBSCRIBERS` | agent_subscriptions | Subscriber cap (default `40000`) |
 | `MAIL_COOLDOWN_SECONDS` / `MAIL_MAX_PER_ADDRESS_DAILY` | agent_subscriptions | Pacing of confirmation and link emails per address (defaults `60` / `5`) |
-| `MAIL_DAILY_CEILING` / `MAX_NEW_SUBSCRIBERS_PER_DAY` | agent_subscriptions | Daily ceilings on those emails and on new confirmed subscribers (defaults `1000` / `2000`); set a very high number to switch one off |
+| `MAIL_DAILY_CEILING` | agent_subscriptions | Daily ceiling on those emails (default `1000`); set a very high number to switch it off |
 | `ADMIN_TOKEN` | agent_subscriptions | Token for `GET /stats` (send as `Authorization: Bearer`); the route is off while unset. The home page uses the public `GET /spots` instead |
 | `ALERT_EMAIL` | agent_healthcheck | Where the draft and send health checks email their reports; never used for subscriber-facing sends |
 | `GOOGLE_OAUTH_CLIENT_ID` | agent_subscriptions | Google OAuth 2.0 Web client ID for server-side Google Sign-In (not secret) |

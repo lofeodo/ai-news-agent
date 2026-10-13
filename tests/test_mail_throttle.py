@@ -49,7 +49,7 @@ class _Db:
 def db(monkeypatch):
     import google.cloud.firestore as fs
     monkeypatch.setattr(fs, "transactional", lambda f: f)
-    for var in ("MAIL_COOLDOWN_SECONDS", "MAIL_MAX_PER_ADDRESS_DAILY", "MAIL_DAILY_CEILING", "MAX_NEW_SUBSCRIBERS_PER_DAY"):
+    for var in ("MAIL_COOLDOWN_SECONDS", "MAIL_MAX_PER_ADDRESS_DAILY", "MAIL_DAILY_CEILING"):
         monkeypatch.delenv(var, raising=False)
     return _Db({})
 
@@ -82,17 +82,9 @@ def test_the_daily_mail_ceiling_stops_all_addresses(db, monkeypatch, capsys):
     assert "ERROR mail skipped: daily_ceiling" in capsys.readouterr().out
 
 
-def test_the_activation_ceiling_counts_per_day(db, monkeypatch):
-    monkeypatch.setenv("MAX_NEW_SUBSCRIBERS_PER_DAY", "2")
-    assert mt.allow_activation(db, T0) and mt.allow_activation(db, T0)
-    assert not mt.allow_activation(db, T0)
-    assert mt.allow_activation(db, T0 + timedelta(days=1))
-
-
 def test_a_store_error_lets_the_request_through(db, monkeypatch):
     monkeypatch.setattr(db, "transaction", lambda: (_ for _ in ()).throw(RuntimeError("down")))
     assert mt.allow_mail(db, "a@example.com", T0)
-    assert mt.allow_activation(db, T0)
 
 
 # --- the routes -----------------------------------------------------------------------------------------

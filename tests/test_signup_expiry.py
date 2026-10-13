@@ -66,7 +66,6 @@ def api(monkeypatch):
     monkeypatch.setattr(subs, "_send_email", lambda *a: sent.append(a[0]))
     monkeypatch.setattr(subs, "_active_subscriber_count", lambda _db: 0)
     monkeypatch.setattr(subs.mail_throttle, "allow_mail", lambda *a: True)
-    monkeypatch.setattr(subs.mail_throttle, "allow_activation", lambda *a: True)
     monkeypatch.setattr(subs.limiter, "enabled", False)
     app = FastAPI()
     app.state.limiter = subs.limiter
@@ -92,20 +91,3 @@ def test_a_former_subscriber_keeps_consent_record_and_gets_no_expiry(api):
     api.client.post("/subscribe", json=BODY)
     doc = api.store["a@example.com"]
     assert doc["confirmed_at"] == then and "expires_at" not in doc
-
-
-def test_confirm_stops_at_the_daily_new_subscriber_ceiling(api, monkeypatch):
-    api.client.post("/subscribe", json=BODY)
-    token = api.store["a@example.com"]["token"]
-    monkeypatch.setattr(subs.mail_throttle, "allow_activation", lambda *a: False)
-    r = api.client.get("/confirm", params={"token": token})
-    assert r.status_code == 503 and api.store["a@example.com"]["active"] is False
-    monkeypatch.setattr(subs.mail_throttle, "allow_activation", lambda *a: True)
-    assert api.client.get("/confirm", params={"token": token}).status_code == 200  # same link works later
-
-
-def test_an_already_active_address_is_not_counted(api, monkeypatch):
-    api.store["a@example.com"] = {"email": "a@example.com", "active": True, "token": "tok",
-                                  "token_expires_at": NOW + timedelta(days=30), "prefs": {}}
-    monkeypatch.setattr(subs.mail_throttle, "allow_activation", lambda *a: pytest.fail("counted"))
-    assert api.client.get("/confirm", params={"token": "tok"}).status_code == 200

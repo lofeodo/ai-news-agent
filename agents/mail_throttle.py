@@ -1,9 +1,8 @@
 # agents/mail_throttle.py
 #
-# Pacing for the public endpoints that send mail to an address the caller names, plus a daily ceiling on new
-# subscribers. State lives in Firestore so every Cloud Run instance sees the same counts:
+# Pacing for the public endpoints that send mail to an address the caller names. State lives in Firestore so every Cloud Run instance sees the same counts:
 #   mail_throttle/{sha256(email)}  last_at, day, count, expires_at   (no raw address)
-#   mail_budget/{YYYY-MM-DD}       mail_count, activation_count, expires_at
+#   mail_budget/{YYYY-MM-DD}       mail_count, expires_at
 # A refused call is the caller's cue to skip the send and still answer exactly as for a sent one.
 
 import hashlib
@@ -29,7 +28,6 @@ def _limits() -> dict:
         "cooldown":    _int_env("MAIL_COOLDOWN_SECONDS", 60),
         "per_address": _int_env("MAIL_MAX_PER_ADDRESS_DAILY", 5),
         "mail_ceiling": _int_env("MAIL_DAILY_CEILING", 1000),
-        "activations": _int_env("MAX_NEW_SUBSCRIBERS_PER_DAY", 2000),
     }
 
 
@@ -74,7 +72,6 @@ def allow_mail(db, email: str, now: datetime | None = None) -> bool:
         transaction.set(addr_ref, {"last_at": now, "day": day, "count": count,
                                    "expires_at": now + timedelta(days=2)})
         transaction.set(budget_ref, {"mail_count": budget.get("mail_count", 0) + 1,
-                                     "activation_count": budget.get("activation_count", 0),
                                      "expires_at": now + timedelta(days=3)})
         return True, "ok"
 
@@ -87,34 +84,4 @@ def allow_mail(db, email: str, now: datetime | None = None) -> bool:
     if not ok:
         level = "ERROR" if reason == "daily_ceiling" else "INFO"
         print(f"[mail_throttle]  {level} mail skipped: {reason}", flush=True)
-    return ok
-
-
-def allow_activation(db, now: datetime | None = None) -> bool:
-    """Atomically count one new subscriber against today's ceiling. False means: refuse this activation."""
-    from google.cloud import firestore
-
-    now = now or datetime.now(timezone.utc)
-    day = now.strftime("%Y-%m-%d")
-    ceiling = _limits()["activations"]
-    budget_ref = db.collection(BUDGET_COLLECTION).document(day)
-
-    @firestore.transactional
-    def _take(transaction):
-        budget = budget_ref.get(transaction=transaction).to_dict() or {}
-        used = budget.get("activation_count", 0)
-        if used >= ceiling:
-            return False
-        transaction.set(budget_ref, {"mail_count": budget.get("mail_count", 0),
-                                     "activation_count": used + 1,
-                                     "expires_at": now + timedelta(days=3)})
-        return True
-
-    try:
-        ok = _take(db.transaction())
-    except Exception as e:
-        print(f"[mail_throttle]  activation check failed ({type(e).__name__}), allowing", flush=True)
-        return True
-    if not ok:
-        print("[mail_throttle]  ERROR new-subscriber daily ceiling reached", flush=True)
     return ok

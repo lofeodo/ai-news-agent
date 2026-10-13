@@ -125,7 +125,7 @@ USE_FIRESTORE        = os.environ.get("USE_FIRESTORE", "false").lower() == "true
 SUBSCRIBERS_COLLECTION = "subscribers"
 
 # Subscriber cap
-MAX_SUBSCRIBERS = int(os.environ.get("MAX_SUBSCRIBERS", "50000"))
+MAX_SUBSCRIBERS = int(os.environ.get("MAX_SUBSCRIBERS", "40000"))
 
 # Health check alerting — where agent_healthcheck sends a problem report.
 # Never used for subscriber-facing sends.

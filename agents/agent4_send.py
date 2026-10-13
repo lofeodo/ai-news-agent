@@ -13,12 +13,13 @@
 # Triggered by a Cloud Scheduler job at 7:00 AM every Monday — separate from the
 # pipeline orchestrator, which drafts the newsletter the day before (Sunday 12:00).
 
+import hashlib
 import json
 import os
 import re
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import NamedTuple
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -367,6 +368,35 @@ def _apply_section_config(html: str, section_config: dict | None) -> str:
     return html
 
 
+# ---------------------------------------------------------------------------
+# Per-run sent markers
+# ---------------------------------------------------------------------------
+# pipeline_runs/{run_id}/sent/{sha256(email)}: written after each successful send so a re-run of
+# the same issue (after a crash or a partial failure) only mails the recipients not yet reached.
+# The id is a hash, so no address is stored in a document id. `expires_at` is for a Firestore TTL rule.
+
+SENT_MARKER_TTL_DAYS = 30
+
+
+def _recipient_id(email: str) -> str:
+    return hashlib.sha256(email.strip().lower().encode("utf-8")).hexdigest()
+
+
+def _already_sent_ids(db, run_id: str) -> set:
+    return {snap.id for snap in db.collection(FIRESTORE_COLLECTION).document(run_id).collection("sent").stream()}
+
+
+def _mark_sent(db, run_id: str, email: str) -> None:
+    """Best effort: a failed marker write only means a re-run could mail this recipient a second time."""
+    try:
+        now = datetime.now(timezone.utc)
+        db.collection(FIRESTORE_COLLECTION).document(run_id).collection("sent").document(_recipient_id(email)).set(
+            {"sent_at": now.isoformat(), "expires_at": now + timedelta(days=SENT_MARKER_TTL_DAYS)}
+        )
+    except Exception as e:
+        print(f"  [warn]  could not record a sent marker: {type(e).__name__}", flush=True)
+
+
 class LoadedNewsletter(NamedTuple):
     variants: dict
     subject: str
@@ -537,9 +567,16 @@ def run(run_id: str):
     api_key = _get_sendgrid_api_key()
     click_run_id = _prepare_click_tracking(db, loaded.run_id, loaded.doc) if CLICK_TRACKING else None
 
-    sent     = 0
-    failed   = 0
-    failures = []  # list of {email, error}
+    # Test sends (TEST_SEND_TO) never read or write markers, so one cannot mark a real subscriber's address.
+    use_markers  = not TEST_SEND_TO
+    already_sent = _already_sent_ids(db, loaded.run_id) if use_markers else set()
+    if already_sent:
+        print(f"[agent4]  resuming: {len(already_sent)} recipient(s) already sent for this run", flush=True)
+
+    sent         = 0
+    skipped      = 0  # reached by an earlier attempt of this run
+    failed       = 0
+    failures     = []  # list of {email, error}
 
     for sub in subscribers:
         email = sub.get("email")
@@ -550,6 +587,10 @@ def run(run_id: str):
             failed += 1
             failures.append({"email": email or "<missing>", "error": "missing email or token"})
             print(f"  [warn]  skipping malformed subscriber doc: {sub}", flush=True)
+            continue
+
+        if use_markers and _recipient_id(email) in already_sent:
+            skipped += 1
             continue
 
         prefs = sub.get("prefs", {})
@@ -573,6 +614,8 @@ def run(run_id: str):
         try:
             send_email(api_key, email, personalized, subject, click_run_id=click_run_id)
             sent += 1
+            if use_markers:
+                _mark_sent(db, loaded.run_id, email)
         except Exception as e:
             failed += 1
             failures.append({"email": email, "error": str(e)})
@@ -589,7 +632,8 @@ def run(run_id: str):
         "service":   "agent4",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "total":     len(subscribers),
-        "sent":      sent,
+        "sent":      sent + skipped,  # skipped ones were sent by an earlier attempt of this run
+        "already_sent": skipped,
         "failed":    failed,
         "failures":  failures,
         "subject":   subject,
@@ -598,7 +642,7 @@ def run(run_id: str):
     print(json.dumps(summary), flush=True)
 
     # Human-readable tail for the live log view.
-    print(f"\n--- agent4 done in {elapsed:.1f}s — sent {sent}, failed {failed} ---", flush=True)
+    print(f"\n--- agent4 done in {elapsed:.1f}s — sent {sent} (+{skipped} earlier), failed {failed} ---", flush=True)
     # Always exit 0 (no raise): a nonzero exit would just create Scheduler
     # noise with no useful retry behavior. Failures are logged loudly above.
 

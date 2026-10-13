@@ -22,6 +22,20 @@ class _Doc:
         coll = self._store.setdefault(self._name, {})
         coll[self._id] = {**coll.get(self._id, {}), **data} if merge else dict(data)
 
+    def update(self, data):
+        from google.cloud import firestore
+        coll = self._store.setdefault(self._name, {})
+        doc = coll.setdefault(self._id, {})
+        for k, v in data.items():
+            if v is firestore.DELETE_FIELD:
+                doc.pop(k, None)
+            else:
+                doc[k] = v
+
+    def collection(self, name):
+        """A subcollection, stored flat under the key 'parent/id/name'."""
+        return _make_collection(self._store, f"{self._name}/{self._id}/{name}")
+
 
 class _Query:
     def __init__(self, store, name, limit=None, filters=()):
@@ -50,15 +64,17 @@ class _Query:
         return [_Snap(i, d) for i, d in rows]
 
 
+def _make_collection(store, name):
+    class _Coll(_Query):
+        def document(self, id):
+            return _Doc(store, name, id)
+
+    return _Coll(store, name)
+
+
 class FakeDb:
     def __init__(self, store=None):
         self.store = store if store is not None else {}
 
     def collection(self, name):
-        db = self
-
-        class _Coll(_Query):
-            def document(self, id):
-                return _Doc(db.store, name, id)
-
-        return _Coll(self.store, name)
+        return _make_collection(self.store, name)

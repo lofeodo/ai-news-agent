@@ -163,7 +163,7 @@ Some past incidents are written up in `docs/postmortems/` (index in its README) 
 - `GET /auth/sections` — **premium only**; returns `{default_sections, section_config}`.
 - `POST /auth/sections` — **premium only**; saves user's section configuration.
 
-**Subscriber doc fields:** `email`, `token`, `token_expires_at`, `active`, `subscribed_at`, `confirmed_at`, `prefs: {include_french, include_canada}`, `send_latest`, `latest_sent`, `uid` (Firebase UID, null for legacy subscribers). Token TTL: 48h for confirmation, 365d for action links.
+**Subscriber doc fields:** `email`, `token`, `token_expires_at`, `active`, `subscribed_at`, `confirmed_at`, `prefs: {include_french, include_canada}`, `send_latest`, `latest_sent`, `uid` (Firebase UID, null for legacy subscribers). Token TTL: 48h for confirmation, 365d for action links; the expiry date only applies to pending sign-ups and `/confirm`, so unsubscribe and preferences links keep working for active subscribers. Signing in never subscribes by itself (only the Subscribe button / sign-up form does), and `POST /auth/subscribe` on an existing doc issues a fresh token.
 
 **Firestore collections:** `subscribers` (existing), `users` (doc ID = Firebase UID, fields: `email`, `display_name`, `provider`, `created_at`, `tier`, `section_config`), `oauth_states` (transient, ~10min TTL, Google Sign-In CSRF state), `oauth_exchange_codes` (transient, ~60s TTL, one-time Google Sign-In handoff — see below).
 

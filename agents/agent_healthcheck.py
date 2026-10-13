@@ -134,6 +134,9 @@ def _diagnose(doc: dict, mode: str = "send") -> list[str]:
             failed_at = doc.get(f"{agent}_failed_at", "unknown time")
             problems.append(f"{agent} failed at {failed_at}: {error}")
 
+    if doc.get("agent1b_warning"):
+        problems.append(f"news pool is thin: {doc['agent1b_warning']}")
+
     for field, label in EXPECTED_STAGES:
         if draft_only and field == "agent4_send_summary":
             continue

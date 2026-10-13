@@ -8,6 +8,8 @@ MAX_FETCH = 500              # safety ceiling for ArXiv API
 SAMPLE_SIZE = 35             # papers to score per week
 WORD_CUTOFF = 5000           # papers — covers method + results, excludes references (~6-7k tokens)
 PAPERS_IN_NEWSLETTER = 1     # how many top-scored papers appear in the newsletter (one spotlight per week)
+MIN_NEWS_ARTICLES = 40       # agent1b notes a thin pool when fewer articles are selected in total
+MIN_ARTICLES_PER_CATEGORY = 3    # ... or fewer than this in any one category
 ARTICLE_WORD_LIMIT = 1500 # news articles — most articles are under this anyway
 
 # Trending-paper shortlist (agent1a): the SAMPLE_SIZE most-upvoted Hugging Face Daily Papers of the

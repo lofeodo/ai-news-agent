@@ -70,3 +70,15 @@ def test_send_mode_does_not_check_composition():
     doc["agent4_send_summary"] = {"total": 3, "sent": 3, "failed": 0}
     doc["newsletter_variants"] = {"0_0": "tiny"}
     assert hc._diagnose(doc, "send") == []
+
+
+def test_thin_news_pool_is_reported():
+    import agent1b_fetch_news as a1b
+    from filter_tool import CATEGORIES
+    full = {c: [{}] * 10 for c in CATEGORIES}
+    assert a1b.pool_warning(full) is None
+    thin = {c: [{}] * 10 for c in CATEGORIES[1:]}
+    assert CATEGORIES[0] in a1b.pool_warning(thin)
+    assert "only 0 articles" in a1b.pool_warning({})
+    doc = {**_composed_doc(), "agent1b_warning": "only 3 articles selected"}
+    assert any("news pool is thin" in p for p in hc._diagnose(doc, "draft"))

@@ -12,6 +12,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
+import config
 from filter_tool import CATEGORIES, FILTER_TOOL, FILTER_TOOL_WITH_CONFIDENCE, LANGUAGE_FILTER_TOOL
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -539,6 +540,20 @@ def _write_review_audit(run_id: str, state: dict) -> None:
         print(f"[agent1b]  Failed to write review audit (ignored): {e}", flush=True)
 
 
+def pool_warning(by_category: dict) -> str | None:
+    """A short note when the selected pool is thin, else None. The run continues either way;
+    the health check reports the note."""
+    total = sum(len(v) for v in by_category.values())
+    notes = []
+    if total < config.MIN_NEWS_ARTICLES:
+        notes.append(f"only {total} articles selected (expected at least {config.MIN_NEWS_ARTICLES})")
+    thin = [f"{c} ({len(by_category.get(c, []))})" for c in CATEGORIES
+            if len(by_category.get(c, [])) < config.MIN_ARTICLES_PER_CATEGORY]
+    if thin:
+        notes.append(f"fewer than {config.MIN_ARTICLES_PER_CATEGORY} articles in: " + ", ".join(thin))
+    return "; ".join(notes) or None
+
+
 def run(run_id: str):
     """Main agent logic. Called by main.py (Cloud Run) or orchestrator.py."""
     start_time = datetime.now()
@@ -562,6 +577,10 @@ def run(run_id: str):
         for article in filtered:
             cat = article["category"]
             by_category.setdefault(cat, []).append(article)
+
+        warning = pool_warning(by_category)
+        if warning:
+            print(f"[agent1b]  WARNING: {warning}")
 
         print("=== FILTERED ARTICLES BY CATEGORY ===")
         for category, articles in sorted(by_category.items()):
@@ -595,7 +614,8 @@ def run(run_id: str):
             db.collection("pipeline_runs").document(run_id).set({
                 "news_filtered": {
                     "by_category": {cat: articles for cat, articles in by_category.items()},
-                }
+                },
+                **({"agent1b_warning": warning} if warning else {}),
             }, merge=True)
             print(f"[agent1b]  Saved news_filtered to Firestore (run_id={run_id})")
 

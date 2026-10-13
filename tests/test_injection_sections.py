@@ -21,9 +21,9 @@ class Model:
 class FakeDb:
     def __init__(self):
         self.saved = None
-        self.collection = lambda name: SimpleNamespace(document=lambda uid: SimpleNamespace(update=self._update))
+        self.collection = lambda name: SimpleNamespace(document=lambda uid: SimpleNamespace(set=self._set))
 
-    def _update(self, data):
+    def _set(self, data, merge=False):
         self.saved = data
 
 

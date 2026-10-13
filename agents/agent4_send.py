@@ -294,7 +294,7 @@ def _apply_section_config(html: str, section_config: dict | None) -> str:
         return html  # null = all sections in default order, nothing to do
 
     # Validate and filter to known DEFAULT_SECTIONS only
-    desired = [s for s in enabled if s in _DEFAULT_SECTIONS_SET]
+    desired = list(dict.fromkeys(s for s in enabled if s in _DEFAULT_SECTIONS_SET))
 
     # Graceful fallback for newsletters generated before section markers were added
     if not _SECTION_RE.search(html):
@@ -540,7 +540,7 @@ def _send_all(db, loaded: LoadedNewsletter, subscribers: list, start_time) -> No
             skipped += 1
             continue
 
-        prefs = sub.get("prefs", {})
+        prefs = sub.get("prefs") or {}
         key   = _variant_key(prefs)
         html  = variants.get(key) or variants.get("0_0", "")
         if not html:

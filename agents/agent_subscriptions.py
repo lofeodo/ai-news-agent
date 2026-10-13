@@ -40,6 +40,7 @@ logger = logging.getLogger(__name__)
 
 from auth_middleware import get_current_user, get_verified_user
 import click_counts
+import ids
 import mail_throttle
 import run_kind
 import sendgrid_webhook
@@ -70,7 +71,7 @@ FRONTEND_BASE_URL = os.environ.get("FRONTEND_BASE_URL", "").rstrip("/")
 # A sign-up that is never confirmed is left to a Firestore TTL rule on this field (see docs/runbook.md).
 UNCONFIRMED_TTL = timedelta(days=7)
 
-EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+EMAIL_RE = ids.EMAIL_RE
 
 # Token TTLs: short window for confirmation, long-lived for action links
 CONFIRM_TOKEN_TTL = timedelta(hours=48)
@@ -604,9 +605,31 @@ class CustomSectionItem(BaseModel):
         return v
 
 
+MAX_ENABLED_SECTIONS = 20
+MAX_CUSTOM_SECTIONS  = 10
+
+
 class SectionConfig(BaseModel):
-    enabled_sections: list[str] | None = None
-    custom_sections:  list[CustomSectionItem] = []
+    enabled_sections: Annotated[list[str], Field(max_length=MAX_ENABLED_SECTIONS)] | None = None
+    custom_sections:  Annotated[list[CustomSectionItem], Field(max_length=MAX_CUSTOM_SECTIONS)] = []
+
+    @field_validator("enabled_sections")
+    @classmethod
+    def _unique_sections(cls, v):
+        return None if v is None else list(dict.fromkeys(v))
+
+    @field_validator("custom_sections")
+    @classmethod
+    def _unique_custom(cls, v):
+        seen_ids, seen_topics, out = set(), set(), []
+        for item in v:
+            topic = item.refined_topic.strip().lower()
+            if item.id in seen_ids or topic in seen_topics:
+                continue
+            seen_ids.add(item.id)
+            seen_topics.add(topic)
+            out.append(item)
+        return out
 
 
 class SectionConfigUpdate(BaseModel):
@@ -837,9 +860,11 @@ async def admin_preview(
     db = _db()
     if run == "latest":
         doc = run_kind.latest_run(db, FIRESTORE_COLLECTION, release_only=False)
-    else:
+    elif ids.is_doc_id(run):
         doc = db.collection(FIRESTORE_COLLECTION).document(run).get()
         doc = doc if doc.exists else None
+    else:
+        doc = None
     if doc is None:
         raise HTTPException(status_code=404, detail="no_run")
     data = doc.to_dict()
@@ -853,7 +878,9 @@ async def admin_preview(
 @router.post("/request-unsubscribe")
 @limiter.limit("5/minute")
 def request_unsubscribe(request: Request, req: EmailOnlyRequest):
-    email = req.email.strip().lower()
+    email = ids.normalize_email(req.email)
+    if email is None:
+        return {"status": "ok"}
     db  = _db()
     doc = db.collection(SUBSCRIBERS_COLLECTION).document(email).get()
 
@@ -867,7 +894,9 @@ def request_unsubscribe(request: Request, req: EmailOnlyRequest):
 @router.post("/request-preferences")
 @limiter.limit("5/minute")
 def request_preferences(request: Request, req: EmailOnlyRequest):
-    email = req.email.strip().lower()
+    email = ids.normalize_email(req.email)
+    if email is None:
+        return {"status": "ok"}
     db  = _db()
     doc = db.collection(SUBSCRIBERS_COLLECTION).document(email).get()
 
@@ -922,7 +951,7 @@ def confirm(
     # Send last week's newsletter if they asked for it (once — guard against
     # double-clicks on the confirm link).
     if data.get("send_latest") and not data.get("latest_sent"):
-        html = _latest_newsletter_html(db, unsubscribe_token=new_token, prefs=data.get("prefs", {}))
+        html = _latest_newsletter_html(db, unsubscribe_token=new_token, prefs=data.get("prefs") or {})
         if html:
             _send_email(data["email"],
                         f"{NEWSLETTER_NAME} — last week's edition",
@@ -968,7 +997,7 @@ def get_preferences(
         return JSONResponse(status_code=404, content={"error": "not_found"})
 
     data = doc.to_dict()
-    return {"email": data["email"], "prefs": data.get("prefs", {})}
+    return {"email": data["email"], "prefs": data.get("prefs") or {}}
 
 
 @router.post("/preferences")
@@ -1081,7 +1110,7 @@ async def auth_me(request: Request, user: dict = Depends(get_current_user)):
         "display_name":   user.get("name"),
         "email_verified": user.get("email_verified", False),
         "subscribed":     bool(sub_data and sub_data.get("active")),
-        "prefs":          sub_data.get("prefs", {}) if sub_data else {},
+        "prefs":          (sub_data.get("prefs") or {}) if sub_data else {},
         "tier":           tier,
         "is_admin":       _is_admin(user),
     }
@@ -1143,7 +1172,7 @@ async def auth_subscribe(request: Request, user: dict = Depends(get_verified_use
         html = _latest_newsletter_html(
             db,
             unsubscribe_token=current_data["token"],
-            prefs=current_data.get("prefs", {}),
+            prefs=current_data.get("prefs") or {},
         )
         if html:
             _send_email(email, f"{NEWSLETTER_NAME} — last week's edition", html)
@@ -1244,7 +1273,7 @@ def auth_google_callback(
         return resp
 
     db = _db()
-    state_data = _consume_once(db, OAUTH_STATES_COLLECTION, state) if state else None
+    state_data = _consume_once(db, OAUTH_STATES_COLLECTION, state) if ids.is_doc_id(state) else None
     return_to  = state_data.get("return_to", DEFAULT_RETURN_PAGE) if state_data else DEFAULT_RETURN_PAGE
 
     if error or state_data is None or request.cookies.get("oauth_state") != state:
@@ -1354,7 +1383,7 @@ async def auth_get_preferences(request: Request, user: dict = Depends(get_verifi
     if not doc.exists or not doc.to_dict().get("active"):
         return {"subscribed": False, "prefs": {}, "tier": tier}
     data = doc.to_dict()
-    return {"subscribed": True, "prefs": data.get("prefs", {}), "tier": tier}
+    return {"subscribed": True, "prefs": data.get("prefs") or {}, "tier": tier}
 
 
 @router.post("/auth/preferences")
@@ -1453,7 +1482,7 @@ async def auth_update_sections(
 
     uid = user["uid"]
     db  = _db()
-    db.collection(USERS_COLLECTION).document(uid).update({
+    db.collection(USERS_COLLECTION).document(uid).set({
         "section_config": {
             "enabled_sections": req.section_config.enabled_sections,
             "custom_sections": [
@@ -1461,5 +1490,5 @@ async def auth_update_sections(
                 for cs in req.section_config.custom_sections
             ],
         }
-    })
+    }, merge=True)
     return {"status": "ok"}

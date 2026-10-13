@@ -881,6 +881,12 @@ def confirm(
             "All spots were claimed just before you confirmed. Check back later.",
             status=503,
         )
+    if not data.get("active", False) and not mail_throttle.allow_activation(db):
+        return _full_page(
+            "Please try again tomorrow",
+            "A lot of people joined today. Your confirmation link stays valid for a while, so click it again tomorrow.",
+            status=503,
+        )
 
     # Rotate token to a long-lived action token on confirmation.
     new_token  = secrets.token_urlsafe(32)
@@ -1084,7 +1090,7 @@ async def auth_subscribe(request: Request, user: dict = Depends(get_verified_use
     if doc.exists and doc.to_dict().get("active"):
         return {"status": "already_subscribed"}
 
-    if _active_subscriber_count(db) >= MAX_SUBSCRIBERS:
+    if _active_subscriber_count(db) >= MAX_SUBSCRIBERS or not mail_throttle.allow_activation(db):
         raise HTTPException(status_code=503, detail="service_unavailable")
 
     token_val = secrets.token_urlsafe(32)

@@ -79,6 +79,7 @@ def api(monkeypatch):
     store = {}
     monkeypatch.setattr(subs, "_db", lambda: FakeDb(store))
     monkeypatch.setattr(subs.limiter, "enabled", False)
+    monkeypatch.setattr(subs.mail_throttle, "allow_activation", lambda *a: True)
     app = FastAPI()
     app.state.limiter = subs.limiter
     app.include_router(subs.router)

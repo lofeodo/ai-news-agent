@@ -32,9 +32,9 @@ def api(monkeypatch):
     app = FastAPI()
     app.state.limiter = subs.limiter
     app.include_router(subs.router)
-    app.dependency_overrides[subs.get_current_user] = lambda: {"email": "p@example.com", "uid": "u1"}
+    app.dependency_overrides[subs.get_current_user] = lambda: {"email": "p@example.com", "email_verified": True, "uid": "u1"}
     monkeypatch.setattr(subs.limiter, "enabled", False)
-    monkeypatch.setattr(subs, "_get_user_tier", lambda email: "premium")
+    monkeypatch.setattr(subs, "_get_user_tier", lambda user: "premium")
     monkeypatch.setattr(subs, "_get_anthropic_api_key", lambda: "unused")
     model, db = Model(), FakeDb()
     monkeypatch.setattr(subs.anthropic, "Anthropic", lambda **kw: model)

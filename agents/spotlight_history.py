@@ -20,23 +20,31 @@ def _local_path(data_dir: str) -> str:
     return os.path.join(data_dir, "spotlighted_papers.json")
 
 
-def load_seen_ids(use_firestore: bool, project: str, data_dir: str, run_id: str | None = None) -> set[str]:
+class SeenIds(set):
+    """Ids already spotlighted. `failed` is True when the history could not be read, so the set is
+    empty for the wrong reason and the caller can say so."""
+    failed = False
+
+
+def load_seen_ids(use_firestore: bool, project: str, data_dir: str, run_id: str | None = None) -> SeenIds:
     """arXiv ids spotlighted by earlier runs. Papers recorded by `run_id` itself are excluded, so a
     retry of the same run re-selects instead of treating its own earlier pick as 'seen'."""
     try:
         if use_firestore:
             from google.cloud import firestore
             db = firestore.Client(project=project)
-            return {d.id for d in db.collection(COLLECTION).stream()
-                    if (d.to_dict() or {}).get("run_id") != run_id}
+            return SeenIds(d.id for d in db.collection(COLLECTION).stream()
+                           if (d.to_dict() or {}).get("run_id") != run_id)
         path = _local_path(data_dir)
         if not os.path.exists(path):
-            return set()
+            return SeenIds()
         with open(path, "r", encoding="utf-8") as f:
-            return {aid for aid, rec in json.load(f).items() if rec.get("run_id") != run_id}
+            return SeenIds(aid for aid, rec in json.load(f).items() if rec.get("run_id") != run_id)
     except Exception as e:
         print(f"[spotlight] could not load history, continuing without it: {e}", flush=True)
-        return set()
+        seen = SeenIds()
+        seen.failed = True
+        return seen
 
 
 def is_debug_run(use_firestore: bool, project: str, run_id: str, db=None) -> bool:
@@ -54,6 +62,36 @@ def is_debug_run(use_firestore: bool, project: str, run_id: str, db=None) -> boo
     except Exception as e:
         print(f"[spotlight] could not read run kind, treating as release: {e}", flush=True)
         return False
+
+
+def unrecord_spotlight(arxiv_ids: list[str], run_id: str, use_firestore: bool, project: str, data_dir: str) -> int:
+    """Remove picks that `run_id` itself recorded (never another run's). Returns how many were removed."""
+    removed = 0
+    try:
+        if use_firestore:
+            from google.cloud import firestore
+            db = firestore.Client(project=project)
+            for aid in arxiv_ids:
+                ref = db.collection(COLLECTION).document(aid)
+                snap = ref.get()
+                if snap.exists and (snap.to_dict() or {}).get("run_id") == run_id:
+                    ref.delete()
+                    removed += 1
+        else:
+            path = _local_path(data_dir)
+            if not os.path.exists(path):
+                return 0
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            for aid in arxiv_ids:
+                if (data.get(aid) or {}).get("run_id") == run_id:
+                    del data[aid]
+                    removed += 1
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        print(f"[spotlight] could not remove spotlight record: {e}", flush=True)
+    return removed
 
 
 def record_spotlight(papers: list[dict], run_id: str, use_firestore: bool, project: str, data_dir: str) -> int:

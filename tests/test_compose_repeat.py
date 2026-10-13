@@ -25,7 +25,7 @@ def cloud(monkeypatch):
 
 
 def _doc(**extra):
-    return {"paper_summaries": [], "news_summaries": {}, **extra}
+    return {"paper_summaries": [{"summary": "A summary."}], "news_summaries": {}, **extra}
 
 
 def test_composed_run_is_skipped_without_an_error_record(cloud):

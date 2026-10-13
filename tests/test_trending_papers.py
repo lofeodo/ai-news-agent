@@ -163,3 +163,16 @@ def test_is_debug_run_only_for_flagged_cloud_runs():
     assert sh.is_debug_run(True, "p", "r", db=_Db(None)) is False                  # no doc
     assert sh.is_debug_run(True, "p", "r", db=_Db(boom=True)) is False             # read failure -> release
     assert sh.is_debug_run(False, "p", "r", db=_Db({"run_kind": "debug"})) is False  # local mode
+
+
+def test_read_failure_is_flagged_on_the_returned_set(tmp_path):
+    (tmp_path / "spotlighted_papers.json").write_text("{not json", encoding="utf-8")
+    assert sh.load_seen_ids(False, "p", str(tmp_path)).failed is True
+    assert sh.load_seen_ids(False, "p", str(tmp_path / "empty")).failed is False
+
+
+def test_unreadable_history_is_noted_by_the_health_check():
+    import agent_healthcheck as hc
+    doc = {"agent1a_warning": "spotlight history could not be read"}
+    assert "Paper selection" in hc._notes(doc, "draft")[0]
+    assert not any("paper selection" in p.lower() for p in hc._diagnose(doc, "draft"))

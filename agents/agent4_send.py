@@ -571,6 +571,13 @@ def _send_all(db, loaded: LoadedNewsletter, subscribers: list, start_time) -> No
 
     elapsed = (datetime.now() - start_time).total_seconds()
 
+    if click_run_id:
+        try:
+            import click_counts
+            click_counts.mark_send_complete(db, loaded.run_id, int(time.time()))
+        except Exception as e:
+            print(f"  [warn]  could not record the send end time: {type(e).__name__}", flush=True)
+
     # Structured summary line — Cloud Logging parses stdout JSON into
     # jsonPayload, making send history queryable:
     #   gcloud logging read 'jsonPayload.event="send_summary"' ...

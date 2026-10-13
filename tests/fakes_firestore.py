@@ -20,7 +20,9 @@ class _Doc:
 
     def set(self, data, merge=False):
         coll = self._store.setdefault(self._name, {})
-        coll[self._id] = {**coll.get(self._id, {}), **data} if merge else dict(data)
+        if merge and self._id in coll:
+            return self.update(data)
+        coll[self._id] = dict(data)
 
     def update(self, data):
         from google.cloud import firestore

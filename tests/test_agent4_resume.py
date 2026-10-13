@@ -91,3 +91,59 @@ def test_a_marker_write_failure_does_not_raise():
         def collection(self, name):
             raise RuntimeError("firestore down")
     a4._mark_sent(Boom(), "RUN1", "a@example.com")
+
+
+# --- failures and logs -------------------------------------------------------------------------------
+
+def test_failures_and_logs_carry_no_addresses_or_tokens(env, capsys):
+    db, _, fail = env
+    fail.add("b@example.com")
+    a4.run("agent4-run")
+    out = capsys.readouterr().out
+    for addr in ("a@example.com", "b@example.com"):
+        assert addr not in out
+    f = _summary(db)["failures"]
+    assert f == [{"subscriber": a4._recipient_id("b@example.com")[:12], "error": "HTTP Error 500"}]
+
+
+def test_a_malformed_subscriber_doc_is_logged_without_its_contents(env, monkeypatch, capsys):
+    db, _, _ = env
+    monkeypatch.setattr(a4, "_active_subscribers", lambda d: [{"email": "x@example.com", "uid": "SECRET-UID"}])
+    a4.run("agent4-run")
+    out = capsys.readouterr().out
+    assert "x@example.com" not in out and "SECRET-UID" not in out
+    assert _summary(db)["failed"] == 1
+
+
+def test_a_missing_sendgrid_key_is_recorded_on_the_composed_run_and_raised(env, monkeypatch):
+    db, _, _ = env
+
+    def no_key():
+        raise RuntimeError("secret manager down")
+    monkeypatch.setattr(a4, "_get_sendgrid_api_key", no_key)
+    with pytest.raises(RuntimeError):
+        a4.run("agent4-run")
+    run = db.store["pipeline_runs"]["RUN1"]
+    assert run["agent4_error"] == "secret manager down" and "agent4_failed_at" in run
+    assert "agent4-run" not in db.store["pipeline_runs"]
+
+
+def test_a_crash_before_the_loop_is_recorded_too(env, monkeypatch):
+    db, _, _ = env
+    monkeypatch.setattr(a4, "_load_user_section_configs", lambda d, s: (_ for _ in ()).throw(RuntimeError("x")))
+    a4.run("agent4-run")  # section configs already degrade to defaults: no error, full send
+    assert "agent4_error" not in db.store["pipeline_runs"]["RUN1"]
+    monkeypatch.setattr(a4, "_already_sent_ids", lambda d, r: (_ for _ in ()).throw(RuntimeError("marker read")))
+    with pytest.raises(RuntimeError):
+        a4.run("agent4-run")
+    assert db.store["pipeline_runs"]["RUN1"]["agent4_error"] == "marker read"
+
+
+def test_a_clean_rerun_clears_the_earlier_error(env, monkeypatch):
+    db, sends, _ = env
+    db.store["pipeline_runs"] = {"RUN1": {"agent4_error": "boom", "agent4_failed_at": "t"}}
+    monkeypatch.setattr(a4, "_load_latest_newsletter",
+                        lambda d: a4.LoadedNewsletter({"0_0": "<p>x</p>"}, "Subj", "RUN1", {"agent4_error": "boom"}))
+    a4.run("agent4-run")
+    run = db.store["pipeline_runs"]["RUN1"]
+    assert "agent4_error" not in run and "agent4_failed_at" not in run and run["agent4_send_summary"]["sent"] == 2

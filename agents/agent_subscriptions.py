@@ -40,6 +40,7 @@ logger = logging.getLogger(__name__)
 
 from auth_middleware import get_current_user, get_verified_user
 import click_counts
+import ids
 import mail_throttle
 import run_kind
 import sendgrid_webhook
@@ -70,7 +71,7 @@ FRONTEND_BASE_URL = os.environ.get("FRONTEND_BASE_URL", "").rstrip("/")
 # A sign-up that is never confirmed is left to a Firestore TTL rule on this field (see docs/runbook.md).
 UNCONFIRMED_TTL = timedelta(days=7)
 
-EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+EMAIL_RE = ids.EMAIL_RE
 
 # Token TTLs: short window for confirmation, long-lived for action links
 CONFIRM_TOKEN_TTL = timedelta(hours=48)
@@ -837,9 +838,11 @@ async def admin_preview(
     db = _db()
     if run == "latest":
         doc = run_kind.latest_run(db, FIRESTORE_COLLECTION, release_only=False)
-    else:
+    elif ids.is_doc_id(run):
         doc = db.collection(FIRESTORE_COLLECTION).document(run).get()
         doc = doc if doc.exists else None
+    else:
+        doc = None
     if doc is None:
         raise HTTPException(status_code=404, detail="no_run")
     data = doc.to_dict()
@@ -853,7 +856,9 @@ async def admin_preview(
 @router.post("/request-unsubscribe")
 @limiter.limit("5/minute")
 def request_unsubscribe(request: Request, req: EmailOnlyRequest):
-    email = req.email.strip().lower()
+    email = ids.normalize_email(req.email)
+    if email is None:
+        return {"status": "ok"}
     db  = _db()
     doc = db.collection(SUBSCRIBERS_COLLECTION).document(email).get()
 
@@ -867,7 +872,9 @@ def request_unsubscribe(request: Request, req: EmailOnlyRequest):
 @router.post("/request-preferences")
 @limiter.limit("5/minute")
 def request_preferences(request: Request, req: EmailOnlyRequest):
-    email = req.email.strip().lower()
+    email = ids.normalize_email(req.email)
+    if email is None:
+        return {"status": "ok"}
     db  = _db()
     doc = db.collection(SUBSCRIBERS_COLLECTION).document(email).get()
 
@@ -1244,7 +1251,7 @@ def auth_google_callback(
         return resp
 
     db = _db()
-    state_data = _consume_once(db, OAUTH_STATES_COLLECTION, state) if state else None
+    state_data = _consume_once(db, OAUTH_STATES_COLLECTION, state) if ids.is_doc_id(state) else None
     return_to  = state_data.get("return_to", DEFAULT_RETURN_PAGE) if state_data else DEFAULT_RETURN_PAGE
 
     if error or state_data is None or request.cookies.get("oauth_state") != state:

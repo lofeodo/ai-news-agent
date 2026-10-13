@@ -317,6 +317,13 @@ async def trigger(request: Request):
             return Response(content=f"Unknown check '{check}'. Valid values: draft, send.", status_code=400)
         if check:
             options = {"check": check}
+    # agent3 leaves an already composed run alone; ?force=1 recomposes it.
+    if agent_name == "agent3":
+        force = request.query_params.get("force")
+        if force and force != "1":
+            return Response(content=f"Unknown force '{force}'. Valid value: 1.", status_code=400)
+        if force:
+            options = {"force": True}
     # The orchestrator takes ?kind=release|debug. Unflagged means debug, so only the scheduled job publishes.
     if agent_name == "orchestrator":
         kind = request.query_params.get("kind")

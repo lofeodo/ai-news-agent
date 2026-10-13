@@ -16,6 +16,7 @@
 # Website-initiated endpoints ALWAYS return 200, whether or not the email
 # exists — otherwise the form becomes an oracle for checking who's subscribed.
 
+import functools
 import hmac
 import logging
 import os
@@ -79,6 +80,7 @@ ACTION_TOKEN_TTL  = timedelta(days=365)
 
 SENDGRID_TIMEOUT_SECONDS = float(os.environ.get("SENDGRID_TIMEOUT_SECONDS", "8"))
 REFINE_TIMEOUT_SECONDS   = 15
+RESPONSE_FLOOR_SECONDS   = float(os.environ.get("RESPONSE_FLOOR_SECONDS", "2.0"))
 
 # Admin token for the /stats endpoint (the endpoint is off while unset)
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "")
@@ -313,6 +315,27 @@ def _get_sendgrid_webhook_public_key() -> str:
     if not key:
         raise RuntimeError("SENDGRID_WEBHOOK_PUBLIC_KEY env var not set for local mode")
     return key
+
+
+def _hold_until(start: float, floor: float) -> None:
+    remaining = floor - (time.monotonic() - start)
+    if remaining > 0:
+        time.sleep(remaining)
+
+
+def steady_response_time(fn):
+    """Take at least RESPONSE_FLOOR_SECONDS, so the time a mail route takes does not depend on the address.
+
+    Slept inside the request on purpose: the service gets no CPU between requests, so a background send could stall.
+    """
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        start = time.monotonic()
+        try:
+            return fn(*args, **kwargs)
+        finally:
+            _hold_until(start, RESPONSE_FLOOR_SECONDS)
+    return wrapper
 
 
 def _send_email(to_email: str, subject: str, html_body: str) -> None:
@@ -745,6 +768,7 @@ async def sendgrid_events(request: Request):
 
 @router.post("/subscribe")
 @limiter.limit("5/minute")
+@steady_response_time
 def subscribe(request: Request, req: SubscribeRequest):
     email = req.email.strip().lower()
     if not EMAIL_RE.match(email):
@@ -888,6 +912,7 @@ def admin_preview(
 
 @router.post("/request-unsubscribe")
 @limiter.limit("5/minute")
+@steady_response_time
 def request_unsubscribe(request: Request, req: EmailOnlyRequest):
     email = ids.normalize_email(req.email)
     if email is None:
@@ -904,6 +929,7 @@ def request_unsubscribe(request: Request, req: EmailOnlyRequest):
 
 @router.post("/request-preferences")
 @limiter.limit("5/minute")
+@steady_response_time
 def request_preferences(request: Request, req: EmailOnlyRequest):
     email = ids.normalize_email(req.email)
     if email is None:

@@ -165,7 +165,7 @@ def _confirm_env(monkeypatch, sub):
 def test_confirm_link_can_be_opened_twice(monkeypatch):
     client, store, mails = _confirm_env(monkeypatch, {})
     for _ in range(2):
-        r = client.get("/confirm", params={"token": "tok"})
+        r = client.post("/confirm", params={"token": "tok"})
         assert r.status_code == 200 and "confirmed" in r.text.lower()
     assert store["a@example.com"]["active"] is True
     assert store["a@example.com"]["token"] == "tok"
@@ -176,7 +176,7 @@ def test_expired_pending_link_is_still_refused(monkeypatch):
     from datetime import datetime, timedelta, timezone
     client, store, mails = _confirm_env(
         monkeypatch, {"token_expires_at": datetime.now(timezone.utc) - timedelta(hours=1)})
-    client.get("/confirm", params={"token": "tok"})
+    client.post("/confirm", params={"token": "tok"})
     assert store["a@example.com"]["active"] is False and not mails
 
 
@@ -189,7 +189,7 @@ def test_failed_edition_mail_can_be_retried(monkeypatch):
     monkeypatch.setattr(subs, "_send_email", boom)
     import pytest
     with pytest.raises(RuntimeError):
-        client.get("/confirm", params={"token": "tok"})
+        client.post("/confirm", params={"token": "tok"})
     assert store["a@example.com"]["latest_sent"] is False
 
 

@@ -17,6 +17,7 @@
 # exists — otherwise the form becomes an oracle for checking who's subscribed.
 
 import functools
+import html as html_lib
 import hmac
 import logging
 import os
@@ -562,9 +563,18 @@ def _already_subscribed_email_html(token: str) -> str:
 # Small HTML pages returned by the GET endpoints (clicked from emails)
 # ---------------------------------------------------------------------------
 
-def _full_page(title: str, body: str, status: int = 200) -> HTMLResponse:
-    """Full-fidelity page matching the website aesthetic — canvas, logo, card, fonts."""
+def _full_page(title: str, body: str, status: int = 200,
+               action: tuple[str, str] | None = None) -> HTMLResponse:
+    """Full-fidelity page matching the website aesthetic — canvas, logo, card, fonts.
+
+    `action` is an optional (post_url, button_label): the page then carries a form whose
+    button POSTs there. Opening the page itself changes nothing."""
     base = FRONTEND_BASE_URL or ""
+    form = ""
+    if action:
+        form = (f'<form method="post" action="{html_lib.escape(action[0], quote=True)}">'
+                f'<button type="submit" class="btn-primary-action" style="margin-top:18px;width:100%">'
+                f'{html_lib.escape(action[1])}</button></form>')
     return HTMLResponse(status_code=status, content=f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -583,6 +593,7 @@ def _full_page(title: str, body: str, status: int = 200) -> HTMLResponse:
   <div class="card">
     <h1><span class="prompt">&#10095;</span> {title}</h1>
     <p class="subtitle">{body}</p>
+    {form}
   </div>
   <div class="nav-links">
     <a href="{base}">Home</a>
@@ -964,6 +975,23 @@ def request_preferences(request: Request, req: EmailOnlyRequest):
 
 @router.get("/confirm")
 @limiter.limit("10/minute")
+def confirm_page(
+    request: Request,
+    token: Annotated[str, Query(max_length=128)] = "",
+):
+    """Opening the link only shows a button; the sign-up is activated by the POST below."""
+    if not token or not re.match(r'^[A-Za-z0-9_-]+$', token):
+        return _INVALID_LINK_PAGE
+    if _find_by_token(_db(), token, enforce_expiry=True) is None:
+        return _INVALID_LINK_PAGE
+    return _full_page("Confirm your subscription",
+                      f"One more step: press the button to start receiving {NEWSLETTER_NAME}.",
+                      action=(f"{SERVICE_BASE_URL}/confirm?{urlencode({'token': token})}",
+                              "Confirm subscription"))
+
+
+@router.post("/confirm")
+@limiter.limit("10/minute")
 def confirm(
     request: Request,
     token: Annotated[str, Query(max_length=128)] = "",
@@ -1019,6 +1047,23 @@ def confirm(
 
 
 @router.get("/unsubscribe")
+@limiter.limit("10/minute")
+def unsubscribe_page(
+    request: Request,
+    token: Annotated[str, Query(max_length=128)] = "",
+):
+    """Opening the link only shows a button; the unsubscribe happens on the POST below."""
+    if not token or not re.match(r'^[A-Za-z0-9_-]+$', token):
+        return _INVALID_LINK_PAGE
+    if _find_by_token(_db(), token) is None:
+        return _INVALID_LINK_PAGE
+    return _full_page("Unsubscribe",
+                      f"Press the button to stop receiving {NEWSLETTER_NAME}. You can re-subscribe any time.",
+                      action=(f"{SERVICE_BASE_URL}/unsubscribe?{urlencode({'token': token})}",
+                              "Unsubscribe"))
+
+
+@router.post("/unsubscribe")
 @limiter.limit("10/minute")
 def unsubscribe(
     request: Request,

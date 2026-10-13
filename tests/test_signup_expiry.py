@@ -80,7 +80,7 @@ def test_a_new_sign_up_expires_in_a_week_and_confirming_clears_it(api):
     api.client.post("/subscribe", json=BODY)
     doc = api.store["a@example.com"]
     assert timedelta(days=6) < doc["expires_at"] - NOW < timedelta(days=8)
-    api.client.get("/confirm", params={"token": doc["token"]})
+    api.client.post("/confirm", params={"token": doc["token"]})
     assert "expires_at" not in api.store["a@example.com"]
     assert api.store["a@example.com"]["active"] is True
 

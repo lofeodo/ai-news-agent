@@ -77,6 +77,9 @@ EMAIL_RE = ids.EMAIL_RE
 CONFIRM_TOKEN_TTL = timedelta(hours=48)
 ACTION_TOKEN_TTL  = timedelta(days=365)
 
+SENDGRID_TIMEOUT_SECONDS = float(os.environ.get("SENDGRID_TIMEOUT_SECONDS", "8"))
+REFINE_TIMEOUT_SECONDS   = 15
+
 # Admin token for the /stats endpoint (the endpoint is off while unset)
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "")
 
@@ -332,7 +335,7 @@ def _send_email(to_email: str, subject: str, html_body: str) -> None:
         },
         method="POST",
     )
-    with urllib.request.urlopen(req) as resp:
+    with urllib.request.urlopen(req, timeout=SENDGRID_TIMEOUT_SECONDS) as resp:
         print(f"[subscriptions]  email sent — status {resp.status}", flush=True)
 
 
@@ -1435,7 +1438,7 @@ def auth_sections_refine(
 
     raw = req.raw_topic.strip()
     try:
-        client = anthropic.Anthropic(api_key=_get_anthropic_api_key())
+        client = anthropic.Anthropic(api_key=_get_anthropic_api_key(), timeout=REFINE_TIMEOUT_SECONDS)
         message = client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=50,

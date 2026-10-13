@@ -72,6 +72,7 @@
     class="preview-frame"
     src="https://agent-subscriptions-zozrn33sna-nn.a.run.app/preview"
     title="Latest Latent SpaceMail issue"
+    sandbox="allow-popups allow-popups-to-escape-sandbox"
   ></iframe>
 
   <script src="share.js"></script>
@@ -90,6 +91,8 @@
     const navLink = document.querySelector('.topbar__nav-link.active') || document.querySelector('.topbar__nav-link[data-href="/preview.html"]');
     const publicSrc = frame.getAttribute('src');
     let debugOn = false;
+    // Same content policy the public response sends, for the inline (srcdoc) copy.
+    const ISSUE_POLICY = '<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https: data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">';
 
     async function showDebug() {
       toggle.disabled = true;
@@ -98,7 +101,7 @@
         if (!res.ok) throw new Error(res.status);
         const run = await res.json();
         frame.removeAttribute('src');
-        frame.srcdoc = run.html;
+        frame.srcdoc = ISSUE_POLICY + run.html;
         if (navLink) navLink.title = `${run.run_kind} run ${run.run_id}`;
         toggle.setAttribute('aria-pressed', 'true');
         toggle.textContent = 'Back to published';

@@ -951,7 +951,7 @@ def confirm(
     # Send last week's newsletter if they asked for it (once — guard against
     # double-clicks on the confirm link).
     if data.get("send_latest") and not data.get("latest_sent"):
-        html = _latest_newsletter_html(db, unsubscribe_token=new_token, prefs=data.get("prefs", {}))
+        html = _latest_newsletter_html(db, unsubscribe_token=new_token, prefs=data.get("prefs") or {})
         if html:
             _send_email(data["email"],
                         f"{NEWSLETTER_NAME} — last week's edition",
@@ -997,7 +997,7 @@ def get_preferences(
         return JSONResponse(status_code=404, content={"error": "not_found"})
 
     data = doc.to_dict()
-    return {"email": data["email"], "prefs": data.get("prefs", {})}
+    return {"email": data["email"], "prefs": data.get("prefs") or {}}
 
 
 @router.post("/preferences")
@@ -1110,7 +1110,7 @@ async def auth_me(request: Request, user: dict = Depends(get_current_user)):
         "display_name":   user.get("name"),
         "email_verified": user.get("email_verified", False),
         "subscribed":     bool(sub_data and sub_data.get("active")),
-        "prefs":          sub_data.get("prefs", {}) if sub_data else {},
+        "prefs":          (sub_data.get("prefs") or {}) if sub_data else {},
         "tier":           tier,
         "is_admin":       _is_admin(user),
     }
@@ -1172,7 +1172,7 @@ async def auth_subscribe(request: Request, user: dict = Depends(get_verified_use
         html = _latest_newsletter_html(
             db,
             unsubscribe_token=current_data["token"],
-            prefs=current_data.get("prefs", {}),
+            prefs=current_data.get("prefs") or {},
         )
         if html:
             _send_email(email, f"{NEWSLETTER_NAME} — last week's edition", html)
@@ -1383,7 +1383,7 @@ async def auth_get_preferences(request: Request, user: dict = Depends(get_verifi
     if not doc.exists or not doc.to_dict().get("active"):
         return {"subscribed": False, "prefs": {}, "tier": tier}
     data = doc.to_dict()
-    return {"subscribed": True, "prefs": data.get("prefs", {}), "tier": tier}
+    return {"subscribed": True, "prefs": data.get("prefs") or {}, "tier": tier}
 
 
 @router.post("/auth/preferences")

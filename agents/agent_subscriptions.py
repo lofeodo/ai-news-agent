@@ -856,7 +856,7 @@ def newsletter_preview(request: Request):
 
 @router.get("/auth/admin/preview")
 @limiter.limit("30/minute")
-async def admin_preview(
+def admin_preview(
     request: Request,
     run: Annotated[str, Query(max_length=64)] = "latest",
     variant: Annotated[str, Query(max_length=8)] = "",
@@ -1088,7 +1088,7 @@ USERS_COLLECTION = "users"
 
 @router.get("/auth/me")
 @limiter.limit("30/minute")
-async def auth_me(request: Request, user: dict = Depends(get_current_user)):
+def auth_me(request: Request, user: dict = Depends(get_current_user)):
     """Return the current user's profile and subscription status."""
     uid = user["uid"]
     if not user.get("email_verified"):
@@ -1132,8 +1132,11 @@ async def auth_subscribe(request: Request, user: dict = Depends(get_verified_use
         body = await request.json()
     except Exception:
         body = {}
-    send_latest = bool(body.get("send_latest", False))
+    send_latest = bool(body.get("send_latest", False)) if isinstance(body, dict) else False
+    return await run_in_threadpool(_subscribe_account, user, send_latest)
 
+
+def _subscribe_account(user: dict, send_latest: bool) -> dict:
     db    = _db()
     email = user["email"].lower()
     uid   = user["uid"]
@@ -1192,7 +1195,7 @@ async def auth_subscribe(request: Request, user: dict = Depends(get_verified_use
 
 @router.post("/auth/unsubscribe")
 @limiter.limit("10/minute")
-async def auth_unsubscribe(request: Request, user: dict = Depends(get_verified_user)):
+def auth_unsubscribe(request: Request, user: dict = Depends(get_verified_user)):
     """Unsubscribe the authenticated user."""
     db    = _db()
     email = user["email"].lower()
@@ -1359,7 +1362,7 @@ def auth_google_callback(
 
 @router.post("/auth/google/exchange")
 @limiter.limit("10/minute")
-async def auth_google_exchange(request: Request, req: GoogleExchangeRequest) -> dict:
+def auth_google_exchange(request: Request, req: GoogleExchangeRequest) -> dict:
     """Redeem a one-time exchange code (minted by /auth/google/callback) for a
     Firebase custom token. This is the only step of the flow reached via
     fetch() rather than a top-level navigation, so it's the only one that
@@ -1382,7 +1385,7 @@ async def auth_google_exchange(request: Request, req: GoogleExchangeRequest) -> 
 
 @router.get("/auth/preferences")
 @limiter.limit("10/minute")
-async def auth_get_preferences(request: Request, user: dict = Depends(get_verified_user)):
+def auth_get_preferences(request: Request, user: dict = Depends(get_verified_user)):
     """Return the authenticated user's current preferences and tier."""
     db    = _db()
     email = user["email"].lower()
@@ -1396,7 +1399,7 @@ async def auth_get_preferences(request: Request, user: dict = Depends(get_verifi
 
 @router.post("/auth/preferences")
 @limiter.limit("10/minute")
-async def auth_update_preferences(
+def auth_update_preferences(
     request: Request,
     req: AuthPreferencesUpdate,
     user: dict = Depends(get_verified_user),
@@ -1420,7 +1423,7 @@ async def auth_update_preferences(
 
 @router.post("/auth/sections/refine")
 @limiter.limit("5/minute")
-async def auth_sections_refine(
+def auth_sections_refine(
     request: Request,
     req: SectionRefineRequest,
     user: dict = Depends(get_verified_user),
@@ -1457,7 +1460,7 @@ async def auth_sections_refine(
 
 @router.get("/auth/sections")
 @limiter.limit("10/minute")
-async def auth_get_sections(request: Request, user: dict = Depends(get_verified_user)):
+def auth_get_sections(request: Request, user: dict = Depends(get_verified_user)):
     """Return the user's section configuration (premium only)."""
     email = user.get("email", "").lower()
     if _get_user_tier(user) != "premium":
@@ -1472,7 +1475,7 @@ async def auth_get_sections(request: Request, user: dict = Depends(get_verified_
 
 @router.post("/auth/sections")
 @limiter.limit("10/minute")
-async def auth_update_sections(
+def auth_update_sections(
     request: Request,
     req: SectionConfigUpdate,
     user: dict = Depends(get_verified_user),

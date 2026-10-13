@@ -14,7 +14,7 @@ def _ensure_firebase():
     _firebase_initialized = True
 
 
-async def get_current_user(authorization: str | None = Header(default=None)) -> dict:
+def get_current_user(authorization: str | None = Header(default=None)) -> dict:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="missing_token")
     id_token = authorization.split("Bearer ", 1)[1].strip()

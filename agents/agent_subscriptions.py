@@ -224,6 +224,21 @@ def _active_subscriber_count(db) -> int:
         return sum(1 for _ in col.where("active", "==", True).stream())
 
 
+def _claim_latest(db, ref) -> bool:
+    """Atomically mark the "last week's edition" mail as taken; True for exactly one caller."""
+    from google.cloud import firestore as _fs
+
+    @_fs.transactional
+    def _txn(transaction):
+        data = ref.get(transaction=transaction).to_dict() or {}
+        if data.get("latest_sent"):
+            return False
+        transaction.update(ref, {"latest_sent": True})
+        return True
+
+    return _txn(db.transaction())
+
+
 def _consume_once(db, collection: str, doc_id: str) -> dict | None:
     """Atomically read-and-delete a single-use doc. None if missing/expired.
 
@@ -972,28 +987,32 @@ def confirm(
             status=503,
         )
 
-    # Rotate token to a long-lived action token on confirmation.
-    new_token  = secrets.token_urlsafe(32)
-    action_exp = datetime.now(timezone.utc) + ACTION_TOKEN_TTL
+    if data.get("active"):
+        # A repeat click, a double click or a mail scanner's visit: already done, nothing more to do.
+        return _full_page("Subscription confirmed 🎉",
+                          f"You'll receive {NEWSLETTER_NAME} every Monday morning.")
+
+    # The link's token stays: the same inbox holds it, and a second visit must still find the subscriber.
     from google.cloud import firestore as _fs
     doc.reference.update({
         "active":            True,
         "confirmed_at":      datetime.now(timezone.utc),   # CASL proof of consent
-        "token":             new_token,
-        "token_expires_at":  action_exp,
+        "token_expires_at":  datetime.now(timezone.utc) + ACTION_TOKEN_TTL,
         "expires_at":        _fs.DELETE_FIELD,
     })
     print("[subscriptions]  confirmed subscriber", flush=True)
 
-    # Send last week's newsletter if they asked for it (once — guard against
-    # double-clicks on the confirm link).
-    if data.get("send_latest") and not data.get("latest_sent"):
-        html = _latest_newsletter_html(db, unsubscribe_token=new_token, prefs=data.get("prefs") or {})
-        if html:
-            _send_email(data["email"],
-                        f"{NEWSLETTER_NAME} — last week's edition",
-                        html)
-            doc.reference.update({"latest_sent": True})
+    # Send last week's newsletter if they asked for it, once: the flag is claimed before sending.
+    if data.get("send_latest") and _claim_latest(db, doc.reference):
+        try:
+            html = _latest_newsletter_html(db, unsubscribe_token=data["token"], prefs=data.get("prefs") or {})
+            if html:
+                _send_email(data["email"], f"{NEWSLETTER_NAME} — last week's edition", html)
+            else:
+                doc.reference.update({"latest_sent": False})
+        except Exception:
+            doc.reference.update({"latest_sent": False})
+            raise
 
     return _full_page("Subscription confirmed 🎉",
                  f"You'll receive {NEWSLETTER_NAME} every Monday morning.")

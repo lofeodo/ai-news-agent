@@ -109,3 +109,85 @@ def test_subscribe_takes_at_least_the_floor(monkeypatch):
         sleeps.clear()
         assert client.post("/subscribe", json={"email": email}).status_code == 200
         assert sleeps == [subs.RESPONSE_FLOOR_SECONDS]
+
+
+# --- confirm link: repeat visits ----------------------------------------------------------------
+
+def _confirm_env(monkeypatch, sub):
+    from datetime import datetime, timedelta, timezone
+    from types import SimpleNamespace
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    import google.cloud.firestore as gfs
+
+    store = {"a@example.com": {
+        "email": "a@example.com", "token": "tok", "active": False, "send_latest": True, "latest_sent": False,
+        "token_expires_at": datetime.now(timezone.utc) + timedelta(hours=40), **sub,
+    }}
+
+    class Ref:
+        def get(self, transaction=None):
+            d = store["a@example.com"]
+            return SimpleNamespace(exists=True, id="a@example.com", reference=self, to_dict=lambda: dict(d))
+
+        def update(self, fields):
+            for k, v in fields.items():
+                if v is gfs.DELETE_FIELD:
+                    store["a@example.com"].pop(k, None)
+                else:
+                    store["a@example.com"][k] = v
+
+    ref = Ref()
+
+    class Db:
+        def collection(self, name):
+            return SimpleNamespace(
+                document=lambda e: ref,
+                where=lambda *a: SimpleNamespace(limit=lambda n: SimpleNamespace(stream=lambda: [ref.get()])),
+            )
+
+        def transaction(self):
+            return SimpleNamespace(update=lambda r, fields: r.update(fields))
+
+    mails = []
+    monkeypatch.setattr(gfs, "transactional", lambda f: (lambda t: f(t)))
+    monkeypatch.setattr(subs, "_db", lambda: Db())
+    monkeypatch.setattr(subs, "_active_subscriber_count", lambda db: 0)
+    monkeypatch.setattr(subs, "_latest_newsletter_html", lambda *a, **k: "<p>issue</p>")
+    monkeypatch.setattr(subs, "_send_email", lambda *a: mails.append(a))
+    monkeypatch.setattr(subs.limiter, "enabled", False)
+    app = FastAPI()
+    app.state.limiter = subs.limiter
+    app.include_router(subs.router)
+    return TestClient(app), store, mails
+
+
+def test_confirm_link_can_be_opened_twice(monkeypatch):
+    client, store, mails = _confirm_env(monkeypatch, {})
+    for _ in range(2):
+        r = client.get("/confirm", params={"token": "tok"})
+        assert r.status_code == 200 and "confirmed" in r.text.lower()
+    assert store["a@example.com"]["active"] is True
+    assert store["a@example.com"]["token"] == "tok"
+    assert len(mails) == 1  # the last-edition mail goes out once
+
+
+def test_expired_pending_link_is_still_refused(monkeypatch):
+    from datetime import datetime, timedelta, timezone
+    client, store, mails = _confirm_env(
+        monkeypatch, {"token_expires_at": datetime.now(timezone.utc) - timedelta(hours=1)})
+    client.get("/confirm", params={"token": "tok"})
+    assert store["a@example.com"]["active"] is False and not mails
+
+
+def test_failed_edition_mail_can_be_retried(monkeypatch):
+    client, store, _ = _confirm_env(monkeypatch, {})
+
+    def boom(*a):
+        raise RuntimeError("mail down")
+
+    monkeypatch.setattr(subs, "_send_email", boom)
+    import pytest
+    with pytest.raises(RuntimeError):
+        client.get("/confirm", params={"token": "tok"})
+    assert store["a@example.com"]["latest_sent"] is False

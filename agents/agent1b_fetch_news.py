@@ -87,10 +87,10 @@ def fetch_newsapi_query(query: str, from_time: str, api_key: str) -> list:
         "sortBy":   "publishedAt",
         "pageSize": NEWS_FETCH_SIZE,
         "from":     from_time,
-        "apiKey":   api_key
     }
 
-    response = requests.get(NEWSAPI_URL, params=params, timeout=10)
+    # The key goes in a header, not the URL: an HTTP error message quotes the full URL.
+    response = requests.get(NEWSAPI_URL, params=params, headers={"X-Api-Key": api_key}, timeout=10)
     response.raise_for_status()
     data = response.json()
 
@@ -133,7 +133,8 @@ def fetch_newsapi_articles() -> list:
             print(f"    got {len(results)} articles")
             all_articles.extend(results)
         except Exception as e:
-            print(f"    [error] {e}")
+            status = getattr(getattr(e, "response", None), "status_code", None)
+            print(f"    [error] {type(e).__name__}{f' (HTTP {status})' if status else ''}")
 
     print(f"  Got {len(all_articles)} NewsAPI articles (before dedup)")
     return all_articles

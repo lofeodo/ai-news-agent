@@ -58,3 +58,7 @@ playwright-state.json
 
 # Eval fixtures holding third-party full text (public repo: ids/urls/snippets only are tracked)
 evals/fixtures/private/
+
+# Downloaded service-account keys (see CLAUDE.md: local Firebase Admin runs)
+key.json
+key*.json

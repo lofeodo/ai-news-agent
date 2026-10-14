@@ -248,7 +248,7 @@ All Claude calls use `claude-haiku-4-5-20251001` (configured in `config.py`).
 | `MAILING_ADDRESS` | Physical address in email footer (CASL compliance) |
 | `GOOGLE_APPLICATION_CREDENTIALS` | Local only: path to service account JSON for Firebase Admin SDK (alternative to `gcloud auth application-default login`) |
 | `ADMIN_EMAILS` | Comma-separated verified emails that may view debug runs (`/auth/admin/preview`, the Debug run button); set on agent-subscriptions |
-| `PREMIUM_EMAILS` | Comma-separated emails that get `tier: "premium"` on login (e.g. `daniel.lofeodo@gmail.com`) |
+| `PREMIUM_EMAILS` | Comma-separated emails that get `tier: "premium"` on login (e.g. `owner@example.com`) |
 | `GOOGLE_OAUTH_CLIENT_ID` | Google OAuth 2.0 Web client ID for server-side Google Sign-In (not secret) |
 | `GOOGLE_OAUTH_CLIENT_SECRET` | Google OAuth 2.0 client secret (or use `USE_SECRET_MANAGER=true`, secret name `google-oauth-client-secret`) |
 | `ALERT_EMAIL` | Where `agent_healthcheck` sends a problem report; never used for subscriber-facing sends |

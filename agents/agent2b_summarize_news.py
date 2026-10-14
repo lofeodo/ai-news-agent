@@ -248,6 +248,7 @@ def run(run_id: str):
                 topic_path = publisher.topic_path(GCP_PROJECT_ID, TOPIC_CONTENT_SUMMARIZED)
                 data       = json.dumps({"run_id": run_id}).encode("utf-8")
                 publisher.publish(topic_path, data).result(timeout=30)
+                stage_counter.mark_published(run_id)
                 print(f"[agent2b]  Both agent2s done — published to {TOPIC_CONTENT_SUMMARIZED} (run_id={run_id})")
             else:
                 print(f"[agent2b]  Waiting for agent2a to finish before triggering agent3")

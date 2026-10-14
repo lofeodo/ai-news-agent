@@ -19,3 +19,14 @@ def test_pick_release_skips_newer_debug_runs():
 def test_pick_release_none_when_all_debug():
     assert run_kind.pick_release_id([("a", {"run_kind": "debug"})]) is None
     assert run_kind.pick_release_id([]) is None
+
+
+def test_pick_sent_skips_a_draft_that_has_not_been_mailed_yet():
+    rows = [("draft", {}), ("last_week", {"agent4_send_summary": {"sent": 15}})]
+    assert run_kind.pick_release_id(rows) == "draft"
+    assert run_kind.pick_release_id(rows, sent_only=True) == "last_week"
+
+
+def test_pick_sent_skips_a_mailed_debug_run_and_returns_none_when_nothing_was_mailed():
+    assert run_kind.pick_release_id([("d", {"run_kind": "debug", "agent4_send_summary": {"sent": 1}})], sent_only=True) is None
+    assert run_kind.pick_release_id([("draft", {})], sent_only=True) is None

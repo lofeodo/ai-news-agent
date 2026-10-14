@@ -1120,7 +1120,7 @@ def update_preferences(request: Request, req: PreferencesUpdate):
 
 
 # ---------------------------------------------------------------------------
-# Latest newsletter lookup (same composite-index query as agent4)
+# Latest newsletter lookup (same composite-index query as agent4, via run_kind)
 # ---------------------------------------------------------------------------
 
 def _detect_provider(decoded_token: dict) -> str:
@@ -1137,19 +1137,13 @@ def _newsletter_variant_key(prefs: dict) -> str:
 
 
 def _latest_newsletter_html(db, unsubscribe_token: str, prefs: dict | None = None):
-    from google.cloud import firestore as _fs
-    docs = list(
-        db.collection(FIRESTORE_COLLECTION)
-        .where("newsletter_composed", "==", True)
-        .order_by("started_at", direction=_fs.Query.DESCENDING)
-        .limit(1)
-        .stream()
-    )
-    if not docs:
+    # The newest issue that was actually mailed: never a debug run, and not a draft still waiting for Monday.
+    doc = run_kind.latest_run(db, FIRESTORE_COLLECTION, sent_only=True)
+    if doc is None:
         print("[subscriptions]  no newsletter found to send", flush=True)
         return None
 
-    data     = docs[0].to_dict()
+    data     = doc.to_dict()
     variants = data.get("newsletter_variants")
     if variants and prefs:
         key  = _newsletter_variant_key(prefs)

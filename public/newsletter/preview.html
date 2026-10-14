@@ -92,7 +92,7 @@
     const publicSrc = frame.getAttribute('src');
     let debugOn = false;
     // Same content policy the public response sends, for the inline (srcdoc) copy.
-    const ISSUE_POLICY = '<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https: data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">';
+    const ISSUE_POLICY = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https: data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">`;
 
     async function showDebug() {
       toggle.disabled = true;

@@ -156,7 +156,7 @@ Some past incidents are written up in `docs/postmortems/` (index in its README) 
 
 **Account-based (Firebase Auth, `Authorization: Bearer <id_token>`):** Users sign in with Google through `login.html` (new email+password accounts were removed 2026-10-07; accounts that already exist still work while signed in, and email-only people use the emailed token links, which work for every subscriber since subscribers are keyed by email). Firebase ID token verified in `agents/auth_middleware.py` using `firebase-admin`. No confirmation email needed — Firebase already verified the email. Creates a `users/{uid}` doc on first call.
 - `GET /auth/me` — return user info + subscription status + tier.
-- `POST /auth/subscribe` — subscribe instantly (email already verified; requires `email_verified: true`). Accepts `{"send_latest": bool}` body.
+- `POST /auth/subscribe` — subscribe instantly (email already verified; requires `email_verified: true`). Accepts `{"send_latest": bool}` body; that mail is the newest release issue agent4 has already sent (`run_kind.latest_run(..., sent_only=True)`), so never a debug run or a draft still waiting for Monday.
 - `POST /auth/unsubscribe` — deactivate subscription.
 - `GET /auth/google/login?return_to=` — start Google Sign-In (see "Google Sign-In" below).
 - `GET /auth/google/callback` — Google OAuth redirect target.

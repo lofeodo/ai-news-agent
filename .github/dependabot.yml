@@ -9,6 +9,15 @@ updates:
     groups:
       python-minor-patch:
         update-types: ["minor", "patch"]
+    ignore:
+      # numpy 2.5+ requires Python >=3.12; the image and CI run 3.11.
+      # Remove this when the base image moves to 3.12.
+      - dependency-name: "numpy"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      # langchain-core pins uuid-utils<1.0, so 1.x cannot be installed.
+      # Remove this when langchain-core lifts the cap.
+      - dependency-name: "uuid-utils"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "github-actions"
     directory: "/"

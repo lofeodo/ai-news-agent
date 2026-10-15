@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "name": "shortlist_eval_2026-10-15",
+  "created_at": "2026-10-15T20:25:57.008127+00:00",
+  "git_sha": "49d1aea",
+  "model": "claude-haiku-4-5-20251001",
+  "cost_usd": 1.1276,
+  "notes": "Frozen 500-article pool, unmodified agent3 selector. Shortlist summaries are reused from the baseline arm; shortlist cost is modelled from measured tokens. Duplicate removal excluded.",
+  "metrics": {
+    "baseline_picks_kept_by_repeat": {
+      "value": 0.8913043478260869,
+      "n": 46,
+      "ci_low": 0.7696217135574916,
+      "ci_high": 0.9526685414190106
+    },
+    "baseline_picks_kept_by_shortlist": {
+      "value": 0.7391304347826086,
+      "n": 46,
+      "ci_low": 0.597408464719844,
+      "ci_high": 0.843991135543574
+    },
+    "shortlist_recall_of_baseline_picks": {
+      "value": 0.9347826086956522,
+      "n": 46,
+      "ci_low": 0.8249725891809577,
+      "ci_high": 0.9775721385707113
+    },
+    "articles_shortlisted": {
+      "value": 82,
+      "n": 500,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "cost_per_run_all_usd": {
+      "value": 0.8839,
+      "n": 500,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "cost_per_run_shortlist_usd": {
+      "value": 0.2951,
+      "n": 500,
+      "ci_low": null,
+      "ci_high": null
+    }
+  }
+}

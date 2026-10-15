@@ -74,7 +74,13 @@ The review eval says it plainly: confidence does not predict errors (Spearman 0.
 - **Metric helpers** in `evals/freeze_baseline.py`: `spearman`, `top_k_overlap`, `summarize_outputs` (success, fallback, words, tokens). The report-only judge applies to summaries as before (kappa 0.04, so it is a smoke test, not a gate).
 - **Consequence for the plan:** the abstract-first design for agent1a must be judged on whether the pick the owner would make stays in the top 8, not on exact rank, because the baseline itself only reproduces 5 of 8.
 
-Remaining Step 3 work, in order of saving: agent2b (the largest line), then agent1a, then caching and batch.
+**Sub-step 2: agent2b shortlist mode (built 2026-10-15, off by default).** `AGENT2B_MODE=shortlist` (default `all`, today's behavior untouched; switch with no redeploy). Stage 1 reuses agent3's own selector on title + HN points + the first ~300 characters of the page (HN stories have no description in any of the 264 HN articles of the frozen pool, so the fetched text is the only content) and keeps picks + runners-up for both language passes; only those are summarized; agent3 then chooses from real summaries. A failed category is kept whole.
+- **Eval** (`python -m evals.run_shortlist_eval`, frozen 500-article pool, unmodified selector, both passes; $1.13 to run): 82 of 500 articles shortlisted. Modelled agent2b cost per run **$0.88 -> $0.30** (about $0.59, 67% less).
+- **Quality:** of the baseline's picks, **74%** [60-84%] also appear when selecting from the shortlist, against **89%** [77-95%] when Haiku simply repeats the baseline selection on the same input (n=46 picks). 93% [83-98%] of baseline picks survive stage 1. The intervals overlap, so the loss is not statistically distinguishable at this size, but the point estimate is about 15 points lower, which is roughly 1 more swapped pick per section. In the "all" pass five categories each swapped exactly one pick; the repeat arm swapped one in two. Swaps looked like near substitutes, with one concern: a high-HN model release (586 points) lost its slot.
+- **Status: not enabled.** Turning it on is the owner's decision after eyeballing a real week; the evaluation cannot say whether a swapped pick is worse, only that it is different.
+- **Not covered:** duplicate removal (follows selection, evaluated separately) and page text for the frozen pool was fetched live a week or more after the originals.
+
+Remaining Step 3 work, in order of saving: decide on shortlist mode, then agent1a abstract-first scoring, then caching and batch.
 
 Independent of model choice, and compounding with it:
 - **agent2b**: ~490 calls for ~15-25 shipped articles. Summarize only what agent3 can actually ship (the post-selection pool plus runners-up), or batch several articles per call. Needs an ordering check: agent2b currently runs in parallel with agent2a before agent3 selection, so this may mean summarizing only the top-N per category by HN points.

@@ -80,7 +80,13 @@ The review eval says it plainly: confidence does not predict errors (Spearman 0.
 - **Status: not enabled.** Turning it on is the owner's decision after eyeballing a real week; the evaluation cannot say whether a swapped pick is worse, only that it is different.
 - **Not covered:** duplicate removal (follows selection, evaluated separately) and page text for the frozen pool was fetched live a week or more after the originals.
 
-Remaining Step 3 work, in order of saving: decide on shortlist mode, then agent1a abstract-first scoring, then caching and batch.
+**Sub-step 3: agent1a abstract-first scoring (built 2026-10-15, off by default).** `AGENT1A_MODE=abstract_first` (default `full`; `AGENT1A_FULLTEXT_TOP_K`, default 8; no-redeploy switch). Stage 1 scores all 35 papers from the abstract (the existing PDF-failure fallback path, so no new prompt); stage 2 downloads and scores the PDFs of the top K. Full-text-scored papers always rank above abstract-only ones.
+- **Eval** (`python -m evals.run_abstract_first_eval`; the 35 frozen papers with two full-text passes as reference, two new abstract-only passes; $0.26): the paper full-text scoring ranks first sits at **rank 5** in all four abstract rankings, and the full-text top 3 (identical in both full passes) are all inside the abstract top 5 in every comparison. Abstract-vs-full Spearman 0.69, against 0.77 between the two full-text passes. Two abstract passes share 7 of their top 8.
+- **Cost per run** (modelled from measured tokens): $0.48 all full text -> **$0.24 at K=8** ($0.20 at K=5), about half. It also skips 27 PDF downloads through the Squid proxy.
+- **Caveat:** one week of papers and a reference that is one noisy model's opinion. The result says the abstract carries the signal Haiku uses, not that the paper is the one the owner would pick.
+- **Status: not enabled**, switch on after the owner is happy; keep K=8 because rank 5 leaves little margin at K=5.
+
+Remaining Step 3 work: decide on both modes (neither is enabled), then prompt caching and the batch API.
 
 Independent of model choice, and compounding with it:
 - **agent2b**: ~490 calls for ~15-25 shipped articles. Summarize only what agent3 can actually ship (the post-selection pool plus runners-up), or batch several articles per call. Needs an ordering check: agent2b currently runs in parallel with agent2a before agent3 selection, so this may mean summarizing only the top-N per category by HN points.

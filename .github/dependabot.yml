@@ -1,23 +1,15 @@
 version: 2
 updates:
+  # requirements.txt is a full freeze (~110 pinned, mostly transitive packages
+  # that pin each other), so per-package version bumps usually cannot install.
+  # A limit of 0 turns off version-update PRs; Dependabot security updates
+  # (alerts) are unaffected. Refresh dependencies by hand and test first.
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
-    open-pull-requests-limit: 5
-    groups:
-      python-minor-patch:
-        update-types: ["minor", "patch"]
-    ignore:
-      # numpy 2.5+ requires Python >=3.12; the image and CI run 3.11.
-      # Remove this when the base image moves to 3.12.
-      - dependency-name: "numpy"
-        update-types: ["version-update:semver-minor", "version-update:semver-major"]
-      # langchain-core pins uuid-utils<1.0, so 1.x cannot be installed.
-      # Remove this when langchain-core lifts the cap.
-      - dependency-name: "uuid-utils"
-        update-types: ["version-update:semver-major"]
+    open-pull-requests-limit: 0
 
   - package-ecosystem: "github-actions"
     directory: "/"

@@ -1,8 +1,8 @@
 -r requirements.txt
 pytest==9.1.1
-iniconfig==2.3.0
+iniconfig==2.3.1
 pluggy==1.6.0
 Pygments==2.21.0
 scikit-learn==1.9.1
 threadpoolctl==3.7.0
-narwhals==2.26.0
+narwhals==2.27.1

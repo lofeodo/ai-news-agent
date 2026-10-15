@@ -17,7 +17,7 @@
   <link rel="preload" href="/fonts/ibm-plex-mono-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/ibm-plex-mono-400.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="fonts.css">
-  <link rel="stylesheet" href="landing.css?v=1">
+  <link rel="stylesheet" href="landing.css?v=3">
   <link rel="stylesheet" href="topbar.css">
 </head>
 <body>
@@ -104,7 +104,11 @@
             Continue with Google
           </a>
 
-          <p class="signup__trust">Free · Arrives Monday morning · Unsubscribe in one click</p>
+          <ul class="signup__trust">
+            <li>Completely free</li>
+            <li>Just one email a week</li>
+            <li>No spam, no unexpected extras</li>
+          </ul>
           <p id="spots-remaining" class="spots"></p>
         </div>
 
@@ -116,33 +120,30 @@
         </div>
       </div>
 
-      <!-- A real excerpt, not a mock-up: copied verbatim from the October 12, 2026 issue. -->
+      <!-- A real excerpt. The markup below is a verbatim copy of the October 12, 2026 issue, shown
+           immediately; the script at the bottom then swaps in the latest issue's text from /preview
+           (the backend scales to zero, so the first request can be slow and must never block this). -->
       <div class="issue-wrap">
-        <figure class="issue" aria-label="Excerpt from the October 12, 2026 issue">
-          <div class="issue__bar"><i></i><i></i><i></i><span>Latent SpaceMail · Issue of October 12, 2026</span></div>
-          <div class="issue__mast">
-            <div class="issue__kicker">&gt;_ Transmission</div>
-            <div class="issue__name">Latent SpaceMail</div>
-            <div class="issue__date">Weekly AI Intelligence Dispatch</div>
-          </div>
+        <figure class="issue" id="issue" aria-label="Excerpt from the latest issue">
+          <div class="issue__bar"><i></i><i></i><i></i><span>Latent SpaceMail · <span id="issue-date">October 12, 2026</span></span></div>
           <div class="issue__body">
             <article class="paper">
-              <div class="paper__meta"><span>★ Paper of the week</span><b>▲ 515 upvotes</b></div>
-              <h3>The Teacher Is a Direction, Not a Destination: Extrapolating RL-Induced Representation Residuals in On-Policy Distillation</h3>
-              <p class="paper__by">Hao Li, MeiJia Chen, Weijie Ren et al.</p>
-              <p>An RL-trained teacher encodes not just a destination but a direction for learning. This paper shows that extrapolating this direction in hidden-state space, rather than output space, lets student models match or beat their teachers without the training instability that plagues output-space approaches.</p>
+              <div class="paper__meta"><span>★ Paper of the week</span><b id="paper-votes">▲ 515 upvotes</b></div>
+              <h3 id="paper-title">The Teacher Is a Direction, Not a Destination: Extrapolating RL-Induced Representation Residuals in On-Policy Distillation</h3>
+              <p class="paper__by" id="paper-by">Hao Li, MeiJia Chen, Weijie Ren et al.</p>
+              <p id="paper-sum">An RL-trained teacher encodes not just a destination but a direction for learning. This paper shows that extrapolating this direction in hidden-state space, rather than output space, lets student models match or beat their teachers without the training instability that plagues output-space approaches.</p>
               <span class="paper__cta">Read on Hugging Face →</span>
             </article>
 
-            <p class="issue__sec"><b>03</b> Open Source &amp; Tools</p>
+            <p class="issue__sec"><b id="story-n">03</b> <span id="story-sec">Open Source &amp; Tools</span></p>
             <article class="story">
-              <h4>Whistle: Speech to Text in 16.9 MB</h4>
-              <p>Cactus released Whistle, a 16.9 MB speech-to-text model that runs entirely on-device across 7 languages with no dependencies, delivering faster first-token latency (11.1ms vs Whisper's 73.2ms) while matching or exceeding accuracy on most benchmarks. This enables private speech recognition on mobile devices, wearables, and embedded systems without cloud infrastructure.</p>
-              <p class="story__meta">HN score ▲ 950</p>
+              <h4 id="story-title">Whistle: Speech to Text in 16.9 MB</h4>
+              <p id="story-body">Cactus released Whistle, a 16.9 MB speech-to-text model that runs entirely on-device across 7 languages with no dependencies, delivering faster first-token latency (11.1ms vs Whisper's 73.2ms) while matching or exceeding accuracy on most benchmarks. This enables private speech recognition on mobile devices, wearables, and embedded systems without cloud infrastructure.</p>
+              <p class="story__meta" id="story-meta">HN score ▲ 950</p>
             </article>
           </div>
         </figure>
-        <p class="issue-caption"><span>A real excerpt from the October 12 issue.</span><a href="/preview.html">Read the latest issue →</a></p>
+        <p class="issue-caption"><span id="issue-caption">An excerpt from the October 12 issue.</span><a href="/preview.html">Read the latest issue →</a></p>
       </div>
     </section>
 
@@ -178,7 +179,7 @@
       <div class="final__box">
         <div>
           <h2>The next issue lands Monday.</h2>
-          <p>Free, one email a week, and gone in one click if it isn't for you.</p>
+          <p>Completely free. Just one email a week, no spam, and gone in one click if it isn't for you.</p>
         </div>
         <div class="final__actions">
           <a href="#top" class="btn" id="final-cta">Subscribe</a>
@@ -285,6 +286,63 @@
         resetBtn();
       }
     });
+
+    // Swap the static excerpt for the latest issue. Everything is optional: any miss (slow cold
+    // start, network error, template change) leaves the static copy in place. Text only, set with
+    // textContent, so nothing from the response is ever injected as HTML.
+    async function loadLiveExcerpt() {
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), 20000);
+      try {
+        const res = await fetch(`${API_BASE}/preview`, { signal: ctl.signal });
+        if (!res.ok) return;
+        const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+        doc.querySelectorAll('style, script, title').forEach((n) => n.remove());
+        const t = [];
+        const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
+        for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+          const s = n.nodeValue.replace(/[​-‏⁠﻿­͏]/g, '').replace(/\s+/g, ' ').trim();
+          if (s) t.push(s);
+        }
+        const iPaper = t.findIndex((s) => /paper of the week/i.test(s));
+        const iUp = t.findIndex((s, i) => i > iPaper && /^upvotes?$/i.test(s));
+        if (iPaper < 0 || iUp < 1 || !/^▲\s*[\d,]+$/.test(t[iUp - 1])) return;
+        const paper = { votes: t[iUp - 1], title: t[iUp + 1], by: t[iUp + 2], sum: t[iUp + 3] };
+        if (!/^read on/i.test(t[iUp + 4] || '') || paper.title.length > 220 || paper.sum.length < 40) return;
+
+        const iNum = t.findIndex((s, i) => i > iUp + 4 && /^\d{2}$/.test(s));
+        const story = iNum < 0 ? null : {
+          n: t[iNum],
+          sec: (t[iNum + 1] || '').replace(/^[^A-Za-z]+/, ''),
+          title: t[iNum + 2], body: t[iNum + 3],
+          score: t[iNum + 4] === 'HN Score' && /^▲\s*[\d,]+$/.test(t[iNum + 5] || '') ? t[iNum + 5] : '',
+        };
+        const date = t.find((s) => /^[A-Z][a-z]+ \d{1,2}, \d{4}$/.test(s));
+
+        const set = (id, v) => { if (v) document.getElementById(id).textContent = v; };
+        set('paper-votes', `${paper.votes} upvotes`);
+        set('paper-title', paper.title);
+        set('paper-by', paper.by);
+        set('paper-sum', paper.sum);
+        if (story && story.sec && story.title && story.body.length > 40) {
+          set('story-n', story.n);
+          set('story-sec', story.sec);
+          set('story-title', story.title);
+          set('story-body', story.body);
+          document.getElementById('story-meta').textContent = story.score ? `HN score ${story.score}` : '';
+        }
+        if (date) {
+          set('issue-date', date);
+          set('issue-caption', `Live from the issue of ${date}.`);
+        }
+      } catch (e) {
+        // keep the static excerpt
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+    if (document.readyState === 'complete') loadLiveExcerpt();
+    else window.addEventListener('load', loadLiveExcerpt, { once: true });
 
     // The closing button brings people back to the one form rather than duplicating it.
     document.getElementById('final-cta').addEventListener('click', (e) => {

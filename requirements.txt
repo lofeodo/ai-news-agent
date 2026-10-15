@@ -88,7 +88,7 @@ requests-toolbelt==1.0.0
 tenacity==9.1.4
 truststore==0.10.4
 uuid_utils==0.17.1
-websockets==16.1.1
+websockets==17.2
 xxhash==4.0.1
 zstandard==0.25.0
 # Transitive deps of the Firebase / Google Cloud / FastAPI packages above, resolved on Python 3.11 (the Docker base)

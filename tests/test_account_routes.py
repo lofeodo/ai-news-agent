@@ -56,7 +56,7 @@ ROUTES = [
     ("post", "/auth/sections/refine", {"raw_topic": "SpaceX"}),
     ("get", "/auth/sections", None),
     ("post", "/auth/sections", {"section_config": {"enabled_sections": None, "custom_sections": []}}),
-    ("get", "/auth/admin/preview", None),
+    ("get", "/auth/admin/issues", None),
 ]
 
 

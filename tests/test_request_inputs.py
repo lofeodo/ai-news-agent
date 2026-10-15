@@ -52,7 +52,7 @@ def test_odd_run_ids_are_not_looked_up(api, monkeypatch):
     monkeypatch.setattr(subs, "_is_admin", lambda user: True)
     from auth_middleware import get_verified_user
     api.client.app.dependency_overrides[get_verified_user] = lambda: {"uid": "u", "email": "a@example.com"}
-    res = api.client.get("/auth/admin/preview", params={"run": "x/y"})
+    res = api.client.get("/auth/admin/issues", params={"run": "x/y"})
     assert res.status_code == 404
     assert api.db.touched == []
 

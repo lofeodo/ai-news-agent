@@ -46,7 +46,7 @@ Each step below is its own PR, stacked on the previous one. A step is checked of
       old one). Nav label stays "Latest Issue" (the nav link still goes to the latest; the page title is
       "Issues"). Checked on desktop, Android (Pixel 7) and iOS (iPhone 15) against a mock API; iOS needed
       `appearance: none` on the select.
-- [ ] **5. Docs**: CLAUDE.md, `docs/architecture.md`, `docs/repository-structure.md`, `docs/runbook.md` (deploy
+- [x] **5. Docs**: CLAUDE.md, `docs/architecture.md`, `docs/repository-structure.md`, `docs/runbook.md` (deploy
       agent-subscriptions, then hosting).
 
 Deploy is not part of any step; it is the owner's `gcloud run deploy` of agent-subscriptions followed by a hosting

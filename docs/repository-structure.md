@@ -42,7 +42,7 @@
 │   ├── login.html                  # Sign in (Google) + emailed preferences link
 │   ├── preferences.html            # Preferences (account auth or token fallback)
 │   ├── unsubscribe.html            # Unsubscribe (one-click if signed in, email form otherwise)
-│   ├── preview.html                # Newsletter preview page
+│   ├── preview.html                # Latest issue + archive switcher
 │   ├── sections.html               # Premium newsletter-sections customization UI
 │   ├── auth-callback.html          # Google Sign-In exchange-code redemption landing page
 │   ├── auth.js                     # Shared Firebase Auth helper (ES module)
@@ -50,6 +50,7 @@
 │   ├── bg.js                       # Shared background/decorative script
 │   ├── style.css / fonts.css       # Shared styling
 │   └── fonts/, images/             # Static assets
+├── tools/                          # One-off maintenance scripts (backfill_release_flag.py)
 ├── evals/                          # Evaluation harnesses, frozen fixtures, labels, results/*.json (see evals/README.md)
 ├── tests/                          # pytest suite (stubbed Claude client + fetcher; no network or keys)
 │   ├── conftest.py / fakes*.py     # Path setup; scripted fake Anthropic client, fetcher and Firestore

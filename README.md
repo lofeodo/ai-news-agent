@@ -18,7 +18,7 @@
 </div>
 
 <a href="https://newsletter.lofeodo.com/preview.html">
-<img src="docs/assets/newsletter-showcase.png" alt="The latest issue of Latent SpaceMail on desktop and on a phone" width="100%">
+<img src="docs/assets/newsletter-showcase.png?v=2" alt="The latest issue of Latent SpaceMail on desktop and on a phone" width="100%">
 </a>
 
 **What's different:** one spotlight research paper and the week's top AI news, picked, summarized and sent by a team of AI agents that checks its own work every run.
@@ -136,7 +136,7 @@ Every weekly run ends in an email report to the maintainer, whether or not anyth
 
 🟢 acts on failures &nbsp; 🔵 flags large shifts &nbsp; ⚪ informational only
 
-<img src="docs/assets/healthcheck-showcase.png" alt="An example health check email: all clear" width="100%">
+<img src="docs/assets/healthcheck-showcase.png?v=2" alt="An example health check email: all clear" width="100%">
 
 Details: [docs/monitoring.md](docs/monitoring.md)
 

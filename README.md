@@ -17,14 +17,14 @@
 
 </div>
 
-<a href="https://newsletter.lofeodo.com/preview.html">
+<a href="https://newsletter.lofeodo.com/issues.html">
 <img src="docs/assets/newsletter-showcase.png?v=2" alt="The latest issue of Latent SpaceMail on desktop and on a phone" width="100%">
 </a>
 
 **What's different:** one spotlight research paper and the week's top AI news, picked, summarized and sent by a team of AI agents that checks its own work every run.
 
 <p align="center">
-<a href="https://newsletter.lofeodo.com/#subscribe-form"><b>📬 Subscribe</b></a> &nbsp;·&nbsp; <a href="https://newsletter.lofeodo.com/preview.html"><b>👀 Live demo: read the latest issue</b></a>
+<a href="https://newsletter.lofeodo.com/#subscribe-form"><b>📬 Subscribe</b></a> &nbsp;·&nbsp; <a href="https://newsletter.lofeodo.com/issues.html"><b>👀 Live demo: read the latest issue</b></a>
 </p>
 
 - **Agentic orchestration**: six agents on Google Cloud, coordinated by Pub/Sub, plus a LangGraph review loop inside one of them.

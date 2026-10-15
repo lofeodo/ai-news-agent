@@ -50,8 +50,10 @@ class _SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        # /preview sets its own frame-ancestors CSP and must be embeddable
-        if request.url.path != "/preview":
+        # The issue HTML routes set their own frame-ancestors CSP and must be embeddable
+        path = request.url.path
+        embeddable = path in ("/preview", "/issues/latest") or path.startswith(("/issues/", "/archive/"))
+        if not embeddable:
             response.headers["X-Frame-Options"] = "DENY"
         return response
 

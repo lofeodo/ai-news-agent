@@ -24,7 +24,7 @@
 
     html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); }
 
-    .preview-frame {
+    .issue-frame {
       position: fixed;
       top: 92px; left: 0; right: 0; bottom: 0;
       width: 100%;
@@ -66,7 +66,7 @@
       <img src="/images/logo-mark.svg" alt="" height="26" width="26" fetchpriority="high">
     </a>
     <nav class="topbar__nav" aria-label="Main">
-      <a href="/preview.html" class="topbar__nav-link" data-href="/preview.html">Latest Issue<span class="topbar__live"><span class="topbar__live-dot"></span>Live</span></a>
+      <a href="/issues.html" class="topbar__nav-link" data-href="/issues.html">Issues<span class="topbar__live"><span class="topbar__live-dot"></span>Live</span></a>
       <a href="/sections.html" class="topbar__nav-link" data-href="/sections.html" id="topbar-sections">Customize</a>
       <a href="/preferences.html" class="topbar__nav-link" data-href="/preferences.html">Preferences</a>
     </nav>
@@ -100,9 +100,9 @@
   </div>
 
   <iframe
-    id="preview-frame"
-    class="preview-frame"
-    src="https://agent-subscriptions-zozrn33sna-nn.a.run.app/preview"
+    id="issue-frame"
+    class="issue-frame"
+    src="https://agent-subscriptions-zozrn33sna-nn.a.run.app/issues/latest"
     title="Latent SpaceMail issue"
     sandbox="allow-popups allow-popups-to-escape-sandbox"
   ></iframe>
@@ -118,13 +118,13 @@
       if (h === 'localhost' || h === '127.0.0.1') return 'http://localhost:8000';
       return 'https://agent-subscriptions-zozrn33sna-nn.a.run.app';
     })();
-    const frame  = document.getElementById('preview-frame');
+    const frame  = document.getElementById('issue-frame');
     const toggle = document.getElementById('debug-toggle');
-    const navLink = document.querySelector('.topbar__nav-link.active') || document.querySelector('.topbar__nav-link[data-href="/preview.html"]');
+    const navLink = document.querySelector('.topbar__nav-link.active') || document.querySelector('.topbar__nav-link[data-href="/issues.html"]');
     const latestSrc = frame.getAttribute('src');
     let publicSrc = latestSrc;
     let debugOn = false;
-    let issues = [];          // newest first, from GET /archive
+    let issues = [];          // newest first, from GET /issues
     let current = 0;
     const bar = document.getElementById('issuebar');
     const select = document.getElementById('issue-select');
@@ -146,8 +146,8 @@
       olderBtn.disabled = i >= issues.length - 1;
       newerBtn.disabled = i <= 0;
       tag.textContent = i === 0 ? 'Latest issue' : `${i} issue${i === 1 ? '' : 's'} ago`;
-      // The newest issue goes through /preview so the page works even when the list does not.
-      publicSrc = i === 0 ? latestSrc : `${API}/archive/${encodeURIComponent(issues[i].run_id)}`;
+      // The newest issue goes through /issues/latest so the page works even when the list does not.
+      publicSrc = i === 0 ? latestSrc : `${API}/issues/${encodeURIComponent(issues[i].run_id)}`;
       if (!debugOn) { frame.removeAttribute('srcdoc'); frame.src = publicSrc; }
       if (push) {
         const u = new URL(location.href);
@@ -158,7 +158,7 @@
 
     async function loadArchive() {
       try {
-        const res = await fetch(`${API}/archive`);
+        const res = await fetch(`${API}/issues`);
         if (!res.ok) throw new Error(res.status);
         issues = (await res.json()).issues || [];
         if (issues.length < 2) return;   // nothing to switch between
@@ -169,7 +169,7 @@
         const at = wanted ? issues.findIndex(it => it.run_id === wanted) : 0;
         showIssue(at > 0 ? at : 0, false);
       } catch (e) {
-        console.error('[preview] archive list failed:', e);   // the latest issue is already showing
+        console.error('[issues] archive list failed:', e);   // the latest issue is already showing
       }
     }
 
@@ -187,7 +187,7 @@
     async function showDebug() {
       toggle.disabled = true;
       try {
-        const res = await authFetch(`${API}/auth/admin/preview?run=latest`);
+        const res = await authFetch(`${API}/auth/admin/issues?run=latest`);
         if (!res.ok) throw new Error(res.status);
         const run = await res.json();
         frame.removeAttribute('src');
@@ -198,7 +198,7 @@
         debugOn = true;
         bar.hidden = true;
       } catch (e) {
-        console.error('[preview] debug run failed:', e);
+        console.error('[issues] debug run failed:', e);
         toggle.textContent = 'No run found';
       } finally {
         toggle.disabled = false;
@@ -227,7 +227,7 @@
             toggle.style.display = 'inline-block';
             if (new URLSearchParams(location.search).get('debug') === '1') showDebug();
           }
-        } catch (e) { console.error('[preview] /auth/me failed:', e); }
+        } catch (e) { console.error('[issues] /auth/me failed:', e); }
       }
     });
   </script>

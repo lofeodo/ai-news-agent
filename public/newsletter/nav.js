@@ -34,17 +34,17 @@ function showSignedIn(email, tier) {
   if (tierEl)   tierEl.style.display   = tier === 'premium' ? 'inline-block' : 'none';
 }
 
-// Admins get an extra link to the preview page in debug mode (/preview.html?debug=1).
+// Admins get an extra link to the issues page in debug mode (/issues.html?debug=1).
 function showAdminLink(isAdmin) {
   const nav = document.querySelector('.topbar__nav');
   if (!nav) return;
   let link = document.getElementById('topbar-debug');
   if (!isAdmin) { link?.remove(); return; }
-  if (link || document.getElementById('debug-toggle')) return;  // preview.html has its own toggle
+  if (link || document.getElementById('debug-toggle')) return;  // issues.html has its own toggle
   link = document.createElement('a');
   link.id = 'topbar-debug';
   link.className = 'topbar__nav-link';
-  link.href = '/preview.html?debug=1';
+  link.href = '/issues.html?debug=1';
   link.textContent = 'Debug run';
   nav.appendChild(link);
 }

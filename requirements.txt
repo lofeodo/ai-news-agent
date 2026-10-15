@@ -94,7 +94,7 @@ zstandard==0.25.0
 # Transitive deps of the Firebase / Google Cloud / FastAPI packages above, resolved on Python 3.11 (the Docker base)
 annotated-doc==0.0.5
 CacheControl==0.14.4
-Deprecated==1.3.1
+Deprecated==3.0.0
 google-cloud-core==2.8.0
 google-cloud-storage==3.15.1
 google-crc32c==1.9.0

@@ -1,0 +1,1850 @@
+{
+  "frozen_at": "2026-10-15",
+  "model": "claude-haiku-4-5-20251001",
+  "repeats": 2,
+  "word_cutoff": 5000,
+  "dimensions": [
+    "novelty",
+    "rigor",
+    "reproducibility",
+    "clarity",
+    "practical_applicability",
+    "significance",
+    "disruption_potential",
+    "wow_factor"
+  ],
+  "rubric_sha1": "f44bb1f106dc",
+  "note": "Reference = pass 1 of the unmodified agent1a.score_paper; pass 2 measures Haiku's own run-to-run noise, the floor any change is judged against. Paper text is in evals/fixtures/private/ (gitignored); the abstract-first change needs it.",
+  "noise_floor": {
+    "spearman_pass1_vs_pass2": 0.7722600584358827,
+    "top8_overlap_pass1_vs_pass2": 0.625,
+    "n": 35
+  },
+  "totals": {
+    "input_tokens": 842424,
+    "output_tokens": 23743,
+    "cost_usd": 0.9611
+  },
+  "items": [
+    {
+      "id": "http://arxiv.org/abs/2609.39102v2",
+      "title": "False Frontiers: Diagnosing and Mitigating Co-Cheating in Self-Evolving Search Agents",
+      "upvotes": 663,
+      "community_traction": 8,
+      "pdf_url": "https://arxiv.org/pdf/2609.39102v2",
+      "text_chars": 64681,
+      "text_sha1": "f8f70b758237",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 2,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 34,
+            "reasoning": "The paper identifies and addresses \"co-cheating,\" a critical failure mode where self-evolving search agents (proposer-solver pairs) reinforce shared errors, making internal rewards diverge from external correctness—a novel problem with clear diagnosis through systematic audit and a principled CrossFit solution that achieves substantial improvements (8.8/8.4 points on downstream benchmarks). The main limitation is that reproducibility is constrained by reliance on proprietary models (Qwen3.5) and commercial APIs (gpt-6-astra/high for auditing), plus the method's practical applicability is limited by the requirement to maintain auxiliary solvers and handle cross-fold partitioning, which increases computational overhead and engineering complexity.",
+            "claude_total": 26,
+            "community_traction": 8,
+            "upvotes": 663
+          },
+          "error": null,
+          "input_tokens": 11370,
+          "output_tokens": 352
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 2,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 34,
+            "reasoning": "The paper's core contribution is identifying and diagnosing co-cheating in self-evolving LLM agents—a fundamental failure mode where proposer and solver converge on shared errors while the internal training signal improves—and introducing CrossFit, an elegant cross-fitted feedback mechanism that breaks the self-reinforcing error loop by scoring each source partition with solvers trained on complementary data, demonstrating substantial gains (8.8 percentage points) across multiple QA benchmarks. The main weakness is limited reproducibility (no code/data release mentioned) and practical applicability challenges: the method requires maintaining multiple auxiliary solvers and careful source-level data partitioning, making it computationally expensive and difficult for resource-constrained practitioners to implement, while the fundamental insight about feedback provenance, though important, operates within a narrow domain (self-evolving search agents) without broader architectural implications.\"",
+            "claude_total": 26,
+            "community_traction": 8,
+            "upvotes": 663
+          },
+          "error": null,
+          "input_tokens": 11370,
+          "output_tokens": 384
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2609.36484v2",
+      "title": "The Teacher Is a Direction, Not a Destination: Extrapolating RL-Induced Representation Residuals in On-Policy Distillation",
+      "upvotes": 524,
+      "community_traction": 8,
+      "pdf_url": "https://arxiv.org/pdf/2609.36484v2",
+      "text_chars": 66154,
+      "text_sha1": "3ad7dd11ad77",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 3,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 36,
+            "reasoning": "RIDE's core contribution is identifying that RL-induced representation changes can be measured and extrapolated in hidden-state space rather than output space, solving the anisotropic attenuation problem of the language-model head and eliminating noise amplification—this is clever, well-motivated, and yields consistent improvements across diverse model scales and families. The main limitation is that gains are modest (0.3-1.1 points above teacher on average, often within error margins) and applicability is restricted to the specific same-initialization distillation setting where both base and RL-trained teacher are available.",
+            "claude_total": 28,
+            "community_traction": 8,
+            "upvotes": 524
+          },
+          "error": null,
+          "input_tokens": 12541,
+          "output_tokens": 323
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 3,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 36,
+            "reasoning": "RIDE's core contribution is an elegant insight: RL shifts models along interpretable directions in hidden-state space that can be measured and extrapolated layer-by-layer, avoiding the noise and instability of output-space extrapolation—validated across four model pairs with consistent improvements over the teacher. The main limitation is that performance gains are often modest (0.3–1.1 points above teacher, sometimes within standard deviation) and the method is restricted to the same-initialization setting where base and RL-teacher checkpoints are available.",
+            "claude_total": 28,
+            "community_traction": 8,
+            "upvotes": 524
+          },
+          "error": null,
+          "input_tokens": 12541,
+          "output_tokens": 309
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2609.39601v1",
+      "title": "GroundingPI: A Grounding Foundation Model towards Physical Intelligence with Visual Primitives",
+      "upvotes": 304,
+      "community_traction": 8,
+      "pdf_url": "https://arxiv.org/pdf/2609.39601v1",
+      "text_chars": 231313,
+      "text_sha1": "d1ae33ce33f3",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 3,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 36,
+            "reasoning": "GroundingPI's core contribution is a dedicated 4B grounding foundation model that unifies diverse spatial perception tasks through visual primitives and quantized coordinates, achieving state-of-the-art results across 34 benchmarks and demonstrating strong transfer to autonomous driving and robotic manipulation with up to 24.8% relative improvements. The biggest limitation is that the paper's novelty is primarily in engineering and dataset composition rather than introducing fundamentally new algorithmic ideas—the architecture leverages existing techniques (VLM pretraining, GRPO reinforcement learning, coordinate quantization) to optimize for a specific capability (precise grounding) rather than proposing paradigm-shifting methods.",
+            "claude_total": 28,
+            "community_traction": 8,
+            "upvotes": 304
+          },
+          "error": null,
+          "input_tokens": 8866,
+          "output_tokens": 340
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 3,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 36,
+            "reasoning": "GroundingPI's core contribution is a dedicated grounding foundation model (4B parameters) that unifies 11 diverse perceptual capabilities through quantized coordinates, achieving SOTA across 34 benchmarks and demonstrating strong transfer to robotics and autonomous driving with up to 24.8% improvements and improved data efficiency. The main limitation is that while the model shows impressive empirical results, the core architectural innovation is somewhat incremental (combining existing techniques: multimodal pretraining, SFT, GRPO RL), and the practical applicability requires significant compute resources despite the 4B size, potentially limiting adoption for solo developers or resource-constrained settings.",
+            "claude_total": 28,
+            "community_traction": 8,
+            "upvotes": 304
+          },
+          "error": null,
+          "input_tokens": 8866,
+          "output_tokens": 338
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2610.13527v1",
+      "title": "S-Space: Exploring Spatial Workspace in Multimodal Language Models",
+      "upvotes": 291,
+      "community_traction": 7,
+      "pdf_url": "https://arxiv.org/pdf/2610.13527v1",
+      "text_chars": 117412,
+      "text_sha1": "bc10081fc774",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 3,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 5,
+            "total": 36,
+            "reasoning": "The paper's core contribution is discovering S-Space, a linear 3D subspace in MLLMs that encodes continuous spatial coordinates (horizontal, vertical, distance) as an internal workspace, which the authors identify via gradient-based methods and validate through rigorous experiments including causal interventions across multiple models and benchmarks. The biggest weakness is limited practical applicability—the approach requires access to internal model activations and currently serves as a diagnostic and interpretability tool rather than enabling new capabilities, and it's unclear how practitioners would leverage these insights to improve spatial reasoning beyond the models themselves.\"",
+            "claude_total": 29,
+            "community_traction": 7,
+            "upvotes": 291
+          },
+          "error": null,
+          "input_tokens": 16319,
+          "output_tokens": 316
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 3,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 5,
+            "total": 36,
+            "reasoning": "The paper discovers S-Space, a linear 3D subspace encoding spatial coordinates in MLLMs' intermediate representations, using an elegant gradient-based method that identifies fixed spatial axes (horizontal, vertical, distance) that generalize across models, datasets, and prompts—enabling direct readout of object positions and revealing how models internally represent and use spatial information. The main limitation is that while the discovery is insightful for interpretability, it doesn't immediately translate to improving spatial reasoning performance or offer direct improvements to model capabilities beyond diagnosis.",
+            "claude_total": 29,
+            "community_traction": 7,
+            "upvotes": 291
+          },
+          "error": null,
+          "input_tokens": 16319,
+          "output_tokens": 305
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2610.01780v3",
+      "title": "RealCompanion: Benchmarking Human Understanding from Reasoning over Longitudinal Real-World Conversations",
+      "upvotes": 286,
+      "community_traction": 7,
+      "pdf_url": "https://arxiv.org/pdf/2610.01780v3",
+      "text_chars": 229293,
+      "text_sha1": "06ae1845c7c3",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 2,
+            "practical_applicability": 2,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 33,
+            "reasoning": "RealCompanion's core strength is releasing the first large-scale benchmark of real, longitudinal AI-human conversations (27,218 messages over 120 days) with fully traceable labels pointing back to source messages, enabling genuine measurement of whether AI systems understand when past context matters—revealing critical insights like that only 3.4% of real messages need prior context, and AI systems often retrieve when unnecessary. The paper's main weakness is that its dense, technical presentation and complex derivation methodology (5-stage reasoning trace with extensive appendices) makes it difficult to extract actionable insights for practitioners, and the scope of just 10 participants with skewed data (two users account for 73% of messages) limits generalizability despite the methodological rigor.",
+            "claude_total": 26,
+            "community_traction": 7,
+            "upvotes": 286
+          },
+          "error": null,
+          "input_tokens": 9101,
+          "output_tokens": 356
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 2,
+            "practical_applicability": 3,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 34,
+            "reasoning": "The paper's core contribution is releasing RealCompanion, a benchmark of 27,218 real messages from 10 long-term human-AI companion relationships with richly annotated ground truth including profiles, personas, and reasoning traces—addressing a critical gap where existing benchmarks use synthetic data and invented personas. The biggest weakness is that the paper is extraordinarily dense and complex in presentation, with heavy notation and multi-layered derivation procedures that make it difficult to extract actionable insights, and the scope remains limited to 10 relationships from a single companion application, which constrains generalizability despite the richness of the real data.",
+            "claude_total": 27,
+            "community_traction": 7,
+            "upvotes": 286
+          },
+          "error": null,
+          "input_tokens": 9101,
+          "output_tokens": 329
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2610.18773v1",
+      "title": "Jeva: System One Models from First Principles",
+      "upvotes": 273,
+      "community_traction": 7,
+      "pdf_url": "https://arxiv.org/pdf/2610.18773v1",
+      "text_chars": 68440,
+      "text_sha1": "db15af97a97f",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 4,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 35,
+            "reasoning": "Jeva's core contribution is a principled decision-native architecture that elegantly separates semantic encoding from set-dependent judgment, enabling reusable option representations while retaining set-dependent scoring through a compact, refined request state—backed by formal propositions proving single-block preference reversal, permutation equivariance, and exact reusability without incurring shared coupling constraints. The main limitations are modest reproducibility signals (no explicit code/data release mentioned in abstract or body), and while the null-detection and permutation-invariance achievements are striking, the practical speed gains and large-candidate scaling, though demonstrable, depend on deployment-specific caching patterns that may not generalize across all applications.\"",
+            "claude_total": 28,
+            "community_traction": 7,
+            "upvotes": 273
+          },
+          "error": null,
+          "input_tokens": 12599,
+          "output_tokens": 345
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 4,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 35,
+            "reasoning": "Jeva's core contribution is a principled, decision-native architecture that separates independent semantic encoding from set-dependent judgment, simultaneously solving four structural problems (null-awareness, permutation-invariance, option-scalability, cacheability) with strong theoretical grounding (Propositions 1-3), rigorous experiments showing near-perfect null detection (98.66% AUROC), zero permutation flips, and 20-27× latency speedups through cross-request reuse. The primary weakness is that reproducibility is limited by the absence of code/model release details in the visible paper, and while the system design is elegant and well-motivated, the practical impact remains uncertain outside the specific \"system one\" decision-making domain where adoption patterns are not yet established.",
+            "claude_total": 28,
+            "community_traction": 7,
+            "upvotes": 273
+          },
+          "error": null,
+          "input_tokens": 12599,
+          "output_tokens": 361
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2609.38721v1",
+      "title": "UniEvo-VL: An On-policy Self-Distillation Training Recipe for Multimodal Model Self-improvement",
+      "upvotes": 243,
+      "community_traction": 7,
+      "pdf_url": "https://arxiv.org/pdf/2609.38721v1",
+      "text_chars": 95182,
+      "text_sha1": "d780554f5f87",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 2,
+            "significance": 3,
+            "disruption_potential": 3,
+            "wow_factor": 3,
+            "total": 30,
+            "reasoning": "UniEvo-VL presents a clever application of on-policy self-distillation to multimodal models, using critique-derived corrective prompts as privileged information for a teacher while training a student on the original prompt—this is a solid technical contribution that elegantly sidesteps reward-based or target-image approaches. The work is methodologically rigorous with comprehensive experiments across three benchmarks, thorough ablations on critic choice and verification, and careful paired evaluation distinguishing training gains from inference-time reflection benefits. However, reproducibility is limited because the paper is under review with unclear code/data release plans, practical applicability is constrained by requiring iterative generation-critique cycles at training time and GPU resources for Qwen-Image fine-tuning, the significance is somewhat incremental as it combines existing techniques (OPSD + unified multimodal models) without addressing fundamental challenges in self-improvement, and the wow factor is modest—the gains are meaningful but relatively small (0.747→0.808 on GenEval) and the core insight, while sound, lacks the directness of paradigm-shifting ideas.",
+            "claude_total": 23,
+            "community_traction": 7,
+            "upvotes": 243
+          },
+          "error": null,
+          "input_tokens": 12189,
+          "output_tokens": 434
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 2,
+            "significance": 3,
+            "disruption_potential": 3,
+            "wow_factor": 3,
+            "total": 30,
+            "reasoning": "UniEvo-VL makes a solid contribution by combining on-policy self-distillation with critique-conditioned privileged prompts to enable multimodal models to self-improve without external teachers, showing consistent empirical gains on compositional generation (GenEval: 0.747→0.808) and text rendering benchmarks. The main weakness is that improvements are task-dependent with some configurations showing regressions on easier prompts, the approach is computationally intensive requiring multiple generation-critique-verification cycles per training step, and reproducibility is limited since only hyperparameters and templates are provided without confirmed code/data release for the community.",
+            "claude_total": 23,
+            "community_traction": 7,
+            "upvotes": 243
+          },
+          "error": null,
+          "input_tokens": 12189,
+          "output_tokens": 333
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2610.13521v1",
+      "title": "Beyond Domain-Routed Supervision: Cross-Teacher Guarding for Multi-Teacher On-Policy Distillation",
+      "upvotes": 231,
+      "community_traction": 7,
+      "pdf_url": "https://arxiv.org/pdf/2610.13521v1",
+      "text_chars": 97883,
+      "text_sha1": "88194dd7ccf4",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 2,
+            "significance": 4,
+            "disruption_potential": 3,
+            "wow_factor": 3,
+            "total": 31,
+            "reasoning": "The paper's core contribution is identifying and addressing gradient conflicts in multi-teacher on-policy distillation through cross-teacher agreement-guided credit assignment and preventive gradient projection—a well-motivated problem with a technically sound solution demonstrated across multiple domain combinations with 5-8 point improvements in high-conflict settings. The primary weakness is limited practical applicability due to computational overhead (requiring auxiliary teacher scoring and gradient computation), restricted evaluation to three text-based reasoning domains, and unclear generalization beyond these settings, which constrains broader impact despite solid technical execution.",
+            "claude_total": 24,
+            "community_traction": 7,
+            "upvotes": 231
+          },
+          "error": null,
+          "input_tokens": 12253,
+          "output_tokens": 309
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 2,
+            "significance": 4,
+            "disruption_potential": 3,
+            "wow_factor": 4,
+            "total": 32,
+            "reasoning": "The paper identifies and addresses a genuine failure mode in multi-teacher on-policy distillation: gradient conflicts when domain-specialized teachers have incompatible update directions, demonstrated empirically through Figure 1 showing Medical domain performance degradation. The core innovation of using auxiliary teachers as cross-domain critics with agreement-guided token weighting and preventive gradient projection is technically sound and well-motivated, combining token-level and parameter-level coordination mechanisms. However, the method requires running multiple teacher inference passes on the same trajectories, adding significant computational overhead that limits practical applicability for resource-constrained practitioners; reproducibility is hampered by reliance on proprietary Qwen3 models and absence of code/data release commitments, though experimental details are reasonably documented.",
+            "claude_total": 25,
+            "community_traction": 7,
+            "upvotes": 231
+          },
+          "error": null,
+          "input_tokens": 12253,
+          "output_tokens": 354
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2609.34563v1",
+      "title": "Rethinking Latent Visual Reasoning: Grounding Latent Reasoning in Visual Evidence",
+      "upvotes": 223,
+      "community_traction": 6,
+      "pdf_url": "https://arxiv.org/pdf/2609.34563v1",
+      "text_chars": 104738,
+      "text_sha1": "bbec4eeb9bcd",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 2,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 32,
+            "reasoning": "ReaLVR's core contribution is identifying and addressing the latent evidence-credit gap by grounding latent visual reasoning in visual evidence through contrastive supervision on the model's own trajectories, with compelling diagnostic analyses showing improved visual sensitivity and answer dependence that scale to 235B parameters. The main limitation is that the approach requires expensive compute (800 MI250X GPUs), per-example ROI annotations, and multiple forward passes during training, severely restricting practical accessibility despite the strong empirical results.",
+            "claude_total": 26,
+            "community_traction": 6,
+            "upvotes": 223
+          },
+          "error": null,
+          "input_tokens": 12298,
+          "output_tokens": 302
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 2,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 32,
+            "reasoning": "ReaLVR addresses a fundamental problem in latent visual reasoning—the \"evidence-credit gap\"—by introducing answer-contrastive and visual-evidence supervision to ground latent token generation in observable image content, demonstrating consistent improvements across six model families up to 235B parameters with rigorous mechanistic analysis. However, the method requires substantial compute (800 AMD MI250X GPUs) and lacks public code/model release, limiting immediate reproducibility and practical adoption by resource-constrained teams.",
+            "claude_total": 26,
+            "community_traction": 6,
+            "upvotes": 223
+          },
+          "error": null,
+          "input_tokens": 12298,
+          "output_tokens": 301
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2610.13361v1",
+      "title": "AgentSWE: Can Coding Agents Build the Agent You Actually Want?",
+      "upvotes": 222,
+      "community_traction": 6,
+      "pdf_url": "https://arxiv.org/pdf/2610.13361v1",
+      "text_chars": 128033,
+      "text_sha1": "fda723ef69d5",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 5,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 4,
+            "significance": 4,
+            "disruption_potential": 5,
+            "wow_factor": 5,
+            "total": 38,
+            "reasoning": "AgentSWE introduces a fundamentally novel evaluation paradigm that moves beyond existing benchmarks by measuring whether coding agents can actually build agents that faithfully serve user requirements on held-out cases—framing evaluation as a \"commission\" with development/frozen delivery/held-out acceptance mirroring real-world delegation, with rigorous task construction across three lifecycle stages (creation, editing, optimization) and requirement-derived rubrics that prevent gaming. The paper's primary limitation is that while it powerfully diagnoses the problem (the gap between demonstrated and delivered fidelity is systemic), it offers limited actionable solutions beyond identifying failure modes like overfitting and hollow runtimes; the benchmark establishes where agents fail but provides less concrete guidance on how to fix these failures or train the next generation of builders to avoid them.",
+            "claude_total": 32,
+            "community_traction": 6,
+            "upvotes": 222
+          },
+          "error": null,
+          "input_tokens": 10445,
+          "output_tokens": 365
+        },
+        {
+          "scores": {
+            "novelty": 5,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 3,
+            "significance": 4,
+            "disruption_potential": 5,
+            "wow_factor": 5,
+            "total": 37,
+            "reasoning": "This paper introduces AgentSWE, a fundamentally new benchmark that reframes agent evaluation from \"can agents complete tasks\" to \"can coding agents build agents that faithfully implement requirements\"—a paradigm shift that exposes a critical gap in how we currently measure AI systems. The work is rigorously designed with a three-stage lifecycle (creation, editing, optimization), held-out evaluation on requirement-derived rubrics, and incisive empirical analysis identifying concrete failure modes (overfitting, hollow runtimes, unsupported claims) that provide actionable insights for future development. The main limitation is that while the benchmark reveals sobering truths about current coding agents, the paper offers limited prescriptive solutions beyond naming the failure modes, and the small task count (25 total, 10 per stage) leaves questions about statistical robustness and domain generalization across different agent-building problems.",
+            "claude_total": 31,
+            "community_traction": 6,
+            "upvotes": 222
+          },
+          "error": null,
+          "input_tokens": 10445,
+          "output_tokens": 385
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2610.08448v1",
+      "title": "Rethinking Cross-Tokenizer On-Policy Distillation: From Alignment Coverage to Supervision Reliability",
+      "upvotes": 213,
+      "community_traction": 6,
+      "pdf_url": "https://arxiv.org/pdf/2610.08448v1",
+      "text_chars": 64854,
+      "text_sha1": "03122833048f",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 4,
+            "significance": 4,
+            "disruption_potential": 3,
+            "wow_factor": 3,
+            "total": 33,
+            "reasoning": "The paper makes a valuable contribution by demonstrating that cross-tokenizer on-policy distillation can be highly effective with strict 1:1 token alignment and compact vocabulary subsets, challenging the assumption that expanded alignment coverage improves learning—with thorough experiments across three heterogeneous model pairs, gradient diagnostics, and probability-mass analysis revealing that weak directional agreement and conflicting signals in span supervision actually harm performance. The main limitation is that the work is somewhat incremental within the distillation literature and primarily offers negative results (showing what doesn't work) rather than proposing novel methods or achieving breakthrough performance gains; the practical impact is also constrained to a relatively narrow domain (cross-tokenizer OPD on math and code).",
+            "claude_total": 27,
+            "community_traction": 6,
+            "upvotes": 213
+          },
+          "error": null,
+          "input_tokens": 11640,
+          "output_tokens": 350
+        },
+        {
+          "scores": {
+            "novelty": 3,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 4,
+            "significance": 3,
+            "disruption_potential": 2,
+            "wow_factor": 2,
+            "total": 29,
+            "reasoning": "The paper's core contribution is a careful empirical investigation showing that strict 1:1 token alignment with compact vocabulary subsets outperforms expanding alignment coverage with span-level supervision in cross-tokenizer on-policy distillation, supported by rigorous diagnostics using probability mass measurements and gradient analysis. However, the work is primarily an analytical study of an existing training paradigm rather than introducing fundamentally new methods, and its impact is constrained to a specific technical problem (cross-tokenizer distillation) that, while relevant, addresses a narrow use case in model distillation.",
+            "claude_total": 23,
+            "community_traction": 6,
+            "upvotes": 213
+          },
+          "error": null,
+          "input_tokens": 11640,
+          "output_tokens": 317
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2609.35259v1",
+      "title": "On-Policy or Off-Policy Learning? A Systematic Study of Distillation Dynamics",
+      "upvotes": 204,
+      "community_traction": 6,
+      "pdf_url": "https://arxiv.org/pdf/2609.35259v1",
+      "text_chars": 146006,
+      "text_sha1": "aac502885d32",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 4,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 34,
+            "reasoning": "The paper makes a valuable contribution by rigorously isolating the effect of rollout policy (on-policy vs. off-policy) in knowledge distillation through a controlled experimental design that decouples this variable from KL direction and learning rate, challenging the widespread assumption that on-policy learning is inherently superior. The main limitation is that while the empirical findings are thorough and well-supported, the practical impact may be somewhat limited to the specific distillation setting studied, and reproducibility is constrained by reliance on large proprietary models without released code or data.",
+            "claude_total": 28,
+            "community_traction": 6,
+            "upvotes": 204
+          },
+          "error": null,
+          "input_tokens": 10870,
+          "output_tokens": 315
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 4,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 34,
+            "reasoning": "The paper's core strength is a rigorous, well-controlled empirical study that challenges the prevailing assumption that on-policy learning is inherently superior to off-policy learning in language model distillation, revealing instead that KL divergence direction and learning rate are more critical factors than rollout policy—supported by both gradient analysis and comprehensive experiments across multiple model families and tasks. The main limitation is that while the controlled setting successfully isolates variables, the findings' generalizability beyond the specific strong-to-weak distillation context (and specific model sizes/task domains studied) remains uncertain, and the paper lacks code/data release details, limiting reproducibility despite methodological rigor.\"",
+            "claude_total": 28,
+            "community_traction": 6,
+            "upvotes": 204
+          },
+          "error": null,
+          "input_tokens": 10870,
+          "output_tokens": 338
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2610.08077v3",
+      "title": "Self-Retrospection Distillation: Turning Post-hoc Experiences into Prior Foresight",
+      "upvotes": 191,
+      "community_traction": 6,
+      "pdf_url": "https://arxiv.org/pdf/2610.08077v3",
+      "text_chars": 150253,
+      "text_sha1": "3c9bb56c57fb",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 3,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 34,
+            "reasoning": "The paper introduces prospective learning, a conceptually novel perspective that flips the supervision target from \"what to do\" to \"what to anticipate,\" instantiated as Self-Retrospection Distillation (SRD), which extracts dense learning signals from trajectories where reward is uninformative—a genuine blind spot in RLVR that affects up to 98% of rollouts in some settings. The biggest limitation is that while the method is well-executed and extensively evaluated, the practical applicability is constrained to LLM agent scenarios with existing RLVR pipelines, and the gains, though consistent, are often incremental (median ~5-8pp) rather than transformative, with test-time foresight showing minimal benefit, suggesting the value is primarily in training dynamics rather than inference-time capability.",
+            "claude_total": 28,
+            "community_traction": 6,
+            "upvotes": 191
+          },
+          "error": null,
+          "input_tokens": 12576,
+          "output_tokens": 372
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 4,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 35,
+            "reasoning": "The paper introduces prospective learning—a novel conceptual shift from using post-hoc hindsight to improve behavior to using it to supervise pre-interaction foresight predictions—and demonstrates that Self-Retrospection Distillation (SRD) effectively extracts learning signals from reward-uniform trajectories that would otherwise be discarded, with substantial gains (up to 24.2pp) across 10 diverse benchmarks and gains persisting even in near-impossibility regimes (98% uniform groups). The main weakness is that the approach is primarily an auxiliary training objective that requires careful prompt engineering and hyperparameter tuning (λ=0.01), adds non-negligible computational overhead (20-37% wall-clock increase), and provides limited benefit at inference time, somewhat limiting its practical impact and reproducibility across diverse settings.\"",
+            "claude_total": 29,
+            "community_traction": 6,
+            "upvotes": 191
+          },
+          "error": null,
+          "input_tokens": 12576,
+          "output_tokens": 375
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2610.05608v1",
+      "title": "Kandinsky 6.0 Video: Foundation Models for Synchronized Video and Audio Generation",
+      "upvotes": 174,
+      "community_traction": 5,
+      "pdf_url": "https://arxiv.org/pdf/2610.05608v1",
+      "text_chars": 146847,
+      "text_sha1": "38e9fc1f22ef",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 4,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 5,
+            "total": 35,
+            "reasoning": "Kandinsky 6.0 Video presents a well-engineered open-source foundation model for synchronized audio-video generation with dual-stream architecture, comprehensive multi-stage training (pretraining, SFT, RL, distillation), and strong empirical results competitive with proprietary systems—particularly impressive given the release of full code and weights under MIT license. The main limitation is that while the engineering is solid and the scale substantial (up to 29B parameters), the core architectural innovations (dual-stream CrossDiT with cross-attention) are incremental refinements of existing approaches (Kandinsky 5.0, LTX-2) rather than conceptual breakthroughs, and the paper prioritizes engineering and empirical results over novel methodological insights.",
+            "claude_total": 30,
+            "community_traction": 5,
+            "upvotes": 174
+          },
+          "error": null,
+          "input_tokens": 19044,
+          "output_tokens": 360
+        },
+        {
+          "scores": {
+            "novelty": 3,
+            "rigor": 2,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 4,
+            "significance": 4,
+            "disruption_potential": 3,
+            "wow_factor": 4,
+            "total": 31,
+            "reasoning": "Kandinsky 6.0 Video introduces a well-engineered dual-stream CrossDiT architecture with comprehensive training methodology (continuous pre-training, SFT, RL, distillation) for synchronized text-to-audio-video generation at scale, released fully open-source under MIT license with competitive performance against closed commercial systems. The main limitation is that the core architectural innovation (dual-stream CrossDiT with cross-attention fusion) is incremental over existing work like LTX-2, ALIVE, and Ovi, relying more on superior engineering, scale, and systematic post-training than fundamental novelty in audio-visual generation mechanisms.",
+            "claude_total": 26,
+            "community_traction": 5,
+            "upvotes": 174
+          },
+          "error": null,
+          "input_tokens": 19044,
+          "output_tokens": 337
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2610.08215v2",
+      "title": "Learn2Play Bench: How Well Do LLM Agents Learn from Experience in Unfamiliar Environments?",
+      "upvotes": 153,
+      "community_traction": 5,
+      "pdf_url": "https://arxiv.org/pdf/2610.08215v2",
+      "text_chars": 170570,
+      "text_sha1": "f8b364b95b2c",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 3,
+            "significance": 4,
+            "disruption_potential": 3,
+            "wow_factor": 4,
+            "total": 32,
+            "reasoning": "The paper's core contribution is a well-designed benchmark of 20 novel text-based games with hidden, often counterintuitive rules that forces LLM agents to learn from interaction rather than rely on pretraining, enabling rigorous evaluation of learning ability with deterministic feedback and controlled instance variation. The primary limitation is that while the benchmark effectively isolates learning from pretraining knowledge, the findings themselves are somewhat incremental—discovering that raw memory beats summarization and that humans outperform current agents in exploration behavior, while valuable, doesn't represent a major algorithmic or conceptual advance in how we build learning agents.",
+            "claude_total": 27,
+            "community_traction": 5,
+            "upvotes": 153
+          },
+          "error": null,
+          "input_tokens": 10496,
+          "output_tokens": 324
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 3,
+            "significance": 4,
+            "disruption_potential": 3,
+            "wow_factor": 4,
+            "total": 32,
+            "reasoning": "The paper's core contribution is Learn2Play Bench, a carefully controlled benchmark of 20 newly designed text-based games with hidden, counterintuitive rules specifically meant to isolate genuine learning from pretraining knowledge, enabling systematic evaluation of how LLM agents learn from repeated interactions in unfamiliar environments. The work's biggest limitation is that it focuses narrowly on a specific evaluation paradigm (text-based games without model weight updates) and doesn't propose novel methods for improving learning—it primarily measures existing approaches, which constrains its potential impact on advancing agent capabilities themselves.",
+            "claude_total": 27,
+            "community_traction": 5,
+            "upvotes": 153
+          },
+          "error": null,
+          "input_tokens": 10496,
+          "output_tokens": 316
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2610.12572v1",
+      "title": "DiffusionART: Efficient, Stable and Scalable Reinforcement of Diffusion Models",
+      "upvotes": 146,
+      "community_traction": 5,
+      "pdf_url": "https://arxiv.org/pdf/2610.12572v1",
+      "text_chars": 83572,
+      "text_sha1": "2fc49bafbb89",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 4,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 34,
+            "reasoning": "DiffusionART provides deep theoretical insights into forward-process RL instability (decomposing it into consistency force and restoration mechanisms) and proposes an elegant solution with dramatic empirical improvements: 12× faster training on HunyuanVideo-13B while achieving higher rewards without per-task hyperparameter tuning. The biggest weakness is limited novelty in individual components (aggregation and trust-region updates are standard RL techniques)—the core contribution is diagnosis and their specific combination rather than fundamental algorithmic innovation.",
+            "claude_total": 29,
+            "community_traction": 5,
+            "upvotes": 146
+          },
+          "error": null,
+          "input_tokens": 13494,
+          "output_tokens": 307
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 3,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 33,
+            "reasoning": "DiffusionART makes a strong theoretical contribution by rigorously diagnosing the instability of forward-process diffusion RL (identifying the hidden forward-reverse consistency force) and proposing an elegant solution through aggregation-first reward tilting with drift-adaptive restoration, achieving 12x GPU efficiency gains on large-scale video generation. The main limitation is that the method is highly specialized to diffusion/flow models and primarily benefits practitioners with significant computational budgets, limiting broader accessibility despite the algorithmic elegance.",
+            "claude_total": 28,
+            "community_traction": 5,
+            "upvotes": 146
+          },
+          "error": null,
+          "input_tokens": 13494,
+          "output_tokens": 304
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2610.20584v1",
+      "title": "Player-1: Learning to Play from Synthetic Experience",
+      "upvotes": 142,
+      "community_traction": 5,
+      "pdf_url": "https://arxiv.org/pdf/2610.20584v1",
+      "text_chars": 73061,
+      "text_sha1": "e1ea2f56e817",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 2,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 5,
+            "total": 33,
+            "reasoning": "Player-1 makes a compelling contribution by demonstrating that synthetic experience in purpose-built environments enables game-control agents to significantly outperform supervised-only baselines, with strong transfer to held-out games like Minecraft and ViZDoom, addressing a genuine bottleneck in scaling interactive training without access to every real game. The main limitation is that Player-1-Gym is carefully hand-engineered with 16 synthetic environments requiring substantial expert design effort and domain knowledge, which reduces the practical applicability for resource-constrained teams and raises questions about whether gains truly come from the RL approach or from environment-specific feature engineering and privileged domain design.",
+            "claude_total": 28,
+            "community_traction": 5,
+            "upvotes": 142
+          },
+          "error": null,
+          "input_tokens": 12252,
+          "output_tokens": 335
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 2,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 32,
+            "reasoning": "Player-1's core contribution is a well-executed post-training framework that combines supervised initialization from 6,044 curated gameplay trajectories with multi-environment RL in 16 synthetic environments designed around shared control demands, demonstrating substantial transfer to held-out games like MineDojo, ViZDoom, and GameWorld. The biggest weakness is that practical applicability is severely limited by reliance on Qwen 3.5 foundation models, custom-built synthetic environments requiring specialized game engine development, and the need for significant computational resources and expertise to reproduce or extend the system.",
+            "claude_total": 27,
+            "community_traction": 5,
+            "upvotes": 142
+          },
+          "error": null,
+          "input_tokens": 12252,
+          "output_tokens": 320
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2609.38288v1",
+      "title": "AREX-2: Advancing Self-Improving Agents through Long-Horizon Reflective Tasks",
+      "upvotes": 136,
+      "community_traction": 5,
+      "pdf_url": "https://arxiv.org/pdf/2609.38288v1",
+      "text_chars": 37983,
+      "text_sha1": "91c973a47305",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 2,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 31,
+            "reasoning": "AREX-2's core contribution is a systematic approach to training LLM agents for test-time self-improvement by synthesizing long-horizon improvement trajectories from domains with verifiable feedback (ML engineering and algorithmic programming), demonstrating that reflection and persistent iteration can transfer as meta-skills to out-of-domain tasks. The biggest limitation is that reproducibility is compromised by the need for custom trajectory generation infrastructure, teacher models, and substantial computational resources, making it difficult for independent researchers to replicate the full pipeline despite code release promises.",
+            "claude_total": 26,
+            "community_traction": 5,
+            "upvotes": 136
+          },
+          "error": null,
+          "input_tokens": 10607,
+          "output_tokens": 308
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 2,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 31,
+            "reasoning": "The paper's core contribution is a principled approach to building self-improving agents by training on long-horizon improvement trajectories from verifiable domains (ML engineering and algorithmic programming), demonstrating that a 27B model can match or exceed much larger models through test-time scaling and transfer to unseen domains like deep research. The main weakness is limited reproducibility—while code and models are promised, the trajectory construction pipeline (teacher agent generation, environment validation, trajectory filtering) appears complex and potentially difficult to reproduce, and the paper lacks ablations isolating how much comes from specific architectural choices versus the training data recipe.\"",
+            "claude_total": 26,
+            "community_traction": 5,
+            "upvotes": 136
+          },
+          "error": null,
+          "input_tokens": 10607,
+          "output_tokens": 322
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2609.38169v1",
+      "title": "STEPQuant: When and Where Errors Matter in Delta-Rule Recurrent State Quantization",
+      "upvotes": 130,
+      "community_traction": 4,
+      "pdf_url": "https://arxiv.org/pdf/2609.38169v1",
+      "text_chars": 92681,
+      "text_sha1": "5636be8300eb",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 4,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 33,
+            "reasoning": "STEPQuant makes a compelling contribution by identifying and exploiting temporal (lifetime-aware) and spatial (key-row-aware) structure in recurrent state quantization, achieving 6-bit compression with minimal accuracy loss on linear attention models—a problem of growing importance as these models scale into production serving. The paper is rigorous (solid mathematical analysis via Proposition 1, thorough experiments across 13 benchmarks, ablations, and GPU kernel integration), well-written, reproducible (code released, calibration protocol clear, SGLang integration described), and demonstrates strong practical results (68.7% total memory reduction, 2.91× faster state updates) that directly address a real deployment bottleneck. The main limitation is that the contribution, while technically sound and practically valuable, is somewhat narrowly scoped to a specific architectural pattern (gated delta-rule recurrent states in linear attention) that, despite recent adoption (Qwen, Kimi), remains less ubiquitous than softmax attention, moderating its disruptive impact in the near term.",
+            "claude_total": 29,
+            "community_traction": 4,
+            "upvotes": 130
+          },
+          "error": null,
+          "input_tokens": 12409,
+          "output_tokens": 423
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 4,
+            "significance": 4,
+            "disruption_potential": 3,
+            "wow_factor": 4,
+            "total": 32,
+            "reasoning": "STEPQuant's core strength is a well-motivated spatial-temporal analysis of quantization error propagation in Delta-rule recurrent states, combining lifetime-aware bit allocation with dual-axis fitting to achieve impressive compression (5x) while maintaining accuracy—addressing a real bottleneck in serving linear attention models. The main limitation is that the approach is specialized to a narrow family of architectures (Gated DeltaNet and Kimi Delta Attention), limiting generalizability, and the practical impact depends on adoption of these still-emerging models, making the long-term significance uncertain.",
+            "claude_total": 28,
+            "community_traction": 4,
+            "upvotes": 130
+          },
+          "error": null,
+          "input_tokens": 12409,
+          "output_tokens": 320
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2609.39982v1",
+      "title": "Mid-Harness: Scaling Actions Between Model and Harness for Terminal Agents",
+      "upvotes": 119,
+      "community_traction": 4,
+      "pdf_url": "https://arxiv.org/pdf/2609.39982v1",
+      "text_chars": 133434,
+      "text_sha1": "fd655746c80a",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 4,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 32,
+            "reasoning": "The paper's core contribution is systematically demonstrating that inserting a verification step between model action generation and execution (at the \"mid-harness\" boundary) can substantially improve terminal agent success rates—up to 68% from 50% with proper verification—while keeping the generator unchanged, revealing that verification quality, not just sampling width, governs returns on test-time compute scaling. The main limitation is the substantial gap between distilled verifiers and frontier models (frontier reaches 68% vs. distilled reaches 57% on the base task), combined with incomplete understanding of why command semantics and execution feasibility remain persistent verification challenges, suggesting the approach addresses symptoms rather than root causes of unreliable action selection.\"",
+            "claude_total": 28,
+            "community_traction": 4,
+            "upvotes": 119
+          },
+          "error": null,
+          "input_tokens": 12007,
+          "output_tokens": 344
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 4,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 32,
+            "reasoning": "Mid-Harness presents a well-motivated approach to improving terminal agent reliability by systematically studying action-level verification at the model-harness boundary, with thorough empirical investigation of when and why verification mechanisms work, achieving meaningful improvements (50% to 68% Pass@1) and identifying pairwise verification and distillation as effective strategies. The main limitation is incomplete reproducibility—while the method is elegantly simple and well-described, there is no released code, pretrained verifiers, or access to the full TerminalBench or training datasets, restricting community adoption despite the clear practical value and systematic findings.\"",
+            "claude_total": 28,
+            "community_traction": 4,
+            "upvotes": 119
+          },
+          "error": null,
+          "input_tokens": 12007,
+          "output_tokens": 328
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2610.08699v1",
+      "title": "nanoMuse: An Open-Source Personal Agent for Every Device You Own",
+      "upvotes": 115,
+      "community_traction": 4,
+      "pdf_url": "https://arxiv.org/pdf/2610.08699v1",
+      "text_chars": 49735,
+      "text_sha1": "228b8d3626da",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 3,
+            "rigor": 2,
+            "reproducibility": 2,
+            "clarity": 2,
+            "practical_applicability": 2,
+            "significance": 3,
+            "disruption_potential": 3,
+            "wow_factor": 3,
+            "total": 24,
+            "reasoning": "nanoMuse's core strength is a timely, principled open-source response to Meta's closed personal agent (Muse), with thoughtful design choices around decentralization, user agency, and interpretable memory that address real privacy and vendor lock-in concerns in the emerging agent ecosystem. However, the paper is primarily a systems engineering design document and architectural manifesto rather than a rigorous research contribution; it lacks controlled experiments, empirical comparisons, formal evaluation frameworks for agent capabilities, or evidence that the implementation actually achieves its design goals at scale—the stated limitation of \"falls short of most\" design principles is concerning, and critical infrastructure elements (proactive behavior, learning from user interactions, robust multi-device coordination) remain unvalidated or incomplete.\"",
+            "claude_total": 20,
+            "community_traction": 4,
+            "upvotes": 115
+          },
+          "error": null,
+          "input_tokens": 8780,
+          "output_tokens": 354
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 2,
+            "reproducibility": 3,
+            "clarity": 2,
+            "practical_applicability": 2,
+            "significance": 3,
+            "disruption_potential": 3,
+            "wow_factor": 4,
+            "total": 27,
+            "reasoning": "nanoMuse's core contribution is a genuinely open-source personal agent architecture that runs on users' own devices with decentralized control, memory transparency, and choice of models—directly addressing Meta's closed Muse by making the first truly open counterpart with phone screen automation (hands). The biggest weakness is that the paper is primarily a system design specification and roadmap rather than rigorous scientific evaluation; it lacks experimental validation, ablation studies, quantitative benchmarks, or formal analysis of safety mechanisms, making it read more as engineering documentation with forward-looking aspirations than a peer-reviewed research contribution.\"",
+            "claude_total": 23,
+            "community_traction": 4,
+            "upvotes": 115
+          },
+          "error": null,
+          "input_tokens": 8780,
+          "output_tokens": 322
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2610.18356v1",
+      "title": "Urbex: Agentic Spatial Grounding for City-Scale 3D Scenes",
+      "upvotes": 114,
+      "community_traction": 4,
+      "pdf_url": "https://arxiv.org/pdf/2610.18356v1",
+      "text_chars": 83267,
+      "text_sha1": "50f606c464fe",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 5,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 3,
+            "significance": 4,
+            "disruption_potential": 5,
+            "wow_factor": 5,
+            "total": 35,
+            "reasoning": "Urbex fundamentally reimagines city-scale 3D grounding by replacing exhaustive candidate ranking with agentic spatial search, using a VLM to sequentially zoom, query landmarks, and verify with oblique views—achieving state-of-the-art accuracy on CityRefer while being 10x faster than prior methods, with strong zero-shot transfer to new scenes. The main limitation is that the approach still relies on pre-rendered BEV representations and landmark databases, potentially reducing its applicability to dynamic scenes or geographic regions without well-indexed landmarks, and the evaluation, while solid, is primarily on relatively constrained urban datasets.",
+            "claude_total": 31,
+            "community_traction": 4,
+            "upvotes": 114
+          },
+          "error": null,
+          "input_tokens": 10557,
+          "output_tokens": 332
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 3,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 5,
+            "total": 33,
+            "reasoning": "Urbex reformulates city-scale 3D grounding from exhaustive candidate ranking to active agentic spatial search through landmark querying, zooming, and oblique verification—a conceptually elegant paradigm shift that achieves state-of-the-art accuracy while being 10× faster than the strongest baseline and demonstrates strong zero-shot generalization. The main limitation is practical applicability: the system requires city-scale preprocessing infrastructure (high-resolution BEV rendering, cached oblique views, landmark databases), RL-based training on annotated datasets, and VLM API access, making it difficult for resource-constrained practitioners to build or deploy independently.",
+            "claude_total": 29,
+            "community_traction": 4,
+            "upvotes": 114
+          },
+          "error": null,
+          "input_tokens": 10557,
+          "output_tokens": 335
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2610.10528v1",
+      "title": "Long-WAM: Scaling the Context of World-Action Models",
+      "upvotes": 111,
+      "community_traction": 3,
+      "pdf_url": "https://arxiv.org/pdf/2610.10528v1",
+      "text_chars": 82782,
+      "text_sha1": "7bccdcbacc0e",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 3,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 30,
+            "reasoning": "Long-WAM's core contribution is a well-motivated insight that access to longer visual history only translates to control improvements when grounded in autoregressive video pretraining, plus a complete system for real-time robot deployment via careful engineering (streaming VAE, asynchronous execution, hardware-specific quantization). The paper's biggest limitation is that reproducibility is constrained by reliance on proprietary NVIDIA infrastructure (LongLive2.0-Robot pretraining, custom kernels for multiple hardware platforms, RTX 5090/DGX Spark/Jetson AGX) and closed-source models (GPT-6 Astra), which will significantly slow adoption by the community despite the abstract promise of code release.",
+            "claude_total": 27,
+            "community_traction": 3,
+            "upvotes": 111
+          },
+          "error": null,
+          "input_tokens": 12894,
+          "output_tokens": 353
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 2,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 29,
+            "reasoning": "Long-WAM's core contribution is a principled finding that autoregressive video pretraining enables world-action models to effectively leverage longer visual histories for robot control, bridging prediction-based dynamics understanding with low-latency execution through careful co-design of model architecture and inference systems. The paper's main limitation is that reproducibility is constrained by reliance on proprietary infrastructure (NVIDIA hardware acceleration, quantization kernels, closed-form pretraining data), making the full system difficult for independent researchers to replicate despite the conceptual contributions being sound.",
+            "claude_total": 26,
+            "community_traction": 3,
+            "upvotes": 111
+          },
+          "error": null,
+          "input_tokens": 12894,
+          "output_tokens": 312
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2610.01509v1",
+      "title": "Sharpening Tax in Post-Training",
+      "upvotes": 111,
+      "community_traction": 3,
+      "pdf_url": "https://arxiv.org/pdf/2610.01509v1",
+      "text_chars": 184195,
+      "text_sha1": "ce3d5694035e",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 4,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 32,
+            "reasoning": "The paper's core contribution is a comprehensive empirical analysis revealing that post-trained LLMs sacrifice solution coverage (pass@K) for single-shot accuracy (pass@1) on agentic tasks, quantified through the novel \"Sharpening Tax\" metric—a finding that challenges assumptions about what RL post-training actually achieves and is backed by extensive experiments across 14 models and 3 benchmarks with both theoretical justification and a practical mitigation strategy (PTGS). The primary limitations are that the analysis, while rigorous and systematic, remains largely confirmatory of the \"sharpening hypothesis\" observed in prior work on math/coding domains (extending it to agentic tasks is the novelty), and PTGS, while simple and practical, shows modest improvements in agentic RL environments rather than a paradigm-shifting solution to the identified problem.",
+            "claude_total": 29,
+            "community_traction": 3,
+            "upvotes": 111
+          },
+          "error": null,
+          "input_tokens": 11330,
+          "output_tokens": 381
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 4,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 32,
+            "reasoning": "The paper's core strength is its systematic empirical investigation revealing that pre-trained base models can match or exceed post-trained LLMs in solution coverage (pass@K) on agentic tasks despite lower single-shot accuracy, combined with the introduction of \"Sharpening Tax\" as a principled diagnostic metric that is predictable and actionable across 42 model-benchmark combinations. The main limitation is that while the work thoroughly characterizes the accuracy-coverage tradeoff and proposes PTGS as a mitigation strategy, the proposed solution (adaptive temperature per task) is somewhat incremental and the paper lacks deeper theoretical understanding of why this tradeoff emerges during RL post-training or how to fundamentally resolve it beyond temperature tuning.",
+            "claude_total": 29,
+            "community_traction": 3,
+            "upvotes": 111
+          },
+          "error": null,
+          "input_tokens": 11330,
+          "output_tokens": 353
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2610.00314v1",
+      "title": "Predictive Credit: Measuring What Scientific Explanations Add to Experimental Forecasts",
+      "upvotes": 103,
+      "community_traction": 3,
+      "pdf_url": "https://arxiv.org/pdf/2610.00314v1",
+      "text_chars": 76346,
+      "text_sha1": "53243ff15ae2",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 3,
+            "rigor": 2,
+            "reproducibility": 2,
+            "clarity": 1,
+            "practical_applicability": 2,
+            "significance": 2,
+            "disruption_potential": 2,
+            "wow_factor": 1,
+            "total": 18,
+            "reasoning": "The paper's core contribution is a methodological framework (paired forecasting with matched/donor explanations) to measure whether scientific explanations improve predictions of experimental outcomes, with careful preregistration and multi-study validation—a rigorous approach to an underexplored question. However, the paper is severely hampered by near-total incomprehensibility: the abstract is a wall of unexplained jargon and statistical results without narrative structure, the main text mixes results without clear findings, multiple primary results are null or inconclusive (\"v5's frozen credit decision was inconclusive,\" \"OpenML's...rule was unmet\"), and even after reading extensively one cannot grasp what question is being answered or why the answer matters—compounded by contradictory or unclear secondary results (e.g., matched cards reduce \"drift\" in Tox21 but show no accuracy gain, positive controls work but natural explanations don't, and the five-check framework's practical utility remains opaque).\"",
+            "claude_total": 15,
+            "community_traction": 3,
+            "upvotes": 103
+          },
+          "error": null,
+          "input_tokens": 11637,
+          "output_tokens": 406
+        },
+        {
+          "scores": {
+            "novelty": 3,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 1,
+            "practical_applicability": 2,
+            "significance": 2,
+            "disruption_potential": 2,
+            "wow_factor": 2,
+            "total": 21,
+            "reasoning": "The paper introduces a methodologically rigorous paired-forecast framework (\"predictive credit\") to evaluate whether scientific explanations improve LLM forecasts of experimental outcomes, using three large prospective studies with preregistered gates, frozen records, and comprehensive reproducibility artifacts. However, the paper is severely hampered by impenetrable prose, convoluted statistical reporting, and disappointing null results: all primary hypotheses failed (Tox21's preregistered ROC AUC harm test unmet, OpenML joint criterion unmet, matched point-accuracy gains unconfirmed), while secondary effects are inconsistent across model variants and datasets, limiting both conceptual contribution and practical impact.\"",
+            "claude_total": 18,
+            "community_traction": 3,
+            "upvotes": 103
+          },
+          "error": null,
+          "input_tokens": 11637,
+          "output_tokens": 338
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2609.32259v2",
+      "title": "Prefill-Free Cross-Family KV Cache Transfer for Heterogeneous Multi-Agent LLMs",
+      "upvotes": 103,
+      "community_traction": 3,
+      "pdf_url": "https://arxiv.org/pdf/2609.32259v2",
+      "text_chars": 71209,
+      "text_sha1": "bf0aefe9ada2",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 4,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 32,
+            "reasoning": "HeteroFold makes a strong contribution by solving the previously unsolved problem of prefill-free KV cache transfer across heterogeneous LLM families through novel token alignment (matching on character boundaries), layer alignment, Recolor mapping, and output-aware calibration—achieving 10.7× speedup over native prefill at 32K context and maintaining frozen models. The main limitations are that while rigorously evaluated, the method requires calibration on 1,600 prompts with held-out validation sets, and performance gaps on short-context tasks and some transfer directions suggest the approach may not generalize uniformly across all model family combinations and context lengths.",
+            "claude_total": 29,
+            "community_traction": 3,
+            "upvotes": 103
+          },
+          "error": null,
+          "input_tokens": 13423,
+          "output_tokens": 336
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 4,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 31,
+            "reasoning": "HeteroFold's core contribution is solving prefill-free KV cache transfer across heterogeneous LLM families through token alignment, layer aggregation, statistical recoloring, and receiver-aware calibration—enabling significant speedups (10.7×) while keeping models frozen, addressing a practical bottleneck in multi-agent systems. The main limitation is that reproducibility is hindered by missing implementation details (GitHub link appears inaccessible from abstract/text), and while results are comprehensive across six directions and multiple benchmarks, the improvements sometimes remain modest relative to text-based baselines, particularly on short-context tasks where calibration data may be limited.",
+            "claude_total": 28,
+            "community_traction": 3,
+            "upvotes": 103
+          },
+          "error": null,
+          "input_tokens": 13423,
+          "output_tokens": 335
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2610.18868v1",
+      "title": "Tev: Scaling Long-Horizon Agentic Environments with Dense Progress Rewards",
+      "upvotes": 98,
+      "community_traction": 2,
+      "pdf_url": "https://arxiv.org/pdf/2610.18868v1",
+      "text_chars": 163966,
+      "text_sha1": "375f318530a1",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 2,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 28,
+            "reasoning": "The paper's core contribution is the latent-world-first synthesis approach combined with progress-potential reward shaping (PPRS), which elegantly solves the long-standing problem of obtaining dense rewards for long-horizon agent training by constructing tasks backward from a verified ground truth specification. The main limitation is practical reproducibility and deployment—the approach requires substantial infrastructure investment (1,170 verified environments, B200/A100 GPUs for 4+ days), and while the latent-world concept is clever, it may not generalize easily to domains outside the 7 covered, potentially limiting broader adoption despite the strong benchmark results.",
+            "claude_total": 26,
+            "community_traction": 2,
+            "upvotes": 98
+          },
+          "error": null,
+          "input_tokens": 12988,
+          "output_tokens": 329
+        },
+        {
+          "scores": {
+            "novelty": 5,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 2,
+            "significance": 4,
+            "disruption_potential": 5,
+            "wow_factor": 5,
+            "total": 31,
+            "reasoning": "The paper introduces latent-world-first synthesis, a paradigm-shifting approach that constructs long-horizon agentic tasks backward from a verified ground truth, enabling dense progressive rewards and creating the first scalable long-horizon agent training dataset (TEV-Gym with 1,170 environments). Its biggest limitation is reproducibility: while the methodology is sound and well-documented, the approach requires massive infrastructure investment (4 nodes of B200s for 4 days to train a single model), proprietary frontier model access for evaluation, and significant engineering effort, making it impractical for solo developers or typical research labs despite the authors' intentions to open-source components.",
+            "claude_total": 29,
+            "community_traction": 2,
+            "upvotes": 98
+          },
+          "error": null,
+          "input_tokens": 12988,
+          "output_tokens": 337
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2610.02508v1",
+      "title": "World Action Modeling with Progressive Visual Planning",
+      "upvotes": 98,
+      "community_traction": 2,
+      "pdf_url": "https://arxiv.org/pdf/2610.02508v1",
+      "text_chars": 86072,
+      "text_sha1": "4fb1f024d1d2",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 2,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 28,
+            "reasoning": "ProWAM introduces progressive sub-goal imagination as a novel solution to the long-horizon robotics problem, elegantly unifying visual planning and action generation through a mixture-of-transformers architecture with clever progress-indexed guidance that scales efficiently using KV-caching, demonstrated across diverse benchmarks (LIBERO-Plus 85.8%, RoboTwin 75.7%, real-world 70.0% success). The primary weakness is that reproducibility is constrained by the requirement for proprietary video backbones (Wan2.2), large-scale robot/egocentric pretraining data, and real-world hardware access, limiting practical adoption despite the elegant methodology.",
+            "claude_total": 26,
+            "community_traction": 2,
+            "upvotes": 98
+          },
+          "error": null,
+          "input_tokens": 12152,
+          "output_tokens": 343
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 2,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 28,
+            "reasoning": "ProWAM's core contribution is elegant: it replaces dense video rollouts with sparse progress-indexed visual sub-goals to guide long-horizon robotic control, achieving strong empirical results (85.8% on LIBERO-Plus, 70% zero-shot real-world success) through a unified diffusion architecture with efficient caching. The main limitation is that reproducibility is hampered by reliance on proprietary Wan2.2 video backbone and large-scale private robotics/egocentric pretraining datasets, making independent reproduction challenging despite a project page.",
+            "claude_total": 26,
+            "community_traction": 2,
+            "upvotes": 98
+          },
+          "error": null,
+          "input_tokens": 12152,
+          "output_tokens": 318
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2609.39045v1",
+      "title": "RSIGame: Autonomous Agentic Game Development with Recursive Self-improvement",
+      "upvotes": 96,
+      "community_traction": 2,
+      "pdf_url": "https://arxiv.org/pdf/2609.39045v1",
+      "text_chars": 149621,
+      "text_sha1": "a9df4311b469",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 3,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 30,
+            "reasoning": "RSIGame's core contribution is a well-architected recursive self-improvement framework that organizes agentic game development into complementary local explore-diagnose-improve loops with global progress monitoring, enabling smaller models (Qwen-27B) to match or exceed larger models (GPT-5.5) while reducing token usage by 11x—a significant and practically valuable advance. The main limitation is that while the approach is rigorously evaluated across two engines and multiple generators, it is domain-specific to game development, and the underlying components (exploration, verification, editing) rely on existing LLM capabilities rather than introducing fundamentally new technical innovations beyond orchestration and training-based internalization.",
+            "claude_total": 28,
+            "community_traction": 2,
+            "upvotes": 96
+          },
+          "error": null,
+          "input_tokens": 11326,
+          "output_tokens": 342
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 3,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 5,
+            "total": 31,
+            "reasoning": "RSIGame's core contribution is a well-architected autonomous agentic framework that combines local explore-diagnose-improve loops with global quality monitoring and training-based experience internalization, enabling smaller open models (Qwen 27B) to match or exceed GPT-5.5 on game development tasks while reducing token usage by 11x. The biggest limitation is that despite strong empirical results on GameCraft-Bench, the approach's generalizability beyond game development remains unclear, and the framework's reliance on multiple specialized LLM agents and complex orchestration may present practical deployment challenges for resource-constrained settings, despite the claimed efficiency gains.",
+            "claude_total": 29,
+            "community_traction": 2,
+            "upvotes": 96
+          },
+          "error": null,
+          "input_tokens": 11326,
+          "output_tokens": 335
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2610.08621v1",
+      "title": "Recursive Game Creator: An Agentic Product-Level Experience-Oriented Game Harness",
+      "upvotes": 94,
+      "community_traction": 2,
+      "pdf_url": "https://arxiv.org/pdf/2610.08621v1",
+      "text_chars": 46713,
+      "text_sha1": "22bbc9d300a8",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 2,
+            "reproducibility": 1,
+            "clarity": 3,
+            "practical_applicability": 2,
+            "significance": 3,
+            "disruption_potential": 3,
+            "wow_factor": 4,
+            "total": 24,
+            "reasoning": "The paper's core contribution is a well-motivated recursive harness (Designer→Builder→coding-native Player→Reviewer loop) that shifts game development from functional correctness to player experience by using programmatic interfaces for efficient trajectory collection and game-specific evaluation rubrics, achieving strong benchmark gains (77.89 on GameCraft-Bench, 53.2% on GameASG-Bench). The biggest weakness is severe reproducibility constraints—code is promised \"coming soon\" rather than released, no ablation studies isolate component contributions, and the user study is limited to expert evaluation rather than real players, making it unclear whether improvements genuinely enhance human enjoyment or just optimize for the metrics the Reviewer was designed to reward.",
+            "claude_total": 22,
+            "community_traction": 2,
+            "upvotes": 94
+          },
+          "error": null,
+          "input_tokens": 10364,
+          "output_tokens": 348
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 2,
+            "reproducibility": 1,
+            "clarity": 3,
+            "practical_applicability": 2,
+            "significance": 3,
+            "disruption_potential": 3,
+            "wow_factor": 4,
+            "total": 24,
+            "reasoning": "Recursive Game Creator introduces a clever architecture combining agentic game development with a coding-native player and experience-oriented reviewer, shifting focus from functional correctness to player enjoyment through multi-round iterative refinement. The main limitations are incomplete reproducibility (code \"coming soon\"), limited rigor in user study methodology (small scale, expert-only evaluation), and modest practical applicability requiring sophisticated multi-agent orchestration and benchmark-specific tooling that solo developers cannot easily replicate.",
+            "claude_total": 22,
+            "community_traction": 2,
+            "upvotes": 94
+          },
+          "error": null,
+          "input_tokens": 10364,
+          "output_tokens": 295
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2610.07767v2",
+      "title": "TRACE: Rollout-Guided Quantization-Aware Training for FP4 Reinforcement Learning of MoE Language Models",
+      "upvotes": 92,
+      "community_traction": 2,
+      "pdf_url": "https://arxiv.org/pdf/2610.07767v2",
+      "text_chars": 58638,
+      "text_sha1": "bb2b61b931b3",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 3,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 29,
+            "reasoning": "TRACE's core contribution is a principled approach to aligning quantized computation paths in RL training by using rollout-side FP4 quantization outcomes to guide training-side rounding decisions, plus an efficient mantissa-only caching scheme that reduces overhead from 51TB to manageable levels while maintaining alignment. The main limitation is that reproducibility is constrained by reliance on proprietary Qwen models and Alibaba-internal infrastructure (VeRL, SGLang integration), making it difficult for external researchers to reproduce or build upon the work despite the technical soundness.",
+            "claude_total": 27,
+            "community_traction": 2,
+            "upvotes": 92
+          },
+          "error": null,
+          "input_tokens": 12520,
+          "output_tokens": 319
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 3,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 29,
+            "reasoning": "TRACE introduces a genuinely novel insight—directly reducing train-rollout discrepancy by using rollout quantization outcomes to guide training rounding decisions, rather than optimizing each path independently—paired with an elegant engineering solution (mantissa-only caching) that makes the approach practical at scale. The paper rigorously demonstrates the problem (Figures 3-4), provides clear motivation, conducts extensive experiments across four large MoE models and three RL task domains with consistent improvements, and shows compelling training dynamics where policies adapt to FP4 under controlled discrepancy. The main limitation is that reproducibility is hindered by proprietary Qwen models and likely unavailable code/data; while implementation details are provided, readers cannot easily reproduce results or apply TRACE to open models without significant engineering effort.",
+            "claude_total": 27,
+            "community_traction": 2,
+            "upvotes": 92
+          },
+          "error": null,
+          "input_tokens": 12520,
+          "output_tokens": 365
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2610.02193v1",
+      "title": "Hierarchical Continuous Diffusion Language Models",
+      "upvotes": 92,
+      "community_traction": 2,
+      "pdf_url": "https://arxiv.org/pdf/2610.02193v1",
+      "text_chars": 78405,
+      "text_sha1": "7b26459a4221",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 2,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 28,
+            "reasoning": "HC-DLM's core strength is a clever hierarchical architecture that elegantly couples continuous and discrete diffusion by making tokens read out from and feed back into the latent at every step, with a principled variational bound that justifies the design and demonstrates consistent improvements on structured reasoning, mathematical planning, and language modeling tasks. The main limitation is practical applicability—diffusion models remain far slower at inference than autoregressive generation (requiring many sampling steps), and the method's advantage over autoregressive baselines on language modeling is modest, limiting its real-world deployment potential despite strong technical contributions.",
+            "claude_total": 26,
+            "community_traction": 2,
+            "upvotes": 92
+          },
+          "error": null,
+          "input_tokens": 11638,
+          "output_tokens": 319
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 2,
+            "significance": 3,
+            "disruption_potential": 3,
+            "wow_factor": 4,
+            "total": 26,
+            "reasoning": "HC-DLM's core contribution is an elegant hierarchical coupling of discrete tokens and continuous latent trajectories in a single principled diffusion framework, addressing a genuine bottleneck (token independence) in both discrete and continuous diffusion approaches with both theoretical grounding (variational bound) and empirical validation across structured reasoning and language modeling. The main limitation is that despite competitive results, it doesn't decisively outperform simpler baselines at matched scale (e.g., CCDD on Sudoku easy), and the practical applicability remains constrained by the computational overhead of iterative diffusion sampling compared to autoregressive generation, with unclear gains for general language modeling that would justify widespread adoption.",
+            "claude_total": 24,
+            "community_traction": 2,
+            "upvotes": 92
+          },
+          "error": null,
+          "input_tokens": 11638,
+          "output_tokens": 342
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2610.01415v1",
+      "title": "Beyond Memory: Harnessing Long-Horizon Agents with Explicit Belief States",
+      "upvotes": 91,
+      "community_traction": 1,
+      "pdf_url": "https://arxiv.org/pdf/2610.01415v1",
+      "text_chars": 92115,
+      "text_sha1": "ed342c3a63f8",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 2,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 28,
+            "reasoning": "The paper's core contribution is a unified framework (PoS) that moves beyond raw history compression by explicitly constructing and maintaining task-conditioned belief states with consistency validation and trapping-aware recovery, achieving consistent improvements across four benchmarks with multiple LLM backbones. The biggest weakness is that the approach significantly increases token consumption (5.06× on RCA-100 despite reducing task agent tokens), limiting practical applicability for budget-constrained deployment, and relies heavily on deterministic LLM reasoning for belief construction which may not scale reliably to more complex domains.",
+            "claude_total": 27,
+            "community_traction": 1,
+            "upvotes": 91
+          },
+          "error": null,
+          "input_tokens": 15348,
+          "output_tokens": 316
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 2,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 28,
+            "reasoning": "PoS introduces a well-motivated and systematic framework that moves beyond raw context retention to maintain explicit, validated belief states with consistency checking and factorized recovery from detected failure modes—a meaningful conceptual advance that addresses a real limitation of long-horizon LLM agents. The main weakness is the substantial token overhead (5.06× on RCA-100), which significantly limits practical deployability for resource-constrained settings despite the elegant methodology and strong empirical results across diverse benchmarks.",
+            "claude_total": 27,
+            "community_traction": 1,
+            "upvotes": 91
+          },
+          "error": null,
+          "input_tokens": 15348,
+          "output_tokens": 296
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2610.20344v1",
+      "title": "Doc2Harness: Benchmarking LLMs on Long-Horizon Harness Engineering of Coding Agents",
+      "upvotes": 90,
+      "community_traction": 1,
+      "pdf_url": "https://arxiv.org/pdf/2610.20344v1",
+      "text_chars": 58156,
+      "text_sha1": "46420a24c990",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 3,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 28,
+            "reasoning": "Doc2Harness introduces the first deterministic benchmark for evaluating LLM capability in long-horizon harness engineering—a critical but previously unmeasured capability as AI agents become more autonomous—with a sophisticated two-stage design that isolates construction from evaluation, employs positive controls to eliminate vacuous passes, and synthesizes test cases through three complementary methods anchored to real-world defect patterns. The benchmark's primary limitation is reproducibility concerns: the evaluation dataset and detailed test case specifications appear not to be released, the reliance on a fixed builder harness (OpenCode) may not generalize across different harness paradigms, and the development document synthesis process from twelve frontier harnesses, while thorough, involves human judgment calls that could affect which models are advantaged.\"",
+            "claude_total": 27,
+            "community_traction": 1,
+            "upvotes": 90
+          },
+          "error": null,
+          "input_tokens": 9157,
+          "output_tokens": 358
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 2,
+            "clarity": 3,
+            "practical_applicability": 2,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 27,
+            "reasoning": "This paper introduces Doc2Harness, the first deterministic benchmark for measuring LLM ability to engineer harnesses for coding agents—a previously unmeasured capability that is highly relevant as agents become more complex and autonomous. The benchmark design is sophisticated and rigorous, with a two-stage approach (construction + evaluation), careful use of positive controls to prevent vacuous passes, and thoughtful test case synthesis from multiple sources, making it a solid methodological contribution. The main limitation is that reproducibility is hindered by the requirement to evaluate against proprietary frontier models and the fact that the test infrastructure itself (requiring isolated containers, mock models, and careful observation channels) would be difficult for others to fully recreate without substantial effort, despite the conceptual contribution being clear.",
+            "claude_total": 26,
+            "community_traction": 1,
+            "upvotes": 90
+          },
+          "error": null,
+          "input_tokens": 9157,
+          "output_tokens": 352
+        }
+      ]
+    },
+    {
+      "id": "http://arxiv.org/abs/2610.14224v1",
+      "title": "Harness^2: Recursive Agent Harnessing for an Open World",
+      "upvotes": 88,
+      "community_traction": 1,
+      "pdf_url": "https://arxiv.org/pdf/2610.14224v1",
+      "text_chars": 122856,
+      "text_sha1": "a2e50d00b553",
+      "used_abstract": false,
+      "passes": [
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 3,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 29,
+            "reasoning": "Harness² introduces a genuinely novel two-level recursive framework that optimizes agent execution scaffolding without ground-truth feedback through a principled Propose-Probe-Compose mechanism, which is a meaningful conceptual advance over prior work and demonstrably improves multiple state-of-the-art models across three professional benchmarks. The main limitation is that the approach requires multiple model calls (especially with k=5), substantial prompt engineering across 8 harness components, and relies on semantic judgments of behavioral contrasts that may not be reliable when base model biases are shared; additionally, practical deployment requires a fairly sophisticated editing model (Claude Opus) and careful orchestration, limiting accessibility to resource-rich teams despite claims of being \"plug-and-play.\"",
+            "claude_total": 28,
+            "community_traction": 1,
+            "upvotes": 88
+          },
+          "error": null,
+          "input_tokens": 13722,
+          "output_tokens": 358
+        },
+        {
+          "scores": {
+            "novelty": 4,
+            "rigor": 3,
+            "reproducibility": 3,
+            "clarity": 3,
+            "practical_applicability": 3,
+            "significance": 4,
+            "disruption_potential": 4,
+            "wow_factor": 4,
+            "total": 29,
+            "reasoning": "Harness² introduces a novel two-level recursive framework (task-level and harnessing-level) that enables LLM agents to self-improve their execution harnesses in open-world settings without ground-truth feedback, using contrastive Propose-Probe-Compose steps to guide refinement and accumulating experience for future improvements—a substantive contribution to agent scaffolding that could reshape how LLM systems are adapted at test-time. The main limitation is that practical applicability is constrained by the heavy reliance on multiple model calls (requiring 100M+ tokens for full recursion), strong editor models, and complex implementation details, making this difficult for solo developers or resource-constrained settings despite the well-designed experiments and reproducible code release.\"",
+            "claude_total": 28,
+            "community_traction": 1,
+            "upvotes": 88
+          },
+          "error": null,
+          "input_tokens": 13722,
+          "output_tokens": 358
+        }
+      ]
+    }
+  ]
+}

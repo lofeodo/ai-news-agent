@@ -284,7 +284,7 @@ h1 .hl { color: var(--accent); }
 .issue__bar i { width: 9px; height: 9px; border-radius: 50%; background: #3a3a3a; }
 .issue__bar span { margin-left: 8px; }
 
-.issue__body { background: #f5f2eb; color: #1b1b1b; padding: 20px 26px 0; }
+.issue__body { background: #f5f2eb; color: #1b1b1b; padding: 16px 22px 0; }
 
 .paper {
   background: #121212;
@@ -298,27 +298,42 @@ h1 .hl { color: var(--accent); }
   color: var(--amber);
 }
 .paper__meta b { font-weight: 400; color: #bdb6a8; }
+/* Titles and summaries are line-clamped so the paper AND several stories fit together:
+   the point of the excerpt is that the articles are summarised too, not just the paper. */
 .paper h3 {
-  font-size: 1rem; line-height: 1.4; font-weight: 700; letter-spacing: -0.01em;
-  margin: 12px 0 6px; color: #f4f1ea;
+  font-size: 0.95rem; line-height: 1.4; font-weight: 700; letter-spacing: -0.01em;
+  margin: 10px 0 4px; color: #f4f1ea;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
 }
-.paper__by { font-size: 0.74rem; color: #8f8a80; margin-bottom: 12px; }
-.paper p { font-size: 0.86rem; line-height: 1.65; color: #cfcac0; }
+.paper__by { font-size: 0.72rem; color: #8f8a80; margin-bottom: 8px; }
+.paper p {
+  font-size: 0.82rem; line-height: 1.6; color: #cfcac0;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
+}
 .paper__cta {
-  display: inline-block; margin-top: 14px;
-  font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase;
+  display: inline-block; margin-top: 10px;
+  font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
   color: var(--amber);
 }
+.paper { padding: 14px 18px 14px; }
 
-.issue__sec {
-  margin: 24px 0 10px;
-  font-size: 0.68rem; letter-spacing: 0.18em; text-transform: uppercase; color: #6d6860;
+.stories { margin-top: 6px; }
+.story { padding: 12px 0 13px; border-top: 1px solid #dcd7cb; }
+.story:first-child { border-top: none; padding-top: 14px; }
+.story__sec {
+  display: flex; justify-content: space-between; gap: 12px;
+  margin-bottom: 4px;
+  font-size: 0.64rem; letter-spacing: 0.16em; text-transform: uppercase; color: #6d6860;
 }
-.issue__sec b { color: #1b1b1b; font-weight: 700; margin-right: 6px; }
-.story { padding-bottom: 26px; }
-.story h4 { font-size: 0.98rem; line-height: 1.4; letter-spacing: -0.01em; margin-bottom: 8px; }
-.story p { font-size: 0.85rem; line-height: 1.7; color: #3a3833; }
-.story__meta { margin-top: 10px; font-size: 0.7rem; letter-spacing: 0.08em; color: #7a756b; text-transform: uppercase; }
+.story__sec b { color: #1b1b1b; font-weight: 700; margin-right: 4px; }
+.story h4 {
+  font-size: 0.9rem; line-height: 1.38; letter-spacing: -0.01em; margin-bottom: 4px;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+}
+.story p:not(.story__sec) {
+  font-size: 0.8rem; line-height: 1.55; color: #3a3833;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+}
 
 /* Desktop: the whole hero (copy, form and excerpt) fits one viewport. The excerpt is cropped to
    what is left and fades out, which reads as "the issue goes on". */
@@ -335,7 +350,7 @@ h1 .hl { color: var(--accent); }
   }
   .issue::after {
     content: '';
-    position: absolute; left: 0; right: 0; bottom: 0; height: 72px;
+    position: absolute; left: 0; right: 0; bottom: 0; height: 30px;
     background: linear-gradient(to bottom, rgba(245,242,235,0), #f5f2eb 88%);
     pointer-events: none;
   }
@@ -347,8 +362,13 @@ h1 .hl { color: var(--accent); }
   .lede { margin-bottom: 22px; line-height: 1.6; }
   .signup__or { margin: 14px 0 12px; }
   .signup__trust { margin-top: 14px; }
+  .paper p { -webkit-line-clamp: 2; }
 }
 
+/* Very short windows: drop the third story rather than cut it off mid-line. */
+@media (min-width: 961px) and (max-height: 740px) {
+  .story:nth-child(3) { display: none; }
+}
 @media (min-width: 961px) and (max-height: 700px) {
   .hero { padding-top: 70px; padding-bottom: 16px; }
   h1 { font-size: 1.75rem; margin-bottom: 10px; }

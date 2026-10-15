@@ -17,7 +17,7 @@
   <link rel="preload" href="/fonts/ibm-plex-mono-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/ibm-plex-mono-400.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="fonts.css">
-  <link rel="stylesheet" href="landing.css?v=3">
+  <link rel="stylesheet" href="landing.css?v=6">
   <link rel="stylesheet" href="topbar.css">
 </head>
 <body>
@@ -135,12 +135,23 @@
               <span class="paper__cta">Read on Hugging Face →</span>
             </article>
 
-            <p class="issue__sec"><b id="story-n">03</b> <span id="story-sec">Open Source &amp; Tools</span></p>
-            <article class="story">
-              <h4 id="story-title">Whistle: Speech to Text in 16.9 MB</h4>
-              <p id="story-body">Cactus released Whistle, a 16.9 MB speech-to-text model that runs entirely on-device across 7 languages with no dependencies, delivering faster first-token latency (11.1ms vs Whisper's 73.2ms) while matching or exceeding accuracy on most benchmarks. This enables private speech recognition on mobile devices, wearables, and embedded systems without cloud infrastructure.</p>
-              <p class="story__meta" id="story-meta">HN score ▲ 950</p>
-            </article>
+            <div class="stories" id="stories">
+              <article class="story">
+                <p class="story__sec"><span><b>01</b> Model &amp; Product Releases</span><span>▲ 1118</span></p>
+                <h4>Why isn't the industry freaking out about DeepSeek 4.1 Flash?</h4>
+                <p>DeepSeek's 4.1 Flash model delivers frontier-level capabilities at a fraction of the cost of OpenAI and Anthropic models, with aggressive cache optimization reducing memory costs by 437x and enabling all-day coding sessions for under $1. This represents a fundamental shift in AI economics that could disrupt premium model providers.</p>
+              </article>
+              <article class="story">
+                <p class="story__sec"><span><b>02</b> Policy, Law &amp; Regulation</span><span>▲ 836</span></p>
+                <h4>Utah to let AI examine patients and prescribe medication without human oversight</h4>
+                <p>Utah has approved an AI startup to examine patients and prescribe acne treatments without direct human oversight, becoming the first state to allow AI to replace doctor decision-making for prescriptions. The immediate risk is limited, but it sets a precedent for AI autonomy in healthcare.</p>
+              </article>
+              <article class="story">
+                <p class="story__sec"><span><b>03</b> Open Source &amp; Tools</span><span>▲ 950</span></p>
+                <h4>Whistle: Speech to Text in 16.9 MB</h4>
+                <p>Cactus released Whistle, a 16.9 MB speech-to-text model that runs entirely on-device across 7 languages with no dependencies, delivering faster first-token latency (11.1ms vs Whisper's 73.2ms). This enables private speech recognition on mobile devices and wearables without cloud infrastructure.</p>
+              </article>
+            </div>
           </div>
         </figure>
         <p class="issue-caption"><span id="issue-caption">An excerpt from the October 12 issue.</span><a href="/preview.html">Read the latest issue →</a></p>
@@ -310,13 +321,23 @@
         const paper = { votes: t[iUp - 1], title: t[iUp + 1], by: t[iUp + 2], sum: t[iUp + 3] };
         if (!/^read on/i.test(t[iUp + 4] || '') || paper.title.length > 220 || paper.sum.length < 40) return;
 
-        const iNum = t.findIndex((s, i) => i > iUp + 4 && /^\d{2}$/.test(s));
-        const story = iNum < 0 ? null : {
-          n: t[iNum],
-          sec: (t[iNum + 1] || '').replace(/^[^A-Za-z]+/, ''),
-          title: t[iNum + 2], body: t[iNum + 3],
-          score: t[iNum + 4] === 'HN Score' && /^▲\s*[\d,]+$/.test(t[iNum + 5] || '') ? t[iNum + 5] : '',
-        };
+        // The first story of each of the first three sections: a two-digit section number, the
+        // section name, then title / summary / optional "HN Score ▲ n".
+        const stories = [];
+        for (let k = iUp + 5; k < t.length - 3 && stories.length < 3; k++) {
+          if (!/^\d{2}$/.test(t[k]) || !/[A-Za-z]/.test(t[k + 1])) continue;
+          const body = t[k + 3] || '';
+          if (!t[k + 2] || body.length < 40) continue;
+          const hasScore = t[k + 4] === 'HN Score' && /^▲\s*[\d,]+$/.test(t[k + 5] || '');
+          stories.push({
+            n: t[k],
+            sec: t[k + 1].replace(/^[^A-Za-z]+/, ''),
+            title: t[k + 2],
+            body,
+            score: hasScore ? t[k + 5] : '',
+          });
+          k += 3;
+        }
         const date = t.find((s) => /^[A-Z][a-z]+ \d{1,2}, \d{4}$/.test(s));
 
         const set = (id, v) => { if (v) document.getElementById(id).textContent = v; };
@@ -324,12 +345,24 @@
         set('paper-title', paper.title);
         set('paper-by', paper.by);
         set('paper-sum', paper.sum);
-        if (story && story.sec && story.title && story.body.length > 40) {
-          set('story-n', story.n);
-          set('story-sec', story.sec);
-          set('story-title', story.title);
-          set('story-body', story.body);
-          document.getElementById('story-meta').textContent = story.score ? `HN score ${story.score}` : '';
+        if (stories.length >= 2) {
+          const box = document.getElementById('stories');
+          box.replaceChildren(...stories.map((s) => {
+            const el = (tag, text, cls) => {
+              const n = document.createElement(tag);
+              if (cls) n.className = cls;
+              n.textContent = text;
+              return n;
+            };
+            const row = el('p', '', 'story__sec');
+            const left = document.createElement('span');
+            left.append(el('b', s.n), ` ${s.sec}`);
+            row.append(left, el('span', s.score));
+            const a = document.createElement('article');
+            a.className = 'story';
+            a.append(row, el('h4', s.title), el('p', s.body));
+            return a;
+          }));
         }
         if (date) {
           set('issue-date', date);

@@ -27,14 +27,14 @@ Most of the money is **volume**, not model quality: ~490 one-article calls in ag
 
 - [ ] Step 1: Freeze the baseline (cost + quality), no behavior change
 - [ ] Step 2: Turn off the agent1b review loop
-- [ ] Step 3: Verify model prices and pick candidates (research, no code)
-- [ ] Step 4: Provider abstraction (one `llm` client seam, Claude stays the default)
-- [ ] Step 5: Per-stage model benchmark (cheap models vs Haiku baseline)
-- [ ] Step 6: Cut call volume (agent2b batching, agent1a pre-ranking, prompt caching)
+- [ ] Step 3: Cut call volume (agent2b batching, agent1a pre-ranking, prompt caching)
+- [ ] Step 4: Verify model prices and pick candidates (research, no code)
+- [ ] Step 5: Provider abstraction (one `llm` client seam, Claude stays the default)
+- [ ] Step 6: Per-stage model benchmark (cheap models vs Haiku baseline)
 - [ ] Step 7: Adopt the winners per stage behind per-stage env switches
 - [ ] Step 8: Final re-benchmark against the Step 1 baseline
 
-Steps 6 and 3-5 are independent; Step 6 can go before the model work if the owner prefers cheap wins first.
+Call-volume cuts (Step 3) go before the model work, per the owner (2026-10-15): they are risk-free and shrink what the model benchmark has to cover. The model steps (4-6) then run against the already-reduced volume.
 
 ## Step detail
 
@@ -44,10 +44,17 @@ Only 2 archived runs back the current cost numbers. Before changing anything: ru
 ### Step 2: Turn off the review loop
 The review eval says it plainly: confidence does not predict errors (Spearman 0.117, intervals overlap), and the loop's final accuracy (0.600) is not distinguishable from the single pass (0.622) or from its own first pass (0.589). It costs ~$0.03-0.05 a run and 0-30 articles' worth of extra calls and fetches, and adds the most failure modes of anything in agent1b.
 - Smallest change: default `REVIEW_MAX_ARTICLES=0` (already documented as "disables review"). Keep the code and the eval so the result stays reproducible; do not delete the graph nodes.
-- Open question for the owner: also drop the `confidence` field from the categorize tool schema? That saves output tokens on every article, but it is a prompt change that needs the Step 1 quality check again. Proposed: do it in the same PR only if the categorize accuracy eval shows no change; otherwise leave it.
+- Decided (owner, 2026-10-15): also drop the `confidence` field from the categorize tool schema, but only if the categorize accuracy check against the Step 1 baseline shows no change; otherwise leave it.
 - Update `docs/architecture.md`, `docs/configuration.md`, and the CLAUDE.md agent1b paragraph. Do not update the README unless its one-liner is now wrong.
 
-### Step 3: Verify prices and pick candidates
+### Step 3: Cut call volume
+Independent of model choice, and compounding with it:
+- **agent2b**: ~490 calls for ~15-25 shipped articles. Summarize only what agent3 can actually ship (the post-selection pool plus runners-up), or batch several articles per call. Needs an ordering check: agent2b currently runs in parallel with agent2a before agent3 selection, so this may mean summarizing only the top-N per category by HN points.
+- **agent1a**: 35 full-PDF scoring calls (~12k tokens each). Score abstracts first, send PDFs for the top ~8 only.
+- **Prompt caching** for the large shared system prompts and rubrics (Anthropic cache reads are 0.1x).
+- **Batch API** (50% off) where latency allows; the pipeline has a ~19h window between Sunday noon and Monday 7 AM, so most stages could run as a batch. Only worth it if the stage is not on the critical path for the draft health check at 1:15 PM, which needs to be checked.
+
+### Step 4: Verify prices and pick candidates
 Web research done 2026-10-15 found **conflicting figures between aggregator sites**, so nothing below is a decision. Treat these as the shortlist to verify against each provider's own pricing page (which this step does, recording the date and URL for each number):
 
 | Candidate | Reported price (in / out per M) | Notes |
@@ -63,23 +70,16 @@ Web research done 2026-10-15 found **conflicting figures between aggregator site
 Also in scope for this step, because they decide whether a candidate is usable: does the provider support **tool use with forced or auto tool_choice** (every stage here relies on tool schemas), an OpenAI- or Anthropic-compatible endpoint, a data-retention policy we are willing to send public article text under, and hosting from a Western provider (Together, Fireworks, OpenRouter) as an alternative to the Chinese first-party API for latency and policy reasons. Also include one non-Chinese cheap baseline (Gemini Flash-Lite or similar) as a control, so "Chinese" is not conflated with "cheap".
 Deliverable: a verified table in this doc, 3-4 final candidates.
 
-### Step 4: Provider abstraction
+### Step 5: Provider abstraction
 Every stage calls `anthropic.Anthropic().messages.create(...)` directly with tools and a hard-coded `SCORING_MODEL`. Add one seam (`agents/llm.py`) that takes a stage name, resolves a `(provider, model)` from config (`MODEL_<STAGE>` env vars, defaulting to today's Haiku), and returns responses in the shape callers already consume. Keep it small: tool-use calls, usage accounting, retry. Extend `pricing.py` with the new models so cost estimates and `llm_usage` stay right. Behavior with defaults must be byte-identical (existing tests cover agent1b's graph and the fetcher; add tests for the seam).
 
-### Step 5: Per-stage benchmark
+### Step 6: Per-stage benchmark
 Stages are different tasks and may pick different winners:
 1. agent1b language filter + categorize (classification, tool use)
 2. agent1a paper scoring (long PDF context, 8-dimension rubric; compare rank agreement with Haiku and the owner's picks)
 3. agent2b news summaries (generation; the existing judge, report-only, plus owner spot labels)
 4. agent3 selection / intro / dedup (existing dedup eval has an arm structure to reuse)
 Each arm runs on frozen fixtures from Step 1, reports quality with intervals, cost per run from real token counts, and failure rate (tool-call schema violations, refusals, timeouts). The injection eval is re-run per candidate: a cheaper model that is easier to inject is not a win.
-
-### Step 6: Cut call volume
-Independent of model choice, and compounding with it:
-- **agent2b**: ~490 calls for ~15-25 shipped articles. Summarize only what agent3 can actually ship (the post-selection pool plus runners-up), or batch several articles per call. Needs an ordering check: agent2b currently runs in parallel with agent2a before agent3 selection, so this may mean summarizing only the top-N per category by HN points.
-- **agent1a**: 35 full-PDF scoring calls (~12k tokens each). Score abstracts first, send PDFs for the top ~8 only.
-- **Prompt caching** for the large shared system prompts and rubrics (Anthropic cache reads are 0.1x).
-- **Batch API** (50% off) where latency allows; the pipeline has a ~19h window between Sunday noon and Monday 7 AM, so most stages could run as a batch. Only worth it if the stage is not on the critical path for the draft health check at 1:15 PM, which needs to be checked.
 
 ### Step 7: Adopt winners
 Per-stage `MODEL_<STAGE>` env values on Cloud Run, rolled out one stage per week, with the health check's `llm_usage` section showing cost per agent. Keep Haiku as the documented rollback value. Add each non-Anthropic provider's key via Secret Manager like the existing ones.
@@ -89,8 +89,8 @@ Re-run the Step 1 suite against the new configuration on the same fixtures plus 
 
 ## Risks to watch
 
-- **Aggregator prices were inconsistent**; Step 3 exists because of this. Peak/off-peak pricing on DeepSeek could erase a saving if calls land in the peak window.
+- **Aggregator prices were inconsistent**; Step 4 exists because of this. Peak/off-peak pricing on DeepSeek could erase a saving if calls land in the peak window.
 - **Tool-use fidelity** is the usual place cheap models fail (malformed JSON, ignored tool_choice). Measure it explicitly.
 - **Prompt injection** surface: article text is untrusted; weaker models resist worse.
-- **Operational risk**: a second provider adds an outage dependency and another secret; per-stage fallback to Haiku on provider error should be part of Step 4.
+- **Operational risk**: a second provider adds an outage dependency and another secret; per-stage fallback to Haiku on provider error should be part of Step 5.
 - **Savings ceiling**: total is ~$2/week, ~$108/year. Do this for the portfolio story and learning value as much as for dollars; keep each step's effort proportionate.

@@ -36,8 +36,10 @@ Each step below is its own PR, stacked on the previous one. A step is checked of
 ## Steps
 
 - [x] **1. Plan** (this PR): `docs/plans/newsletter-archive.md`.
-- [ ] **2. Backfill script**: `tools/backfill_release_flag.py` + tests; dry-run output pasted in the PR; applied
-      to Firestore only after the PR is reviewed, using the exact id list from the dry run.
+- [x] **2. Backfill script**: `tools/backfill_release_flag.py` + tests. Dry run (2026-10-15) lists 10 runs: the
+      nine Monday-morning ids above plus `2026-09-28T183736Z`. **Owner action:** run
+      `venv\Scripts\python tools\backfill_release_flag.py --apply` (writes were blocked for the agent).
+      Safe to run before or after any other step; re-running is a no-op.
 - [ ] **3. Backend**: `run_kind.list_releases()`, `GET /archive`, `GET /archive/{run_id}`, rate limits, tests.
 - [ ] **4. Frontend**: switcher in `preview.html` (date dropdown, prev/next, keyboard arrows, deep link, empty
       and error states); nav label; screenshots on desktop, Android (Pixel 7) and iOS (iPhone 15).

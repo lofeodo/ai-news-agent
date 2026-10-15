@@ -184,6 +184,17 @@ def test_review_config_from_env(monkeypatch):
     assert cfg.max_articles == 7 and cfg.confidence_threshold == 4
 
 
+def test_review_off_asks_for_no_confidence():
+    client = FakeClient(CONF)
+    state = run(client, max_articles=0)
+    cat_calls = [kw for kind, kw in client.calls if kind == "categorize"]
+    assert cat_calls
+    for kw in cat_calls:
+        assert "confidence" not in str(kw["tools"][0]["input_schema"])
+        assert "confidence" not in kw["messages"][0]["content"].lower()
+    assert not state.get("capped_urls") and not state.get("to_review")
+
+
 def test_review_off_by_default(monkeypatch):
     monkeypatch.delenv("REVIEW_MAX_ARTICLES", raising=False)
     assert g.ReviewConfig.from_env().max_articles == 0

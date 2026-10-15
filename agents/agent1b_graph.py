@@ -343,10 +343,12 @@ def build_graph(client=None, fetcher: Callable | None = None, cfg: ReviewConfig 
 
     def categorize(state: AgentState) -> dict:
         meter, mclient = _metered("categorize")
-        categorized = a1b.filter_and_categorize(state["articles"], client=mclient, with_confidence=True)
+        # Review off: ask for plain categories (no confidence in tool or prompt).
+        review_on = cfg.max_articles > 0
+        categorized = a1b.filter_and_categorize(state["articles"], client=mclient, with_confidence=review_on)
 
         low = [a for a in categorized
-               if a.get("confidence") is None or a["confidence"] < cfg.confidence_threshold]
+               if review_on and (a.get("confidence") is None or a["confidence"] < cfg.confidence_threshold)]
         low.sort(key=lambda a: (a["confidence"] is not None, a["confidence"] or 0))  # least sure first
         to_review, capped = low[:cfg.max_articles], low[cfg.max_articles:]
         print(f"  Confidence routing: {len(categorized) - len(low)} confident, "

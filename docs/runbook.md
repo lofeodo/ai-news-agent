@@ -76,6 +76,25 @@ Each `pipeline_runs` doc has `run_kind`: `release` or `debug` (no field = releas
 once with `venv\Scripts\python tools/backfill_release_flag.py` (dry run), then `--apply`; re-running is a no-op.
 To add or hide an issue, set or remove `run_kind` on its `pipeline_runs` doc. Deploy agent-subscriptions, then hosting.
 
+## 2d. Landing page excerpt
+
+The landing hero shows the latest issue's spotlight paper and the first story of three sections. That text is
+**baked into `public/newsletter/index.html`** (between the `EXCERPT:START` / `EXCERPT:END` markers) at deploy
+time, so visitors never wait on the backend. `tools/bake_landing_excerpt.py` reads the public `/preview` page
+(retrying, since agent-subscriptions scales to zero), validates it and rewrites those markers; on any failure it
+exits non-zero **without touching the file**. `cloudbuild-site.yaml` runs it and then `firebase deploy --only
+hosting`, so a failed bake stops before the deploy and the live site keeps the previous excerpt.
+
+- **Refresh now:** `gcloud builds submit --config cloudbuild-site.yaml .` (PowerShell), or locally
+  `venv\Scripts\python tools\bake_landing_excerpt.py` then `firebase deploy --only hosting`.
+- **A plain `firebase deploy` from the repo ships whatever excerpt is committed**, which is older than the
+  latest issue. Run the bake first, or let the next scheduled build replace it.
+- **Scheduled refresh (one-time setup, not created by the repo):** a Cloud Build trigger for
+  `cloudbuild-site.yaml` on the GitHub repo, run by a Cloud Scheduler job after the draft is composed
+  (Sunday after the 12:00 PM pipeline, before the 1:15 PM draft check). The build's service account needs
+  Firebase Hosting Admin. Check the first run's log for `baked <date>`.
+- **Not part of the pipeline:** nothing in agent1a–agent4 or the health check depends on this.
+
 ## 3. Roll back
 
 | Change | How |

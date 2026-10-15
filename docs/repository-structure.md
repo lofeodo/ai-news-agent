@@ -50,7 +50,7 @@
 │   ├── bg.js                       # Shared background/decorative script
 │   ├── style.css / fonts.css       # Shared styling
 │   └── fonts/, images/             # Static assets
-├── tools/                          # One-off maintenance scripts (backfill_release_flag.py)
+├── tools/                          # Maintenance scripts (backfill_release_flag.py, bake_landing_excerpt.py)
 ├── evals/                          # Evaluation harnesses, frozen fixtures, labels, results/*.json (see evals/README.md)
 ├── tests/                          # pytest suite (stubbed Claude client + fetcher; no network or keys)
 │   ├── conftest.py / fakes*.py     # Path setup; scripted fake Anthropic client, fetcher and Firestore
@@ -75,6 +75,7 @@
 ├── cloudbuild.yaml                 # Cloud Build: build + push all 9 service images
 ├── cloudbuild-partial.yaml         # Cloud Build: agent1b + agent3 + agent4 only (fast iteration)
 ├── cloudbuild-subscriptions.yaml   # Cloud Build: agent_subscriptions only
+├── cloudbuild-site.yaml            # Cloud Build: bake the landing excerpt, then deploy Firebase Hosting
 ├── firebase.json                   # Firebase Hosting config
 ├── firestore.indexes.json          # Firestore composite index definitions
 ├── requirements.txt

@@ -80,7 +80,7 @@ To add or hide an issue, set or remove `run_kind` on its `pipeline_runs` doc. De
 
 | Change | How |
 |---|---|
-| agent 1b graph and review loop | `gcloud run services update agent1b --update-env-vars AGENT1B_MODE=single_pass` (no redeploy). Back with `graph` or by removing the variable. Disable only the review step with `REVIEW_MAX_ARTICLES=0`. |
+| agent 1b graph and review loop | `gcloud run services update agent1b --update-env-vars AGENT1B_MODE=single_pass` (no redeploy). Back with `graph` or by removing the variable. The review step is off by default (`REVIEW_MAX_ARTICLES=0`); turn it on with `REVIEW_MAX_ARTICLES=30`. |
 | Click tracking | `gcloud run services update agent4 --update-env-vars CLICK_TRACKING=false` restores the previous email exactly. Do the same on `agent4-test`. |
 | Any service's code | In the Cloud Run console, send traffic back to the previous revision, or run `gcloud run services update-traffic <SERVICE> --to-revisions <REVISION>=100`. List revisions with `gcloud run revisions list --service <SERVICE>`. |
 | A bad image | Rebuild from a good commit with `gcloud builds submit --config cloudbuild.yaml` (all nine images; `cloudbuild-partial.yaml` and `cloudbuild-subscriptions.yaml` build subsets), then `gcloud run services update <SERVICE> --image <IMAGE>`. |

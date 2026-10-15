@@ -184,6 +184,11 @@ def test_review_config_from_env(monkeypatch):
     assert cfg.max_articles == 7 and cfg.confidence_threshold == 4
 
 
+def test_review_off_by_default(monkeypatch):
+    monkeypatch.delenv("REVIEW_MAX_ARTICLES", raising=False)
+    assert g.ReviewConfig.from_env().max_articles == 0
+
+
 def test_mermaid_shows_review_loop():
     m = g.mermaid()
     assert "llm_call" in m and "tool_exec" in m and "finalize" in m

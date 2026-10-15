@@ -896,7 +896,6 @@ PREVIEW_CSP = (
 
 
 @router.get("/issues/latest")
-@router.get("/preview")  # old name, kept so cached pages and links keep working
 @limiter.limit("30/minute")
 def newsletter_preview(request: Request):
     """Return the latest *release* newsletter HTML for embedding in the preview iframe. Debug runs are never shown."""
@@ -909,7 +908,6 @@ def newsletter_preview(request: Request):
 
 
 @router.get("/issues")
-@router.get("/archive")  # old name
 @limiter.limit("30/minute")
 def archive_list(request: Request):
     """Public: the flagged release issues, newest first. Debug runs and unflagged old runs never appear."""
@@ -917,7 +915,6 @@ def archive_list(request: Request):
 
 
 @router.get("/issues/{run_id}")
-@router.get("/archive/{run_id}")  # old name
 @limiter.limit("30/minute")
 def archive_issue(request: Request, run_id: str):
     """Public: one archived issue as HTML, rendered and fenced exactly like /issues/latest. 404 for anything that is not
@@ -931,7 +928,6 @@ def archive_issue(request: Request, run_id: str):
 
 
 @router.get("/auth/admin/issues")
-@router.get("/auth/admin/preview")  # old name
 @limiter.limit("30/minute")
 def admin_preview(
     request: Request,

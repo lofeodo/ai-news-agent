@@ -52,7 +52,7 @@ class _SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         # The issue HTML routes set their own frame-ancestors CSP and must be embeddable
         path = request.url.path
-        embeddable = path in ("/preview", "/issues/latest") or path.startswith(("/issues/", "/archive/"))
+        embeddable = path == "/issues/latest" or path.startswith("/issues/")
         if not embeddable:
             response.headers["X-Frame-Options"] = "DENY"
         return response

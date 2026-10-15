@@ -70,7 +70,7 @@ Each `pipeline_runs` doc has `run_kind`: `release` or `debug` (no field = releas
 
 ## 2c. Newsletter archive
 
-`GET /issues` lists, and `GET /issues/{run_id}` serves (`/issues/latest` is the newest; the old `/preview`, `/archive` names still answer), composed runs whose `run_kind` is **explicitly**
+`GET /issues` lists, and `GET /issues/{run_id}` serves (`/issues/latest` is the newest), composed runs whose `run_kind` is **explicitly**
 `release`; the Issues page (`issues.html`) shows them as a date switcher. Runs with no `run_kind` are
 *not* archived, even though `/issues/latest` and agent4 treat them as release. Old Monday-morning issues were flagged
 once with `venv\Scripts\python tools/backfill_release_flag.py` (dry run), then `--apply`; re-running is a no-op.

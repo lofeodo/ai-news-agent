@@ -1,4 +1,4 @@
-"""The issue routes (/issues, /issues/latest, /issues/{run_id}) and the old names that still answer."""
+"""The issue routes (/issues, /issues/latest, /issues/{run_id}) and that the old names are gone."""
 from types import SimpleNamespace
 
 import pytest
@@ -30,14 +30,14 @@ def client(monkeypatch):
     return TestClient(app)
 
 
-@pytest.mark.parametrize("path", ["/issues/latest", "/preview", "/issues/r1", "/archive/r1"])
+@pytest.mark.parametrize("path", ["/issues/latest", "/issues/r1"])
 def test_html_routes_serve_the_issue_with_the_embed_policy(client, path):
     r = client.get(path)
     assert r.status_code == 200 and "one" in r.text
     assert r.headers["Content-Security-Policy"] == subs.PREVIEW_CSP
 
 
-@pytest.mark.parametrize("path", ["/issues", "/archive"])
+@pytest.mark.parametrize("path", ["/issues"])
 def test_list_routes_match(client, path):
     assert client.get(path).json() == {"issues": [{"run_id": "r1", "subject": "S", "started_at": ""}]}
 
@@ -47,6 +47,11 @@ def test_latest_is_not_treated_as_a_run_id(client):
     assert client.get("/issues/latest").status_code == 200
 
 
-@pytest.mark.parametrize("path", ["/auth/admin/issues", "/auth/admin/preview"])
+@pytest.mark.parametrize("path", ["/auth/admin/issues"])
 def test_admin_routes_require_login(client, path):
     assert client.get(path).status_code == 401
+
+
+@pytest.mark.parametrize("path", ["/preview", "/archive", "/archive/r1", "/auth/admin/preview"])
+def test_old_names_are_gone(client, path):
+    assert client.get(path).status_code == 404

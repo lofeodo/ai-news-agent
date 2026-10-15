@@ -66,7 +66,6 @@
 │   ├── decisions/                  # Architecture decision records (ADRs)
 │   └── history/                    # Archived working log of the evaluation and monitoring work
 ├── .github/workflows/tests.yml     # CI: pytest on push and pull request (no secrets)
-├── selection_test.py               # Manual script (real Claude calls) — NOT collected by pytest
 ├── pytest.ini                      # Restricts pytest to tests/
 ├── orchestrator.py                 # Local sequential runner / cloud pipeline trigger
 ├── main.py                         # Cloud Run entrypoint (FastAPI, AGENT_NAME dispatch)

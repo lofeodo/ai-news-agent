@@ -89,10 +89,24 @@ hosting`, so a failed bake stops before the deploy and the live site keeps the p
   `venv\Scripts\python tools\bake_landing_excerpt.py` then `firebase deploy --only hosting`.
 - **A plain `firebase deploy` from the repo ships whatever excerpt is committed**, which is older than the
   latest issue. Run the bake first, or let the next scheduled build replace it.
-- **Scheduled refresh (one-time setup, not created by the repo):** a Cloud Build trigger for
-  `cloudbuild-site.yaml` on the GitHub repo, run by a Cloud Scheduler job after the draft is composed
-  (Sunday after the 12:00 PM pipeline, before the 1:15 PM draft check). The build's service account needs
-  Firebase Hosting Admin. Check the first run's log for `baked <date>`.
+- **Scheduled refresh (set up 2026-10-15 in the cloud project, not created by the repo):**
+
+  | Piece | Name / setting |
+  |---|---|
+  | Service account | `site-deployer@<project>`: Firebase Hosting Admin, Logs Writer, Service Usage Consumer, Cloud Build Editor, and Service Account User on itself |
+  | Cloud Build trigger | `site-excerpt` (manual, `global`, repo `lofeodo/ai-news-agent`, branch `main`, `cloudbuild-site.yaml`, runs as `site-deployer`) |
+  | Cloud Scheduler job | `site-excerpt-weekly` (`northamerica-northeast1`), `45 12 * * 0` America/Toronto: Sunday after the 12:00 PM pipeline, before the 1:15 PM draft check |
+
+  The job POSTs to `cloudbuild.googleapis.com/v1/projects/<project>/locations/global/triggers/<trigger id>:run`
+  as `site-deployer`. **The body must be `{"source":{"branchName":"main"}}`**: a bare `{"branchName":"main"}` is
+  rejected with 400 INVALID_ARGUMENT (job status code 3, no build starts). In PowerShell pass the body with
+  `--message-body-from-file`, because inline quotes are stripped.
+- **A scheduled build publishes everything on `main`**, not only the excerpt, so a merged page change goes
+  live at the next run (or run it sooner with `gcloud builds triggers run site-excerpt --branch main`).
+  A failed run changes nothing: the build stops before the deploy and the site keeps the previous excerpt.
+- **If a run did not happen:** `gcloud scheduler jobs describe site-excerpt-weekly --location
+  northamerica-northeast1` shows `status.code` (non-zero means the call failed; read Cloud Logging for
+  `resource.type="cloud_scheduler_job"`), and `gcloud builds list --limit 3` shows whether a build started.
 - **Not part of the pipeline:** nothing in agent1a–agent4 or the health check depends on this.
 
 ## 3. Roll back

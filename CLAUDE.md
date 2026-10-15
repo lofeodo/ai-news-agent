@@ -51,7 +51,7 @@ python agents/agent1b_fetch_news.py
 venv\Scripts\python -m pip install -r requirements-dev.txt
 venv\Scripts\python -m pytest -q
 ```
-`pytest.ini` restricts collection to `tests/`. The root-level `selection_test.py` is a manual script that makes **real Claude calls at import time** — never let pytest collect it (without `pytest.ini`, it did, silently spending API credits on every local run and failing CI, which has no key). CI (`.github/workflows/tests.yml`) runs pytest on push and PR; it only *blocks* merges if the GitHub branch ruleset requires the `pytest` check. The suite covers agent1b's graph, the shared fetcher and tracing only — green CI does not mean the rest of the app works.
+`pytest.ini` restricts collection to `tests/`, so any script that makes real Claude calls at import time stays out of the run (an old root-level `selection_test.py` did exactly that before `pytest.ini` existed, silently spending API credits locally and failing CI, which has no key; it was deleted). CI (`.github/workflows/tests.yml`) runs pytest on push and PR; it only *blocks* merges if the GitHub branch ruleset requires the `pytest` check. The suite covers agent1b's graph, the shared fetcher and tracing only — green CI does not mean the rest of the app works.
 
 **Run agent1b in the original single-pass mode (CMD):** `set AGENT1B_MODE=single_pass` then `python agents\agent1b_fetch_news.py`.
 

@@ -36,6 +36,10 @@ service_account*.json
 
 docker
 
+# Accidental shell-redirect artifacts (docker build progress lines; '[internal]' is a BuildKit step label)
+\[internal\]
+requirements.txt;*
+
 # Firebase CLI cache
 .firebase/
 firebase-debug.log

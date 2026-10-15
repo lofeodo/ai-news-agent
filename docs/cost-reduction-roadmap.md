@@ -25,7 +25,7 @@ Most of the money is **volume**, not model quality: ~490 one-article calls in ag
 
 ## Step sequence
 
-- [ ] Step 1: Freeze the baseline (cost + quality), no behavior change
+- [x] Step 1: Freeze the baseline (cost + quality), no behavior change
 - [ ] Step 2: Turn off the agent1b review loop
 - [ ] Step 3: Cut call volume (agent2b batching, agent1a pre-ranking, prompt caching)
 - [ ] Step 4: Verify model prices and pick candidates (research, no code)
@@ -38,8 +38,28 @@ Call-volume cuts (Step 3) go before the model work, per the owner (2026-10-15): 
 
 ## Step detail
 
-### Step 1: Freeze the baseline
-Only 2 archived runs back the current cost numbers. Before changing anything: run `python -m evals.fetch_pipeline_cost` again (more runs will have accumulated), and snapshot quality metrics with the existing evals (review eval, dedup eval, injection eval, judge, plus a fixed fixture set for summaries and paper scoring). Write them under `evals/results/baseline_2026-10-*.json` and link from here. Deliverable: a baseline table in this doc. No production code touched.
+### Step 1: Freeze the baseline (done 2026-10-15)
+**Cost (frozen):** `evals/results/baseline_cost_2026-10-15.json`, from `python -m evals.fetch_pipeline_cost` (git `8a139f4`): mean of **4** archived production runs, LangSmith estimate, Claude calls only, min/max in place of an interval.
+
+| Agent | $ / run (min-max) |
+|---|---|
+| agent2b | 0.805 (0.774-0.856) |
+| agent1b | 0.637 (0.624-0.661) |
+| agent1a | 0.467 (0.464-0.471) |
+| agent3 | 0.132 (0.114-0.149) |
+| agent2a | 0.014 (0.010-0.021) |
+| **Total** | **2.055 (2.022-2.114)**, ~656 calls |
+
+**Quality (frozen, already in `evals/results/`, no new API spend):**
+
+| Stage | Baseline file |
+|---|---|
+| agent1b categorize / review loop | `review_eval_2026-10-05.json`, `prompt_recheck_review_eval.json` |
+| agent3 dedup | `dedup_eval_2026-10-08.json`, `dedup_eval_2026-10-09.json` |
+| Prompt injection | `injection_eval_after.json` |
+| Summary judge (report-only, kappa 0.04) | `judge_calibration.json` |
+
+**Gap found:** there are no frozen fixtures or labels for **agent1a paper scoring** or **agent2b/2a summaries**, and those are exactly the stages Step 3 changes. Building them (a frozen article set and a frozen paper set with Haiku's current outputs as the reference, plus rank agreement and the report-only judge as metrics) is the first task of Step 3, before any change to those agents, so the "before" is captured on the unmodified code.
 
 ### Step 2: Turn off the review loop
 The review eval says it plainly: confidence does not predict errors (Spearman 0.117, intervals overlap), and the loop's final accuracy (0.600) is not distinguishable from the single pass (0.622) or from its own first pass (0.589). It costs ~$0.03-0.05 a run and 0-30 articles' worth of extra calls and fetches, and adds the most failure modes of anything in agent1b.

@@ -98,8 +98,28 @@ h1 .hl { color: var(--accent); }
   line-height: 1.7;
   color: var(--soft);
   max-width: 34rem;
-  margin-bottom: 32px;
+  margin-bottom: 18px;
 }
+
+/* Open-source badge: sits right under the promise, above the form. */
+.os-pill {
+  display: flex; align-items: center; gap: 10px;
+  max-width: 34rem;
+  margin-bottom: 26px;
+  padding: 9px 12px;
+  background: rgba(200,184,154,0.07);
+  border: 1px solid rgba(200,184,154,0.4);
+  color: var(--soft);
+  font-size: 0.78rem; line-height: 1.45;
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.os-pill svg { flex-shrink: 0; color: var(--accent); }
+.os-pill span:not(.os-pill__arrow) { flex: 1; min-width: 0; }
+.os-pill b { color: var(--text); font-weight: 700; }
+.os-pill__arrow { color: var(--accent); }
+.os-pill:hover { border-color: var(--accent); background: rgba(200,184,154,0.12); }
+.os-pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* ── Signup ───────────────────────────────────────────────────────────────── */
 .signup { max-width: 34rem; }
@@ -359,7 +379,8 @@ h1 .hl { color: var(--accent); }
 @media (min-width: 961px) and (max-height: 800px) {
   h1 { font-size: clamp(1.8rem, 3vw, 2.35rem); margin-bottom: 14px; }
   .eyebrow { margin-bottom: 14px; }
-  .lede { margin-bottom: 22px; line-height: 1.6; }
+  .lede { margin-bottom: 14px; line-height: 1.6; }
+  .os-pill { margin-bottom: 16px; padding: 7px 12px; }
   .signup__or { margin: 14px 0 12px; }
   .signup__trust { margin-top: 14px; }
   .paper p { -webkit-line-clamp: 2; }
@@ -372,7 +393,8 @@ h1 .hl { color: var(--accent); }
 @media (min-width: 961px) and (max-height: 700px) {
   .hero { padding-top: 70px; padding-bottom: 16px; }
   h1 { font-size: 1.75rem; margin-bottom: 10px; }
-  .lede { font-size: 0.92rem; margin-bottom: 16px; }
+  .lede { font-size: 0.92rem; margin-bottom: 10px; }
+  .os-pill { margin-bottom: 12px; padding: 5px 10px; font-size: 0.74rem; }
   .signup input[type="email"], .btn { padding-top: 11px; padding-bottom: 11px; }
   .signup__trust { margin-top: 10px; }
   .issue { max-height: max(380px, calc(100svh - 70px - 16px - 40px)); }
@@ -412,6 +434,19 @@ h2 {
 .pillar h3 { font-size: 1rem; line-height: 1.35; letter-spacing: -0.01em; margin-bottom: 10px; }
 .pillar p { font-size: 0.86rem; line-height: 1.7; color: var(--soft); }
 
+/* Open source: a full-width band under the three claims, so it reads as its own selling point. */
+.opensource {
+  display: flex; align-items: center; justify-content: space-between; gap: 32px;
+  margin-top: 20px;
+  background: rgba(22,22,22,0.85);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  padding: 28px 30px;
+}
+.opensource h3 { font-size: 1.15rem; letter-spacing: -0.01em; margin-bottom: 10px; }
+.opensource p:not(.pillar__n) { font-size: 0.88rem; line-height: 1.7; color: var(--soft); max-width: 52rem; }
+.opensource .btn { flex-shrink: 0; }
+
 /* ── Closing call to action ───────────────────────────────────────────────── */
 .final { padding-bottom: 96px; }
 .final__box {
@@ -433,6 +468,7 @@ h2 {
   .signup, .lede, .member { max-width: none; }
   .issue-wrap { max-width: 600px; }
   .pillars { grid-template-columns: minmax(0, 1fr); }
+  .opensource { flex-direction: column; align-items: stretch; gap: 20px; padding: 24px 22px; }
   .final__box { flex-direction: column; align-items: stretch; gap: 22px; padding: 28px 22px; }
   .final__actions { min-width: 0; }
 }

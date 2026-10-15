@@ -32,6 +32,13 @@ from filter_tool import CATEGORIES, FETCH_ARTICLE_TOOL, SUBMIT_CATEGORY_TOOL
 
 REVIEW_MAX_TOKENS = 500
 
+# Production default: review off. The review eval found confidence does not
+# predict errors and the loop's accuracy is not distinguishable from one pass
+# (docs/evaluation.md; cost roadmap step 2). Set REVIEW_MAX_ARTICLES=30 to
+# turn it back on. The ReviewConfig field default stays 30 so evals that build
+# a config directly still exercise the loop.
+DEFAULT_REVIEW_MAX_ARTICLES = 0
+
 
 # ---------------------------------------------------------------------------
 # Config (env vars, safe defaults)
@@ -55,7 +62,7 @@ class ReviewConfig:
     def from_env(cls) -> "ReviewConfig":
         return cls(
             confidence_threshold=_env_int("REVIEW_CONFIDENCE_THRESHOLD", cls.confidence_threshold),
-            max_articles=max(0, _env_int("REVIEW_MAX_ARTICLES", cls.max_articles)),
+            max_articles=max(0, _env_int("REVIEW_MAX_ARTICLES", DEFAULT_REVIEW_MAX_ARTICLES)),
             max_iterations=max(1, _env_int("REVIEW_MAX_ITERATIONS", cls.max_iterations)),
             fetch_timeout=max(1, _env_int("REVIEW_FETCH_TIMEOUT", cls.fetch_timeout)),
         )
@@ -336,10 +343,12 @@ def build_graph(client=None, fetcher: Callable | None = None, cfg: ReviewConfig 
 
     def categorize(state: AgentState) -> dict:
         meter, mclient = _metered("categorize")
-        categorized = a1b.filter_and_categorize(state["articles"], client=mclient, with_confidence=True)
+        # Review off: ask for plain categories (no confidence in tool or prompt).
+        review_on = cfg.max_articles > 0
+        categorized = a1b.filter_and_categorize(state["articles"], client=mclient, with_confidence=review_on)
 
         low = [a for a in categorized
-               if a.get("confidence") is None or a["confidence"] < cfg.confidence_threshold]
+               if review_on and (a.get("confidence") is None or a["confidence"] < cfg.confidence_threshold)]
         low.sort(key=lambda a: (a["confidence"] is not None, a["confidence"] or 0))  # least sure first
         to_review, capped = low[:cfg.max_articles], low[cfg.max_articles:]
         print(f"  Confidence routing: {len(categorized) - len(low)} confident, "

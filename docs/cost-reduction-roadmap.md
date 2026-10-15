@@ -26,7 +26,7 @@ Most of the money is **volume**, not model quality: ~490 one-article calls in ag
 ## Step sequence
 
 - [x] Step 1: Freeze the baseline (cost + quality), no behavior change
-- [ ] Step 2: Turn off the agent1b review loop
+- [x] Step 2: Turn off the agent1b review loop
 - [ ] Step 3: Cut call volume (agent2b batching, agent1a pre-ranking, prompt caching)
 - [ ] Step 4: Verify model prices and pick candidates (research, no code)
 - [ ] Step 5: Provider abstraction (one `llm` client seam, Claude stays the default)
@@ -61,11 +61,11 @@ Call-volume cuts (Step 3) go before the model work, per the owner (2026-10-15): 
 
 **Gap found:** there are no frozen fixtures or labels for **agent1a paper scoring** or **agent2b/2a summaries**, and those are exactly the stages Step 3 changes. Building them (a frozen article set and a frozen paper set with Haiku's current outputs as the reference, plus rank agreement and the report-only judge as metrics) is the first task of Step 3, before any change to those agents, so the "before" is captured on the unmodified code.
 
-### Step 2: Turn off the review loop
-The review eval says it plainly: confidence does not predict errors (Spearman 0.117, intervals overlap), and the loop's final accuracy (0.600) is not distinguishable from the single pass (0.622) or from its own first pass (0.589). It costs ~$0.03-0.05 a run and 0-30 articles' worth of extra calls and fetches, and adds the most failure modes of anything in agent1b.
-- Smallest change: default `REVIEW_MAX_ARTICLES=0` (already documented as "disables review"). Keep the code and the eval so the result stays reproducible; do not delete the graph nodes.
-- Decided (owner, 2026-10-15): also drop the `confidence` field from the categorize tool schema, but only if the categorize accuracy check against the Step 1 baseline shows no change; otherwise leave it.
-- Update `docs/architecture.md`, `docs/configuration.md`, and the CLAUDE.md agent1b paragraph. Do not update the README unless its one-liner is now wrong.
+### Step 2: Turn off the review loop (done 2026-10-15)
+The review eval says it plainly: confidence does not predict errors (Spearman 0.117, intervals overlap), and the loop's final accuracy (0.600) is not distinguishable from the single pass (0.622) or from its own first pass (0.589).
+- **Shipped:** `ReviewConfig.from_env()` now defaults `REVIEW_MAX_ARTICLES` to 0 (`DEFAULT_REVIEW_MAX_ARTICLES` in `agents/agent1b_graph.py`), so the route node sends nothing to `review`. The graph nodes, the audit and the eval are untouched and reproducible. Rollback with no redeploy: `gcloud run services update agent1b --update-env-vars REVIEW_MAX_ARTICLES=30`. Takes effect when agent1b is next deployed.
+- **Expected saving:** ~$0.03-0.05 a run (0-30 extra calls and fetches), to be confirmed from the first run's LangSmith cost, not measured yet.
+- **Confidence field dropped with it (owner, 2026-10-15):** when review is off (`max_articles == 0`), `categorize` calls `filter_and_categorize(with_confidence=False)`, so the tool schema and prompt carry no confidence and nothing is routed or "capped". Turning review back on (`REVIEW_MAX_ARTICLES>0`) restores the confidence tool and addendum. The earlier plan to gate this on a categorize accuracy check was waived: nothing reads the field. No accuracy re-check was run, so the first run's category counts are the thing to eyeball.
 
 ### Step 3: Cut call volume
 Independent of model choice, and compounding with it:

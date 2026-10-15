@@ -41,8 +41,11 @@ Each step below is its own PR, stacked on the previous one. A step is checked of
       `venv\Scripts\python tools\backfill_release_flag.py --apply` (writes were blocked for the agent).
       Safe to run before or after any other step; re-running is a no-op.
 - [x] **3. Backend**: `run_kind.list_releases()`, `GET /archive`, `GET /archive/{run_id}`, rate limits, tests.
-- [ ] **4. Frontend**: switcher in `preview.html` (date dropdown, prev/next, keyboard arrows, deep link, empty
-      and error states); nav label; screenshots on desktop, Android (Pixel 7) and iOS (iPhone 15).
+- [x] **4. Frontend**: switcher in `preview.html` (date dropdown, prev/next, left/right arrow keys, `?issue=`
+      deep link; the bar stays hidden when the list fails or has under two issues, so the page degrades to the
+      old one). Nav label stays "Latest Issue" (the nav link still goes to the latest; the page title is
+      "Issues"). Checked on desktop, Android (Pixel 7) and iOS (iPhone 15) against a mock API; iOS needed
+      `appearance: none` on the select.
 - [ ] **5. Docs**: CLAUDE.md, `docs/architecture.md`, `docs/repository-structure.md`, `docs/runbook.md` (deploy
       agent-subscriptions, then hosting).
 

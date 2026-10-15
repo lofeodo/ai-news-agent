@@ -10,6 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 FONTS = ROOT / "public" / "newsletter" / "fonts"
+BANNER_FONTS = Path(__file__).resolve().parent / "fonts"   # faces only the banner uses
 OUT_DIR = Path(__file__).resolve().parent
 
 W, H = 1280, 576
@@ -30,7 +31,9 @@ THEMES = {
 
 
 def font_face(family, filename, style="normal", weight=400):
-    data = base64.b64encode((FONTS / filename).read_bytes()).decode()
+    path = BANNER_FONTS / filename
+    path = path if path.exists() else FONTS / filename
+    data = base64.b64encode(path.read_bytes()).decode()
     return (f"@font-face{{font-family:'{family}';font-style:{style};font-weight:{weight};"
             f"src:url(data:font/woff2;base64,{data}) format('woff2');}}")
 
@@ -80,11 +83,10 @@ def build(name):
   <title>Latent SpaceMail</title>
   <defs>
     <style>
-      {font_face("Cormorant Garamond", "cormorant-garamond-600.woff2", weight=600)}
-      {font_face("Cormorant Garamond", "cormorant-garamond-400i.woff2", style="italic")}
       {font_face("IBM Plex Mono", "ibm-plex-mono-400.woff2")}
-      .title{{font:600 108px 'Cormorant Garamond',Georgia,serif;fill:{t["title"]};letter-spacing:1px}}
-      .tag{{font:italic 400 36px 'Cormorant Garamond',Georgia,serif;fill:{t["tag"]}}}
+      {font_face("IBM Plex Mono", "ibm-plex-mono-700.woff2", weight=700)}
+      .title{{font:700 88px 'IBM Plex Mono',Menlo,Consolas,monospace;fill:{t["title"]};letter-spacing:-2px}}
+      .tag{{font:400 25px 'IBM Plex Mono',Menlo,Consolas,monospace;fill:{t["tag"]}}}
       .chip{{font:400 15.5px 'IBM Plex Mono',Menlo,Consolas,monospace;fill:{t["chip_text"]};letter-spacing:1.3px}}
       .cta{{font:400 31px 'IBM Plex Mono',Menlo,Consolas,monospace;fill:{t["pill_text"]};letter-spacing:1.2px;font-weight:700}}
     </style>

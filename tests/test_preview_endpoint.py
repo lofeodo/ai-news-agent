@@ -85,6 +85,6 @@ def test_empty_preview_sends_embed_policy(client, monkeypatch):
 
 def test_preview_page_frame_has_limited_sandbox():
     from pathlib import Path
-    html = (Path(__file__).resolve().parent.parent / "public/newsletter/preview.html").read_text(encoding="utf-8")
+    html = (Path(__file__).resolve().parent.parent / "public/newsletter/issues.html").read_text(encoding="utf-8")
     assert 'sandbox="allow-popups allow-popups-to-escape-sandbox"' in html
     assert "allow-scripts" not in html and "allow-same-origin" not in html

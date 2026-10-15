@@ -247,7 +247,7 @@
 }
 @keyframes topbar-live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 
-/* Admin-only toggle on preview.html (published issue <-> newest run) */
+/* Admin-only toggle on issues.html (published issue <-> newest run) */
 .topbar__debug {
   display: none;
   font-family: 'Menlo', 'Cascadia Code', 'Consolas', 'Courier New', monospace;

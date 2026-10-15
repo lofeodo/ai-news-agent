@@ -65,14 +65,14 @@ Each `pipeline_runs` doc has `run_kind`: `release` or `debug` (no field = releas
 
 - The orchestrator defaults to `debug`. The scheduled job `create-newsletter` must call `<orchestrator-url>/?kind=release`; if it does not, nothing publishes and the health check reports a stale run.
 - To try something, start a debug run: call the orchestrator with no `kind` (it defaults to `debug`). The `create-newsletter-debug` job does exactly this, but it is paused and `gcloud scheduler jobs run` refuses paused jobs (`Job.state must be ENABLED for RunJob`). Either resume it, run it, and pause it again right away (its schedule only fires Sundays at noon), or send the same request yourself, which leaves the job paused: `curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" <orchestrator-url>/` (needs invoker access on the orchestrator; untested). Never add `?kind=release` for this, that is a release.
-- Preview a debug run: sign in to the site with an admin account (`ADMIN_EMAILS` on agent-subscriptions) and click **Debug run** in the top bar (or the toggle on the Latest Issue page). It shows the newest composed run of any kind; "Back to published" returns to the public issue.
+- Preview a debug run: sign in to the site with an admin account (`ADMIN_EMAILS` on agent-subscriptions) and click **Debug run** in the top bar (or the toggle on the Issues page). It shows the newest composed run of any kind; "Back to published" returns to the public issue.
 - To publish a debug run by hand (rare), set `run_kind` to `release` on its doc in the Firestore console.
 
 ## 2c. Newsletter archive
 
-`GET /archive` lists, and `GET /archive/{run_id}` serves, composed runs whose `run_kind` is **explicitly**
-`release`; the Latest Issue page (`preview.html`) shows them as a date switcher. Runs with no `run_kind` are
-*not* archived, even though `/preview` and agent4 treat them as release. Old Monday-morning issues were flagged
+`GET /issues` lists, and `GET /issues/{run_id}` serves (`/issues/latest` is the newest; the old `/preview`, `/archive` names still answer), composed runs whose `run_kind` is **explicitly**
+`release`; the Issues page (`issues.html`) shows them as a date switcher. Runs with no `run_kind` are
+*not* archived, even though `/issues/latest` and agent4 treat them as release. Old Monday-morning issues were flagged
 once with `venv\Scripts\python tools/backfill_release_flag.py` (dry run), then `--apply`; re-running is a no-op.
 To add or hide an issue, set or remove `run_kind` on its `pipeline_runs` doc. Deploy agent-subscriptions, then hosting.
 

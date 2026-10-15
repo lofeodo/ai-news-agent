@@ -93,7 +93,7 @@ PREMIUM_EMAILS = {
     if e.strip()
 }
 
-# Comma-separated list of emails that may view unpublished (debug) runs through /auth/admin/preview.
+# Comma-separated list of emails that may view unpublished (debug) runs through /auth/admin/issues.
 ADMIN_EMAILS = {
     e.strip().lower()
     for e in os.environ.get("ADMIN_EMAILS", "").split(",")
@@ -116,7 +116,7 @@ OAUTH_EXCHANGE_CODES_COLLECTION = "oauth_exchange_codes"
 # and Google's redirect) — allowlist known frontend pages rather than trying
 # to validate arbitrary relative-URL syntax, which is an easy place to get an
 # open redirect wrong.
-ALLOWED_RETURN_PAGES = {"index.html", "preferences.html", "sections.html", "preview.html", "share.html"}
+ALLOWED_RETURN_PAGES = {"index.html", "preferences.html", "sections.html", "issues.html", "preview.html", "share.html"}
 DEFAULT_RETURN_PAGE  = "index.html"
 
 DEFAULT_SECTIONS = [
@@ -895,7 +895,8 @@ PREVIEW_CSP = (
 )
 
 
-@router.get("/preview")
+@router.get("/issues/latest")
+@router.get("/preview")  # old name, kept so cached pages and links keep working
 @limiter.limit("30/minute")
 def newsletter_preview(request: Request):
     """Return the latest *release* newsletter HTML for embedding in the preview iframe. Debug runs are never shown."""
@@ -907,17 +908,19 @@ def newsletter_preview(request: Request):
     return HTMLResponse(content=_render_preview(doc.to_dict()), status_code=200, headers=headers)
 
 
-@router.get("/archive")
+@router.get("/issues")
+@router.get("/archive")  # old name
 @limiter.limit("30/minute")
 def archive_list(request: Request):
     """Public: the flagged release issues, newest first. Debug runs and unflagged old runs never appear."""
     return {"issues": run_kind.list_releases(_db(), FIRESTORE_COLLECTION)}
 
 
-@router.get("/archive/{run_id}")
+@router.get("/issues/{run_id}")
+@router.get("/archive/{run_id}")  # old name
 @limiter.limit("30/minute")
 def archive_issue(request: Request, run_id: str):
-    """Public: one archived issue as HTML, rendered and fenced exactly like /preview. 404 for anything that is not
+    """Public: one archived issue as HTML, rendered and fenced exactly like /issues/latest. 404 for anything that is not
     an explicitly flagged, composed release run, so a debug run cannot be fetched by guessing its id."""
     headers = {"Content-Security-Policy": PREVIEW_CSP}
     doc = _db().collection(FIRESTORE_COLLECTION).document(run_id).get() if ids.is_doc_id(run_id) else None
@@ -927,7 +930,8 @@ def archive_issue(request: Request, run_id: str):
     return HTMLResponse(content=_render_preview(data), status_code=200, headers=headers)
 
 
-@router.get("/auth/admin/preview")
+@router.get("/auth/admin/issues")
+@router.get("/auth/admin/preview")  # old name
 @limiter.limit("30/minute")
 def admin_preview(
     request: Request,

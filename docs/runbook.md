@@ -73,7 +73,7 @@ Each `pipeline_runs` doc has `run_kind`: `release` or `debug` (no field = releas
 `GET /archive` lists, and `GET /archive/{run_id}` serves, composed runs whose `run_kind` is **explicitly**
 `release`; the Latest Issue page (`preview.html`) shows them as a date switcher. Runs with no `run_kind` are
 *not* archived, even though `/preview` and agent4 treat them as release. Old Monday-morning issues were flagged
-once with `venv\Scripts\python toolsackfill_release_flag.py` (dry run), then `--apply`; re-running is a no-op.
+once with `venv\Scripts\python tools/backfill_release_flag.py` (dry run), then `--apply`; re-running is a no-op.
 To add or hide an issue, set or remove `run_kind` on its `pipeline_runs` doc. Deploy agent-subscriptions, then hosting.
 
 ## 3. Roll back

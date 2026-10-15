@@ -1,4 +1,4 @@
-"""GET /archive and GET /archive/{run_id}: public, explicit-release only. Firestore is stubbed."""
+"""GET /issues and GET /issues/{run_id}: public, explicit-release only. Firestore is stubbed."""
 from types import SimpleNamespace
 
 import pytest
@@ -46,12 +46,12 @@ def test_list_returns_only_flagged_composed_releases(client, monkeypatch):
     scan = SimpleNamespace(where=lambda *a, **k: scan, order_by=lambda *a, **k: scan, select=lambda *a, **k: scan,
                            limit=lambda *a, **k: scan, stream=lambda: iter(rows))
     monkeypatch.setattr(subs, "_db", lambda: SimpleNamespace(collection=lambda n: scan))
-    body = client.get("/archive").json()
+    body = client.get("/issues").json()
     assert body == {"issues": [{"run_id": "a", "subject": "S1", "started_at": "2026-09-21T10:00:00"}]}
 
 
 def test_issue_html_is_rendered_and_fenced(client):
-    r = client.get("/archive/2026-09-21T100003Z")
+    r = client.get("/issues/2026-09-21T100003Z")
     assert r.status_code == 200 and 'target="_blank"' in r.text
     assert "default-src 'none'" in r.headers["Content-Security-Policy"]
 
@@ -64,7 +64,7 @@ def test_issue_html_is_rendered_and_fenced(client):
     "__bad__",
 ])
 def test_issue_404_for_anything_not_an_archived_release(client, run_id):
-    r = client.get(f"/archive/{run_id}")
+    r = client.get(f"/issues/{run_id}")
     assert r.status_code == 404 and r.headers["Content-Security-Policy"] == subs.PREVIEW_CSP
 
 

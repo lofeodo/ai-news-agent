@@ -42,7 +42,7 @@
 │   ├── login.html                  # Sign in (Google) + emailed preferences link
 │   ├── preferences.html            # Preferences (account auth or token fallback)
 │   ├── unsubscribe.html            # Unsubscribe (one-click if signed in, email form otherwise)
-│   ├── preview.html                # Latest issue + archive switcher
+│   ├── issues.html                 # Issues page: latest issue + archive switcher
 │   ├── sections.html               # Premium newsletter-sections customization UI
 │   ├── auth-callback.html          # Google Sign-In exchange-code redemption landing page
 │   ├── auth.js                     # Shared Firebase Auth helper (ES module)

@@ -3,6 +3,9 @@
     "site": "latentspacemail",
     "public": "public/newsletter",
     "ignore": ["firebase.json", "**/.*"],
+    "redirects": [
+      { "source": "/preview.html", "destination": "/issues.html", "type": 301 }
+    ],
     "headers": [
       {
         "source": "**",

@@ -1,7 +1,7 @@
 """Bake the latest issue's excerpt into the landing page.
 
 The landing hero shows the spotlight paper plus the first story of the first three sections. That
-text is copied from the latest release issue (the public ``/preview`` page) and written straight into
+text is copied from the latest release issue (the public ``/issues/latest`` page) and written straight into
 ``public/newsletter/index.html`` between the ``EXCERPT:START`` / ``EXCERPT:END`` markers, so the
 deployed page carries it in its own HTML: no runtime request, nothing that can be slow or cold.
 
@@ -21,7 +21,7 @@ import urllib.request
 from html.parser import HTMLParser
 from pathlib import Path
 
-DEFAULT_SOURCE = "https://agent-subscriptions-zozrn33sna-nn.a.run.app/preview"
+DEFAULT_SOURCE = "https://agent-subscriptions-zozrn33sna-nn.a.run.app/issues/latest"
 DEFAULT_INDEX = Path(__file__).resolve().parent.parent / "public" / "newsletter" / "index.html"
 MARK_START = "<!-- EXCERPT:START -->"
 MARK_END = "<!-- EXCERPT:END -->"
@@ -133,7 +133,7 @@ def render_excerpt(data: dict) -> str:
             </div>
           </div>
         </figure>
-        <p class="issue-caption"><span>From the issue of {e(data['date'])}.</span><a href="/preview.html">Read the latest issue →</a></p>"""
+        <p class="issue-caption"><span>From the issue of {e(data['date'])}.</span><a href="/issues.html">Read the latest issue →</a></p>"""
 
 
 def bake(index_html: str, data: dict) -> str:

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Latest Issue — Latent SpaceMail</title>
+  <title>Issues — Latent SpaceMail</title>
   <link rel="icon" type="image/svg+xml" href="/images/logo-mark.svg">
   <link rel="icon" type="image/png" href="/images/logo-email.png">
   <link rel="preload" href="/__/firebase/init.json" as="fetch" crossorigin>
@@ -26,12 +26,37 @@
 
     .preview-frame {
       position: fixed;
-      top: 48px; left: 0; right: 0; bottom: 0;
+      top: 92px; left: 0; right: 0; bottom: 0;
       width: 100%;
-      height: calc(100% - 48px);
+      height: calc(100% - 92px);
       border: none;
       background: #060606;
     }
+
+    /* Issue switcher: sits under the top bar; hidden until the archive list loads, and while the debug run shows. */
+    .issuebar {
+      position: fixed; top: 48px; left: 0; right: 0; height: 44px; z-index: 5;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 0 16px; background: var(--bg); border-bottom: 1px solid var(--border);
+    }
+    .issuebar[hidden] { display: none; }
+    .issuebar__btn, .issuebar__select {
+      height: 32px; background: #181818; color: var(--text); border: 1px solid var(--border);
+      border-radius: 4px; font-family: var(--font); font-size: 13px;
+    }
+    .issuebar__btn { width: 36px; cursor: pointer; }
+    .issuebar__btn:hover:not(:disabled), .issuebar__select:hover { border-color: var(--accent); }
+    .issuebar__btn:disabled { opacity: .35; cursor: default; }
+    .issuebar__btn:focus-visible, .issuebar__select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .issuebar__select {
+      flex: 0 1 280px; min-width: 0; padding: 0 30px 0 10px;
+      -webkit-appearance: none; appearance: none;   /* iOS draws a white native control otherwise */
+      background-color: #181818;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238b8b8b' stroke-width='1.5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 10px center;
+    }
+    .issuebar__tag { color: var(--muted); font-size: 12px; white-space: nowrap; }
+    @media (max-width: 480px) { .issuebar__tag { display: none; } .issuebar__select { flex: 1 1 auto; } }
 
   </style>
 </head>
@@ -67,11 +92,18 @@
     </div>
   </header>
 
+  <div class="issuebar" id="issuebar" hidden>
+    <button type="button" class="issuebar__btn" id="issue-older" aria-label="Older issue">&larr;</button>
+    <select class="issuebar__select" id="issue-select" aria-label="Choose an issue"></select>
+    <button type="button" class="issuebar__btn" id="issue-newer" aria-label="Newer issue">&rarr;</button>
+    <span class="issuebar__tag" id="issue-tag"></span>
+  </div>
+
   <iframe
     id="preview-frame"
     class="preview-frame"
     src="https://agent-subscriptions-zozrn33sna-nn.a.run.app/preview"
-    title="Latest Latent SpaceMail issue"
+    title="Latent SpaceMail issue"
     sandbox="allow-popups allow-popups-to-escape-sandbox"
   ></iframe>
 
@@ -89,8 +121,66 @@
     const frame  = document.getElementById('preview-frame');
     const toggle = document.getElementById('debug-toggle');
     const navLink = document.querySelector('.topbar__nav-link.active') || document.querySelector('.topbar__nav-link[data-href="/preview.html"]');
-    const publicSrc = frame.getAttribute('src');
+    const latestSrc = frame.getAttribute('src');
+    let publicSrc = latestSrc;
     let debugOn = false;
+    let issues = [];          // newest first, from GET /archive
+    let current = 0;
+    const bar = document.getElementById('issuebar');
+    const select = document.getElementById('issue-select');
+    const olderBtn = document.getElementById('issue-older');
+    const newerBtn = document.getElementById('issue-newer');
+    const tag = document.getElementById('issue-tag');
+
+    // "Latent SpaceMail — September 28, 2026" -> "September 28, 2026"
+    function issueLabel(it) {
+      const m = (it.subject || '').split(/[—–-]\s+/).pop().trim();
+      if (m) return m;
+      const d = new Date(it.started_at);
+      return isNaN(d) ? it.run_id : d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+
+    function showIssue(i, push = true) {
+      current = i;
+      select.value = String(i);
+      olderBtn.disabled = i >= issues.length - 1;
+      newerBtn.disabled = i <= 0;
+      tag.textContent = i === 0 ? 'Latest issue' : `${i} issue${i === 1 ? '' : 's'} ago`;
+      // The newest issue goes through /preview so the page works even when the list does not.
+      publicSrc = i === 0 ? latestSrc : `${API}/archive/${encodeURIComponent(issues[i].run_id)}`;
+      if (!debugOn) { frame.removeAttribute('srcdoc'); frame.src = publicSrc; }
+      if (push) {
+        const u = new URL(location.href);
+        if (i === 0) u.searchParams.delete('issue'); else u.searchParams.set('issue', issues[i].run_id);
+        history.replaceState(null, '', u);
+      }
+    }
+
+    async function loadArchive() {
+      try {
+        const res = await fetch(`${API}/archive`);
+        if (!res.ok) throw new Error(res.status);
+        issues = (await res.json()).issues || [];
+        if (issues.length < 2) return;   // nothing to switch between
+        select.innerHTML = issues.map((it, i) => `<option value="${i}"></option>`).join('');
+        [...select.options].forEach((o, i) => { o.textContent = issueLabel(issues[i]); });
+        bar.hidden = debugOn;
+        const wanted = new URLSearchParams(location.search).get('issue');
+        const at = wanted ? issues.findIndex(it => it.run_id === wanted) : 0;
+        showIssue(at > 0 ? at : 0, false);
+      } catch (e) {
+        console.error('[preview] archive list failed:', e);   // the latest issue is already showing
+      }
+    }
+
+    select.addEventListener('change', () => showIssue(Number(select.value)));
+    olderBtn.addEventListener('click', () => showIssue(current + 1));
+    newerBtn.addEventListener('click', () => showIssue(current - 1));
+    document.addEventListener('keydown', (e) => {
+      if (bar.hidden || e.target === select || e.altKey || e.ctrlKey || e.metaKey) return;
+      if (e.key === 'ArrowLeft' && current < issues.length - 1) showIssue(current + 1);
+      if (e.key === 'ArrowRight' && current > 0) showIssue(current - 1);
+    });
     // Same content policy the public response sends, for the inline (srcdoc) copy.
     const ISSUE_POLICY = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https: data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">`;
 
@@ -106,6 +196,7 @@
         toggle.setAttribute('aria-pressed', 'true');
         toggle.textContent = 'Back to published';
         debugOn = true;
+        bar.hidden = true;
       } catch (e) {
         console.error('[preview] debug run failed:', e);
         toggle.textContent = 'No run found';
@@ -121,9 +212,11 @@
       toggle.setAttribute('aria-pressed', 'false');
       toggle.textContent = 'Debug run';
       debugOn = false;
+      bar.hidden = issues.length < 2;
     }
 
     toggle.addEventListener('click', () => (debugOn ? showPublic() : showDebug()));
+    loadArchive();
 
     onAuthStateChanged(auth, async (user) => {
       if (user && user.emailVerified) {

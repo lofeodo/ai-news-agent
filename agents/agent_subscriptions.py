@@ -907,6 +907,26 @@ def newsletter_preview(request: Request):
     return HTMLResponse(content=_render_preview(doc.to_dict()), status_code=200, headers=headers)
 
 
+@router.get("/archive")
+@limiter.limit("30/minute")
+def archive_list(request: Request):
+    """Public: the flagged release issues, newest first. Debug runs and unflagged old runs never appear."""
+    return {"issues": run_kind.list_releases(_db(), FIRESTORE_COLLECTION)}
+
+
+@router.get("/archive/{run_id}")
+@limiter.limit("30/minute")
+def archive_issue(request: Request, run_id: str):
+    """Public: one archived issue as HTML, rendered and fenced exactly like /preview. 404 for anything that is not
+    an explicitly flagged, composed release run, so a debug run cannot be fetched by guessing its id."""
+    headers = {"Content-Security-Policy": PREVIEW_CSP}
+    doc = _db().collection(FIRESTORE_COLLECTION).document(run_id).get() if ids.is_doc_id(run_id) else None
+    data = doc.to_dict() if doc is not None and doc.exists else None
+    if not run_kind.is_archived_release(data):
+        return HTMLResponse("<p>Issue not found.</p>", status_code=404, headers=headers)
+    return HTMLResponse(content=_render_preview(data), status_code=200, headers=headers)
+
+
 @router.get("/auth/admin/preview")
 @limiter.limit("30/minute")
 def admin_preview(

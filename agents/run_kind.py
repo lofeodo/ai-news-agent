@@ -27,6 +27,42 @@ def pick_release_id(rows: list[tuple[str, dict]], sent_only: bool = False) -> st
     return None
 
 
+def is_archived_release(doc: dict | None) -> bool:
+    """True only for a composed run explicitly flagged release. Unlike is_release(), a missing flag does not count:
+    the archive shows only issues someone flagged (the backfill), not every old recovery or test run."""
+    d = doc or {}
+    return d.get("run_kind") == RELEASE and bool(d.get("newsletter_composed"))
+
+
+def list_releases(db, collection: str, limit: int = 200) -> list[dict]:
+    """Archived release issues, newest first, as [{run_id, subject, started_at}].
+
+    Scans composed runs with the same (newsletter_composed, started_at) index as latest_run, reading only the
+    small fields, and filters in code, so no extra index is needed.
+    """
+    from google.cloud import firestore
+
+    scan = (
+        db.collection(collection)
+        .where("newsletter_composed", "==", True)
+        .order_by("started_at", direction=firestore.Query.DESCENDING)
+        .select(["run_kind", "newsletter_composed", "newsletter_subject", "started_at"])
+        .limit(limit)
+        .stream()
+    )
+    out = []
+    for d in scan:
+        f = d.to_dict() or {}
+        if is_archived_release(f):
+            started = f.get("started_at")
+            out.append({
+                "run_id": d.id,
+                "subject": f.get("newsletter_subject") or "",
+                "started_at": started.isoformat() if hasattr(started, "isoformat") else (started or ""),
+            })
+    return out
+
+
 def latest_run(db, collection: str, release_only: bool = True, sent_only: bool = False):
     """The newest composed pipeline run as a Firestore snapshot, or None.
 

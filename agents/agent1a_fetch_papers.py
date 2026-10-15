@@ -21,6 +21,7 @@ from prompt_guard import GUARD_PAPER_SCORING
 import tracing
 import spotlight_history
 import trending_papers
+import paper_shortlist
 from config import (
     MAX_FETCH, SAMPLE_SIZE, LOOKBACK_HOURS, DATA_DIR, SCORING_MODEL, MAX_TOKENS, WORD_CUTOFF,
     GCP_PROJECT_ID, TOPIC_PAPERS_SCORED, USE_FIRESTORE, PAPERS_IN_NEWSLETTER, PAPER_FALLBACK_CANDIDATES,
@@ -242,6 +243,37 @@ def process_paper(paper: dict) -> dict:
         return {**paper, "scores": None, "error": str(e)}
 
 
+def process_paper_abstract(paper: dict) -> dict:
+    """Stage 1 of AGENT1A_MODE=abstract_first: score from the abstract alone, no PDF download.
+
+    Same scoring call (and the same fallback input) as process_paper uses when a PDF cannot be read."""
+    paper_id = paper["id"].split("/")[-1]
+    try:
+        scores = score_with_retry(paper, paper["abstract"])
+        print(f"  [abstract] {paper['title'][:50]} -> {scores.get('total', '?')}/{MAX_SCORE}", flush=True)
+        return {**paper, "scores": scores, "error": None}
+    except Exception as e:
+        print(f"  [error]    {paper_id}: {e}", flush=True)
+        return {**paper, "scores": None, "error": str(e)}
+
+
+def score_abstract_first(papers: list, k: int) -> tuple[list, dict]:
+    """Score every paper from its abstract, then score the full PDF of the top `k` only.
+
+    Returns (results sorted best first, small summary for the run doc)."""
+    print(f"\nStage 1: scoring {len(papers)} papers from their abstracts...\n")
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        stage1 = list(executor.map(process_paper_abstract, papers))
+
+    picked = paper_shortlist.pick_for_second_pass(stage1, k)
+    print(f"\nStage 2: scoring the full text of {len(picked)} paper(s) (top {k} by abstract score)...\n")
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        stage2 = list(executor.map(process_paper, [papers[i] for i in picked]))
+
+    merged = paper_shortlist.merge_stages(stage1, picked, stage2)
+    return merged, paper_shortlist.summary(len(papers), picked, merged, k)
+
+
 def score_all_papers(papers: list) -> list:
     """Score all papers concurrently. Returns list sorted by score descending."""
     print(f"\nScoring {len(papers)} papers with up to {MAX_CONCURRENT_CLAUDE_CALLS} concurrent Claude calls...\n")
@@ -296,7 +328,12 @@ def run(run_id: str):
             fresh = [p for p in fetch_papers() if trending_papers.base_arxiv_id(p["id"]) not in seen]
             sampled = sample_papers(fresh)
         sampled = [{**p, "hf_url": trending_papers.hf_paper_url(p["id"])} for p in sampled]
-        scored = score_all_papers(sampled)
+        scoring_summary = None
+        if paper_shortlist.agent1a_mode() == paper_shortlist.MODE_ABSTRACT_FIRST:
+            print("[agent1a]  AGENT1A_MODE=abstract_first", flush=True)
+            scored, scoring_summary = score_abstract_first(sampled, paper_shortlist.top_k())
+        else:
+            scored = score_all_papers(sampled)
 
         successful = [r for r in scored if r["scores"] is not None]
         failed = [r for r in scored if r["scores"] is None]
@@ -348,6 +385,7 @@ def run(run_id: str):
                     "scored_papers": top_papers,
                     "paper_candidates": paper_candidates,
                     **({"agent1a_warning": warning} if warning else {}),
+                    **({"agent1a_scoring_summary": scoring_summary} if scoring_summary else {}),
                     # Aware UTC, not start_time.isoformat() — start_time is a
                     # naive local() timestamp used for elapsed-time math below;
                     # writing it here used to overwrite the orchestrator's

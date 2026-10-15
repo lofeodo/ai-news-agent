@@ -202,3 +202,7 @@ Full results and caveats: [docs/evaluation.md](docs/evaluation.md)
 - [Local development and deployment](docs/development.md)
 - [Repository structure](docs/repository-structure.md)
 - [Evaluation harness conventions](evals/README.md)
+
+## License
+
+[MIT](LICENSE).

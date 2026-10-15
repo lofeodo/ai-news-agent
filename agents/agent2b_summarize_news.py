@@ -20,6 +20,7 @@ from config import (
     GCP_PROJECT_ID, TOPIC_CONTENT_SUMMARIZED, FIRESTORE_COLLECTION, USE_FIRESTORE,
 )
 from article_fetch import fetch_article_text  # noqa: E402 — shared with agent1b
+import news_shortlist  # noqa: E402 — AGENT2B_MODE switch; selection code is imported lazily
 
 # --- Rate limiting ---
 MAX_CONCURRENT_CLAUDE_CALLS = 3
@@ -94,6 +95,40 @@ def process_article(args: tuple) -> dict:
     return summarize_article(article, text, prompt_template, fallback_template, quebec_style, client)
 
 
+def summarize_with_text(article: dict, text: str | None, prompt_template: str, fallback_template: str, quebec_style: str, client) -> dict:
+    """process_article without the fetch: the text is already in hand (shortlist mode)."""
+    if _is_twitter_url(article.get("url", "")):
+        return {**article, "summary": None, "used_fallback": False, "summary_error": "twitter_no_content"}
+    return summarize_article(article, text, prompt_template, fallback_template, quebec_style, client)
+
+
+def run_shortlist(by_category: dict, all_articles: list, client, prompt_template: str, fallback_template: str,
+                  quebec_style: str) -> tuple[dict, set, dict]:
+    """AGENT2B_MODE=shortlist: fetch all texts, shortlist per category, summarize only the shortlist.
+
+    Returns (results_by_index, kept_indices, summary). Indices are positions in `all_articles`.
+    """
+    def fetch(i: int):
+        url = all_articles[i].get("url", "")
+        return i, (None if (not url or _is_twitter_url(url)) else fetch_article_text(url))
+
+    with ThreadPoolExecutor(max_workers=MAX_FETCH_WORKERS) as executor:
+        texts = dict(executor.map(fetch, range(len(all_articles))))
+    print(f"  [shortlist] fetched {sum(1 for t in texts.values() if t)}/{len(texts)} article texts", flush=True)
+
+    with open("prompts/article_selection_prompt.txt", "r", encoding="utf-8") as f:
+        selection_prompt = f.read()
+    kept, summary = news_shortlist.shortlist_all(by_category, texts, selection_prompt, client)
+    print(f"  [shortlist] {len(kept)}/{len(all_articles)} articles shortlisted for summaries", flush=True)
+
+    def summarize(i: int):
+        return i, summarize_with_text(all_articles[i], texts[i], prompt_template, fallback_template, quebec_style, client)
+
+    with ThreadPoolExecutor(max_workers=MAX_FETCH_WORKERS) as executor:
+        results_by_index = dict(executor.map(summarize, sorted(kept)))
+    return results_by_index, kept, summary
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -124,9 +159,12 @@ def _record_failure(run_id: str, agent_name: str, error: Exception) -> None:
         print(f"[{agent_name}]  Failed to record failure to Firestore: {record_error}", flush=True)
 
 
-def assemble_results(by_category: dict, results_by_index: dict) -> tuple[dict, list, list]:
+def assemble_results(by_category: dict, results_by_index: dict, only_indices: set | None = None) -> tuple[dict, list, list]:
     """Put each result back in its article's slot. Articles are matched by position, not URL,
-    so repeated or empty URLs cannot overwrite each other. Returns (by_category, flat list, sources)."""
+    so repeated or empty URLs cannot overwrite each other. Returns (by_category, flat list, sources).
+
+    `only_indices` (shortlist mode): articles outside it were never summarized on purpose and are
+    left out of the output instead of being recorded as "not processed"."""
     summarized_by_category: dict[str, list] = {}
     all_summarized: list = []
     sources: list[dict] = []
@@ -137,6 +175,8 @@ def assemble_results(by_category: dict, results_by_index: dict) -> tuple[dict, l
         for a in articles:
             result = results_by_index.get(i)
             i += 1
+            if only_indices is not None and (i - 1) not in only_indices:
+                continue
             if result is None:
                 result = {**a, "summary": None, "used_fallback": False, "summary_error": "not processed"}
             else:
@@ -192,19 +232,26 @@ def run(run_id: str):
         tasks  = [(client, article, prompt_template, fallback_template, quebec_style) for article in all_articles]
 
         results_by_index: dict[int, dict] = {}
+        only_indices = None
+        shortlist_summary = None
         done = 0
 
-        with ThreadPoolExecutor(max_workers=MAX_FETCH_WORKERS) as executor:
-            future_to_index = {executor.submit(process_article, t): i for i, t in enumerate(tasks)}
-            for future in as_completed(future_to_index):
-                results_by_index[future_to_index[future]] = future.result()
-                done += 1
-                if done % 50 == 0 or done == len(tasks):
-                    failed_so_far   = sum(1 for r in results_by_index.values() if not r.get("summary"))
-                    fallback_so_far = sum(1 for r in results_by_index.values() if r.get("used_fallback"))
-                    print(f"  [{done}/{len(tasks)}] failed={failed_so_far} fallback={fallback_so_far}")
+        if news_shortlist.agent2b_mode() == news_shortlist.MODE_SHORTLIST:
+            print("[agent2b]  AGENT2B_MODE=shortlist: summarizing only the shortlisted articles", flush=True)
+            results_by_index, only_indices, shortlist_summary = run_shortlist(
+                by_category, all_articles, client, prompt_template, fallback_template, quebec_style)
+        else:
+            with ThreadPoolExecutor(max_workers=MAX_FETCH_WORKERS) as executor:
+                future_to_index = {executor.submit(process_article, t): i for i, t in enumerate(tasks)}
+                for future in as_completed(future_to_index):
+                    results_by_index[future_to_index[future]] = future.result()
+                    done += 1
+                    if done % 50 == 0 or done == len(tasks):
+                        failed_so_far   = sum(1 for r in results_by_index.values() if not r.get("summary"))
+                        fallback_so_far = sum(1 for r in results_by_index.values() if r.get("used_fallback"))
+                        print(f"  [{done}/{len(tasks)}] failed={failed_so_far} fallback={fallback_so_far}")
 
-        summarized_by_category, all_summarized, sources = assemble_results(by_category, results_by_index)
+        summarized_by_category, all_summarized, sources = assemble_results(by_category, results_by_index, only_indices)
 
         total_summarized = sum(1 for a in all_summarized if a.get("summary"))
         total_fallback   = sum(1 for a in all_summarized if a.get("used_fallback"))
@@ -218,9 +265,10 @@ def run(run_id: str):
 
         if USE_FIRESTORE:
             from google.cloud import firestore as _fs
-            _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).update({
-                "news_summaries": summarized_by_category
-            })
+            run_update = {"news_summaries": summarized_by_category}
+            if shortlist_summary is not None:
+                run_update["agent2b_shortlist_summary"] = shortlist_summary
+            _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).update(run_update)
             print(f"[agent2b]  Saved news_summaries to Firestore (run_id={run_id})")
             n_src = summary_sources.save_sources(_fs.Client(project=GCP_PROJECT_ID), run_id, "news", sources)
             print(f"[agent2b]  Saved {n_src} summary sources for the judge")
@@ -237,6 +285,7 @@ def run(run_id: str):
                     "total_failed":        total_failed,
                     "by_category":         summarized_by_category,
                     "articles":            all_summarized,
+                    **({"shortlist": shortlist_summary} if shortlist_summary is not None else {}),
                 }, f, indent=2, ensure_ascii=False)
             print(f"Saved to {out_path}")
 

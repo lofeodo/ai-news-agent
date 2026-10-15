@@ -113,6 +113,7 @@ hosting`, so a failed bake stops before the deploy and the live site keeps the p
 
 | Change | How |
 |---|---|
+| agent 2b shortlist mode | Off unless `AGENT2B_MODE=shortlist` is set. Back to summarizing everything: `gcloud run services update agent2b --update-env-vars AGENT2B_MODE=all` (or `--remove-env-vars AGENT2B_MODE`). No redeploy. |
 | agent 1b graph and review loop | `gcloud run services update agent1b --update-env-vars AGENT1B_MODE=single_pass` (no redeploy). Back with `graph` or by removing the variable. The review step is off by default (`REVIEW_MAX_ARTICLES=0`); turn it on with `REVIEW_MAX_ARTICLES=30`. |
 | Click tracking | `gcloud run services update agent4 --update-env-vars CLICK_TRACKING=false` restores the previous email exactly. Do the same on `agent4-test`. |
 | Any service's code | In the Cloud Run console, send traffic back to the previous revision, or run `gcloud run services update-traffic <SERVICE> --to-revisions <REVISION>=100`. List revisions with `gcloud run revisions list --service <SERVICE>`. |

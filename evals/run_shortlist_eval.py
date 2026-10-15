@@ -271,7 +271,9 @@ def main(argv=None) -> int:
         "cost_per_run_all_usd": {"value": round(cost_all, 4), "n": n, "ci_low": None, "ci_high": None},
         "cost_per_run_shortlist_usd": {"value": round(cost_shortlist, 4), "n": n, "ci_low": None, "ci_high": None},
     }
-    actual = cost.estimate_cost(meter.input, meter.output, config.SCORING_MODEL)
+    new_in = sum(cached[a['url']]['in'] for a in todo)
+    new_out = sum(cached[a['url']]['out'] for a in todo)
+    actual = cost.estimate_cost(meter.input + new_in, meter.output + new_out, config.SCORING_MODEL)
     doc = results.build_results(
         f"shortlist_eval_{date.today().isoformat()}", config.SCORING_MODEL, metrics, cost_usd=round(actual, 4),
         notes=("Frozen 500-article pool, unmodified agent3 selector. Shortlist summaries are reused from the "

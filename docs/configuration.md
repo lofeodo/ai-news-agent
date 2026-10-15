@@ -7,6 +7,7 @@ Credentials (API keys and similar) are supplied to the services at runtime and a
 | `USE_FIRESTORE` | all agents | Enable cloud mode (Pub/Sub + Firestore); default `false` |
 | `GCP_PROJECT_ID` | all agents | Google Cloud project ID |
 | `AGENT1B_MODE` | agent1b | `graph` (default, LangGraph) or `single_pass` (original linear code; rollback switch) |
+| `AGENT2B_MODE` | agent2b | `all` (default, summarize every article) or `shortlist` (summarize only what a first selection pass keeps; cuts ~65% of agent2b's cost, see the Step 3 notes in `cost-reduction-roadmap.md`). Read on every run, so changing it needs no redeploy |
 | `REVIEW_CONFIDENCE_THRESHOLD` / `REVIEW_MAX_ARTICLES` / `REVIEW_MAX_ITERATIONS` / `REVIEW_FETCH_TIMEOUT` | agent1b | Review-loop tuning (defaults `4` / `0` / `3` / `10`; review is off by default, `REVIEW_MAX_ARTICLES=30` turns it on); see [Inside agent 1b](architecture.md#inside-agent-1b-langgraph) |
 | `LANGSMITH_TRACING` / `LANGSMITH_PROJECT` | all Claude-calling agents | Opt-in LangSmith tracing; a no-op without an API key |
 | `CLICK_TRACKING` | agent4 | `true` turns on SendGrid click tracking and tags each email with the run id (default off) |

@@ -1,0 +1,272 @@
+{
+  "shortlist_summary": {
+    "mode": "shortlist",
+    "articles_in": 500,
+    "shortlisted": 82,
+    "by_category": {
+      "Open Source & Tools": {
+        "in": 81,
+        "kept": 14,
+        "failed": false
+      },
+      "Model & Product Releases": {
+        "in": 90,
+        "kept": 15,
+        "failed": false
+      },
+      "Society & Culture": {
+        "in": 95,
+        "kept": 13,
+        "failed": false
+      },
+      "Industry & Business": {
+        "in": 87,
+        "kept": 11,
+        "failed": false
+      },
+      "Policy, Law & Regulation": {
+        "in": 74,
+        "kept": 10,
+        "failed": false
+      },
+      "Safety & Alignment": {
+        "in": 64,
+        "kept": 10,
+        "failed": false
+      },
+      "Canada & Montreal": {
+        "in": 9,
+        "kept": 9,
+        "failed": false
+      }
+    }
+  },
+  "baseline": {
+    "Open Source & Tools|all": [
+      "https://github.com/ninjahawk/livenerf",
+      "https://github.com/firelex/jeff",
+      "https://magazine.sebastianraschka.com/p/classifier-history-and-jev",
+      "https://huggingface.co/apple/LensVLM-9B"
+    ],
+    "Open Source & Tools|en": [
+      "https://github.com/ninjahawk/livenerf",
+      "https://github.com/firelex/jeff",
+      "https://github.com/deepfates/imp",
+      "https://blog.cloudflare.com/cloudflare-cf-cli-launch/"
+    ],
+    "Model & Product Releases|all": [
+      "https://openai.com/index/introducing-gpt-6-1-sol/",
+      "https://www.anthropic.com/claude-sonnet-5-5",
+      "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-opus-5-5",
+      "https://fireworks.ai/blog/ember-1"
+    ],
+    "Model & Product Releases|en": [
+      "https://openai.com/index/introducing-gpt-6-1-sol/",
+      "https://www.anthropic.com/claude-sonnet-5-5",
+      "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-opus-5-5",
+      "https://fireworks.ai/blog/ember-1"
+    ],
+    "Society & Culture|all": [
+      "https://sancho.bearblog.dev/google-weird/",
+      "https://www.eff.org/deeplinks/2026/09/draftkings-using-ai-supercharge-harms-online-behavioral-advertising",
+      "https://launchvideo.io"
+    ],
+    "Society & Culture|en": [
+      "https://sancho.bearblog.dev/google-weird/",
+      "https://www.eff.org/deeplinks/2026/09/draftkings-using-ai-supercharge-harms-online-behavioral-advertising",
+      "https://launchvideo.io"
+    ],
+    "Industry & Business|all": [
+      "https://openai.com/index/introducing-dots/",
+      "https://www.worldlabs.ai/blog/amd-announcement",
+      "https://www.business-standard.com/world-news/anthropic-s-ipo-filings-massive-losses-rising-costs-and-more-126092901481_1.html"
+    ],
+    "Industry & Business|en": [
+      "https://www.worldlabs.ai/blog/amd-announcement",
+      "https://www.thenationalnews.com/future/technology/2026/09/29/ai-industry-needs-to-earn-6-trillion-by-2031-to-justify-data-centres/",
+      "https://www.channelnewsasia.com/business/openai-targets-30-billion-funding-14-trillion-valuation-bloomberg-news-reports-6419526"
+    ],
+    "Policy, Law & Regulation|all": [
+      "https://swarmtraces.org/",
+      "https://authorsguild.org/news/ag-v-openai-top-execs-knew-mass-book-piracy-was-illegal/",
+      "https://www.cnbc.com/2026/09/25/pentagon-anthropic-ai-risk-appeals-court.html"
+    ],
+    "Policy, Law & Regulation|en": [
+      "https://swarmtraces.org/",
+      "https://authorsguild.org/news/ag-v-openai-top-execs-knew-mass-book-piracy-was-illegal/",
+      "https://www.cnbc.com/2026/09/25/pentagon-anthropic-ai-risk-appeals-court.html"
+    ],
+    "Safety & Alignment|all": [
+      "https://transluce.org/agent-activity",
+      "https://www.anthropic.com/research/glm-5-3-and-the-spread-of-advanced-cyber-capabilities",
+      "https://cryptobriefing.com/openai-scraps-astra-model-safety-risks/"
+    ],
+    "Safety & Alignment|en": [
+      "https://transluce.org/agent-activity",
+      "https://www.anthropic.com/research/glm-5-3-and-the-spread-of-advanced-cyber-capabilities",
+      "https://thehackernews.com/2026/09/openai-shelves-gpt-61-astra-after-tests.html"
+    ],
+    "Canada & Montreal|all": [
+      "https://www.iphoneincanada.ca/2026/09/29/meta-launches-muse-for-small-business-in-canada/",
+      "https://financialpost.com/personal-finance/business-essentials/claude-ai-professional-degree",
+      "https://www.iphoneincanada.ca/2026/09/29/bell-launches-ai-tool-that-builds-video-ads-for-small-businesses/"
+    ],
+    "Canada & Montreal|en": [
+      "https://mobilesyrup.com/?p=1047518",
+      "https://www.iphoneincanada.ca/2026/09/29/meta-launches-muse-for-small-business-in-canada/",
+      "https://www.iphoneincanada.ca/2026/09/29/bell-launches-ai-tool-that-builds-video-ads-for-small-businesses/"
+    ]
+  },
+  "repeat": {
+    "Open Source & Tools|all": [
+      "https://github.com/ninjahawk/livenerf",
+      "https://github.com/firelex/jeff",
+      "https://magazine.sebastianraschka.com/p/classifier-history-and-jev",
+      "https://developer.nvidia.com/blog/nvidia-open-agent-safety-platform-a-reference-for-continuous-in-silicon-agent-monitoring/"
+    ],
+    "Open Source & Tools|en": [
+      "https://github.com/ninjahawk/livenerf",
+      "https://github.com/firelex/jeff",
+      "https://github.com/deepfates/imp",
+      "https://blog.cloudflare.com/cloudflare-cf-cli-launch/"
+    ],
+    "Model & Product Releases|all": [
+      "https://openai.com/index/introducing-gpt-6-1-sol/",
+      "https://www.anthropic.com/claude-sonnet-5-5",
+      "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-opus-5-5",
+      "https://fireworks.ai/blog/ember-1"
+    ],
+    "Model & Product Releases|en": [
+      "https://openai.com/index/introducing-gpt-6-1-sol/",
+      "https://www.anthropic.com/claude-sonnet-5-5",
+      "https://claude.dev/blog/how-we-made-claude-ai-faster/",
+      "https://fireworks.ai/blog/ember-1"
+    ],
+    "Society & Culture|all": [
+      "https://sancho.bearblog.dev/google-weird/",
+      "https://www.eff.org/deeplinks/2026/09/draftkings-using-ai-supercharge-harms-online-behavioral-advertising",
+      "https://launchvideo.io"
+    ],
+    "Society & Culture|en": [
+      "https://sancho.bearblog.dev/google-weird/",
+      "https://www.eff.org/deeplinks/2026/09/draftkings-using-ai-supercharge-harms-online-behavioral-advertising",
+      "https://launchvideo.io"
+    ],
+    "Industry & Business|all": [
+      "https://openai.com/index/introducing-dots/",
+      "https://www.worldlabs.ai/blog/amd-announcement",
+      "https://www.business-standard.com/world-news/anthropic-s-ipo-filings-massive-losses-rising-costs-and-more-126092901481_1.html"
+    ],
+    "Industry & Business|en": [
+      "https://www.worldlabs.ai/blog/amd-announcement",
+      "https://www.thenationalnews.com/future/technology/2026/09/29/ai-industry-needs-to-earn-6-trillion-by-2031-to-justify-data-centres/",
+      "https://openai.com/index/introducing-dots/"
+    ],
+    "Policy, Law & Regulation|all": [
+      "https://swarmtraces.org/",
+      "https://authorsguild.org/news/ag-v-openai-top-execs-knew-mass-book-piracy-was-illegal/",
+      "https://www.cnbc.com/2026/09/25/pentagon-anthropic-ai-risk-appeals-court.html"
+    ],
+    "Policy, Law & Regulation|en": [
+      "https://swarmtraces.org/",
+      "https://authorsguild.org/news/ag-v-openai-top-execs-knew-mass-book-piracy-was-illegal/",
+      "https://www.cnbc.com/2026/09/25/pentagon-anthropic-ai-risk-appeals-court.html"
+    ],
+    "Safety & Alignment|all": [
+      "https://transluce.org/agent-activity",
+      "https://www.anthropic.com/research/glm-5-3-and-the-spread-of-advanced-cyber-capabilities",
+      "https://cryptobriefing.com/openai-scraps-astra-model-safety-risks/"
+    ],
+    "Safety & Alignment|en": [
+      "https://transluce.org/agent-activity",
+      "https://www.anthropic.com/research/glm-5-3-and-the-spread-of-advanced-cyber-capabilities",
+      "https://thehackernews.com/2026/09/openai-shelves-gpt-61-astra-after-tests.html"
+    ],
+    "Canada & Montreal|all": [
+      "https://www.iphoneincanada.ca/2026/09/29/meta-launches-muse-for-small-business-in-canada/",
+      "https://www.iphoneincanada.ca/2026/09/29/bell-launches-ai-tool-that-builds-video-ads-for-small-businesses/",
+      "https://mobilesyrup.com/?p=1047518"
+    ],
+    "Canada & Montreal|en": [
+      "https://www.iphoneincanada.ca/2026/09/29/meta-launches-muse-for-small-business-in-canada/",
+      "https://mobilesyrup.com/?p=1047518",
+      "https://financialpost.com/personal-finance/business-essentials/claude-ai-professional-degree"
+    ]
+  },
+  "shortlist": {
+    "Open Source & Tools|all": [
+      "https://github.com/ninjahawk/livenerf",
+      "https://github.com/firelex/jeff",
+      "https://huggingface.co/apple/LensVLM-9B",
+      "https://blog.cloudflare.com/cloudflare-cf-cli-launch/"
+    ],
+    "Open Source & Tools|en": [
+      "https://github.com/ninjahawk/livenerf",
+      "https://github.com/firelex/jeff",
+      "https://huggingface.co/apple/LensVLM-9B",
+      "https://blog.cloudflare.com/cloudflare-cf-cli-launch/"
+    ],
+    "Model & Product Releases|all": [
+      "https://openai.com/index/introducing-gpt-6-1-sol/",
+      "https://www.anthropic.com/claude-sonnet-5-5",
+      "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-opus-5-5",
+      "https://insufferable.dev/posts/the-ai-race-just-got-awkward/"
+    ],
+    "Model & Product Releases|en": [
+      "https://openai.com/index/introducing-gpt-6-1-sol/",
+      "https://www.anthropic.com/claude-sonnet-5-5",
+      "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-opus-5-5",
+      "https://insufferable.dev/posts/the-ai-race-just-got-awkward/"
+    ],
+    "Society & Culture|all": [
+      "https://www.eff.org/deeplinks/2026/09/draftkings-using-ai-supercharge-harms-online-behavioral-advertising",
+      "https://sancho.bearblog.dev/google-weird/",
+      "https://launchvideo.io"
+    ],
+    "Society & Culture|en": [
+      "https://sancho.bearblog.dev/google-weird/",
+      "https://www.eff.org/deeplinks/2026/09/draftkings-using-ai-supercharge-harms-online-behavioral-advertising",
+      "https://eoinhiggins.substack.com/p/there-are-no-rogue-ai-agents"
+    ],
+    "Industry & Business|all": [
+      "https://openai.com/index/introducing-dots/",
+      "https://www.worldlabs.ai/blog/amd-announcement",
+      "https://blog.google/innovation-and-ai/models-and-research/google-research/google-project-suncatcher-facts/"
+    ],
+    "Industry & Business|en": [
+      "https://openai.com/index/introducing-dots/",
+      "https://www.worldlabs.ai/blog/amd-announcement",
+      "https://blog.google/innovation-and-ai/models-and-research/google-research/google-project-suncatcher-facts/"
+    ],
+    "Policy, Law & Regulation|all": [
+      "https://swarmtraces.org/",
+      "https://authorsguild.org/news/ag-v-openai-top-execs-knew-mass-book-piracy-was-illegal/",
+      "https://www.cnbc.com/2026/09/25/pentagon-anthropic-ai-risk-appeals-court.html"
+    ],
+    "Policy, Law & Regulation|en": [
+      "https://swarmtraces.org/",
+      "https://authorsguild.org/news/ag-v-openai-top-execs-knew-mass-book-piracy-was-illegal/",
+      "https://www.cnbc.com/2026/09/25/pentagon-anthropic-ai-risk-appeals-court.html"
+    ],
+    "Safety & Alignment|all": [
+      "https://transluce.org/agent-activity",
+      "https://www.anthropic.com/research/glm-5-3-and-the-spread-of-advanced-cyber-capabilities",
+      "https://www.cnbc.com/2026/09/28/nvidia-releases.html"
+    ],
+    "Safety & Alignment|en": [
+      "https://transluce.org/agent-activity",
+      "https://www.anthropic.com/research/glm-5-3-and-the-spread-of-advanced-cyber-capabilities",
+      "https://www.cnbc.com/2026/09/28/nvidia-releases.html"
+    ],
+    "Canada & Montreal|all": [
+      "https://www.iphoneincanada.ca/2026/09/29/meta-launches-muse-for-small-business-in-canada/",
+      "https://www.iphoneincanada.ca/2026/09/29/bell-launches-ai-tool-that-builds-video-ads-for-small-businesses/",
+      "https://mobilesyrup.com/?p=1047518"
+    ],
+    "Canada & Montreal|en": [
+      "https://www.iphoneincanada.ca/2026/09/29/meta-launches-muse-for-small-business-in-canada/",
+      "https://mobilesyrup.com/?p=1047518",
+      "https://financialpost.com/personal-finance/business-essentials/claude-ai-professional-degree"
+    ]
+  }
+}

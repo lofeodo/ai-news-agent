@@ -4,19 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Latent SpaceMail</title>
-  <meta name="description" content="A weekly briefing on AI research and industry news, delivered every Monday morning.">
+  <meta name="description" content="One standout AI paper and the week's best stories, every Monday. Technical enough for practitioners, explained plainly enough for everyone.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Latent SpaceMail">
-  <meta property="og:title" content="Latent SpaceMail">
-  <meta property="og:description" content="A weekly briefing on AI research and industry news, delivered every Monday morning.">
+  <meta property="og:title" content="Latent SpaceMail: real AI research, explained plainly">
+  <meta property="og:description" content="One standout AI paper and the week's best stories, every Monday. Technical enough for practitioners, explained plainly enough for everyone.">
   <meta property="og:url" content="https://newsletter.lofeodo.com/">
   <meta property="og:image" content="https://newsletter.lofeodo.com/images/logo-email.png">
   <meta name="twitter:card" content="summary">
   <link rel="icon" type="image/svg+xml" href="/images/logo-mark.svg">
   <link rel="icon" type="image/png" href="/images/logo-email.png">
-  <link rel="preload" href="/fonts/cormorant-garamond-600.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/ibm-plex-mono-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/ibm-plex-mono-400.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="fonts.css">
-  <link rel="stylesheet" href="style.css?v=6">
+  <link rel="stylesheet" href="landing.css?v=6">
   <link rel="stylesheet" href="topbar.css">
 </head>
 <body>
@@ -52,70 +53,153 @@
     </div>
   </header>
 
-  <a class="issue-teaser" href="/issues.html">
-    <span class="issue-teaser__left">
-      <span class="issue-teaser__dot"></span>
-      <span class="issue-teaser__label">This week's issue</span>
-      <span class="issue-teaser__title">Read the latest briefing</span>
-    </span>
-    <span class="issue-teaser__arrow">Read it →</span>
-  </a>
+  <main>
+    <!-- 1. Hero: the promise, the one action, and the product itself, all above the fold. -->
+    <section class="wrap hero" id="top">
+      <div class="hero__copy">
+        <p class="eyebrow"><span class="eyebrow__dot"></span>&gt;_ Weekly AI dispatch · Mondays</p>
+        <h1>Real AI research.<br><span class="hl">Plain-language explanations.</span></h1>
+        <p class="lede">Every Monday: one standout paper and the week's best AI stories. Written for people who build things, clear enough for everyone else.</p>
 
-  <div class="card">
-    <h1><span class="prompt">❯</span> Latent SpaceMail</h1>
-    <p class="subtitle">A weekly briefing on AI research and industry news.<br>Delivered every Monday morning.</p>
+        <div class="signup signup-only" id="subscribe">
+          <!-- Account-free subscribe: double opt-in, POST /subscribe sends a confirmation email. -->
+          <form id="subscribe-form" novalidate>
+            <div class="signup__row">
+              <label for="email" class="sr-only">Email address</label>
+              <input type="email" id="email" name="email" autocomplete="email" required placeholder="you@example.com">
+              <button type="submit" id="submit-btn" class="btn">Subscribe</button>
+            </div>
 
-    <p id="spots-remaining" class="spots-counter"></p>
+            <div class="signup__opts">
+              <label class="check-row">
+                <input type="checkbox" id="send_latest" name="send_latest" checked>
+                <span>Send me the latest issue right away</span>
+              </label>
+              <details class="more-opts">
+                <summary>More options</summary>
+                <label class="check-row">
+                  <input type="checkbox" id="include_french" name="include_french">
+                  <span>French-language articles<span class="check-desc">AI coverage from French-language sources</span></span>
+                </label>
+                <label class="check-row">
+                  <input type="checkbox" id="include_canada" name="include_canada">
+                  <span>Canada &amp; Montréal section<span class="check-desc">Local AI news from across Canada</span></span>
+                </label>
+              </details>
+            </div>
+            <div class="msg" id="msg" role="status" aria-live="polite"></div>
+          </form>
 
-    <!-- Plain <a> to a backend redirect — no click handler needed, so there's
-         no client-side error path for *starting* sign-in (see auth.js /
-         auth-callback.html for the server-side OAuth Authorization Code flow). -->
-    <a id="google-btn" class="btn-google" href="#">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-      </svg>
-      Continue with Google
-    </a>
+          <div class="signup__or"><span>or</span></div>
 
-    <div class="auth-divider"><span>or</span></div>
+          <!-- Plain <a> to a backend redirect: no click handler, so no client-side error path for
+               *starting* sign-in (see auth.js / auth-callback.html for the server-side OAuth flow). -->
+          <a id="google-btn" class="btn-google" href="#">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Continue with Google
+          </a>
 
-    <!-- Account-free subscribe: double opt-in, POST /subscribe sends a confirmation email. -->
-    <form id="subscribe-form" novalidate>
-      <div class="field">
-        <label for="email">Subscribe with just your email</label>
-        <input type="email" id="email" name="email" autocomplete="email" required placeholder="you@example.com">
+          <ul class="signup__trust">
+            <li>Completely free</li>
+            <li>Just one email a week</li>
+            <li>No spam, no unexpected extras</li>
+          </ul>
+          <p id="spots-remaining" class="spots"></p>
+        </div>
+
+        <!-- Shown instead of the signup when already authenticated -->
+        <div class="member" id="signed-in-ctas">
+          <a href="/issues.html" class="btn">Read the latest issue →</a>
+          <a href="preferences.html" class="member__link">Preferences →</a>
+          <a href="sections.html" class="member__link">Customize →</a>
+        </div>
       </div>
 
-      <div class="checkboxes">
-        <label as="div">Include in my newsletter</label>
-        <label class="check-row">
-          <input type="checkbox" id="send_latest" name="send_latest" checked>
-          <span>Send me the latest issue right away<span class="check-desc">Delivered after you confirm your subscription</span></span>
-        </label>
-        <label class="check-row">
-          <input type="checkbox" id="include_french" name="include_french">
-          <span>French-language articles<span class="check-desc">AI coverage from French-language sources</span></span>
-        </label>
-        <label class="check-row">
-          <input type="checkbox" id="include_canada" name="include_canada">
-          <span>Canada &amp; Montréal section<span class="check-desc">Local AI news from across Canada</span></span>
-        </label>
+      <!-- Latest-issue excerpt. Rewritten at deploy time by tools/bake_landing_excerpt.py
+           (cloudbuild-site.yaml), so it ships inside this HTML: no runtime request, never slow. -->
+      <div class="issue-wrap">
+        <!-- EXCERPT:START -->
+        <figure class="issue" aria-label="Excerpt from the issue of October 12, 2026">
+          <div class="issue__bar"><i></i><i></i><i></i><span>Latent SpaceMail · October 12, 2026</span></div>
+          <div class="issue__body">
+            <article class="paper">
+              <div class="paper__meta"><span>★ Paper of the week</span><b>▲ 515 upvotes</b></div>
+              <h3>The Teacher Is a Direction, Not a Destination: Extrapolating RL-Induced Representation Residuals in On-Policy Distillation</h3>
+              <p class="paper__by">Hao Li, MeiJia Chen, Weijie Ren et al.</p>
+              <p>An RL-trained teacher encodes not just a destination but a direction for learning. This paper shows that extrapolating this direction in hidden-state space, rather than output space, lets student models match or beat their teachers without the training instability that plagues output-space approaches.</p>
+              <span class="paper__cta">Read on Hugging Face →</span>
+            </article>
+
+            <div class="stories">
+              <article class="story">
+                <p class="story__sec"><span><b>01</b> Model &amp; Product Releases</span><span>▲ 1118</span></p>
+                <h4>Why isn&#x27;t the industry freaking out about DeepSeek 4.1 Flash?</h4>
+                <p>DeepSeek&#x27;s 4.1 Flash model delivers frontier-level capabilities at a fraction of the cost of OpenAI and Anthropic models, with aggressive cache optimization reducing memory costs by 437x and enabling all-day coding sessions for under $1. This represents a fundamental shift in AI economics that could disrupt premium model providers by making high-quality AI accessible and affordable enough to change how developers approach their work.</p>
+              </article>
+              <article class="story">
+                <p class="story__sec"><span><b>02</b> Policy, Law &amp; Regulation</span><span>▲ 836</span></p>
+                <h4>Anthropic reported diary entry to police, woman faces felony charge</h4>
+                <p>A Florida woman faces felony charges after Anthropic&#x27;s Claude flagged her diary-like entry threatening to &quot;shoot up&quot; the Sheriff&#x27;s office and reported it to police. The case illustrates that AI companies will disclose user communications to law enforcement when they assess threats as credible, making chatbots fundamentally different from private journals.</p>
+              </article>
+              <article class="story">
+                <p class="story__sec"><span><b>03</b> Open Source &amp; Tools</span><span>▲ 950</span></p>
+                <h4>Whistle: Speech to Text in 16.9 MB</h4>
+                <p>Cactus released Whistle, a 16.9 MB speech-to-text model that runs entirely on-device across 7 languages with no dependencies, delivering faster first-token latency (11.1ms vs Whisper&#x27;s 73.2ms) while matching or exceeding accuracy on most benchmarks. This enables private speech recognition on mobile devices, wearables, and embedded systems without cloud infrastructure.</p>
+              </article>
+            </div>
+          </div>
+        </figure>
+        <p class="issue-caption"><span>From the issue of October 12, 2026.</span><a href="/issues.html">Read the latest issue →</a></p>
+        <!-- EXCERPT:END -->
       </div>
+    </section>
 
-      <button type="submit" id="submit-btn">Subscribe</button>
-      <div class="msg" id="msg"></div>
-    </form>
+    <!-- 2. Why: the positioning, in three claims the page can back up. -->
+    <section class="why" id="why">
+      <div class="wrap">
+        <p class="section-label">Why Latent SpaceMail</p>
+        <h2>Most AI newsletters pick a side.</h2>
+        <p class="why__sub">Hype for everyone, or jargon for specialists. This one is written for both: the real substance for people who build, and a plain explanation of why it matters for everyone else.</p>
 
+        <div class="pillars">
+          <div class="pillar">
+            <p class="pillar__n">01</p>
+            <h3>One paper, picked for you</h3>
+            <p>Each week we score the most-upvoted research on Hugging Face and spotlight a single paper, chosen for how important and how explainable it is.</p>
+          </div>
+          <div class="pillar">
+            <p class="pillar__n">02</p>
+            <h3>Explained, not dumbed down</h3>
+            <p>Every paper and story comes with a short explanation of what it is and why it matters. The real numbers and benchmarks stay in.</p>
+          </div>
+          <div class="pillar">
+            <p class="pillar__n">03</p>
+            <h3>Filtered, not firehosed</h3>
+            <p>Hacker News and global news are sorted into sections, duplicates removed, and ranked by what the community actually discussed.</p>
+          </div>
+        </div>
+      </div>
+    </section>
 
-    <!-- Shown instead of sign-in buttons when already authenticated -->
-    <div id="signed-in-ctas" style="display:none">
-      <a href="preferences.html" class="btn-primary-action">Preferences →</a>
-      <a href="sections.html" class="btn-secondary-link">Customize →</a>
-    </div>
-  </div>
+    <!-- 3. Close: same action again for anyone who scrolled this far. -->
+    <section class="wrap final signup-only" id="join">
+      <div class="final__box">
+        <div>
+          <h2>The next issue lands Monday.</h2>
+          <p>Completely free. Just one email a week, no spam, and gone in one click if it isn't for you.</p>
+        </div>
+        <div class="final__actions">
+          <a href="#top" class="btn" id="final-cta">Subscribe</a>
+          <a href="/issues.html" class="final__link">or read the latest issue first →</a>
+        </div>
+      </div>
+    </section>
+  </main>
 
   <script src="bg.js"></script>
   <script src="share.js"></script>
@@ -130,22 +214,11 @@
       return 'https://agent-subscriptions-zozrn33sna-nn.a.run.app';
     })();
 
-    function showSignedIn() {
-      document.getElementById('google-btn').style.display     = 'none';
-      document.querySelector('.auth-divider').style.display   = 'none';
-      document.getElementById('subscribe-form').style.display = 'none';
-      document.getElementById('spots-remaining').style.display = 'none';
-      document.getElementById('signed-in-ctas').style.display = 'block';
-    }
-    function showSignedOut() {
-      document.getElementById('google-btn').style.display     = '';
-      document.querySelector('.auth-divider').style.display   = '';
-      document.getElementById('subscribe-form').style.display = '';
-      document.getElementById('spots-remaining').style.display = '';
-      document.getElementById('signed-in-ctas').style.display = 'none';
-    }
+    // CSS (.is-signed-in) swaps the signup for the account links.
+    function showSignedIn()  { document.body.classList.add('is-signed-in'); }
+    function showSignedOut() { document.body.classList.remove('is-signed-in'); }
 
-    // Instantly restore signed-in card from nav cache — prevents flash of sign-in buttons
+    // Instantly restore signed-in state from nav cache — prevents flash of sign-in buttons
     try { if (JSON.parse(localStorage.getItem('lsm_nav_auth'))?.email) showSignedIn(); } catch {}
 
     // Firebase is source of truth; corrects cache if stale
@@ -160,7 +233,7 @@
         const { active, max } = await res.json();
         const el = document.getElementById('spots-remaining');
         if (!el) return;
-        el.textContent = `${active} / ${max}`;
+        el.textContent = `${active} / ${max} spots taken`;
         if (active >= max) {
           el.classList.add('spots-full');
           btn.disabled = true;
@@ -224,6 +297,13 @@
         showMsg('Something went wrong. Please try again.', 'error');
         resetBtn();
       }
+    });
+
+    // The closing button brings people back to the one form rather than duplicating it.
+    document.getElementById('final-cta').addEventListener('click', (e) => {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => document.getElementById('email').focus({ preventScroll: true }), 350);
     });
 
     // Google sign-in is a plain navigation to the backend — see auth.js /

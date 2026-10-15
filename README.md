@@ -17,7 +17,15 @@
 
 </div>
 
-A weekly AI briefing, written and sent by a team of AI agents: one spotlight research paper plus the week's top AI news, delivered as a personalized email.
+<a href="https://newsletter.lofeodo.com/preview.html">
+<img src="docs/assets/newsletter-showcase.png?v=2" alt="The latest issue of Latent SpaceMail on desktop and on a phone" width="100%">
+</a>
+
+**What's different:** one spotlight research paper and the week's top AI news, picked, summarized and sent by a team of AI agents that checks its own work every run.
+
+<p align="center">
+<a href="https://newsletter.lofeodo.com/#subscribe-form"><b>📬 Subscribe</b></a> &nbsp;·&nbsp; <a href="https://newsletter.lofeodo.com/preview.html"><b>👀 Live demo: read the latest issue</b></a>
+</p>
 
 - **Agentic orchestration**: six agents on Google Cloud, coordinated by Pub/Sub, plus a LangGraph review loop inside one of them.
 - **Live monitoring**: health checks, drift detection, cost tracking and an LLM judge report on every run.
@@ -63,8 +71,6 @@ flowchart LR
 | **Health checks** | A draft check on Sunday and a send check on Monday email a report on every run. |
 
 Agents hand work to each other through Pub/Sub; Firestore holds each run's state. Cloud Scheduler triggers the pipeline, the send and both health checks.
-
-<img src="docs/assets/newsletter-showcase.png" alt="The latest composed newsletter on desktop and on a phone" width="100%">
 
 ## 🕸️ Agentic orchestration
 
@@ -130,7 +136,7 @@ Every weekly run ends in an email report to the maintainer, whether or not anyth
 
 🟢 acts on failures &nbsp; 🔵 flags large shifts &nbsp; ⚪ informational only
 
-<img src="docs/assets/healthcheck-showcase.png" alt="An example health check email: all clear" width="100%">
+<img src="docs/assets/healthcheck-showcase.png?v=2" alt="An example health check email: all clear" width="100%">
 
 Details: [docs/monitoring.md](docs/monitoring.md)
 

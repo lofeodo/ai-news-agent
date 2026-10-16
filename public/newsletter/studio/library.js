@@ -127,10 +127,12 @@ function build() {
     }, 'widget', () => M.widgetBlock(w, widgetTopic(w)));
     it.widget = w;
   }
-  sections.push(h('section', { class: 'lib-widgets' },
-    h('h3', { class: 'lib-heading', text: 'Widgets' }),
-    h('p', { class: 'lib-help', text: 'Small blocks with their own data, like this week’s numbers.' }),
-    chips, wg.list));
+  if (ctx.catalog.widgets.length) {
+    sections.push(h('section', { class: 'lib-widgets' },
+      h('h3', { class: 'lib-heading', text: 'Widgets' }),
+      h('p', { class: 'lib-help', text: 'Small blocks with their own data, like this week’s numbers.' }),
+      chips, wg.list));
+  }
 
   // Intro and share strip.
   const lg = { id: 'layout', items: [], list: h('ul', { class: 'lib-flat', role: 'list' }) };

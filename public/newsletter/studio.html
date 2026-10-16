@@ -71,6 +71,7 @@
     <section class="canvas" id="canvas" aria-labelledby="blocks-title">
       <div class="canvas__bar" id="canvas-bar"></div>
       <div class="canvas__scroll" id="canvas-scroll">
+        <p class="loading-note" aria-hidden="true">Loading the studio…</p>
         <div class="masthead" id="masthead">
           <label class="masthead__label" for="nl-name">Newsletter name</label>
           <textarea id="nl-name" class="masthead__name" maxlength="60" rows="1" autocomplete="off" spellcheck="false"></textarea>
@@ -91,7 +92,7 @@
     </section>
 
     <!-- Preview: the email exactly as it will arrive. -->
-    <section class="pv" id="preview" aria-labelledby="pv-title">
+    <section class="pv" id="preview" aria-labelledby="pv-title" data-state="loading">
       <div class="pv__head">
         <h2 class="col-title" id="pv-title">Preview</h2>
         <div class="seg" role="group" aria-label="Preview width">

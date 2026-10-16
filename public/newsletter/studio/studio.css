@@ -7,7 +7,7 @@
   --st-raised: #191919;
   --st-line: #262626;
   --st-line-soft: #1d1d1d;
-  --st-dim: #6f6f6f;
+  --st-dim: #8a8a8a;         /* 5.4:1 on --bg: small text stays AA */
   --st-bar: 48px;            /* topbar */
   --st-notice: 0px;          /* mock notice line, set by app.js when shown */
   --st-tabbar: 0px;          /* phone tab bar */
@@ -92,8 +92,10 @@
   background: var(--bg);
   z-index: 2;
 }
-.studio[aria-busy="true"] .canvas__scroll,
 .studio[aria-busy="true"] .lib__body { opacity: 0.35; }
+.loading-note { display: none; font-size: 0.82rem; color: var(--muted); padding: 24px 0; }
+.studio[aria-busy="true"] .loading-note { display: block; }
+.studio[aria-busy="true"] .canvas__scroll > :not(.loading-note) { display: none; }
 
 .lib, .canvas, .pv {
   min-height: 0;
@@ -582,7 +584,7 @@
   width: 28px;
   min-height: 44px;
   margin-left: 4px;
-  color: #4a4a4a;
+  color: #6a6a6a;
   cursor: grab;
   touch-action: none;
   user-select: none;
@@ -934,6 +936,11 @@ body.is-dragging-any, body.is-dragging-any * { cursor: grabbing !important; user
   .canvas__scroll { padding: 22px 16px 40px; }
   .add-btn { display: block; }
   .only-tablet { display: none; }   /* the tab bar switches to the preview on phones */
+  .canvas__bar { flex-wrap: nowrap; gap: 6px; }
+  .canvas__bar:has(.save-msg:not([hidden])) { flex-wrap: wrap; }
+  .switch { flex: 1 1 0; max-width: none; }
+  .dirty__text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .save-btn { min-width: 72px; padding: 0 12px; }
 
   .lib {
     position: absolute;
@@ -1035,6 +1042,9 @@ body.is-dragging-any, body.is-dragging-any * { cursor: grabbing !important; user
   .studio input.hex-input { min-height: 44px; }
   .field-row--check { min-height: 44px; }
   .field-row--check input { width: 22px; height: 22px; }
+  /* iOS Safari zooms the page when a field under 16 px gets focus. */
+  .studio input[type="text"], .studio input[type="search"], .studio textarea.field-input,
+  .studio select, .lib__search input, .studio input.hex-input { font-size: 16px; }
 }
 
 @media (max-width: 699px) {

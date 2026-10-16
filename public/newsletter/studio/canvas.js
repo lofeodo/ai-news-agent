@@ -207,12 +207,14 @@ function iconButton(label, path, onclick, extra = {}) {
   return h('button', { type: 'button', class: 'icon-btn', 'aria-label': label, title: label, onclick, ...extra }, icon(path));
 }
 
-function stepper(label, value, min, max, onChange, ctl) {
+function stepper(label, value, min, max, change, ctl) {
   const id = `${ctl}-${Math.random().toString(36).slice(2, 7)}`;
+  // The list is rebuilt after each change, so a live region inside it would be replaced before it speaks.
+  const onChange = v => { change(v); ctx.announce(`${label}: ${Math.min(max, Math.max(min, v))}`); };
   return h('div', { class: 'stepper', role: 'group', 'aria-labelledby': id },
     h('span', { class: 'stepper__label', id, text: label }),
     iconButton(`Fewer: ${label}`, ICONS.minus, () => onChange(value - 1), { disabled: value <= min || ctx.readOnly, 'data-ctl': `${ctl}-dec` }),
-    h('output', { class: 'stepper__value', 'aria-live': 'polite', text: String(value) }),
+    h('output', { class: 'stepper__value', text: String(value) }),
     iconButton(`More: ${label}`, ICONS.plus, () => onChange(value + 1), { disabled: value >= max || ctx.readOnly, 'data-ctl': `${ctl}-inc` }));
 }
 

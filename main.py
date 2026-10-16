@@ -344,6 +344,15 @@ async def trigger(request: Request):
             return Response(content=f"Unknown force '{force}'. Valid value: 1.", status_code=400)
         if force:
             options = {"force": True}
+    # agent4 takes ?topic=<id>: which newsletter to send (default: the AI one), one Scheduler job per newsletter.
+    if agent_name == "agent4":
+        topic = request.query_params.get("topic")
+        if topic:
+            import topics
+            problem = topics.check_run_request(topic, None)
+            if problem:
+                return Response(content=problem, status_code=400)
+            options = {"topic": topics.get_topic(topic).id}
     # The orchestrator takes ?kind=release|debug. Unflagged means debug, so only the scheduled job publishes.
     if agent_name == "orchestrator":
         kind = request.query_params.get("kind")

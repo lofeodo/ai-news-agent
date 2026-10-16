@@ -8,6 +8,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import FIRESTORE_COLLECTION
 
+import topics
 from drift import summarize_audit
 
 AUDIT_COLLECTION = "agent1b_audits"
@@ -37,35 +38,43 @@ def run_summary(db, run_id: str, doc: dict) -> dict | None:
     }
 
 
-def recent_runs(db, current_run_id: str, n: int) -> list[tuple[str, dict]]:
-    """(run_id, doc) for up to `n` runs started before the current one, newest first."""
+# Other topics' runs (mostly debug) share the collection; scan this many extra rows past the ones wanted so a
+# burst of them cannot push the AI runs out of the window.
+_OTHER_TOPIC_HEADROOM = 50
+
+
+def _ai_run_ids(db, current_run_id: str, wanted: int) -> list[str]:
+    """Ids of up to `wanted` AI-newsletter runs started before the current one, newest first.
+
+    Scans only the small `topic` field; callers fetch the full docs (which can be close to 1 MiB) for the
+    ids they actually use.
+    """
     from google.cloud import firestore
 
-    docs = (
+    scan = (
         db.collection(FIRESTORE_COLLECTION)
         .order_by("started_at", direction=firestore.Query.DESCENDING)
-        .limit(n + 1)
+        .select(["topic"])
+        .limit(wanted + 1 + _OTHER_TOPIC_HEADROOM)
         .stream()
     )
-    return [(d.id, d.to_dict() or {}) for d in docs if d.id != current_run_id][:n]
+    ids = [d.id for d in scan if d.id != current_run_id and topics.is_default_topic(d.to_dict())]
+    return ids[:wanted]
+
+
+def recent_runs(db, current_run_id: str, n: int) -> list[tuple[str, dict]]:
+    """(run_id, doc) for up to `n` AI runs started before the current one, newest first."""
+    return [(i, db.collection(FIRESTORE_COLLECTION).document(i).get().to_dict() or {})
+            for i in _ai_run_ids(db, current_run_id, n)]
 
 
 def load_baseline(db, current_run_id: str, n_baseline: int) -> list[dict]:
-    """Up to `n_baseline` usable summaries from the runs started before the current one."""
-    from google.cloud import firestore
-
-    # Over-fetch: some prior runs will be single_pass, failed early, or lack data.
-    docs = (
-        db.collection(FIRESTORE_COLLECTION)
-        .order_by("started_at", direction=firestore.Query.DESCENDING)
-        .limit(n_baseline * 3 + 1)
-        .stream()
-    )
+    """Up to `n_baseline` usable summaries from the AI runs started before the current one."""
     out = []
-    for d in docs:
-        if d.id == current_run_id:
-            continue
-        summary = run_summary(db, d.id, d.to_dict() or {})
+    # Over-fetch: some prior runs will be single_pass, failed early, or lack data.
+    for run_id in _ai_run_ids(db, current_run_id, n_baseline * 3):
+        doc = db.collection(FIRESTORE_COLLECTION).document(run_id).get().to_dict() or {}
+        summary = run_summary(db, run_id, doc)
         if summary:
             out.append(summary)
         if len(out) >= n_baseline:

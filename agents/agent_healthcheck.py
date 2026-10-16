@@ -65,8 +65,8 @@ ERROR_AGENTS = ["agent1a", "agent1b", "agent2a", "agent2b", "agent3", "agent4"]
 def _latest_run_doc(db):
     """Return (run_id, doc dict) for the most recently started *release* pipeline run, or (None, None).
 
-    Debug runs are skipped: they are never published or mailed, so they say nothing about this week's
-    delivery. Failed runs (never composed) still count, so the scan does not filter on newsletter_composed.
+    Debug runs and other topics' runs are skipped: they are never published or mailed, so they say nothing
+    about this week's delivery. Failed runs (never composed) still count, so the scan does not filter on newsletter_composed.
     """
     from google.cloud import firestore
 
@@ -75,8 +75,8 @@ def _latest_run_doc(db):
         for d in (
             db.collection(FIRESTORE_COLLECTION)
             .order_by("started_at", direction=firestore.Query.DESCENDING)
-            .select(["run_kind"])
-            .limit(10)
+            .select(run_kind.SCAN_FIELDS)
+            .limit(50)
             .stream()
         )
     ]

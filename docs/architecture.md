@@ -54,6 +54,14 @@ What a profile changes, stage by stage: **agent1b** takes its sources (Hacker Ne
 
 Safety rails: non-AI topics are debug-only, and every lookup that picks "the latest run" (`run_kind`, the health check, `drift_history`) skips other topics' runs, so a topic draft can never be mailed, published or checked as the AI newsletter. Not built yet: topic signup and sending, schedules, and a per-topic health check.
 
+### Overlapping runs
+
+Every topic drafts on Sunday morning, 30 minutes apart, so two topics' runs can be in the same pipeline service at once. Checked when release runs for every topic were allowed (roadmap A, step 5):
+
+- **Two runs can share a container.** No service sets `--concurrency`, and setting `--concurrency=1` would not help: `main.py` answers the trigger at once and runs the agent in a background thread, so Cloud Run sees an idle instance and may route the next topic's push to it while the first run is still working.
+- **The watchdog was the hazard.** It ended a run that overran with `os._exit`, which would also have killed any other run in the process. Now every pipeline agent (`_CHILD_PROCESS_AGENTS` in `main.py`: agent1a, 1b, 2a, 2b, 3 and 4) runs in its own child process, as agent2b already did for crash isolation (only agent2b retries). A timeout kills that run's child, records `{agent}_error = "hard timeout — …"` on that run's doc and leaves the process and other runs alone. The orchestrator and the health check still run in-process (one short run at a time) and keep the hard exit.
+- **State is per run or AI-only.** The `agent2_completions` counter and the `agent2a_counted` / `agent2b_counted` / `content_summarized_published` flags live on `pipeline_runs/{run_id}`; agent4's sent markers are `pipeline_runs/{run_id}/sent/*`; `click_links` / `click_counts` are keyed by run id; `spotlighted_papers` is written only by topics with `spotlight: papers` (the AI newsletter). The `data/*.json` files agents write in cloud mode are never read back there (cloud agents read their inputs from the run doc), and a child process gives each run its own module state (Claude-call semaphores, caches).
+
 ## Inside agent 1b (LangGraph)
 
 ```mermaid

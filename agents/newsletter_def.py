@@ -261,13 +261,17 @@ def to_dict(definition: Definition) -> dict:
 
 
 def from_topic(topic) -> Definition:
-    """A ready-made newsletter's definition: intro, the paper spotlight for `spotlight: papers`, every category
-    in profile order with its cap, and the share strip after the first section (AI only, as today)."""
-    blocks = [IntroBlock()]
-    if topic.spotlight == "papers":
-        blocks.append(WidgetBlock("paper_spotlight", topic.id))
+    """A ready-made newsletter's definition: intro, the profile's widgets placed after_intro then
+    before_sections (the AI paper spotlight), every category in profile order with its cap, the share strip after
+    the first section (AI only, as today), then the after_sections widgets. Widgets placed "none" are produced
+    for the edition but not shown here."""
+    def widget_blocks(placement):
+        return [WidgetBlock(w.id, topic.id, dict(w.config)) for w in topic.widgets if w.placement == placement]
+
+    blocks = [IntroBlock()] + widget_blocks("after_intro") + widget_blocks("before_sections")
     for i, c in enumerate(topic.categories):
         blocks.append(SectionBlock(topic.id, c.name, c.cap))
         if i == 0 and topic.is_default:
             blocks.append(ShareBlock())
+    blocks += widget_blocks("after_sections")
     return Definition(name=topic.name, accent_color=topic.accent_color, blocks=tuple(blocks))

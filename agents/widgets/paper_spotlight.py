@@ -37,8 +37,10 @@ class PaperSpotlight(Widget):
         return {"papers": papers}
 
     def render(self, data, config, look):
+        # An empty list still draws the (empty) section, exactly as the renderer did before widgets existed;
+        # agent3 never composes an AI issue without a summarized paper anyway.
         papers = [p for p in (data or {}).get("papers") or [] if isinstance(p, dict)]
-        return research_rows(papers) if papers else ""
+        return research_rows(papers)
 
     def sample_data(self):
         return {"papers": [{

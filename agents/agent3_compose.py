@@ -15,7 +15,8 @@ from prompt_guard import GUARD_XML_TAGS, neutralize_tags
 import tracing
 import topics
 from agent3_dedup_graph import dedup_section
-from render import blocks as _blocks, palette as _palette, shell as _shell
+import newsletter_def
+import render
 from render.blocks import render_article_card, render_paper_card  # noqa: F401  (re-exported)
 from render.palette import AMBER as _AMBER, darken as _darken  # noqa: F401  (re-exported)
 from render.text import esc as _esc, safe_url as _safe_url, strip_markdown_headers as _strip_markdown_headers  # noqa: F401
@@ -346,55 +347,16 @@ def compose_html(
     topic=None,
 ) -> str:
     """The newsletter email. `topic` (default: the AI newsletter) supplies the name, tagline, accent colour,
-    sections and icons; everything else is the shared layout."""
+    sections and icons; everything else is the shared layout. Drawn by the block renderer from the topic's
+    ready-made definition (newsletter_def.from_topic)."""
     topic = topic or topics.get_topic()
-    name = _esc(topic.name)
-    tagline = _esc(topic.tagline)
-    accent = topic.accent_color
-    link_color = _palette.AI_LINK if topic.is_default else _darken(accent)
-    has_spotlight = topic.spotlight == "papers"
-    empty_text = "No notable releases this week." if topic.is_default else "Nothing notable this week."
-    disclaimer_html = _shell.disclaimer_html(topic.disclaimer) if topic.disclaimer else ""
-
-    active_categories = [
-        c.name for c in topic.categories
-        if topic.category_active(c, {"include_canada": include_canada})
-    ]
-    category_icons = {c.name: c.icon for c in topic.categories}
-    logo = _shell.logo_img(name) if topic.is_default else ""
-    address_html = _shell.address_html(os.environ.get("MAILING_ADDRESS", "").strip(), accent)
-
-    # The spotlight paper leads the issue, so it leads the contents too (and stays unnumbered).
-    toc_entries = ([("RES", "RESEARCH")] if has_spotlight else []) + [
-        (f"{i+1:02d}", cat.split(" &")[0].split(",")[0].upper())
-        for i, cat in enumerate(active_categories)
-    ]
-    toc_row1, toc_row2 = _shell.toc_rows(toc_entries, accent)
-
-    news_rows = ""
-    for i, category in enumerate(active_categories):
-        articles = selected_by_category.get(category, [])
-        if articles:
-            body = "".join(
-                render_article_card(a, is_last=(j == len(articles) - 1), accent=accent, link_color=link_color)
-                for j, a in enumerate(articles)
-            )
-        else:
-            body = _blocks.empty_note(empty_text)
-        news_rows += _blocks.section_rows(category, f"{i+1:02d}", category_icons.get(category, "📌"), body, accent)
-        if i == 0 and topic.is_default:      # the share page is the AI newsletter's
-            news_rows += _blocks.share_strip()
-
-    research_rows = _blocks.research_rows(papers) if has_spotlight else ""
-
-    inner = (
-        _shell.masthead(name, tagline, week_of, accent, logo, toc_row1, toc_row2)
-        + "\n\n    " + _shell.intro_row(intro, week_of)
-        + "\n\n    " + research_rows
-        + "\n    " + news_rows
-        + "\n\n    " + _shell.footer(name, accent, address_html, disclaimer_html)
+    content = render.Content(
+        intro=intro,
+        sections={(topic.id, cat): arts for cat, arts in selected_by_category.items()},
+        widgets={"paper_spotlight": {"papers": papers}},
     )
-    return _shell.page(name, intro, inner)
+    return render.render(newsletter_def.from_topic(topic), content, render.Look.from_topic(topic, week_of),
+                         {"include_canada": include_canada}).html
 
 
 # ---------------------------------------------------------------------------

@@ -32,6 +32,7 @@ def test_stores_failure_still_renders_without_store_names():
 def test_bad_rows_are_skipped():
     deals = [{"title": "No id"}, {"title": "Not cheaper", "dealID": "a", "salePrice": "10", "normalPrice": "10"},
              {"title": "Junk price", "dealID": "b", "salePrice": "x", "normalPrice": "10"},
+             {"title": "Giveaway", "dealID": "g", "salePrice": "0.00", "normalPrice": "12.99"},
              {"title": "Good", "dealID": "c&d=\"e\"", "salePrice": "5", "normalPrice": "10", "savings": "50",
               "storeID": "1"}]
     data = W.produce(ctx({"/deals": FakeResponse(200, deals), "/stores": FakeResponse(200, [])}), {})

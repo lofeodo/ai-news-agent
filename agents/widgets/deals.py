@@ -44,7 +44,8 @@ class Deals(Widget):
                 continue
             title = d["title"].strip()[:80]
             sale, normal, savings = _num(d.get("salePrice")), _num(d.get("normalPrice")), _num(d.get("savings"))
-            if not title or title.lower() in seen or sale is None or normal is None or sale >= normal:
+            # A $0 "deal" is a giveaway, which free_games already covers.
+            if not title or title.lower() in seen or sale is None or normal is None or not 0 < sale < normal:
                 continue
             if stores and str(d.get("storeID")) not in stores:
                 continue

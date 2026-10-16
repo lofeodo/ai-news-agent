@@ -108,6 +108,19 @@ class Topic:
             "category_definitions": self.category_definitions(),
         }
 
+    def fill_prompt(self, template: str) -> str:
+        """Put this topic's name, audience and category definitions into a generic prompt template.
+
+        Braces in the inserted text are doubled, because the caller runs str.format() on the template afterwards.
+        A template with none of those placeholders (every AI prompt) comes back unchanged.
+        """
+        for key, value in self.prompt_vars().items():
+            template = template.replace("{" + key + "}", value.replace("{", "{{").replace("}", "}}"))
+        return template
+
+    def read_filled_prompt(self, key: str) -> str:
+        return self.fill_prompt(self.read_prompt(key))
+
     def variant_prefs(self) -> dict:
         return {key: KNOWN_VARIANTS[key] for key in self.variants}
 

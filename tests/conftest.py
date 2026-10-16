@@ -27,15 +27,13 @@ def _default_topic_in_tests(monkeypatch):
 def demo_topic(monkeypatch):
     """A registered non-AI topic without a paper spotlight (id "demo"), so tests need no real profile file."""
     import topics
-    prompts = {k: v for k, v in topics.get_topic("ai").prompts.items() if k != "news_filter"}
     t = topics.parse_topic({
         "id": "demo", "name": "Demo Weekly", "tagline": "A demo", "audience": "demo readers",
         "accent_color": "#112233", "languages": ["en"], "variants": ["0_0"], "spotlight": "none",
         "categories": [{"name": "Alpha", "definition": "first", "icon": "A"},
                        {"name": "Beta", "definition": "second", "cap": 2}],
         "sources": [{"type": "rss", "feeds": [{"name": "f", "url": "https://example.com/f.xml"}]}],
-        "prompts": prompts,
-    })
+    })   # no prompts named: every one falls back to prompts/generic/
     monkeypatch.setitem(topics._CACHE, "demo", t)
     monkeypatch.setattr(topics, "list_topic_ids", lambda: ["ai", "demo"])
     return t

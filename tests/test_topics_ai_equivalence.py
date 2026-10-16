@@ -3,8 +3,6 @@
 Every later step makes the pipeline read topics/ai.yaml instead of module constants. If this file
 passes, the AI newsletter is configured the same as before; if you change one side, change both.
 """
-import re
-
 import agent3_compose
 import agent_subscriptions
 import config
@@ -46,13 +44,22 @@ def test_caps_match():
         assert c.cap == config.section_cap(c.name), c.name
 
 
-def test_icons_match_compose_html():
-    # the icon table lives inside compose_html; read it from the source so the two cannot drift
-    import inspect
-    src = inspect.getsource(agent3_compose.compose_html)
-    table = dict(re.findall(r'"([^"]+)":\s+"([^"]+)",\s*\n', src.split("category_icons = {")[1].split("}")[0]))
-    for c in _ai().categories:
-        assert table[c.name] == c.icon, c.name
+def test_icons_are_the_original_ones():
+    """compose_html used to hold this table itself; it now reads the profile, so pin the values here."""
+    original = {
+        "Model & Product Releases": "🚀",
+        "Industry & Business":      "💼",
+        "Policy, Law & Regulation": "⚖️",
+        "Open Source & Tools":      "🛠️",
+        "Safety & Alignment":       "🛡️",
+        "Society & Culture":        "🌍",
+        "Canada & Montreal":        "🍁",
+    }
+    assert {c.name: c.icon for c in _ai().categories} == original
+
+
+def test_accent_color_is_the_original_brand_amber():
+    assert _ai().accent_color == agent3_compose._AMBER
 
 
 def test_definitions_are_the_ones_in_the_filter_prompt():
@@ -72,8 +79,7 @@ def test_variants_match():
 
 def test_branding_matches():
     assert _ai().name == agent3_compose.NEWSLETTER_NAME
-    assert _ai().tagline == "Weekly AI Intelligence Dispatch"   # the header line in compose_html
-    assert "Weekly AI Intelligence Dispatch" in open("agents/agent3_compose.py", encoding="utf-8").read()
+    assert _ai().tagline == "Weekly AI Intelligence Dispatch"   # the header line under the title in the email
 
 
 def test_ai_keeps_its_prompt_files():

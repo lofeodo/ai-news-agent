@@ -501,16 +501,6 @@ def filter_batch(batch: list, batch_index: int, prompt_template: str, client: an
     return results
 
 
-def _fill_topic_vars(template: str, topic) -> str:
-    """Put a topic's name, audience and category definitions into a generic prompt template.
-
-    Braces in the inserted text are doubled so the later str.format(articles=...) leaves them alone.
-    """
-    for key, value in topic.prompt_vars().items():
-        template = template.replace("{" + key + "}", value.replace("{", "{{").replace("}", "}}"))
-    return template
-
-
 def filter_and_categorize(articles: list, client=None, with_confidence: bool = False, topic=None) -> list:
     """Filter for relevance and categorize. `topic` (a non-AI topic) supplies the prompt and the category list;
     without one this is the AI newsletter's original behaviour."""
@@ -519,7 +509,7 @@ def filter_and_categorize(articles: list, client=None, with_confidence: bool = F
 
     custom = topic is not None and not topic.is_default
     if custom:
-        prompt_template = _fill_topic_vars(topic.read_prompt("news_filter"), topic)
+        prompt_template = topic.read_filled_prompt("news_filter")
         tool = build_filter_tool(topic.category_names, with_confidence)
     else:
         with open("prompts/news_filter_prompt.txt", "r", encoding="utf-8") as f:

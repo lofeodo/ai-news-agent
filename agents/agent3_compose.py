@@ -200,11 +200,16 @@ def _top_up_order(ordered: list, exclude: set) -> list[int]:
     return sorted(rest, key=lambda i: (ordered[i].get("hn_score") is None, -(ordered[i].get("hn_score") or 0), i))
 
 
+def _cap(category: str, topic=None) -> int:
+    return topic.section_cap(category) if topic else section_cap(category)
+
+
 def select_with_runners_up(
     category: str,
     articles: list,
     prompt_template: str,
     client: anthropic.Anthropic,
+    topic=None,
 ) -> SelectionResult:
     if not articles:
         return SelectionResult()
@@ -226,7 +231,7 @@ def select_with_runners_up(
     random.Random(category).shuffle(ordered)
 
     formatted = format_articles_for_selection(ordered, category)
-    cap       = section_cap(category)
+    cap       = _cap(category, topic)
     prompt    = prompt_template.format(category=category, articles=formatted, cap=cap, runners_up=RUNNERS_UP_MAX)
 
     response = claude_call_with_retry(
@@ -272,14 +277,14 @@ def select_articles_for_category(
     return select_with_runners_up(category, articles, prompt_template, client).picks
 
 
-def take_fallback(category: str, picks: list, runners_up: list, used=()):
+def take_fallback(category: str, picks: list, runners_up: list, used=(), topic=None):
     """Next runner-up to add to a section, or None.
 
     Only fills a gap: None when `picks` (the articles currently kept) already
     reach the section's cap. Skips runners-up already kept or in `used`
     (everything the dedup loop has already tried, removed ones included).
     """
-    if len(picks) >= section_cap(category):
+    if len(picks) >= _cap(category, topic):
         return None
     taken = {id(a) for a in picks} | {id(a) for a in used}
     return next((a for a in runners_up if id(a) not in taken), None)
@@ -356,6 +361,12 @@ _HN    = "#22c55e"   # Hacker News score green
 _SEPR  = "#ededed"   # separator on white
 
 
+def _darken(hex_color: str, factor: float = 0.5) -> str:
+    """A darker shade of #rrggbb, for link text on a white card (the accent itself is meant for dark backgrounds)."""
+    r, g, b = (int(hex_color[i:i + 2], 16) for i in (1, 3, 5))
+    return "#{:02x}{:02x}{:02x}".format(int(r * factor), int(g * factor), int(b * factor))
+
+
 def _strip_markdown_headers(text: str) -> str:
     """Remove markdown header lines that Claude may generate despite prompt instructions."""
     return re.sub(r"^#{1,6}\s+[^\n]*\n?", "", text, flags=re.MULTILINE).strip()
@@ -418,7 +429,7 @@ def render_paper_card(paper: dict) -> str:
     )
 
 
-def render_article_card(article: dict, is_last: bool = False) -> str:
+def render_article_card(article: dict, is_last: bool = False, accent: str = _AMBER, link_color: str = "#7a6548") -> str:
     title   = _esc(article.get("title", "Untitled"))
     url     = _safe_url(article.get("url"))
     summary = _esc(article.get("summary") or article.get("description") or "")
@@ -436,7 +447,7 @@ def render_article_card(article: dict, is_last: bool = False) -> str:
             f'<p style="margin:0 0 10px 0;font-family:{_F};font-size:20px;font-weight:700;'
             f'line-height:1;color:{_HN};">&#9650;&nbsp;{hn}</p>'
             f'<p style="margin:0;font-family:{_F};font-size:12px;">'
-            f'<a href="{url}" target="_blank" rel="noopener noreferrer" style="color:{_AMBER};text-decoration:none;">Read&nbsp;&#8594;</a>'
+            f'<a href="{url}" target="_blank" rel="noopener noreferrer" style="color:{accent};text-decoration:none;">Read&nbsp;&#8594;</a>'
             f'</p>'
             f'</td>\n'
         )
@@ -444,7 +455,7 @@ def render_article_card(article: dict, is_last: bool = False) -> str:
         right_col = (
             f'<td class="mob-block mob-hn" width="72" valign="top" style="border-left:1px solid {_SEPR};padding-left:14px;">'
             f'<p style="margin:0;font-family:{_F};font-size:12px;">'
-            f'<a href="{url}" target="_blank" rel="noopener noreferrer" style="color:{_AMBER};text-decoration:none;">Read&nbsp;&#8594;</a>'
+            f'<a href="{url}" target="_blank" rel="noopener noreferrer" style="color:{accent};text-decoration:none;">Read&nbsp;&#8594;</a>'
             f'</p>'
             f'</td>\n'
         )
@@ -455,7 +466,7 @@ def render_article_card(article: dict, is_last: bool = False) -> str:
         f'<tr>\n'
         f'<td class="mob-block" valign="top" style="padding-right:16px;">'
         f'<p style="margin:0 0 8px 0;font-family:{_F};font-size:16px;font-weight:600;line-height:1.35;">'
-        f'<a href="{url}" target="_blank" rel="noopener noreferrer" style="color:#7a6548;text-decoration:underline;text-underline-offset:2px;">{title}</a>'
+        f'<a href="{url}" target="_blank" rel="noopener noreferrer" style="color:{link_color};text-decoration:underline;text-underline-offset:2px;">{title}</a>'
         f'</p>\n'
         f'<p style="margin:0;font-family:{_F};font-size:14px;line-height:1.8;color:{_INK2};">{summary}</p>'
         f'</td>\n'
@@ -471,33 +482,35 @@ def compose_html(
     selected_by_category: dict[str, list],
     week_of: str,
     include_canada: bool = True,
+    topic=None,
 ) -> str:
-    active_categories = [
-        cat for cat in NEWS_CATEGORIES
-        if not (cat == "Canada & Montreal" and not include_canada)
-    ]
+    """The newsletter email. `topic` (default: the AI newsletter) supplies the name, tagline, accent colour,
+    sections and icons; everything else is the shared layout."""
+    topic = topic or topics.get_topic()
+    name = _esc(topic.name)
+    tagline = _esc(topic.tagline)
+    accent = topic.accent_color
+    link_color = "#7a6548" if topic.is_default else _darken(accent)
+    has_spotlight = topic.spotlight == "papers"
+    empty_text = "No notable releases this week." if topic.is_default else "Nothing notable this week."
 
-    category_icons = {
-        "Model & Product Releases": "🚀",
-        "Industry & Business":      "💼",
-        "Policy, Law & Regulation": "⚖️",
-        "Open Source & Tools":      "🛠️",
-        "Safety & Alignment":       "🛡️",
-        "Society & Culture":        "🌍",
-        "Canada & Montreal":        "🍁",
-    }
+    active_categories = [
+        c.name for c in topic.categories
+        if topic.category_active(c, {"include_canada": include_canada})
+    ]
+    category_icons = {c.name: c.icon for c in topic.categories}
 
     # Always use the canonical custom domain for email logos — absolute URL required for email clients
     _logo_base = "https://newsletter.lofeodo.com"
     _LOGO_IMG = (
-        f'<img src="{_logo_base}/images/logo-email.png" alt="{NEWSLETTER_NAME}" width="48" height="48"'
+        f'<img src="{_logo_base}/images/logo-email.png" alt="{name}" width="48" height="48"'
         f' style="display:block;border:0;margin-bottom:14px;">'
-    )
+    ) if topic.is_default else ""
 
     # CASL: physical mailing address sourced from env var (satisfies CASL when set)
     _mailing_address = os.environ.get("MAILING_ADDRESS", "").strip()
     address_html = (
-        f'<p style="margin:0 0 10px 0;font-family:{_F};font-size:12px;color:{_AMBER};">'
+        f'<p style="margin:0 0 10px 0;font-family:{_F};font-size:12px;color:{accent};">'
         f'{_esc(_mailing_address)}</p>'
         if _mailing_address else ""
     )
@@ -520,9 +533,9 @@ def compose_html(
             # rhythm rule + large section number (Weingart marker)
             f'<td style="vertical-align:top;white-space:nowrap;padding-right:16px;">'
             f'<table role="presentation" cellspacing="0" cellpadding="0" border="0">'
-            f'<tr><td width="40" height="2" style="background:{_AMBER};font-size:0;line-height:0;mso-line-height-rule:exactly;">&nbsp;</td></tr>'
+            f'<tr><td width="40" height="2" style="background:{accent};font-size:0;line-height:0;mso-line-height-rule:exactly;">&nbsp;</td></tr>'
             f'<tr><td style="padding-top:5px;">'
-            f'<span style="font-family:{_F};font-size:28px;font-weight:700;color:{_AMBER};'
+            f'<span style="font-family:{_F};font-size:28px;font-weight:700;color:{accent};'
             f'line-height:1;letter-spacing:-1px;">{num}</span>'
             f'</td></tr></table>'
             f'</td>\n'
@@ -541,13 +554,13 @@ def compose_html(
     def _toc_cell(num: str, short: str) -> str:
         return (
             f'<td class="mob-toc-cell" style="width:25%;padding:0 0 6px 0;">'
-            f'<span style="font-family:{_F};font-size:11px;color:{_AMBER};font-weight:700;">{num}</span>'
+            f'<span style="font-family:{_F};font-size:11px;color:{accent};font-weight:700;">{num}</span>'
             f'<span style="font-family:{_F};font-size:11px;color:#585858;">&thinsp;{short}</span>'
             f'</td>'
         )
 
     # The spotlight paper leads the issue, so it leads the contents too (and stays unnumbered).
-    _toc_entries = [("RES", "RESEARCH")] + [
+    _toc_entries = ([("RES", "RESEARCH")] if has_spotlight else []) + [
         (f"{i+1:02d}", cat.split(" &")[0].split(",")[0].upper())
         for i, cat in enumerate(active_categories)
     ]
@@ -586,13 +599,13 @@ def compose_html(
 
         if articles:
             body = "".join(
-                render_article_card(a, is_last=(j == len(articles) - 1))
+                render_article_card(a, is_last=(j == len(articles) - 1), accent=accent, link_color=link_color)
                 for j, a in enumerate(articles)
             )
         else:
             body = (
                 f'<p style="font-family:{_F};font-size:13px;color:#aaaaaa;'
-                f'font-style:italic;margin:0;">No notable releases this week.</p>'
+                f'font-style:italic;margin:0;">{empty_text}</p>'
             )
 
         # Section markers enable per-subscriber filtering/reordering in agent4
@@ -604,12 +617,12 @@ def compose_html(
               f'</td></tr>\n'
             + f'<!-- /SECTION:{category} -->\n'
         )
-        if i == 0:
+        if i == 0 and topic.is_default:      # the share page is the AI newsletter's
             news_rows += _share_strip()
 
     # — research section: the spotlight paper leads the issue, right under the editor's note —
     paper_cards   = "".join(render_paper_card(p) for p in papers)
-    research_rows = (
+    research_rows = "" if not has_spotlight else (
         f'<!-- SECTION:Research Spotlights -->\n'
         + f'<tr><td style="padding:0;background:{_D0};">\n'
           f'{paper_cards}'
@@ -623,7 +636,7 @@ def compose_html(
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>{NEWSLETTER_NAME}</title>
+  <title>{name}</title>
   <!--[if mso]><xml><o:OfficeDocumentSettings><o:AllowPNG/><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]-->
   <style>
     @media (prefers-color-scheme: dark) {{
@@ -661,14 +674,14 @@ def compose_html(
          ════════════════════════════════════════════ -->
     <tr><td style="background:{_D0};">
       <!-- amber top accent bar -->
-      {_rule(_AMBER)}
+      {_rule(accent)}
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
       <tr><td class="mob-pad" style="padding:32px 40px 24px;">
         {_LOGO_IMG}
         <p style="margin:0 0 6px 0;font-family:{_F};font-size:12px;color:#484848;letter-spacing:5px;">&gt;_ TRANSMISSION</p>
         <h1 class="mob-h1" style="margin:0 0 0 0;font-family:{_F};font-size:48px;font-weight:700;
-                   letter-spacing:-1px;line-height:1;color:{_AMBER};">{NEWSLETTER_NAME}</h1>
-        <table role="presentation" width="56" cellspacing="0" cellpadding="0" border="0" style="margin:12px 0 0;"><tr><td height="3" style="background:{_AMBER};font-size:0;line-height:0;mso-line-height-rule:exactly;">&nbsp;</td></tr></table>
+                   letter-spacing:-1px;line-height:1;color:{accent};">{name}</h1>
+        <table role="presentation" width="56" cellspacing="0" cellpadding="0" border="0" style="margin:12px 0 0;"><tr><td height="3" style="background:{accent};font-size:0;line-height:0;mso-line-height-rule:exactly;">&nbsp;</td></tr></table>
         {_rule("#222222", "14px")}
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
                style="margin-top:12px;">
@@ -676,7 +689,7 @@ def compose_html(
           <td style="vertical-align:bottom;">
             <p style="margin:0;font-family:{_F};font-size:12px;color:#666666;
                       letter-spacing:2.5px;text-transform:uppercase;">
-              Weekly AI Intelligence Dispatch
+              {tagline}
             </p>
           </td>
           <td style="vertical-align:bottom;text-align:right;white-space:nowrap;">
@@ -721,16 +734,16 @@ def compose_html(
       {_rule("#1a1a1a")}
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
       <tr><td class="mob-pad" style="padding:24px 40px;text-align:center;">
-        <p style="margin:0 0 4px 0;font-family:{_F};font-size:11px;color:{_AMBER};
-                  letter-spacing:3px;text-transform:uppercase;">{NEWSLETTER_NAME}</p>
-        <p style="margin:0 0 14px 0;font-family:{_F};font-size:12px;color:{_AMBER};">
+        <p style="margin:0 0 4px 0;font-family:{_F};font-size:11px;color:{accent};
+                  letter-spacing:3px;text-transform:uppercase;">{name}</p>
+        <p style="margin:0 0 14px 0;font-family:{_F};font-size:12px;color:{accent};">
           You're receiving this because you subscribed.
         </p>
         {address_html}
         <p style="margin:0;font-family:{_F};font-size:12px;">
-          <a href="{{{{UNSUBSCRIBE_URL}}}}" style="color:#c8b89a;text-decoration:underline;">Unsubscribe</a>
-          <span style="color:{_AMBER};">&nbsp;&nbsp;·&nbsp;&nbsp;</span>
-          <a href="{{{{PREFERENCES_URL}}}}" style="color:#c8b89a;text-decoration:underline;">Manage preferences</a>
+          <a href="{{{{UNSUBSCRIBE_URL}}}}" style="color:{accent};text-decoration:underline;">Unsubscribe</a>
+          <span style="color:{accent};">&nbsp;&nbsp;·&nbsp;&nbsp;</span>
+          <a href="{{{{PREFERENCES_URL}}}}" style="color:{accent};text-decoration:underline;">Manage preferences</a>
         </p>
       </td></tr>
       </table>
@@ -748,11 +761,11 @@ def compose_html(
 # Main
 # ---------------------------------------------------------------------------
 
-def _dedup(category: str, sel: "SelectionResult", client, run_id: str, pass_name: str, audits: list) -> list:
+def _dedup(category: str, sel: "SelectionResult", client, run_id: str, pass_name: str, audits: list, topic=None) -> list:
     """Run the dedup graph on one selection; records its audit. Never raises (dedup_section degrades)."""
     result = dedup_section(category, sel.picks, sel.runners_up, client,
                            create=lambda **kw: claude_call_with_retry(client, **kw),
-                           run_id=run_id, pass_name=pass_name)
+                           run_id=run_id, pass_name=pass_name, topic=topic)
     audits.append({**result.audit, "usage": result.usage})
     return result.picks
 
@@ -784,7 +797,7 @@ def write_dedup_audit(run_id: str, audits: list) -> None:
 
 
 def build_run_doc_update(newsletter_variants: dict, subject: str, selected_all: dict,
-                         selected_en: dict, by_category: dict, dedup_summary: dict | None = None) -> dict:
+                         selected_en: dict, by_category: dict, dedup_summary: dict | None = None, topic=None) -> dict:
     """Fields agent3 writes to the run doc when it finishes.
 
     The doc must stay under Firestore's 1 MiB cap, and the full article pools
@@ -794,7 +807,7 @@ def build_run_doc_update(newsletter_variants: dict, subject: str, selected_all: 
     Both must stay truthy: agent_healthcheck checks them for presence.
     """
     shipped_by_category = {}
-    for category in NEWS_CATEGORIES:
+    for category in (topic.category_names if topic else NEWS_CATEGORIES):
         seen, shipped = set(), []
         for a in selected_all.get(category, []) + selected_en.get(category, []):
             if a.get("url") not in seen:
@@ -845,11 +858,6 @@ def run(run_id: str, force: bool = False):
     start_time = datetime.now()
 
     try:
-        with open("prompts/article_selection_prompt.txt", "r", encoding="utf-8") as f:
-            selection_prompt = f.read()
-        with open("prompts/intro_prompt.txt", "r", encoding="utf-8") as f:
-            intro_prompt = f.read()
-
         if USE_FIRESTORE:
             from google.cloud import firestore as _fs
             doc_snap    = _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).get()
@@ -877,6 +885,9 @@ def run(run_id: str, force: bool = False):
             by_category = news_data["by_category"]
 
         topic = topics.get_topic(topics.topic_id_of(doc) if USE_FIRESTORE else os.environ.get("TOPIC"))
+        print(f"[agent3]  topic: {topic.id}", flush=True)
+        selection_prompt = topic.read_filled_prompt("selection")
+        intro_prompt     = topic.read_filled_prompt("intro")
         if topic.spotlight == "papers":
             papers = require_summarized_papers(papers)
         client = tracing.make_client("agent3", run_id)
@@ -890,7 +901,7 @@ def run(run_id: str, force: bool = False):
         selected_en:  dict[str, list] = {}
         dedup_audits: list[dict] = []
 
-        for category in NEWS_CATEGORIES:
+        for category in topic.category_names:
             articles = by_category.get(category, [])
             print(f"  [{category}] {len(articles)} articles available", end="")
 
@@ -900,15 +911,15 @@ def run(run_id: str, force: bool = False):
                 selected_en[category]  = []
                 continue
 
-            sel = select_with_runners_up(category, articles, selection_prompt, client)
-            full_selected = _dedup(category, sel, client, run_id, "all", dedup_audits)
+            sel = select_with_runners_up(category, articles, selection_prompt, client, topic)
+            full_selected = _dedup(category, sel, client, run_id, "all", dedup_audits, topic)
             selected_all[category] = full_selected
 
             en_articles = [a for a in articles if a.get("language") != "fr"]
             if len(en_articles) < len(articles):
                 print(f" → selected {len(full_selected)} (re-running English-only)", end="")
-                sel_en = select_with_runners_up(category, en_articles, selection_prompt, client)
-                selected_en[category] = _dedup(category, sel_en, client, run_id, "en", dedup_audits)
+                sel_en = select_with_runners_up(category, en_articles, selection_prompt, client, topic)
+                selected_en[category] = _dedup(category, sel_en, client, run_id, "en", dedup_audits, topic)
             else:
                 selected_en[category] = full_selected
 
@@ -923,9 +934,9 @@ def run(run_id: str, force: bool = False):
         print("\n=== Composing HTML variants ===")
         week_of = newsletter_send_date().strftime("%B %d, %Y")
         newsletter_variants: dict[str, str] = {}
-        for key, prefs in NEWSLETTER_VARIANTS.items():
+        for key, prefs in topic.variant_prefs().items():
             selection = selected_all if prefs["include_french"] else selected_en
-            html = compose_html(intro, papers, selection, week_of, include_canada=prefs["include_canada"])
+            html = compose_html(intro, papers, selection, week_of, include_canada=prefs["include_canada"], topic=topic)
             newsletter_variants[key] = html
             print(f"  Variant {key}: {len(html):,} chars")
 
@@ -945,8 +956,8 @@ def run(run_id: str, force: bool = False):
             from google.cloud import firestore as _fs
             # The run doc must stay under Firestore's 1 MiB cap; see build_run_doc_update().
             _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).update(
-                build_run_doc_update(newsletter_variants, f"{NEWSLETTER_NAME} — {week_of}",
-                                     selected_all, selected_en, by_category, summarize_dedup(dedup_audits))
+                build_run_doc_update(newsletter_variants, f"{topic.name} — {week_of}",
+                                     selected_all, selected_en, by_category, summarize_dedup(dedup_audits), topic)
             )
             print(f"  Written newsletter_variants + newsletter_html (0_0) to Firestore; pruned article pools")
 
@@ -955,7 +966,7 @@ def run(run_id: str, force: bool = False):
 
         total_selected = sum(len(v) for v in selected_all.values())
         print(f"Papers:   {len(papers)}")
-        print(f"Articles: {total_selected} selected across {len(NEWS_CATEGORIES)} categories")
+        print(f"Articles: {total_selected} selected across {len(topic.categories)} categories")
         print(f"Variants: {list(newsletter_variants.keys())}")
     except Exception as e:
         _record_failure(run_id, "agent3", e)

@@ -14,6 +14,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_NEWS_SUMMARY
 import stage_counter
 import summary_sources
+import topics
 import tracing
 from config import (
     DATA_DIR, SCORING_MODEL, NEWS_SUMMARY_MAX_TOKENS,
@@ -199,11 +200,10 @@ def run(run_id: str):
     start_time = datetime.now()
 
     try:
-        with open("prompts/news_summary_prompt.txt", "r", encoding="utf-8") as f:
-            prompt_template = f.read()
-
-        with open("prompts/news_summary_fallback_prompt.txt", "r", encoding="utf-8") as f:
-            fallback_template = f.read()
+        topic = topics.topic_for_run(run_id, USE_FIRESTORE)
+        print(f"[agent2b]  topic: {topic.id}", flush=True)
+        prompt_template   = topic.read_filled_prompt("news_summary")
+        fallback_template = topic.read_filled_prompt("news_summary_fallback")
 
         with open("prompts/quebec_french_style.txt", "r", encoding="utf-8") as f:
             quebec_style = f.read()

@@ -61,7 +61,8 @@ def keep_index(indices: tuple, articles: list) -> int:
     return max(indices, key=lambda i: (_hn(articles[i]), -i))
 
 
-def build_dedup_graph(category: str, original: list, runners_up: list, conv: DedupConversation, cfg: DedupConfig):
+def build_dedup_graph(category: str, original: list, runners_up: list, conv: DedupConversation, cfg: DedupConfig,
+                      topic=None):
     target = len(original)
 
     def check_start(state: DedupState) -> dict:
@@ -99,7 +100,7 @@ def build_dedup_graph(category: str, original: list, runners_up: list, conv: Ded
     def refill(state: DedupState) -> dict:
         picks, used = state["picks"], state["used"]
         from agent3_compose import take_fallback   # lazy: agent3_compose imports this module
-        cand = take_fallback(category, picks, runners_up, used)
+        cand = take_fallback(category, picks, runners_up, used, topic)
         if cand is None:
             return {"exhausted": True}
         number = conv.count
@@ -138,7 +139,7 @@ def build_dedup_graph(category: str, original: list, runners_up: list, conv: Ded
 
 
 def dedup_section(category: str, picks: list, runners_up: list, client, create: Callable | None = None,
-                  cfg: DedupConfig | None = None, run_id: str = "", pass_name: str = "") -> DedupResult:
+                  cfg: DedupConfig | None = None, run_id: str = "", pass_name: str = "", topic=None) -> DedupResult:
     """Remove duplicates from one section's picks, refilling from `runners_up`. Never raises."""
     cfg = cfg or DedupConfig()
     audit = {"category": category, "pass": pass_name, "status": "ok", "before": len(picks),
@@ -150,7 +151,7 @@ def dedup_section(category: str, picks: list, runners_up: list, client, create: 
     conv = DedupConversation(client, category, model=cfg.model, create=create)
     try:
         tracing.configure()
-        graph = build_dedup_graph(category, list(picks), list(runners_up), conv, cfg)
+        graph = build_dedup_graph(category, list(picks), list(runners_up), conv, cfg, topic)
         final = graph.invoke(
             {"picks": list(picks), "used": [], "numbered": list(picks), "kept_of": {}, "iterations": 0,
              "exhausted": False, "error": None, "groups": [], "fallbacks": []},

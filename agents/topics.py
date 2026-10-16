@@ -313,17 +313,12 @@ def is_default_topic(doc: dict | None) -> bool:
 
 
 def check_run_request(topic: str | None, kind: str | None) -> str | None:
-    """Why a (topic, kind) request must be refused, or None when it is fine.
-
-    Only the AI newsletter may be a release run for now: a release is what the public pages, agent4 and the
-    health check follow, and the other topics have no subscribers, signup or schedule yet.
-    """
+    """Why a (topic, kind) request must be refused, or None when it is fine. Any known topic may be a release
+    run: the owner's Scheduler jobs decide which topics run weekly, agents/launch.py decides who can subscribe."""
     if topic is None or topic == "":
         return None
     if not is_valid_topic(topic):
         return f"Unknown topic '{topic}'. Valid values: {', '.join(list_topic_ids())}."
-    if get_topic(topic).id != DEFAULT_TOPIC and kind == "release":
-        return f"Topic '{topic}' can only be started as a debug run (kind=release is for the AI newsletter)."
     return None
 
 

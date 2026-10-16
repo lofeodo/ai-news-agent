@@ -63,8 +63,8 @@ def test_unknown_topic_refused():
     assert "Unknown topic" in topics.check_run_request("nope", "debug")
 
 
-def test_other_topic_release_refused(other_topic):
-    assert "debug run" in topics.check_run_request(other_topic, "release")
+def test_other_topic_may_be_release_or_debug(other_topic):
+    assert topics.check_run_request(other_topic, "release") is None
     assert topics.check_run_request(other_topic, "debug") is None
     assert topics.check_run_request(other_topic, None) is None
 
@@ -81,9 +81,9 @@ def test_topic_and_kind_are_combined(monkeypatch, started, other_topic):
     assert started[0][3] == {"kind": "debug", "topic": "demo"}
 
 
-def test_non_ai_release_is_a_400(monkeypatch, started, other_topic):
-    r = _post(monkeypatch, "?topic=demo&kind=release")
-    assert r.status_code == 400 and started == []
+def test_non_ai_release_is_started(monkeypatch, started, other_topic):
+    assert _post(monkeypatch, "?topic=demo&kind=release").status_code == 200
+    assert started[0][3] == {"kind": "release", "topic": "demo"}
 
 
 def test_unknown_topic_is_a_400(monkeypatch, started):
@@ -127,9 +127,15 @@ def test_ai_run_doc_is_unchanged(cloud, topic):
     assert doc["run_kind"] == "release"
 
 
-def test_orchestrator_refuses_a_non_ai_release(cloud, other_topic):
+def test_orchestrator_starts_a_non_ai_release(cloud, other_topic):
+    orchestrator.run("R1", kind="release", topic="demo")
+    doc = cloud.store["pipeline_runs"]["R1"]
+    assert doc["topic"] == "demo" and doc["run_kind"] == "release"
+
+
+def test_orchestrator_refuses_an_unknown_topic(cloud):
     with pytest.raises(ValueError):
-        orchestrator.run("R1", kind="release", topic="demo")
+        orchestrator.run("R1", kind="release", topic="nope")
     assert cloud.store.get("pipeline_runs", {}) == {}
     assert cloud.published == []
 

@@ -40,7 +40,7 @@ def run_summary(db, run_id: str, doc: dict) -> dict | None:
 
 # Other topics' runs (mostly debug) share the collection; scan this many extra rows past the ones wanted so a
 # burst of them cannot push the AI runs out of the window.
-_OTHER_TOPIC_HEADROOM = 50
+_OTHER_TOPIC_HEADROOM = 200
 
 
 def _ai_run_ids(db, current_run_id: str, wanted: int) -> list[str]:

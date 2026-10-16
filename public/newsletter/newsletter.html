@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Newsletter — Latent SpaceMail</title>
+  <link rel="icon" type="image/svg+xml" href="/images/logo-mark.svg">
+  <link rel="icon" type="image/png" href="/images/logo-email.png">
+  <link rel="preload" href="/fonts/cormorant-garamond-600.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="topbar.css">
+  <link rel="stylesheet" href="newsletters.css">
+</head>
+<body>
+  <canvas id="bg-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;will-change:transform;"></canvas>
+
+  <header class="topbar">
+    <a href="/" class="topbar__logo" aria-label="Latent SpaceMail home">
+      <img src="/images/logo-mark.svg" alt="" height="26" width="26" fetchpriority="high">
+    </a>
+    <nav class="topbar__nav" aria-label="Main">
+      <a href="/newsletters.html" class="topbar__nav-link" data-href="/newsletters.html">Newsletters</a>
+      <a href="/issues.html" class="topbar__nav-link" data-href="/issues.html">Issues<span class="topbar__live"><span class="topbar__live-dot"></span>Live</span></a>
+      <a href="/sections.html" class="topbar__nav-link" data-href="/sections.html" id="topbar-sections">Customize</a>
+      <a href="/preferences.html" class="topbar__nav-link" data-href="/preferences.html">Preferences</a>
+    </nav>
+    <div class="topbar__right">
+      <div class="topbar__auth" id="topbar-auth" style="display:none">
+        <span class="topbar__auth-dot"></span>
+        <span class="topbar__auth-email" id="topbar-email"></span>
+        <span class="topbar__auth-tier" id="topbar-tier" style="display:none">◆ Premium</span>
+        <button type="button" class="topbar__signout" id="topbar-signout">Sign out</button>
+      </div>
+      <a href="/login.html" class="topbar__signin" id="topbar-signin">Sign in →</a>
+      <a href="https://github.com/lofeodo/ai-news-agent" target="_blank" rel="noopener" class="topbar__github" aria-label="View source on GitHub">
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+        <span class="topbar__github-label">GitHub</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="nl-page">
+    <p class="nl-status" id="status">Loading…</p>
+
+    <div id="content" hidden>
+      <section class="nl-hero" id="hero">
+        <h1 id="name"></h1>
+        <p id="tagline"></p>
+        <div id="sections"></div>
+      </section>
+
+      <form class="nl-signup" id="signup" novalidate hidden>
+        <h2 id="signup-title">Subscribe</h2>
+        <p class="nl-signup__picked">Free, every Monday morning. You'll get a link by email to confirm.</p>
+        <div class="nl-signup__row">
+          <label for="email" class="sr-only">Email address</label>
+          <input type="email" id="email" name="email" autocomplete="email" required placeholder="you@example.com">
+          <button type="submit" id="submit-btn">Subscribe</button>
+        </div>
+        <label class="check-row">
+          <input type="checkbox" id="send-latest" checked>
+          <span>Send me the latest issue right away</span>
+        </label>
+        <p class="nl-consent" id="consent"></p>
+        <p class="nl-consent">Want more than one? <a href="/newsletters.html" style="color:inherit">Pick several newsletters</a> with one email.</p>
+        <div class="msg" id="msg" role="status" aria-live="polite"></div>
+      </form>
+
+      <div class="nl-signup" id="account" hidden>
+        <h2 id="account-title"></h2>
+        <p class="nl-signup__picked" id="account-note"></p>
+        <label class="nl-pick" style="display:inline-flex">
+          <input type="checkbox" id="account-toggle"> <span id="account-label">Subscribe</span>
+        </label>
+      </div>
+
+      <h2 class="nl-block-title" id="latest">Latest issue</h2>
+      <p class="nl-status" id="no-issue" hidden>The first issue arrives on a Monday soon.</p>
+      <iframe id="issue" class="nl-issue" title="Latest issue" hidden
+              sandbox="allow-popups allow-popups-to-escape-sandbox"></iframe>
+      <p class="nl-issue-links" id="issue-links" hidden><a id="archive-link" href="/issues.html">All past issues</a></p>
+    </div>
+  </main>
+
+  <script src="bg.js"></script>
+  <script type="module" src="nav.js"></script>
+  <script type="module">
+    import { authFetch } from './auth.js';
+    import { API, ISSUE_POLICY, signedInUser, loadCatalog, loadMe, setSubscribed, subscribeByEmail,
+             emailFormMessage, sectionsHtml } from './newsletters.js';
+
+    const id = (new URLSearchParams(location.search).get('id') || '').toLowerCase();
+    if (!id) location.replace('/newsletters.html');   // e.g. back from sign-in, which drops the query
+    const status = document.getElementById('status');
+
+    function fail(text) {
+      status.innerHTML = text;
+      status.hidden = false;
+    }
+
+    async function showIssue(n) {
+      const frame = document.getElementById('issue');
+      if (!n.latest_issue) { document.getElementById('no-issue').hidden = false; return; }
+      const links = document.getElementById('issue-links');
+      document.getElementById('archive-link').href = `/issues.html?n=${encodeURIComponent(n.id)}`;
+      frame.title = `Latest issue of ${n.name}`;
+      if (!n.hidden) {
+        frame.src = `${API}/issues/${encodeURIComponent(n.latest_issue)}`;
+      } else {
+        // Not launched: the public route refuses it, so an admin gets it through the admin preview.
+        const res = await authFetch(`${API}/auth/admin/issues?run=${encodeURIComponent(n.latest_issue)}`);
+        if (!res.ok) { document.getElementById('no-issue').hidden = false; return; }
+        frame.srcdoc = ISSUE_POLICY + (await res.json()).html;
+        links.hidden = true;
+      }
+      frame.hidden = false;
+      if (!n.hidden) links.hidden = false;
+    }
+
+    function showEmailForm(n, catalog) {
+      const form = document.getElementById('signup');
+      const btn = document.getElementById('submit-btn');
+      const msg = document.getElementById('msg');
+      document.getElementById('signup-title').textContent = `Subscribe to ${n.name}`;
+      document.getElementById('consent').textContent = catalog.consent_text;
+      form.hidden = false;
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value.trim();
+        if (!email) return;
+        btn.disabled = true;
+        msg.className = 'msg';
+        try {
+          const res = await subscribeByEmail(email, [n.id], catalog.consent_text_version,
+            document.getElementById('send-latest').checked);
+          const [text, kind] = emailFormMessage(res.status);
+          msg.textContent = text;
+          msg.className = `msg visible ${kind}`;
+          if (res.ok) document.getElementById('email').value = '';
+        } catch {
+          msg.textContent = 'Network problem. Try again.';
+          msg.className = 'msg visible error';
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    }
+
+    function showAccount(n, catalog, me, user) {
+      const box = document.getElementById('account-toggle');
+      const label = document.getElementById('account-label');
+      const note = document.getElementById('account-note');
+      const pick = box.closest('.nl-pick');
+      const paint = () => {
+        label.textContent = box.checked ? 'Subscribed' : 'Subscribe';
+        note.textContent = box.checked
+          ? `It arrives at ${user.email} every Monday morning. Switch it off to unsubscribe.`
+          : `Free, every Monday morning, to ${user.email}.`;
+      };
+      document.getElementById('account-title').textContent = n.name;
+      box.checked = (me.newsletters || []).includes(n.id);
+      paint();
+      document.getElementById('account').hidden = false;
+      box.addEventListener('change', async () => {
+        pick.setAttribute('aria-busy', 'true');
+        box.disabled = true;
+        try {
+          await setSubscribed(n.id, box.checked, catalog.consent_text_version);
+          paint();
+        } catch (err) {
+          box.checked = !box.checked;
+          label.textContent = err.status === 503 ? 'List is full' : 'Not saved, try again';
+        } finally {
+          pick.removeAttribute('aria-busy');
+          box.disabled = false;
+        }
+      });
+    }
+
+    (async () => {
+      try {
+        const user = await signedInUser();
+        const catalog = await loadCatalog(user);
+        const n = catalog.newsletters.find((x) => x.id === id);
+        if (!n) {
+          fail('This newsletter does not exist or is not open yet. <a href="/newsletters.html" style="color:var(--accent)">See every newsletter</a>.');
+          return;
+        }
+        document.title = `${n.name} — Latent SpaceMail`;
+        document.getElementById('hero').style.setProperty('--nl', n.accent_color);
+        document.querySelector('.nl-page').style.setProperty('--nl', n.accent_color);
+        document.getElementById('name').textContent = n.name;
+        document.getElementById('tagline').textContent =
+          `${n.tagline}. Free, every Monday morning.` + (n.hidden ? ' Not launched yet: only admins see this page.' : '');
+        document.getElementById('sections').innerHTML = sectionsHtml(n);
+        status.hidden = true;
+        document.getElementById('content').hidden = false;
+        if (user) showAccount(n, catalog, await loadMe(), user);
+        else showEmailForm(n, catalog);
+        await showIssue(n);
+        if (location.hash === '#latest') document.getElementById('latest').scrollIntoView();
+      } catch (e) {
+        console.error('[newsletter]', e);
+        fail("This page couldn't be loaded. Reload to try again.");
+      }
+    })();
+  </script>
+</body>
+</html>

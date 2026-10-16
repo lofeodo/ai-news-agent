@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <!-- Not linked from anywhere yet: roadmap E adds the top-bar link once the studio API exists. -->
+  <meta name="robots" content="noindex">
+  <title>Latent SpaceMail — Studio</title>
+  <link rel="icon" type="image/svg+xml" href="/images/logo-mark.svg">
+  <link rel="icon" type="image/png" href="/images/logo-email.png">
+  <link rel="preload" href="/fonts/cormorant-garamond-600.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/bebas-neue-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="topbar.css">
+  <link rel="stylesheet" href="studio/studio.css">
+</head>
+<body class="studio-page">
+  <a class="skip-link" href="#blocks-title">Skip to your newsletter</a>
+
+  <header class="topbar">
+    <a href="/" class="topbar__logo" aria-label="Latent SpaceMail home">
+      <img src="/images/logo-mark.svg" alt="" height="26" width="26" fetchpriority="high">
+    </a>
+    <nav class="topbar__nav" aria-label="Main">
+      <a href="/issues.html" class="topbar__nav-link" data-href="/issues.html">Issues<span class="topbar__live"><span class="topbar__live-dot"></span>Live</span></a>
+      <a href="/sections.html" class="topbar__nav-link" data-href="/sections.html" id="topbar-sections">Customize</a>
+      <a href="/preferences.html" class="topbar__nav-link" data-href="/preferences.html">Preferences</a>
+    </nav>
+    <div class="topbar__right">
+      <div class="topbar__auth" id="topbar-auth" style="display:none">
+        <span class="topbar__auth-dot"></span>
+        <span class="topbar__auth-email" id="topbar-email"></span>
+        <span class="topbar__auth-tier" id="topbar-tier" style="display:none">◆ Premium</span>
+        <button type="button" class="topbar__signout" id="topbar-signout">Sign out</button>
+      </div>
+      <a href="/login.html?returnUrl=studio.html" class="topbar__signin" id="topbar-signin">Sign in →</a>
+      <span class="share-wrap">
+        <button type="button" class="share-btn" id="share-btn" aria-label="Share Latent SpaceMail">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v14"/></svg>
+          Share
+        </button>
+      </span>
+      <a href="https://github.com/lofeodo/ai-news-agent" target="_blank" rel="noopener" class="topbar__github" aria-label="View source on GitHub">
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+        <span class="topbar__github-label">GitHub</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Shown in mock mode: what "sample" means here, in one line. -->
+  <p class="studio-notice" id="studio-notice" hidden></p>
+
+  <main class="studio" id="studio" data-view="build" aria-busy="true">
+    <!-- Library: what can be added. A column on desktop and tablet, a sheet on phones. -->
+    <section class="lib" id="library" aria-labelledby="lib-title">
+      <div class="lib__head">
+        <h2 class="col-title" id="lib-title">Add to your newsletter</h2>
+        <button type="button" class="icon-btn lib__close" id="lib-close" aria-label="Close the library">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <div class="lib__search">
+        <label class="sr-only" for="lib-search">Search sections and widgets</label>
+        <input type="search" id="lib-search" placeholder="Search sections and widgets" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="lib__body" id="lib-body"></div>
+    </section>
+
+    <!-- Canvas: the newsletter being built. -->
+    <section class="canvas" id="canvas" aria-labelledby="blocks-title">
+      <div class="canvas__bar" id="canvas-bar"></div>
+      <div class="canvas__scroll" id="canvas-scroll">
+        <div class="masthead" id="masthead">
+          <label class="masthead__label" for="nl-name">Newsletter name</label>
+          <input type="text" id="nl-name" class="masthead__name" maxlength="60" autocomplete="off" spellcheck="false">
+          <div class="masthead__rule" aria-hidden="true"></div>
+          <div class="masthead__colour" id="colour-picker"></div>
+        </div>
+        <div class="canvas__head">
+          <h2 class="col-title" id="blocks-title" tabindex="-1">In this newsletter</h2>
+          <p class="canvas__counts" id="counts"></p>
+        </div>
+        <p class="limit-msg" id="limit-msg" role="alert" hidden></p>
+        <ol class="blocks" id="blocks" aria-describedby="blocks-help"></ol>
+        <p class="sr-only" id="blocks-help">Move a block with Alt and the up or down arrow, or with its Move up and Move down buttons.</p>
+        <div class="empty" id="empty" hidden></div>
+        <button type="button" class="add-btn" id="add-open">Add a section or widget</button>
+        <div class="canvas__foot" id="canvas-foot"></div>
+      </div>
+    </section>
+
+    <!-- Preview: the email exactly as it will arrive. -->
+    <section class="pv" id="preview" aria-labelledby="pv-title">
+      <div class="pv__head">
+        <h2 class="col-title" id="pv-title">Preview</h2>
+        <div class="seg" role="group" aria-label="Preview width">
+          <button type="button" class="seg__btn" data-width="600" aria-pressed="true">Desktop</button>
+          <button type="button" class="seg__btn" data-width="375" aria-pressed="false">Phone</button>
+        </div>
+        <button type="button" class="icon-btn pv__close" id="pv-close" aria-label="Close the preview">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <div class="pv__stage" id="pv-stage">
+        <div class="pv__frame" id="pv-frame">
+          <iframe id="pv-iframe" title="Email preview" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer"></iframe>
+          <div class="pv__shimmer" aria-hidden="true"></div>
+        </div>
+      </div>
+      <div class="pv__foot">
+        <div class="meter" id="meter"></div>
+        <p class="pv__status" id="pv-status"></p>
+        <ul class="pv__warnings" id="pv-warnings"></ul>
+      </div>
+    </section>
+
+    <div class="scrim" id="scrim" hidden></div>
+  </main>
+
+  <!-- Phones: switch between building and previewing. -->
+  <nav class="tabbar" id="tabbar" aria-label="Studio views">
+    <button type="button" class="tabbar__btn" data-view="build" aria-pressed="true">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Build
+    </button>
+    <button type="button" class="tabbar__btn" data-view="preview" aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="1"/><path d="M4 7l8 6 8-6"/></svg>Preview
+    </button>
+  </nav>
+
+  <!-- Gate: signed-out pitch, free-tier upgrade, or a load error, over a read-only sample. -->
+  <div class="gate" id="gate" hidden>
+    <div class="gate__card" id="gate-card" role="dialog" aria-modal="false" aria-labelledby="gate-title"></div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <p class="sr-only" id="sr-status" aria-live="polite"></p>
+
+  <script src="share.js"></script>
+  <script>LSMShare.attachButton(document.getElementById('share-btn'));</script>
+  <script type="module" src="nav.js"></script>
+  <script type="module" src="studio/app.js"></script>
+</body>
+</html>

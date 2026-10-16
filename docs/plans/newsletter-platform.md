@@ -91,6 +91,13 @@ in the PR description; roadmaps that already merged are then adjusted by whichev
   "unsubscribe from everything".
 - **Custom newsletters** are mailed only to their owner's verified account email (no sharing in v1), so a custom
   newsletter's subscriber list is its owner.
+- **Added by roadmap A (merged):** the doc also carries `subscribed_any` (true while it gets any newsletter; the
+  `MAX_SUBSCRIBERS` cap counts people with it) and, while an email-form addition waits for its confirmation click,
+  `pending_newsletters` / `pending_consent_version` / `pending_requested_at`. `active` wins for AI when it disagrees
+  with the list. `newsletter_meta.<id>` gains `unsubscribed_at` on leaving. Always write through
+  `subscriptions_model.add()` / `remove()` / `remove_all()`, which return the fields to write.
+  `GET /newsletters` returns `{"newsletters": [{id, name, tagline, accent_color, spotlight, sections: [{name, icon}],
+  latest_issue, hidden}], "consent_text", "consent_text_version"}`; hidden topics only for admins (`agents/launch.py`).
 
 ### C2. Edition
 

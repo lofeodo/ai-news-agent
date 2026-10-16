@@ -1036,20 +1036,31 @@ def newsletter_preview(request: Request):
 
 @router.get("/issues")
 @limiter.limit("30/minute")
-def archive_list(request: Request):
-    """Public: the flagged release issues, newest first. Debug runs and unflagged old runs never appear."""
-    return {"issues": run_kind.list_releases(_db(), FIRESTORE_COLLECTION)}
+def archive_list(
+    request: Request,
+    topic: Annotated[str, Query(max_length=32)] = "",
+    user: dict | None = Depends(get_optional_user),
+):
+    """Public: one newsletter's flagged release issues (AI unless `topic` names another), newest first. Debug runs
+    and unflagged old runs never appear; a hidden newsletter's archive is a 404 except for admins."""
+    newsletter = (topic or AI).strip().lower()
+    if not launch.is_visible(newsletter, bool(user) and _is_admin(user)):
+        return JSONResponse(status_code=404, content={"error": "not_found"})
+    return {"issues": run_kind.list_releases(_db(), FIRESTORE_COLLECTION, topic=newsletter)}
 
 
 @router.get("/issues/{run_id}")
 @limiter.limit("30/minute")
-def archive_issue(request: Request, run_id: str):
+def archive_issue(request: Request, run_id: str, user: dict | None = Depends(get_optional_user)):
     """Public: one archived issue as HTML, rendered and fenced exactly like /issues/latest. 404 for anything that is not
-    an explicitly flagged, composed release run, so a debug run cannot be fetched by guessing its id."""
+    an explicitly flagged, composed release run, so a debug run cannot be fetched by guessing its id, and for an
+    issue of a hidden newsletter (admins excepted)."""
     headers = {"Content-Security-Policy": PREVIEW_CSP}
     doc = _db().collection(FIRESTORE_COLLECTION).document(run_id).get() if ids.is_doc_id(run_id) else None
     data = doc.to_dict() if doc is not None and doc.exists else None
-    if not run_kind.is_archived_release(data):
+    newsletter = topics.topic_id_of(data)
+    if (not run_kind.is_archived_release(data, newsletter)
+            or not launch.is_visible(newsletter, bool(user) and _is_admin(user))):
         return HTMLResponse("<p>Issue not found.</p>", status_code=404, headers=headers)
     return HTMLResponse(content=_render_preview(data), status_code=200, headers=headers)
 

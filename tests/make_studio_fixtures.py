@@ -160,21 +160,25 @@ def _widget_card(wid: str, kicker: str, body: str, source: str) -> str:
 def _rows(rows: list[tuple[str, str, str]]) -> str:
     """A small data table: label | value | change. A change starting with ▲/▼ is coloured, and keeps its arrow
     and sign so it reads without colour."""
+    return _table("".join(_row(*r) for r in rows))
+
+
+def _table(rows_html: str) -> str:
+    return f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">\n{rows_html}</table>\n'
+
+
+def _row(label: str, value: str, change: str) -> str:
     from render.palette import ASH, F
 
-    out = ['<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">\n']
-    for label, value, change in rows:
-        colour = "#5fd08a" if change.startswith("▲") else "#e07a6a" if change.startswith("▼") else "#8a8580"
-        out.append(
-            f'<tr><td style="padding:6px 0;border-bottom:1px solid #222222;font-family:{F};font-size:13px;'
-            f'color:{ASH};">{label}</td>'
-            f'<td align="right" style="padding:6px 0 6px 12px;border-bottom:1px solid #222222;font-family:{F};'
-            f'font-size:13px;font-weight:700;color:#faf9f4;white-space:nowrap;">{value}</td>'
-            f'<td align="right" width="86" style="padding:6px 0 6px 12px;border-bottom:1px solid #222222;'
-            f'font-family:{F};font-size:12px;color:{colour};white-space:nowrap;">{change}</td></tr>\n'
-        )
-    out.append('</table>\n')
-    return "".join(out)
+    colour = "#5fd08a" if change.startswith("▲") else "#e07a6a" if change.startswith("▼") else "#8a8580"
+    return (
+        f'<tr><td style="padding:6px 0;border-bottom:1px solid #222222;font-family:{F};font-size:13px;'
+        f'color:{ASH};">{label}</td>'
+        f'<td align="right" style="padding:6px 0 6px 12px;border-bottom:1px solid #222222;font-family:{F};'
+        f'font-size:13px;font-weight:700;color:#faf9f4;white-space:nowrap;">{value}</td>'
+        f'<td align="right" width="86" style="padding:6px 0 6px 12px;border-bottom:1px solid #222222;'
+        f'font-family:{F};font-size:12px;color:{colour};white-space:nowrap;">{change}</td></tr>\n'
+    )
 
 
 def _lines(items: list[tuple[str, str]]) -> str:
@@ -234,7 +238,10 @@ def build_widget_fragments() -> dict:
             ("Thu &nbsp;US GDP", "third quarter, first estimate"),
             ("Fri &nbsp;Canada jobs", "October Labour Force Survey"),
         ]), fin),
-        "stock_watchlist": _widget_card("stock_watchlist", "My watchlist", "__ROWS__", fin),
+        # The mock fills __ROWS__ with one widget-row-up/-down per ticker the reader chose.
+        "stock_watchlist": _widget_card("stock_watchlist", "My watchlist", _table("__ROWS__"), fin),
+        "row-up": _row("__LABEL__", "__VALUE__", "▲ __CHANGE__"),
+        "row-down": _row("__LABEL__", "__VALUE__", "▼ __CHANGE__"),
         "free_games": _widget_card("free_games", "Free this week", _lines([
             ("Lantern Keeper", "Epic Games Store &middot; free until Thu"),
             ("Orbital Gardens", "Steam &middot; free weekend"),

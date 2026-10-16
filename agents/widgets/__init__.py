@@ -22,6 +22,7 @@ BUILTIN = (
     "market_snapshot",
     "number_of_week",
     "crowdfunding_watch",
+    "bgg_hot",
 )
 
 for _name in BUILTIN:

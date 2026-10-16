@@ -22,11 +22,11 @@ IF_EMPTY = ("note", "hide")   # an empty section shows "Nothing notable this wee
 
 _COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 
-# The widgets this module knows when the caller passes none. Roadmap C replaces this with its registry
-# (agents/widgets/); each entry needs only the attributes read by _widget_attr.
-DEFAULT_WIDGETS = {
-    "paper_spotlight": {"scope": "edition", "topics": ("ai",), "premium": False, "commercial_use": True},
-}
+def default_widget_catalog() -> dict:
+    """The widgets parse() knows when the caller passes none: the widget registry (agents/widgets/). Imported here
+    because the widgets package imports the renderer, which imports this module."""
+    from widgets import registry
+    return registry.definitions_catalog()
 
 
 class DefinitionError(ValueError):
@@ -125,7 +125,7 @@ def parse(raw, *, widgets=None, custom: bool = True, premium: bool = True) -> De
     member's own newsletter (the paid product, where a non-commercial widget is never allowed); `premium` says
     whether the owner may use premium widgets.
     """
-    catalog = DEFAULT_WIDGETS if widgets is None else widgets
+    catalog = default_widget_catalog() if widgets is None else widgets
     if not isinstance(catalog, dict):
         catalog = {w: {} for w in catalog}
     errors: list[str] = []

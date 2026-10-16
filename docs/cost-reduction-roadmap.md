@@ -91,7 +91,9 @@ The review eval says it plainly: confidence does not predict errors (Spearman 0.
 - **Caveat:** one week of papers and a reference that is one noisy model's opinion. The result says the abstract carries the signal Haiku uses, not that the paper is the one the owner would pick.
 - **Decision (owner, 2026-10-16): enable it**, K=8 (rank 5 leaves little margin at K=5). Needs agent1a deployed with `AGENT1A_MODE=abstract_first`; a deploy request to the owner. Rollback is `AGENT1A_MODE=full`.
 
-Remaining Step 3 work: deploy and switch on both modes (owner's decision, 2026-10-16), compare the first real runs against the Step 1 baseline cost, then prompt caching and the batch API.
+**Deployed and switched on 2026-10-16** (owner approved): agent1a `abstract_first`, agent2b `shortlist`, agent3 with the carried HN rank, all from `main` at `f596a11`; existing env vars untouched. First release run on them is 2026-10-18.
+
+Remaining Step 3 work: compare the first real runs against the Step 1 baseline cost (LangSmith per-agent cost), then prompt caching and the batch API.
 
 Independent of model choice, and compounding with it:
 - **agent2b**: ~490 calls for ~15-25 shipped articles. Summarize only what agent3 can actually ship (the post-selection pool plus runners-up), or batch several articles per call. Needs an ordering check: agent2b currently runs in parallel with agent2a before agent3 selection, so this may mean summarizing only the top-N per category by HN points.

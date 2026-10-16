@@ -20,10 +20,6 @@ categories:
   definition: commercial/closed AI model launches (e.g. GPT-5, Claude Fable, Gemini 3.5, Grok 3), new AI APIs and paid services, major version updates from AI labs. Do NOT put open-source or open-weights model releases here — those go in Open Source & Tools.
   cap: 4
   icon: 🚀
-- name: Industry & Business
-  definition: funding rounds, acquisitions, partnerships, earnings, market moves
-  cap: 3
-  icon: 💼
 - name: Policy, Law & Regulation
   definition: lawsuits, government hearings, legislation, copyright cases, AI governance
   cap: 3
@@ -36,6 +32,10 @@ categories:
   definition: AI safety research, alignment, interpretability, existential risk
   cap: 3
   icon: 🛡️
+- name: Industry & Business
+  definition: funding rounds, acquisitions, partnerships, earnings, market moves
+  cap: 3
+  icon: 💼
 - name: Society & Culture
   definition: AI in education, healthcare, art, labor, public discourse, ethics
   cap: 3

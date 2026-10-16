@@ -14,6 +14,7 @@ BUILTIN = (
     "paper_spotlight",
     "release_tracker",
     "free_games",
+    "most_played",
 )
 
 for _name in BUILTIN:

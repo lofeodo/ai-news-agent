@@ -1,0 +1,211 @@
+/* Newsletters hub (newsletters.html) and one newsletter's page (newsletter.html). Built on style.css: same
+   tokens, inputs and buttons. Each newsletter carries its own accent in --nl (set inline from GET /newsletters);
+   it appears where the site's amber card bar does, so every newsletter reads as a sibling of the AI one. */
+
+body { align-items: stretch; }
+
+.nl-page {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.nl-head { margin-bottom: 32px; }
+.nl-head h1 {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(2.2rem, 7vw, 3.2rem);
+  line-height: 1.05;
+  letter-spacing: 0;
+  color: var(--text);
+  margin-bottom: 14px;
+}
+.nl-head p {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--muted);
+  max-width: 60ch;
+}
+
+/* ── One newsletter in the list ── */
+.nl-list { list-style: none; display: grid; gap: 14px; }
+
+.nl {
+  --nl: var(--accent);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px 24px;
+  align-items: start;
+  padding: 24px 24px 22px;
+  background: rgba(22, 22, 22, 0.94);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--nl);
+  transition: background 0.2s, border-color 0.2s;
+}
+.nl.is-picked {
+  background: color-mix(in srgb, var(--nl) 7%, rgba(22, 22, 22, 0.94));
+  border-color: color-mix(in srgb, var(--nl) 45%, var(--border));
+  border-left-color: var(--nl);
+}
+
+.nl__name {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.75rem;
+  line-height: 1.1;
+  color: var(--nl);
+}
+.nl__name a { color: inherit; text-decoration: none; }
+.nl__name a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.nl__tagline { font-size: 0.8rem; color: var(--muted); margin-top: 6px; }
+
+.nl-hidden {
+  display: inline-block;
+  margin-left: 10px;
+  vertical-align: middle;
+  font-family: var(--font);
+  font-size: 0.68rem;
+  color: var(--muted);
+  border: 1px dashed var(--border);
+  padding: 2px 7px;
+}
+
+.nl-sections {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 14px;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: #bdbdbd;
+}
+
+.nl__links { margin-top: 14px; font-size: 0.8rem; }
+.nl__links a { color: var(--nl); text-decoration: none; }
+.nl__links a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* The control on the right: a checkbox for the email form, or a live toggle when signed in. */
+.nl-pick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 14px;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+.nl-pick:hover { border-color: var(--nl); }
+.nl-pick input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px; height: 16px; min-width: 16px;
+  margin: 0;
+  border: 1px solid #555;
+  background: var(--bg);
+  position: relative;
+  cursor: pointer;
+}
+.nl-pick input[type="checkbox"]:checked { background: var(--nl); border-color: var(--nl); }
+.nl-pick input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px; top: 1px;
+  width: 5px; height: 9px;
+  border: 2px solid var(--bg);
+  border-top: none; border-left: none;
+  transform: rotate(45deg);
+}
+.nl-pick:focus-within { outline: 2px solid var(--nl); outline-offset: 2px; }
+.nl-pick[aria-busy="true"] { opacity: 0.6; cursor: progress; }
+
+/* ── Email form under the list ── */
+.nl-signup {
+  margin-top: 28px;
+  padding: 26px 24px 24px;
+  background: rgba(22, 22, 22, 0.94);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+}
+.nl-signup h2 {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.4rem;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.nl-signup__picked { font-size: 0.82rem; color: var(--muted); margin-bottom: 18px; line-height: 1.6; }
+.nl-signup__row { display: flex; gap: 10px; }
+.nl-signup__row input { flex: 1 1 auto; min-width: 0; min-height: 44px; }
+.nl-signup__row button[type="submit"] { width: auto; flex: 0 0 auto; padding: 0 22px; min-height: 44px; }
+.nl-signup .check-row { margin: 14px 0 0; }
+.nl-consent { margin-top: 14px; font-size: 0.76rem; line-height: 1.6; color: var(--muted); }
+.nl-signed-in { font-size: 0.84rem; line-height: 1.6; color: var(--muted); margin-top: 22px; }
+
+.nl-status { font-size: 0.9rem; color: var(--muted); line-height: 1.6; }
+.nl-status.error { color: var(--error); }
+
+/* ── One newsletter's page ── */
+.nl-hero {
+  --nl: var(--accent);
+  border-left: 4px solid var(--nl);
+  padding: 4px 0 4px 22px;
+  margin-bottom: 30px;
+}
+.nl-hero h1 {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(2.4rem, 9vw, 4rem);
+  line-height: 1;
+  color: var(--nl);
+  margin-bottom: 12px;
+}
+.nl-hero p { font-size: 0.9rem; color: var(--muted); line-height: 1.7; max-width: 60ch; }
+.nl-hero .nl-sections { margin-top: 18px; font-size: 0.82rem; }
+
+.nl-block-title {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.4rem;
+  color: var(--text);
+  margin: 34px 0 12px;
+}
+.nl-issue {
+  display: block;
+  width: 100%;
+  height: min(78vh, 900px);
+  border: 1px solid var(--border);
+  background: #060606;
+}
+.nl-issue-links { margin-top: 10px; font-size: 0.8rem; }
+.nl-issue-links a { color: var(--nl, var(--accent)); text-decoration: none; }
+.nl-issue-links a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+@media (max-width: 600px) {
+  .nl { grid-template-columns: 1fr; padding: 20px 16px 18px; }
+  .nl-pick { justify-content: center; }
+  .nl-signup { padding: 22px 16px 20px; }
+  .nl-signup__row { flex-direction: column; }
+  .nl-signup__row button[type="submit"] { width: 100%; }
+  .nl-hero { padding-left: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nl { transition: none; }
+}

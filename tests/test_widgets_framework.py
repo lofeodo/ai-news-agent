@@ -66,6 +66,13 @@ def test_timeout(make_widget):
     assert res.summary() == {"t_slow": "timed_out", "t_fast": "ok"}
 
 
+def test_a_widget_may_ask_for_a_longer_timeout(make_widget):
+    make_widget("t_patient", produce=lambda c, cfg: time.sleep(0.4) or {"n": 1}, timeout=2)
+    make_widget("t_hasty", produce=lambda c, cfg: time.sleep(0.4) or {"n": 1})
+    res = produce_edition_widgets(ctx(), [{"id": "t_patient"}, {"id": "t_hasty"}], timeout=0.2, budget=5)
+    assert res.summary() == {"t_patient": "ok", "t_hasty": "timed_out"}
+
+
 def test_budget_exhaustion(make_widget):
     make_widget("t_b1", produce=lambda c, cfg: time.sleep(1.0) or {"n": 1})
     make_widget("t_b2", produce=lambda c, cfg: time.sleep(1.0) or {"n": 1})

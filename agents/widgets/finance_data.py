@@ -19,7 +19,8 @@ CALENDAR_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "financ
 BOC_URL = "https://www.bankofcanada.ca/valet/observations/{series}/json?recent={n}"
 TREASURY_URL = ("https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/"
                 "{year}/all?type=daily_treasury_yield_curve&field_tdr_date_value={year}&page&_format=csv")
-NYFED_URL = "https://markets.newyorkfed.org/api/rates/unsecured/effr/last/{n}.json"
+TREASURY_TIMEOUT = 35   # the server takes ~17 s before its first byte, whatever the range asked for
+NYFED_URL ="https://markets.newyorkfed.org/api/rates/unsecured/effr/last/{n}.json"
 ECB_URL = ("https://data-api.ecb.europa.eu/service/data/FM/D.U2.EUR.4F.KR.DFR.LEV"
            "?lastNObservations={n}&format=jsondata")
 
@@ -83,7 +84,7 @@ def boc_series(ctx, series: list[str], recent: int = 10) -> dict:
 
 def treasury_yields(ctx, year: int, columns=("2 Yr", "10 Yr")) -> dict:
     """{column: [(date iso, value), ...] oldest first} from the Treasury's daily par yield curve CSV."""
-    text = ctx.get(TREASURY_URL.format(year=year)).text
+    text = ctx.get(TREASURY_URL.format(year=year), timeout=TREASURY_TIMEOUT).text
     out: dict = {}
     for row in reversed(list(csv.DictReader(io.StringIO(text)))):
         try:

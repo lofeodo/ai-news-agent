@@ -112,6 +112,7 @@ def produce_edition_widgets(ctx: ProduceContext, entries, timeout: float = WIDGE
     if not jobs:
         return result
 
+    limits = {wid: w.timeout or timeout for wid, w, _ in jobs}
     started: dict[str, float] = {}
 
     def call(wid, widget, config):
@@ -138,9 +139,9 @@ def produce_edition_widgets(ctx: ProduceContext, entries, timeout: float = WIDGE
                     result.data[wid] = data
             now = time.monotonic()
             for fut, wid in list(pending.items()):
-                if wid in started and now - started[wid] >= timeout:
+                if wid in started and now - started[wid] >= limits[wid]:
                     pending.pop(fut)
-                    result.status[wid] = {"status": TIMED_OUT, "error": f"no answer within {timeout:g}s"}
+                    result.status[wid] = {"status": TIMED_OUT, "error": f"no answer within {limits[wid]:g}s"}
         for fut, wid in pending.items():
             fut.cancel()
             result.status[wid] = {"status": TIMED_OUT, "error": f"edition budget of {budget:g}s used up"}

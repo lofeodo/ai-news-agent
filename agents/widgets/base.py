@@ -83,6 +83,7 @@ class Widget:
     config_fields: tuple = ()       # ({"name", "type", "label", "options"?, "min"?, "max"?, "default"}, ...)
     keys: tuple = ()                # env vars the source needs; absent = skipped_no_key (ships disabled)
     max_age_hours: float | None = None   # data whose `as_of` is older than this is never shown as current
+    timeout: float | None = None    # seconds for produce(); None = the runner's default (20); still within the budget
     toc: tuple | None = None        # (short, label) for the table of contents, or None
 
     def produce(self, ctx: ProduceContext, config: dict) -> dict:

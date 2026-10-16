@@ -21,8 +21,9 @@ and `sample_data()` feeds the admin gallery, the studio and the tests. Attribute
 
 ## The rules every widget follows
 
-- **Bounded.** `agents/widgets/runner.py` gives each `produce` 20 s, all of a run's widgets share 90 s in a pool of
-  4 threads, data must be JSON and at most 20 KB, and the rendered fragment at most 8 KB (Gmail clips an email at
+- **Bounded.** `agents/widgets/runner.py` gives each `produce` 20 s (a widget may ask for more with `timeout`:
+  `market_snapshot` takes 45 s because the US Treasury needs ~17 s to answer), all of a run's widgets share 90 s
+  in a pool of 4 threads, data must be JSON and at most 20 KB, and the rendered fragment at most 8 KB (Gmail clips an email at
   about 102 KB). A widget that breaks a rule gets a status (`failed`, `timed_out`, `stale`, `empty`,
   `skipped_no_key`) and is left out of that week's email. Nothing in a widget can fail a run or a send.
 - **Untrusted data.** Everything from a source or a model goes through `esc()`; links through `safe_url()`. Derived

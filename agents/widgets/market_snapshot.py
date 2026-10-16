@@ -39,6 +39,7 @@ class MarketSnapshot(Widget):
     description = "The Canadian dollar and Canadian and US government bond yields: where they ended the week."
     topics = ("finance",)
     max_age_hours = 7 * 24
+    timeout = 45                # the Treasury's CSV takes ~17 s to start answering (measured 2026-10-16)
 
     def produce(self, ctx, config):
         today = _send_day(ctx)

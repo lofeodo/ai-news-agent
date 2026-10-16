@@ -18,6 +18,7 @@ from filter_tool import CATEGORIES, FILTER_TOOL, FILTER_TOOL_WITH_CONFIDENCE, LA
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_XML_ARTICLES, neutralize_tags
 from drift import summarize_audit
+from rss_source import fetch_rss_articles
 from config import (
     DATA_DIR, SCORING_MODEL, MAX_TOKENS, FILTER_MAX_TOKENS,
     NEWS_FETCH_SIZE, NEWSAPI_QUERIES,
@@ -43,22 +44,7 @@ _semaphore = threading.Semaphore(MAX_CONCURRENT_CLAUDE_CALLS)
 # Fetching
 # ---------------------------------------------------------------------------
 
-def fetch_hn_articles() -> list:
-    """Fetch the week's top HN stories (last LOOKBACK_HOURS) by points, via Algolia search.
-
-    Not the official topstories.json: that is the *current* front page, whose ranking
-    decays with age, so by Monday morning most of the week's biggest stories had
-    already fallen off it. No points floor — HN_MAX_HITS alone bounds the volume.
-    """
-    print(f"Fetching Hacker News stories (last {LOOKBACK_HOURS}h)...")
-
-    cutoff_timestamp = int((datetime.now(timezone.utc) - timedelta(hours=LOOKBACK_HOURS)).timestamp())
-    params = {
-        "tags":           "story",
-        "numericFilters": f"created_at_i>{cutoff_timestamp}",
-        "hitsPerPage":    HN_MAX_HITS,
-    }
-
+def _hn_search(params: dict) -> list:
     response = requests.get(HN_SEARCH_URL, params=params, timeout=30)
     response.raise_for_status()
 
@@ -75,6 +61,43 @@ def fetch_hn_articles() -> list:
             "language":    "en",
             "hn_score":    hit.get("points") or 0,
         })
+    return articles
+
+
+def fetch_hn_articles(queries: list | None = None, min_points: int = 0) -> list:
+    """Fetch the week's top HN stories (last LOOKBACK_HOURS) by points, via Algolia search.
+
+    Not the official topstories.json: that is the *current* front page, whose ranking
+    decays with age, so by Monday morning most of the week's biggest stories had
+    already fallen off it. No points floor — HN_MAX_HITS alone bounds the volume.
+
+    With `queries` (a topic that is not AI), each query is searched on its own, since Algolia has no OR
+    operator, keeping stories with at least `min_points`; the results are merged.
+    """
+    print(f"Fetching Hacker News stories (last {LOOKBACK_HOURS}h)...")
+
+    cutoff_timestamp = int((datetime.now(timezone.utc) - timedelta(hours=LOOKBACK_HOURS)).timestamp())
+    base = {
+        "tags":           "story",
+        "numericFilters": f"created_at_i>{cutoff_timestamp}",
+        "hitsPerPage":    HN_MAX_HITS,
+    }
+
+    if not queries:
+        articles = _hn_search(base)
+    else:
+        articles = []
+        for query in queries:
+            params = {**base, "query": query}
+            if min_points:
+                params["numericFilters"] += f",points>={min_points}"
+            try:
+                found = _hn_search(params)
+            except Exception as e:
+                print(f"  [hn error] {query!r}: {type(e).__name__}")
+                continue
+            print(f"  {query!r}: {len(found)} stories")
+            articles.extend(found)
 
     print(f"  Got {len(articles)} HN articles")
     return articles
@@ -115,9 +138,10 @@ def fetch_newsapi_query(query: str, from_time: str, api_key: str) -> list:
     return articles
 
 
-def fetch_newsapi_articles() -> list:
-    """Run all NEWSAPI_QUERIES and merge results."""
-    print(f"Fetching NewsAPI articles ({len(NEWSAPI_QUERIES)} queries)...")
+def fetch_newsapi_articles(queries: list | None = None) -> list:
+    """Run all NEWSAPI_QUERIES (or the given `queries`, for another topic) and merge results."""
+    queries = NEWSAPI_QUERIES if queries is None else queries
+    print(f"Fetching NewsAPI articles ({len(queries)} queries)...")
 
     api_key = os.environ.get("NEWS_API_KEY")
     if not api_key:
@@ -126,8 +150,8 @@ def fetch_newsapi_articles() -> list:
     from_time = (datetime.now(timezone.utc) - timedelta(hours=LOOKBACK_HOURS)).strftime("%Y-%m-%dT%H:%M:%S")
 
     all_articles = []
-    for i, query in enumerate(NEWSAPI_QUERIES, 1):
-        print(f"  Query {i}/{len(NEWSAPI_QUERIES)}: {query[:60]}...")
+    for i, query in enumerate(queries, 1):
+        print(f"  Query {i}/{len(queries)}: {query[:60]}...")
         try:
             results = fetch_newsapi_query(query, from_time, api_key)
             print(f"    got {len(results)} articles")
@@ -138,6 +162,30 @@ def fetch_newsapi_articles() -> list:
 
     print(f"  Got {len(all_articles)} NewsAPI articles (before dedup)")
     return all_articles
+
+
+def fetch_topic_articles(topic) -> list:
+    """Every source of a topic's profile, in profile order, merged into one list.
+
+    The AI newsletter's sources (the plain weekly HN top and the NEWSAPI_QUERIES list) are called exactly as
+    they always were, with no arguments.
+    """
+    articles = []
+    for source in topic.sources:
+        kind = source["type"]
+        if kind == "hn":
+            if source.get("queries"):
+                articles += fetch_hn_articles(source["queries"], source.get("min_points") or 0)
+            else:
+                articles += fetch_hn_articles()
+        elif kind == "newsapi":
+            if list(source["queries"]) == NEWSAPI_QUERIES:
+                articles += fetch_newsapi_articles()
+            else:
+                articles += fetch_newsapi_articles(list(source["queries"]))
+        elif kind == "rss":
+            articles += fetch_rss_articles(source["feeds"], LOOKBACK_HOURS)
+    return articles
 
 
 # ---------------------------------------------------------------------------

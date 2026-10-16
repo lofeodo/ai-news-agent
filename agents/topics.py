@@ -160,8 +160,15 @@ def _parse_source(raw, topic_id: str) -> dict:
             _require(mi is None or (isinstance(mi, int) and not isinstance(mi, bool) and mi >= 1), topic_id,
                      f"feed {feed['name']!r}: max_items must be a positive integer")
     elif kind == "hn":
-        q = raw.get("query")
-        _require(q is None or (isinstance(q, str) and q.strip()), topic_id, "hn query must be a non-empty string")
+        # No queries = the week's top stories overall (the AI newsletter). With queries, each is searched
+        # separately (Algolia has no OR operator) and the results are merged.
+        queries = raw.get("queries")
+        _require(queries is None or (isinstance(queries, list) and queries
+                                     and all(isinstance(q, str) and q.strip() for q in queries)),
+                 topic_id, "hn queries must be a non-empty list of strings")
+        mp = raw.get("min_points")
+        _require(mp is None or (isinstance(mp, int) and not isinstance(mp, bool) and mp >= 0), topic_id,
+                 "hn min_points must be a non-negative integer")
     return raw
 
 

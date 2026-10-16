@@ -1,0 +1,68 @@
+# The original AI newsletter. Pinned to the pre-topic constants by tests/test_topics_ai_equivalence.py:
+# change config.py and this file together, or the test fails.
+id: ai
+name: Latent SpaceMail
+tagline: Weekly AI Intelligence Dispatch
+audience: 'readers who follow artificial intelligence closely: researchers, engineers and curious professionals'
+accent_color: '#c8b89a'
+languages:
+- en
+- fr
+variants:
+- '0_0'
+- '1_0'
+- '0_1'
+- '1_1'
+spotlight: papers
+max_articles: 0
+categories:
+- name: Model & Product Releases
+  definition: commercial/closed AI model launches (e.g. GPT-5, Claude Fable, Gemini 3.5, Grok 3), new AI APIs and paid services, major version updates from AI labs. Do NOT put open-source or open-weights model releases here — those go in Open Source & Tools.
+  cap: 4
+  icon: 🚀
+- name: Industry & Business
+  definition: funding rounds, acquisitions, partnerships, earnings, market moves
+  cap: 3
+  icon: 💼
+- name: Policy, Law & Regulation
+  definition: lawsuits, government hearings, legislation, copyright cases, AI governance
+  cap: 3
+  icon: ⚖️
+- name: Open Source & Tools
+  definition: open-source or open-weights model releases (anything described as "open weights", "open source", or "available on Hugging Face"), GitHub projects, new frameworks, developer tools, benchmarks
+  cap: 4
+  icon: 🛠️
+- name: Safety & Alignment
+  definition: AI safety research, alignment, interpretability, existential risk
+  cap: 3
+  icon: 🛡️
+- name: Society & Culture
+  definition: AI in education, healthcare, art, labor, public discourse, ethics
+  cap: 3
+  icon: 🌍
+- name: Canada & Montreal
+  definition: any AI story with a Canadian or Montreal angle, regardless of topic
+  cap: 3
+  icon: 🍁
+  variant_flag: include_canada
+sources:
+- type: hn
+- type: newsapi
+  queries:
+  - '"artificial intelligence" OR "machine learning" OR "deep learning"'
+  - '"LLM" OR "large language model" OR "generative AI" OR "foundation model"'
+  - '"OpenAI" OR "Anthropic" OR "Google DeepMind" OR "Mistral" OR "xAI" OR "Meta AI" OR "Apple Intelligence" OR "Amazon Bedrock" OR "Cohere" OR "Stability AI" OR "Midjourney" OR "Perplexity"'
+  - '"ChatGPT" OR "Claude" OR "Gemini" OR "Llama" OR "Grok" OR "Copilot" OR "Sora" OR "DALL-E" OR "Fable"'
+  - '"AI regulation" OR "AI safety" OR "AI policy" OR "AI law" OR "AI ethics" OR "AI governance" OR "AI alignment"'
+  - '"open source AI" OR "AI tools" OR "AI agent" OR "AI assistant" OR "agentic AI"'
+  - '"AI chip" OR "GPU" OR "NVIDIA" OR "semiconductor" OR "AI infrastructure" OR "AI hardware"'
+  - '"AI research" OR "neural network" OR "transformer model" OR "diffusion model" OR "reinforcement learning"'
+  - '"intelligence artificielle" OR "apprentissage automatique" OR "apprentissage profond" OR "IA générative" OR "grand modèle de langage"'
+  - ("AI" OR "artificial intelligence" OR "intelligence artificielle" OR "IA") AND ("Canada" OR "Montreal" OR "Montréal" OR "Quebec" OR "Québec" OR "Toronto" OR "Ottawa")
+paywalled_domains: []
+prompts:
+  news_filter: prompts/news_filter_prompt.txt
+  selection: prompts/article_selection_prompt.txt
+  intro: prompts/intro_prompt.txt
+  news_summary: prompts/news_summary_prompt.txt
+  news_summary_fallback: prompts/news_summary_fallback_prompt.txt

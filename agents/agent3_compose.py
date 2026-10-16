@@ -15,8 +15,10 @@ from prompt_guard import GUARD_XML_TAGS, neutralize_tags
 import tracing
 import topics
 from agent3_dedup_graph import dedup_section
+import editions
 import newsletter_def
 import render
+import run_kind
 from render.blocks import render_article_card, render_paper_card  # noqa: F401  (re-exported)
 from render.palette import AMBER as _AMBER, darken as _darken  # noqa: F401  (re-exported)
 from render.text import esc as _esc, safe_url as _safe_url, strip_markdown_headers as _strip_markdown_headers  # noqa: F401
@@ -398,6 +400,43 @@ def write_dedup_audit(run_id: str, audits: list) -> None:
         print(f"  [dedup] could not write audit log: {e}")
 
 
+def _duplicate_urls(audits: list, category: str) -> set:
+    """URLs the dedup step judged duplicates in a section: removed picks and rejected fallbacks."""
+    urls = set()
+    for a in audits:
+        if a.get("category") != category:
+            continue
+        urls.update(r.get("url") for g in a.get("groups", []) for r in g.get("removed", []))
+        urls.update(f.get("url") for f in a.get("fallbacks", []) if not f.get("accepted"))
+    return urls
+
+
+def write_edition(topic, run_id: str, kind: str, intro: str, selected_all: dict, selected_en: dict,
+                  pools: dict, audits: list) -> str | None:
+    """Save this run's edition (editions/{run_id}; data/edition.json in local mode). Best effort: returns the
+    error text on failure (the caller records it as agent3_edition_error) and never raises."""
+    try:
+        clean_pools = {cat: [a for a in pool if a.get("url") not in _duplicate_urls(audits, cat)]
+                       for cat, pool in pools.items()}
+        edition = editions.build_edition(
+            topic, run_id, kind, newsletter_send_date().date().isoformat(), intro, selected_all, selected_en,
+            clean_pools, ["paper_spotlight"] if topic.spotlight == "papers" else [])
+        if USE_FIRESTORE:
+            from google.cloud import firestore as _fs
+            editions.save(_fs.Client(project=GCP_PROJECT_ID), edition)
+            print(f"  Saved editions/{run_id}")
+        else:
+            os.makedirs(DATA_DIR, exist_ok=True)
+            path = os.path.join(DATA_DIR, "edition.json")
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(edition, f, indent=2, ensure_ascii=False, default=str)
+            print(f"  Saved {path}")
+        return None
+    except Exception as e:
+        print(f"  [edition] could not save the edition: {e}", flush=True)
+        return str(e) or type(e).__name__
+
+
 def build_run_doc_update(newsletter_variants: dict, subject: str, selected_all: dict,
                          selected_en: dict, by_category: dict, dedup_summary: dict | None = None, topic=None) -> dict:
     """Fields agent3 writes to the run doc when it finishes.
@@ -501,6 +540,7 @@ def run(run_id: str, force: bool = False):
         # The second pass is skipped when the category has no French articles.
         selected_all: dict[str, list] = {}
         selected_en:  dict[str, list] = {}
+        pools:        dict[str, list] = {}   # ranked runners-up of both passes, for the edition
         dedup_audits: list[dict] = []
 
         for category in topic.category_names:
@@ -516,12 +556,14 @@ def run(run_id: str, force: bool = False):
             sel = select_with_runners_up(category, articles, selection_prompt, client, topic)
             full_selected = _dedup(category, sel, client, run_id, "all", dedup_audits, topic)
             selected_all[category] = full_selected
+            pools[category] = list(sel.runners_up)
 
             en_articles = [a for a in articles if a.get("language") != "fr"]
             if len(en_articles) < len(articles):
                 print(f" → selected {len(full_selected)} (re-running English-only)", end="")
                 sel_en = select_with_runners_up(category, en_articles, selection_prompt, client, topic)
                 selected_en[category] = _dedup(category, sel_en, client, run_id, "en", dedup_audits, topic)
+                pools[category] += sel_en.runners_up
             else:
                 selected_en[category] = full_selected
 
@@ -554,13 +596,18 @@ def run(run_id: str, force: bool = False):
             f.write(newsletter_variants["0_0"])
         print(f"  Saved {legacy_path} (legacy alias for 0_0)")
 
+        print("\n=== Saving the edition ===")
+        kind = run_kind.RELEASE if USE_FIRESTORE and run_kind.is_release(doc) else run_kind.DEBUG
+        edition_error = write_edition(topic, run_id, kind, intro, selected_all, selected_en, pools, dedup_audits)
+
         if USE_FIRESTORE:
             from google.cloud import firestore as _fs
             # The run doc must stay under Firestore's 1 MiB cap; see build_run_doc_update().
-            _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).update(
-                build_run_doc_update(newsletter_variants, f"{topic.name} — {week_of}",
-                                     selected_all, selected_en, by_category, summarize_dedup(dedup_audits), topic)
-            )
+            update = build_run_doc_update(newsletter_variants, f"{topic.name} — {week_of}",
+                                          selected_all, selected_en, by_category, summarize_dedup(dedup_audits), topic)
+            # A forced recompose that saves the edition clears an earlier attempt's error.
+            update["agent3_edition_error"] = edition_error or _fs.DELETE_FIELD
+            _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).update(update)
             print(f"  Written newsletter_variants + newsletter_html (0_0) to Firestore; pruned article pools")
 
         elapsed = (datetime.now() - start_time).total_seconds()

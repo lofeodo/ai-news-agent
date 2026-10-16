@@ -40,28 +40,28 @@ class _Doc:
 
 
 class _Query:
-    def __init__(self, store, name, limit=None, filters=()):
+    def __init__(self, store, name, limit=None, filters=(), order="started_at"):
         self._store, self._name, self._limit, self._filters = store, name, limit, tuple(filters)
+        self._order = order
 
     def order_by(self, field, direction=None):
-        self._field = field
-        return self
+        return _Query(self._store, self._name, self._limit, self._filters, field)
 
     def where(self, field, op, value):
         assert op == "==", "the fake only supports equality filters"
-        return _Query(self._store, self._name, self._limit, self._filters + ((field, value),))
+        return _Query(self._store, self._name, self._limit, self._filters + ((field, value),), self._order)
 
     def select(self, fields):
         return self  # the fake always returns whole docs
 
     def limit(self, n):
-        return _Query(self._store, self._name, n, self._filters)
+        return _Query(self._store, self._name, n, self._filters, self._order)
 
     def stream(self):
-        # Newest first by started_at (ISO strings sort lexicographically).
+        # Newest first by the order_by field, started_at by default (ISO strings sort lexicographically).
         rows = sorted(((i, d) for i, d in self._store.get(self._name, {}).items()
                        if all(d.get(f) == v for f, v in self._filters)),
-                      key=lambda kv: kv[1].get("started_at", ""), reverse=True)
+                      key=lambda kv: kv[1].get(self._order) or "", reverse=True)
         rows = rows[: self._limit] if self._limit else rows
         return [_Snap(i, d) for i, d in rows]
 

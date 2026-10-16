@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "name": "lang_filter_eval_2026-10-16",
+  "created_at": "2026-10-16T14:46:01.413768+00:00",
+  "git_sha": "59fb258",
+  "model": "claude-haiku-4-5-20251001",
+  "cost_usd": 0.9131,
+  "notes": "Fresh unfiltered fetch after prefilter, same batches per arm. Reference = today's filter (claude_a); claude_b is the same code again (noise floor). No hand labels yet: disagreements are in the rows file.",
+  "metrics": {
+    "claude_b_vs_a_foreign_through": {
+      "value": 0.000657030223390276,
+      "n": 1522,
+      "ci_low": 0.0001159913845392845,
+      "ci_high": 0.0037123610218823657
+    },
+    "claude_b_vs_a_wrongly_dropped": {
+      "value": 0.0,
+      "n": 1522,
+      "ci_low": 0.0,
+      "ci_high": 0.002517600238535363
+    },
+    "claude_b_vs_a_relabelled": {
+      "value": 0.000657030223390276,
+      "n": 1522,
+      "ci_low": 0.0001159913845392845,
+      "ci_high": 0.0037123610218823657
+    },
+    "exceptions_vs_a_foreign_through": {
+      "value": 0.000657030223390276,
+      "n": 1522,
+      "ci_low": 0.0001159913845392845,
+      "ci_high": 0.0037123610218823657
+    },
+    "exceptions_vs_a_wrongly_dropped": {
+      "value": 0.0,
+      "n": 1522,
+      "ci_low": 0.0,
+      "ci_high": 0.002517600238535363
+    },
+    "exceptions_vs_a_relabelled": {
+      "value": 0.000657030223390276,
+      "n": 1522,
+      "ci_low": 0.0001159913845392845,
+      "ci_high": 0.0037123610218823657
+    },
+    "claude_a_dropped": {
+      "value": 0.05387647831800263,
+      "n": 1522,
+      "ci_low": 0.0436157403063108,
+      "ci_high": 0.06638353769890012
+    },
+    "cost_usd_claude_a": {
+      "value": 0.3324,
+      "n": 1522,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "cost_usd_claude_b": {
+      "value": 0.3324,
+      "n": 1522,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "cost_usd_exceptions": {
+      "value": 0.2484,
+      "n": 1522,
+      "ci_low": null,
+      "ci_high": null
+    }
+  }
+}

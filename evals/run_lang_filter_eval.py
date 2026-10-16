@@ -41,10 +41,10 @@ from evals.stats import rate_with_ci  # noqa: E402
 
 POOL_CACHE = PRIVATE_DIR / "lang_filter_pool.json"
 
-# Per-article budgets for the pre-run estimate (measured 2026-10-16: 62 calls, ~220k in / 24k out for 547).
-_IN_PER_ARTICLE = 400
-_OUT_PER_ARTICLE_FULL = 44
-_OUT_PER_ARTICLE_EXC = 4
+# Per-article budgets for the pre-run estimate (measured 2026-10-16: 62 calls x 25 = ~1,550 articles, ~220k in / 24k out).
+_IN_PER_ARTICLE = 145
+_OUT_PER_ARTICLE_FULL = 16
+_OUT_PER_ARTICLE_EXC = 2
 
 
 # ---------------------------------------------------------------------------

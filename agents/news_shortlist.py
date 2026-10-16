@@ -46,6 +46,25 @@ def make_candidates(articles: list, texts: list) -> list:
     return out
 
 
+def hn_context(by_category: dict) -> dict:
+    """{global index: {"hn_rank", "hn_of"}} for every HN-scored article, ranked within its WHOLE section.
+
+    agent3 labels each article "#rank of N HN stories in this section", computed from the pool it is
+    given. After a shortlist that pool is already the section's best, so every rank would read
+    differently from the full-pool run (a #9 story would look like #2). Carrying the full-section rank
+    through keeps the editor's HN signal the same as in AGENT2B_MODE=all."""
+    out = {}
+    offset = 0
+    for articles in by_category.values():
+        scores = [a["hn_score"] for a in articles if a.get("hn_score") is not None]
+        for i, a in enumerate(articles):
+            hn = a.get("hn_score")
+            if hn is not None:
+                out[offset + i] = {"hn_rank": 1 + sum(1 for s in scores if s > hn), "hn_of": len(scores)}
+        offset += len(articles)
+    return out
+
+
 def _default_select():
     from agent3_compose import select_with_runners_up  # lazy: only shortlist mode needs agent3's code
     return select_with_runners_up

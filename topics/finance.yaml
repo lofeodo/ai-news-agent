@@ -13,7 +13,7 @@ disclaimer: For information only. Nothing here is financial, investment or tax a
 guidelines: >-
   Readers are retail investors, not traders. Prefer the story that explains why markets, rates or prices moved
   and what it means for ordinary savers and investors over a bare price move. Skip stock-tip and "best stocks to
-  buy" promotion, price predictions, and affiliate pieces. A central bank decision, a major earnings result, a
+  buy" promotion ("should you buy this dividend stock", "my top pick"), price predictions, and affiliate pieces. A central bank decision, a major earnings result, a
   regulatory change or a clear personal-finance explainer is worth including. Canadian stories belong in the
   Canada section even when they also fit another section.
 
@@ -61,7 +61,6 @@ sources:
       - {name: Kiplinger, url: "https://www.kiplinger.com/feed/all", max_items: 25}
       - {name: NerdWallet, url: "https://www.nerdwallet.com/blog/feed/", max_items: 15}
       - {name: MoneySense, url: "https://www.moneysense.ca/feed/", max_items: 15}
-      - {name: Motley Fool Canada, url: "https://www.fool.ca/feed/", max_items: 15}
       - {name: Bank of Canada, url: "https://www.bankofcanada.ca/feed/", max_items: 15}
       - {name: Federal Reserve, url: "https://www.federalreserve.gov/feeds/press_all.xml", max_items: 15}
       - {name: ECB, url: "https://www.ecb.europa.eu/rss/press.html", max_items: 10}

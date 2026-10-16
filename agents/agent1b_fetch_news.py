@@ -20,6 +20,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_XML_ARTICLES, neutralize_tags
 from drift import summarize_audit
 from rss_source import fetch_rss_articles
+import llm
 import topics
 from config import (
     DATA_DIR, SCORING_MODEL, MAX_TOKENS, FILTER_MAX_TOKENS,
@@ -413,7 +414,7 @@ def language_exceptions_batch(batch: list, batch_index: int, client: anthropic.A
     with _semaphore:
         response = claude_call_with_retry(
             client,
-            model=SCORING_MODEL,
+            model=llm.model_for("lang_filter"),
             max_tokens=FILTER_MAX_TOKENS,
             system=GUARD_XML_ARTICLES,
             tools=[LANGUAGE_EXCEPTIONS_TOOL],
@@ -460,7 +461,7 @@ def language_filter_batch(batch: list, batch_index: int, client: anthropic.Anthr
     with _semaphore:
         response = claude_call_with_retry(
             client,
-            model=SCORING_MODEL,
+            model=llm.model_for("lang_filter"),
             max_tokens=FILTER_MAX_TOKENS,
             system=GUARD_XML_ARTICLES,
             tools=[LANGUAGE_FILTER_TOOL],
@@ -506,7 +507,7 @@ def language_filter(articles: list, client=None, allowed=("en", "fr")) -> list:
     n_batches = (len(articles) + LANG_BATCH_SIZE - 1) // LANG_BATCH_SIZE
     print(f"\nLanguage filtering {len(articles)} articles in {n_batches} batch(es)...")
 
-    client  = client or anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
+    client  = client or llm.make_client("agent1b")
     batches = [articles[i:i + LANG_BATCH_SIZE] for i in range(0, len(articles), LANG_BATCH_SIZE)]
 
     all_results = []
@@ -552,7 +553,7 @@ def filter_batch(batch: list, batch_index: int, prompt_template: str, client: an
     with _semaphore:
         response = claude_call_with_retry(
             client,
-            model=SCORING_MODEL,
+            model=llm.model_for("categorize"),
             max_tokens=FILTER_MAX_TOKENS,
             system=GUARD_XML_ARTICLES,
             tools=[tool],
@@ -614,7 +615,7 @@ def filter_and_categorize(articles: list, client=None, with_confidence: bool = F
         assert marker in prompt_template
         prompt_template = prompt_template.replace(marker, addendum + marker)
 
-    client = client or anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
+    client = client or llm.make_client("agent1b")
 
     batches = [articles[i:i + FILTER_BATCH_SIZE] for i in range(0, len(articles), FILTER_BATCH_SIZE)]
 

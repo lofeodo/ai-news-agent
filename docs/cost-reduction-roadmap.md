@@ -28,13 +28,13 @@ Most of the money is **volume**, not model quality: ~490 one-article calls in ag
 - [x] Step 1: Freeze the baseline (cost + quality), no behavior change
 - [x] Step 2: Turn off the agent1b review loop
 - [ ] Step 3: Cut call volume (agent2b shortlist and agent1a abstract-first are live; still open: agent1b language filter, prompt caching, batch API)
-- [ ] Step 4: Verify model prices and pick candidates (research, no code)
-- [ ] Step 5: Provider abstraction (one `llm` client seam, Claude stays the default)
-- [ ] Step 6: Per-stage model benchmark (cheap models vs Haiku baseline)
-- [ ] Step 7: Adopt the winners per stage behind per-stage env switches
-- [ ] Step 8: Final re-benchmark against the Step 1 baseline
+- [x] Step 4: Verify model prices and pick candidates (DeepSeek V4.1 Flash verified; GLM and Kimi not tested, no API keys yet)
+- [x] Step 5: Provider abstraction (`agents/llm.py`, Claude stays the default)
+- [x] Step 6: Per-stage model benchmark (language filter and categorize pass; summaries held for injection; papers fail)
+- [ ] Step 7: Adopt the winners per stage behind per-stage env switches (code done; needs the owner's deploy and secret)
+- [ ] Step 8: Final re-benchmark against the Step 1 baseline (needs production runs after the deploy)
 
-**Status (2026-10-16):** weekly cost $2.06 -> $1.05 (-49%, one production debug run); the 2026-10-18 release run is the confirmation. Next: the agent1b language filter, then decide whether the model steps (4-8) are worth it for what is left.
+**Status (2026-10-16):** weekly cost $2.06 -> $1.05 (-49%, one production debug run); the 2026-10-18 release run is the confirmation. The language filter work is deployed (exceptions mode). Steps 4-6 are done on branch `feat/cost-model-benchmark`: DeepSeek V4.1 Flash passes for the language filter and categorize and projects the run to about $0.60 a week; adopting it needs the owner's deploy (Step 7).
 
 Call-volume cuts (Step 3) go before the model work, per the owner (2026-10-15): they are risk-free and shrink what the model benchmark has to cover. The model steps (4-6) then run against the already-reduced volume.
 
@@ -138,43 +138,53 @@ Where each original idea stands:
 - **Prompt caching**: **dropped (checked 2026-10-16).** The largest static prompt or rubric in `prompts/` is 3.1 KB (about 800 tokens) and the rest are 0.5-2 KB, far under the minimum cacheable prefix (about 4,096 tokens for Haiku 4.5). What makes each call big is unique per-call text (article batches, PDFs), which cannot be cached.
 - **Batch API** (50% off): **not recommended (checked 2026-10-16).** Every Claude stage (agent1a, 1b, 2a, 2b, 3) sits before the 1:15 PM Sunday draft health check, and batches are asynchronous (up to 24h), so using them would need an async hand-off between stages and moving the draft check later. For at most ~$0.50 a week (half of ~$1.05) that is a production schedule and pipeline-control change; revisit only if the owner wants it.
 
-### Step 4: Verify prices and pick candidates
-Web research done 2026-10-15 found **conflicting figures between aggregator sites**, so nothing below is a decision. Treat these as the shortlist to verify against each provider's own pricing page (which this step does, recording the date and URL for each number):
+### Step 4: Verify prices and pick candidates (done 2026-10-16)
+**Owner's direction: test Chinese models** (DeepSeek, GLM, Kimi at minimum). Aggregator sites disagreed with each other, so prices were taken from the provider's own page: `https://api-docs.deepseek.com/quick_start/pricing`, read 2026-10-16.
 
-| Candidate | Reported price (in / out per M) | Notes |
-|---|---|---|
-| DeepSeek V4 Flash | ~$0.14-0.22 / ~$0.60-0.66 (off-peak; peak is reported ~2x; cache-hit input reported ~$0.003) | Cheapest strong general model; peak/off-peak pricing matters because the pipeline runs Sunday noon Toronto. |
-| Qwen Flash tier (Alibaba DashScope) | ~$0.03-0.07 / ~$0.26-0.30 | Cheapest; capability on structured tool use must be tested. |
-| GLM Flash tier (Zhipu) | ~$0.08-0.15 / ~$0.28-0.50 | Sources disagree on both numbers. |
-| MiniMax M2.7 | ~$0.24 / ~$0.96 | Mid-priced. |
-| DeepSeek V4 Pro | ~$0.44-0.57 / ~$0.87-1.15 | Fallback if Flash fails the quality gate. |
-| Haiku 4.5 (baseline) | $1.00 / $5.00 | |
-| Kimi K3, Qwen Max, GLM 5.x full | $1.3-3 / $4-15 | Not cheap enough to matter here; excluded. |
+| Model | API id | Input (cache miss) / output per M, off-peak | Peak (2x) | Context |
+|---|---|---|---|---|
+| **DeepSeek V4.1 Flash** (launched 2026-09-10; the legacy `deepseek-v4-flash` id is served by it) | `deepseek-flash` | $0.15 / $0.60 (cache hit $0.003) | $0.30 / $1.20 | 1M |
+| DeepSeek V4 Pro | `deepseek-v4-pro` | $0.66 / $1.98 | $1.32 / $3.96 | 1M |
+| Haiku 4.5 (baseline) | | $1.00 / $5.00 | | |
 
-Also in scope for this step, because they decide whether a candidate is usable: does the provider support **tool use with forced or auto tool_choice** (every stage here relies on tool schemas), an OpenAI- or Anthropic-compatible endpoint, a data-retention policy we are willing to send public article text under, and hosting from a Western provider (Together, Fireworks, OpenRouter) as an alternative to the Chinese first-party API for latency and policy reasons. Also include one non-Chinese cheap baseline (Gemini Flash-Lite or similar) as a control, so "Chinese" is not conflated with "cheap".
-Deliverable: a verified table in this doc, 3-4 final candidates.
+- **Peak window:** 01:00-04:00 and 06:00-10:00 UTC, Monday to Friday (not Chinese public holidays). The Sunday 12:00 PM Toronto pipeline run (16:00-17:00 UTC) is off-peak; a weekday-morning debug run can land in peak at double the price.
+- **Tool use works** through DeepSeek's Anthropic-compatible endpoint (`https://api.deepseek.com/anthropic`), tested with real calls: `tool_choice` auto, `any` and a forced named tool all return a valid tool call. **It thinks by default, which bills extra output tokens (201 vs 82 in the probe) and makes it reject a forced `tool_choice` (HTTP 400 "Thinking mode does not support this tool_choice")**, so every call sends `thinking: {"type": "disabled"}`.
+- **GLM and Kimi were NOT benchmarked, against the owner's "at the bare minimum try those":** the only key available was DeepSeek's. Aggregator-reported prices (unverified): GLM-5.2 about $1.40 / $4.40, Kimi K3 about $3 / $15 and K2.6 about $0.95 / $4, which are Haiku's price class or above, and the GLM Flash tiers about $0.06-0.15 in. A GLM Flash tier and Kimi K2.6 are the ones worth testing. Each needs an API key and its provider's Anthropic-compatible base URL added to `agents/llm.py` (a small change, the evals are model-agnostic). Qwen Flash ($0.03 in, one aggregator) is the other open follow-up.
+- **Not done:** data-retention policy of DeepSeek's first-party API was not reviewed. Only public article text is sent (see Principles); the owner should confirm that is acceptable before the language filter and categorize are switched to it.
 
-### Step 5: Provider abstraction
-Every stage calls `anthropic.Anthropic().messages.create(...)` directly with tools and a hard-coded `SCORING_MODEL`. Add one seam (`agents/llm.py`) that takes a stage name, resolves a `(provider, model)` from config (`MODEL_<STAGE>` env vars, defaulting to today's Haiku), and returns responses in the shape callers already consume. Keep it small: tool-use calls, usage accounting, retry. Extend `pricing.py` with the new models so cost estimates and `llm_usage` stay right. Behavior with defaults must be byte-identical (existing tests cover agent1b's graph and the fetcher; add tests for the seam).
+### Step 5: Provider abstraction (done 2026-10-16)
+`agents/llm.py` is the single seam. Every stage asks `llm.model_for("<stage>")` for its model and builds its client with `llm.make_client(agent, run_id)`. Stages: `lang_filter`, `categorize` (agent1b), `paper_score` (agent1a), `news_summary` (agent2b), `paper_summary` (agent2a), `select` (agent3 selection and intro). agent3's duplicate removal is not routed (about $0.01 a run).
+- **Default is byte-identical:** with no `MODEL_<STAGE>` variable set, `model_for` returns the Haiku model and `make_client` returns exactly what `tracing.make_client` did. A stage set to a `deepseek-*` id (e.g. `MODEL_LANG_FILTER=deepseek-flash`) goes to DeepSeek's endpoint with thinking off; the other stages are untouched. Rollback is unsetting the variable (no redeploy of code).
+- **Fallback:** a DeepSeek error other than a rate limit retries that one call on Haiku, logs `[llm] DeepSeek call fell back to Claude`, and never fails the run; a missing `DEEPSEEK_API_KEY` does the same. A rate limit propagates so each caller's own retry loop handles it.
+- **Tracing and prices:** the DeepSeek client is wrapped for LangSmith like the Claude one (`tracing.wrap_for_tracing`); `agents/pricing.py` has DeepSeek's off-peak and `@peak` list prices.
+- 9 unit tests in `tests/test_llm.py` (routing, thinking off, fallback, rate-limit propagation, prices); the full suite passes.
 
-### Step 6: Per-stage benchmark
-Stages are different tasks and may pick different winners:
-1. agent1b language filter + categorize (classification, tool use)
-2. agent1a paper scoring (long PDF context, 8-dimension rubric; compare rank agreement with Haiku and the owner's picks)
-3. agent2b news summaries (generation; the existing judge, report-only, plus owner spot labels)
-4. agent3 selection / intro / dedup (existing dedup eval has an arm structure to reuse)
-Each arm runs on frozen fixtures from Step 1, reports quality with intervals, cost per run from real token counts, and failure rate (tool-call schema violations, refusals, timeouts). The injection eval is re-run per candidate: a cheaper model that is easier to inject is not a win.
+### Step 6: Per-stage benchmark (done 2026-10-16)
+Same frozen inputs as Step 1, production functions, `MODEL_<STAGE>` set per arm. Runners: `evals/run_lang_model_eval.py`, `evals/run_model_stages_eval.py` (categorize, summaries, papers), `evals/run_injection_eval.py --model deepseek`. Total spend on the evals: about $2 (mostly Haiku reference arms and the Sonnet judge; DeepSeek about $0.15), including one summaries run that crashed on a judge-parsing bug and was rerun. Results in `evals/results/*_model_eval_2026-10-16.json`. DeepSeek costs below are cold-cache, off-peak; a rerun of identical prompts is served from DeepSeek's cache and understates cost.
 
-### Step 7: Adopt winners
-Per-stage `MODEL_<STAGE>` env values on Cloud Run, rolled out one stage per week, with the health check's `llm_usage` section showing cost per agent. Keep Haiku as the documented rollback value. Add each non-Anthropic provider's key via Secret Manager like the existing ones.
+| Stage | Haiku | DeepSeek V4.1 Flash | Verdict |
+|---|---|---|---|
+| **Language filter** (1,522 articles, exceptions mode) | $0.248 | **$0.024** | **Adopt.** 4 articles differ between any arms, 3 of them noise-level; Haiku's own repeat runs differ on 2. DeepSeek read two English-edition articles (Le Monde, Folha) as English and dropped a Spanish one that Haiku's full-label run mislabelled French. Foreign articles let through: 1 (0.07%), same as run to run. 0 fallbacks, 0 failed batches. |
+| **Categorize** (500 articles, 100 gold labels) | accuracy 0.53 [0.43-0.63], $0.083 | 0.63 [0.53-0.72] and 0.56 [0.46-0.65] on two runs, **$0.0096** | **Adopt.** Not distinguishable from Haiku (intervals overlap; the point estimate is not lower); 84% agreement with Haiku, 89% with itself. Accuracy counts articles the model skipped as wrong (coverage 0.92 Haiku, 0.96 and 0.92 DeepSeek). |
+| **News summaries** (60 articles) | $0.099 | **$0.012** | **Do not adopt yet (injection).** Quality reads as good or better (sampled by hand: tighter, follows "1-2 sentences" better, more specific; mean 45 words against 59), 60/60 produced. But on the injection eval DeepSeek echoed a planted string from an article **title** at the start of the summary in 5 of 5 repeats of one case, plus 1 markup case: 6/20 attacks succeeded [15%-52%] against Haiku's 0/20. That text would reach subscribers. The pairwise Sonnet judge returned no verdict on 68% of items and is not usable. |
+| **Paper scoring** (35 papers, full text, 2 passes) | self-agreement Spearman 0.77, top-8 overlap 0.62 | self-agreement **0.58**, agreement with Haiku **0.36**, top-8 overlap with Haiku 0.50, 1 of Haiku's top 3 inside its top 5 | **Do not adopt.** It is noisier than Haiku and ranks differently; the saving was at most about $0.20 a week. |
+| Categorize injection | 0/20 [0-16%] | 1/20 [1-24%] (one forced-category breakout) | Not distinguishable at this size; accepted with the categorize result. |
 
-### Step 8: Final re-benchmark
-Re-run the Step 1 suite against the new configuration on the same fixtures plus at least 2 fresh production runs. Output: before/after cost per agent, quality deltas with intervals, failure rate, and regenerated result tables/charts via `python -m evals.make_readme_table`.
+Language-filter prompts are not in the injection cases: the filter's only output is a language label, so the worst case is one foreign article getting through, which the 0.07% rate bounds.
+
+### Step 7: Adopt winners (code ready; the switch needs the owner's deploy)
+Adoption is two environment variables on agent1b, `MODEL_LANG_FILTER=deepseek-flash` and `MODEL_CATEGORIZE=deepseek-flash`, plus a `DEEPSEEK_API_KEY` secret mounted like the existing ones. Agents never deploy and do not touch secrets, so this is a deploy request (below in the PR). **Projected effect** from the measured token counts: agent1b about $0.41 (Haiku, exceptions mode) -> about $0.04; the whole run from about $0.97 to about **$0.60 a week** (-71% against the $2.055 baseline, about $76 a year). agent1a, agent2a, agent2b and agent3 stay on Haiku. Rollback: remove the two variables (or set them to the Haiku id); DeepSeek errors already fall back to Haiku per call.
+- **News summaries stay on Haiku until the title echo is fixed.** A fix to try is a code check that rejects a summary starting with text that appears in the title but not in the article body, or a stronger guard for the DeepSeek arm, then re-run `python -m evals.run_injection_eval --model deepseek --agents summarize_2b` (about $0.01) and the summaries eval. Worth about $0.23 a week.
+- **Reporting follow-up:** the healthcheck's list-price estimate (`agents/drift.py`) prices every token at the Haiku rate, so it will overstate cost once DeepSeek tokens are in the mix, and LangSmith may show no cost for the DeepSeek model. Read DeepSeek's own usage page for the first week.
+
+### Step 8: Final re-benchmark (open)
+Needs production runs on the new configuration, so it waits for the deploy: compare at least 2 fresh runs' cost per agent (LangSmith plus DeepSeek's usage page) with `baseline_cost_2026-10-15.json`, check the category counts and language drops on the first run, and regenerate the result tables with `python -m evals.make_readme_table`.
 
 ## Risks to watch
 
-- **Aggregator prices were inconsistent**; Step 4 exists because of this. Peak/off-peak pricing on DeepSeek could erase a saving if calls land in the peak window.
-- **Tool-use fidelity** is the usual place cheap models fail (malformed JSON, ignored tool_choice). Measure it explicitly.
-- **Prompt injection** surface: article text is untrusted; weaker models resist worse.
-- **Operational risk**: a second provider adds an outage dependency and another secret; per-stage fallback to Haiku on provider error should be part of Step 5.
-- **Savings ceiling**: the run cost ~$2.06/week (~$108/year) at the baseline and ~$1.05/week after Step 3 (one debug run, 2026-10-16). What is left for Steps 4-8 is part of that $1.05: even a model 70% cheaper on every stage would save about $0.70/week, ~$36/year. Do this for the portfolio story and learning value as much as for dollars; keep each step's effort proportionate.
+- **Aggregator prices were inconsistent**; Step 4 took them from DeepSeek's own page. Peak pricing is double: keep scheduled runs off-peak (the Sunday run is).
+- **Tool-use fidelity** held up on DeepSeek (0 failed batches and 0 fallbacks to Haiku over about 450 DeepSeek calls) once thinking is off; with thinking on, forced tool choice is rejected.
+- **Prompt injection** surface: article text is untrusted, and a cheaper model was measurably easier to inject on summaries (see Step 6). Re-run the injection eval for any stage before it moves.
+- **Operational risk**: a second provider adds an outage dependency and another secret. The per-call fallback to Haiku covers outages; a missing key also falls back.
+- **Data policy:** DeepSeek's first-party API retention terms were not reviewed (Step 4). Only public article text is sent.
+- **Savings ceiling**: the run cost ~$2.06/week (~$108/year) at the baseline and ~$1.05/week after Step 3. With the language filter and categorize on DeepSeek it projects to about $0.60. What is left is agent1a ($0.24, stays on Haiku), agent2b ($0.26, held back) and small items.

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SYNTHETIC: built from the documented XML API2 /hot shape; BGG needs a registered app token to record a real one. -->
+<items termsofuse="https://boardgamegeek.com/xmlapi/termsofuse">
+	<item id="100001" rank="1">
+		<thumbnail value="https://cf.geekdo-images.com/example1_thumb.jpg"/>
+		<name value="Example Game One"/>
+		<yearpublished value="2026"/>
+	</item>
+	<item id="100002" rank="2">
+		<thumbnail value="https://cf.geekdo-images.com/example2_thumb.jpg"/>
+		<name value="Example &amp; Game Two"/>
+		<yearpublished value="2025"/>
+	</item>
+	<item id="100003" rank="3">
+		<name value="Example Game Three"/>
+	</item>
+</items>

@@ -1,0 +1,85 @@
+{
+ "prusa3d/PrusaSlicer": {
+  "status": 200,
+  "body": {
+   "tag_name": "version_2.9.6",
+   "name": "PrusaSlicer 2.9.6",
+   "published_at": "2026-06-25T20:52:26Z",
+   "html_url": "https://github.com/prusa3d/PrusaSlicer/releases/tag/version_2.9.6",
+   "prerelease": false,
+   "draft": false
+  }
+ },
+ "SoftFever/OrcaSlicer": {
+  "status": 200,
+  "body": {
+   "tag_name": "v2.4.2",
+   "name": "OrcaSlicer v2.4.2 Official Release",
+   "published_at": "2026-07-07T03:33:49Z",
+   "html_url": "https://github.com/OrcaSlicer/OrcaSlicer/releases/tag/v2.4.2",
+   "prerelease": false,
+   "draft": false
+  }
+ },
+ "bambulab/BambuStudio": {
+  "status": 200,
+  "body": {
+   "tag_name": "v02.08.02.61",
+   "name": "2.8.2.61 Public Release",
+   "published_at": "2026-08-21T06:31:50Z",
+   "html_url": "https://github.com/bambulab/BambuStudio/releases/tag/v02.08.02.61",
+   "prerelease": false,
+   "draft": false
+  }
+ },
+ "Ultimaker/Cura": {
+  "status": 200,
+  "body": {
+   "tag_name": "5.13.0",
+   "name": "UltiMaker Cura 5.13.0",
+   "published_at": "2026-05-28T14:22:22Z",
+   "html_url": "https://github.com/Ultimaker/Cura/releases/tag/5.13.0",
+   "prerelease": false,
+   "draft": false
+  }
+ },
+ "MarlinFirmware/Marlin": {
+  "status": 200,
+  "body": {
+   "tag_name": "2.1.2.9",
+   "name": "Marlin 2.1.2.9",
+   "published_at": "2026-10-12T22:09:45Z",
+   "html_url": "https://github.com/MarlinFirmware/Marlin/releases/tag/2.1.2.9",
+   "prerelease": false,
+   "draft": false
+  }
+ },
+ "prusa3d/Prusa-Firmware-Buddy": {
+  "status": 200,
+  "body": {
+   "tag_name": "v6.9.2",
+   "name": "6.9.2 Firmware for Prusa CORE One+ (Gen 2) INDX, CORE One INDX",
+   "published_at": "2026-10-07T12:10:17Z",
+   "html_url": "https://github.com/prusa3d/Prusa-Firmware-Buddy/releases/tag/v6.9.2",
+   "prerelease": false,
+   "draft": false
+  }
+ },
+ "CrealityOfficial/CrealityPrint": {
+  "status": 200,
+  "body": {
+   "tag_name": "v7.3.0",
+   "name": "V7.3.0",
+   "published_at": "2026-09-24T07:13:01Z",
+   "html_url": "https://github.com/CrealityOfficial/CrealityPrint/releases/tag/v7.3.0",
+   "prerelease": false,
+   "draft": false
+  }
+ },
+ "Klipper3d/klipper": {
+  "status": 404,
+  "body": {
+   "message": "Not Found"
+  }
+ }
+}

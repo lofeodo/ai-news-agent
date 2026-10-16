@@ -28,6 +28,40 @@ LANGUAGE_FILTER_TOOL = {
     }
 }
 
+LANGUAGE_EXCEPTIONS_TOOL = {
+    "name": "report_language_exceptions",
+    "description": "List only the articles that are NOT English (French or another language); every article not listed is English",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "checked": {
+                "type": "integer",
+                "description": "How many articles you examined: must equal the number of articles in the input list"
+            },
+            "exceptions": {
+                "type": "array",
+                "description": "Only the articles written in French or in another non-English language; empty when all are English",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "index": {
+                            "type": "integer",
+                            "description": "0-based index of the article from the input list"
+                        },
+                        "language": {
+                            "type": "string",
+                            "enum": ["fr", "other"],
+                            "description": "\"fr\" for French; \"other\" for any language that is neither English nor French"
+                        }
+                    },
+                    "required": ["index", "language"]
+                }
+            }
+        },
+        "required": ["checked", "exceptions"]
+    }
+}
+
 FILTER_TOOL = {
     "name": "filter_articles",
     "description": "Filter a list of news articles for AI relevance and assign each a category",

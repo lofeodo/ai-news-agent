@@ -13,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
 import config
-from filter_tool import CATEGORIES, FILTER_TOOL, FILTER_TOOL_WITH_CONFIDENCE, LANGUAGE_FILTER_TOOL
+from filter_tool import CATEGORIES, FILTER_TOOL, FILTER_TOOL_WITH_CONFIDENCE, LANGUAGE_EXCEPTIONS_TOOL, LANGUAGE_FILTER_TOOL
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_XML_ARTICLES, neutralize_tags
@@ -265,6 +265,30 @@ Articles:
 {samples}"""
 
 
+# AGENT1B_LANG_MODE=exceptions: same rules, shorter answer. The model lists only the French and
+# "other" articles instead of labelling every one (almost all are English), which cuts output tokens.
+LANG_EXCEPTIONS_PROMPT = LANG_FILTER_PROMPT.replace(
+    """Your task: return one entry for EVERY article, labelling the language the article is written in:
+- "en" — English
+- "fr" — French
+- "other" — any other language""",
+    """Your task: find the articles that are NOT written in English. Return an entry ONLY for those, labelled:
+- "fr" — French
+- "other" — any other language""",
+).replace(
+    "Use the filter_by_language tool to return your answer.",
+    "Do not list English articles; every article you do not list is taken to be English. "
+    "Set \"checked\" to the number of articles below.\n\n"
+    "Use the report_language_exceptions tool to return your answer.",
+)
+assert "report_language_exceptions" in LANG_EXCEPTIONS_PROMPT and "EVERY article" not in LANG_EXCEPTIONS_PROMPT
+
+
+def lang_mode() -> str:
+    """'claude' (default: label every article) or 'exceptions' (list only the non-English ones)."""
+    return "exceptions" if os.environ.get("AGENT1B_LANG_MODE", "claude").strip().lower() == "exceptions" else "claude"
+
+
 def _first_words(text: str, n: int) -> str:
     return " ".join((text or "").split()[:n])
 
@@ -287,7 +311,55 @@ def format_samples_for_lang_prompt(articles: list) -> str:
     return "\n".join(blocks)
 
 
+def language_exceptions_batch(batch: list, batch_index: int, client: anthropic.Anthropic):
+    """Exceptions-only answer. Returns the kept articles, or None when the answer cannot be trusted
+    (empty, cut off, or `checked` does not match the batch) so the caller can label the batch in full:
+    an empty exceptions list is a valid "all English", so it must not be confused with a failed call."""
+    prompt = LANG_EXCEPTIONS_PROMPT.format(samples=format_samples_for_lang_prompt(batch))
+    with _semaphore:
+        response = claude_call_with_retry(
+            client,
+            model=SCORING_MODEL,
+            max_tokens=FILTER_MAX_TOKENS,
+            system=GUARD_XML_ARTICLES,
+            tools=[LANGUAGE_EXCEPTIONS_TOOL],
+            tool_choice={"type": "tool", "name": "report_language_exceptions"},
+            messages=[{"role": "user", "content": prompt}]
+        )
+    if not response.content or response.stop_reason == "max_tokens":
+        print(f"  [lang] Batch {batch_index}: unusable exceptions answer — labelling in full")
+        return None
+    tool_input = response.content[0].input
+    exceptions = tool_input.get("exceptions")
+    if tool_input.get("checked") != len(batch) or not isinstance(exceptions, list):
+        print(f"  [lang] Batch {batch_index}: checked={tool_input.get('checked')} for {len(batch)} articles — labelling in full")
+        return None
+
+    language_of = {}
+    for item in exceptions:
+        idx, language = (item.get("index"), item.get("language")) if isinstance(item, dict) else (None, None)
+        if not (isinstance(idx, int) and 0 <= idx < len(batch)) or language not in ("fr", "other"):
+            print(f"  [lang] Batch {batch_index}: invalid entry {item}, skipping")
+            continue
+        language_of.setdefault(idx, language)
+
+    results = []
+    for idx, raw in enumerate(batch):
+        article = {k: v for k, v in raw.items() if k != "_lang_excerpt"}
+        language = language_of.get(idx, "en")
+        if language == "other":
+            print(f"  [lang] drop other: {urlparse(article['url']).hostname} | {article['title'][:70]}")
+            continue
+        results.append({**article, "language": language})
+    print(f"  [lang] Batch {batch_index}: keeping {len(results)}/{len(batch)} articles (exceptions mode)")
+    return results
+
+
 def language_filter_batch(batch: list, batch_index: int, client: anthropic.Anthropic) -> list:
+    if lang_mode() == "exceptions":
+        kept = language_exceptions_batch(batch, batch_index, client)
+        if kept is not None:
+            return kept
     samples = format_samples_for_lang_prompt(batch)
     prompt  = LANG_FILTER_PROMPT.format(samples=samples)
 

@@ -33,6 +33,10 @@ class FakeClient:
     def create(self, **kw):
         names = [t["name"] for t in kw["tools"]]
         prompt = kw["messages"][0]["content"]
+        if "report_language_exceptions" in names:
+            self.calls.append(("language_exceptions", kw))
+            n = len(set(re.findall(r"<article_(\d+)>", prompt)))
+            return response(tool_use("report_language_exceptions", checked=n, exceptions=[]))
         if "filter_by_language" in names:
             self.calls.append(("language", kw))
             idx = sorted({int(i) for i in re.findall(r"<article_(\d+)>", prompt)})

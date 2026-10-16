@@ -79,7 +79,9 @@ def shortlist_category(category, articles, texts, prompt_template, client, selec
     """
     # The default selector is agent3's; `topic` gives it the topic's section caps. An injected select_fn
     # (tests) keeps the four-argument form.
-    select = select_fn or functools.partial(_default_select(), topic=topic)
+    # The AI newsletter's call stays exactly the original four-argument one (its caps are the default ones).
+    other_topic = {"topic": topic} if topic is not None and not topic.is_default else {}
+    select = select_fn or functools.partial(_default_select(), **other_topic)
     candidates = make_candidates(articles, texts)
     kept: set[int] = set()
 

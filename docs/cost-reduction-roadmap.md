@@ -103,7 +103,20 @@ The review eval says it plainly: confidence does not predict errors (Spearman 0.
 - **Quality gate (the owner's rule):** on a frozen pool measure two numbers against today's filter: foreign-language articles that get through (must not rise) and English or French articles wrongly dropped (must not rise). Any article the cheap path and the current filter disagree on goes to the owner to settle. Needs a labelled pool: a fresh unfiltered fetch labelled by today's filter, with every disagreement and a sample of agreements checked by hand.
 - **Rollback:** a no-redeploy switch such as `AGENT1B_LANG_MODE=claude` (today's behavior stays the default and the baseline).
 
-Remaining Step 3 work: compare the first real runs against the Step 1 baseline cost (LangSmith per-agent cost), the language filter above, then prompt caching and the batch API.
+**Measured on a production debug run (2026-10-16, run `2026-10-16T135631Z`, deployed code with both modes on, review off; LangSmith's estimate for this run's calls only):**
+
+| Agent | Baseline $ (mean of 4) | This run $ | Calls (base -> now) |
+|---|---|---|---|
+| agent1a | 0.467 | 0.238 | 35 -> 43 |
+| agent1b | 0.637 | 0.498 | 128 -> 77 |
+| agent2a | 0.014 | 0.011 | 1 -> 1 |
+| agent2b | 0.805 | 0.263 | 470 -> 93 |
+| agent3 | 0.132 | 0.041 | 21 -> 17 |
+| **Total** | **2.055** | **1.051** | **656 -> 231** |
+
+That is **49% less** (about $1.00 a week, roughly $52 a year). The run composed with no `*_error` field; agent1a ran 8 second-pass papers, agent2b shortlisted 80 of 547 articles. agent3 got cheaper on its own (123k -> 31k tokens) because it now reads a pool of ~80 summarized articles instead of ~470. One run, so the release run on 2026-10-18 is the confirmation. agent1b is now the largest line: its language filter is about $0.34 of the $0.50.
+
+Remaining Step 3 work: the language filter above, then prompt caching and the batch API, and a second measurement from the 2026-10-18 release run.
 
 Independent of model choice, and compounding with it:
 - **agent2b**: ~490 calls for ~15-25 shipped articles. Summarize only what agent3 can actually ship (the post-selection pool plus runners-up), or batch several articles per call. Needs an ordering check: agent2b currently runs in parallel with agent2a before agent3 selection, so this may mean summarizing only the top-N per category by HN points.

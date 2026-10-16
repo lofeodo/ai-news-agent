@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "name": "Just the releases",
+  "accent_color": "#b79cff",
+  "blocks": [
+    {"type": "section", "topic": "gaming", "section": "Releases & Reviews", "max_items": 5}
+  ]
+}

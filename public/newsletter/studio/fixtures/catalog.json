@@ -1,0 +1,450 @@
+{
+  "topics": [
+    {
+      "id": "ai",
+      "name": "Latent SpaceMail",
+      "tagline": "Weekly AI Intelligence Dispatch",
+      "accent_color": "#c8b89a",
+      "public": true,
+      "sections": [
+        {
+          "name": "Model & Product Releases",
+          "definition": "commercial/closed AI model launches (e.g. GPT-5, Claude Fable, Gemini 3.5, Grok 3), new AI APIs and paid services, major version updates from AI labs. Do NOT put open-source or open-weights model releases here — those go in Open Source & Tools.",
+          "icon": "🚀"
+        },
+        {
+          "name": "Policy, Law & Regulation",
+          "definition": "lawsuits, government hearings, legislation, copyright cases, AI governance",
+          "icon": "⚖️"
+        },
+        {
+          "name": "Open Source & Tools",
+          "definition": "open-source or open-weights model releases (anything described as \"open weights\", \"open source\", or \"available on Hugging Face\"), GitHub projects, new frameworks, developer tools, benchmarks",
+          "icon": "🛠️"
+        },
+        {
+          "name": "Safety & Alignment",
+          "definition": "AI safety research, alignment, interpretability, existential risk",
+          "icon": "🛡️"
+        },
+        {
+          "name": "Industry & Business",
+          "definition": "funding rounds, acquisitions, partnerships, earnings, market moves",
+          "icon": "💼"
+        },
+        {
+          "name": "Society & Culture",
+          "definition": "AI in education, healthcare, art, labor, public discourse, ethics",
+          "icon": "🌍"
+        },
+        {
+          "name": "Canada & Montreal",
+          "definition": "any AI story with a Canadian or Montreal angle, regardless of topic",
+          "icon": "🍁"
+        }
+      ]
+    },
+    {
+      "id": "boardgames",
+      "name": "Tabletop Weekly",
+      "tagline": "Weekly Board Games & Tabletop Dispatch",
+      "accent_color": "#f2a65a",
+      "public": false,
+      "sections": [
+        {
+          "name": "New Releases",
+          "definition": "announcements and releases of board games, expansions, reprints and new editions, including release dates and what is coming from major publishers",
+          "icon": "🎲"
+        },
+        {
+          "name": "Crowdfunding",
+          "definition": "Kickstarter and Gamefound campaigns for board games and tabletop products, new launches, funded milestones and delivery news",
+          "icon": "🚀"
+        },
+        {
+          "name": "Reviews & Previews",
+          "definition": "reviews, previews, first impressions, strategy and how-to-play pieces, and well-argued best-of lists for specific games",
+          "icon": "📝"
+        },
+        {
+          "name": "Industry & Publishers",
+          "definition": "publisher and designer news, acquisitions, tariffs and pricing, distribution, retail and game store news, awards and lawsuits",
+          "icon": "🏢"
+        },
+        {
+          "name": "Events & Conventions",
+          "definition": "Gen Con, Essen Spiel, Origins, PAX Unplugged and other conventions, game fairs, tournaments and the Spiel des Jahres and other awards",
+          "icon": "🎪"
+        },
+        {
+          "name": "RPGs, Minis & Card Games",
+          "definition": "tabletop role-playing games such as Dungeons & Dragons, miniatures games such as Warhammer, and collectible and living card games such as Magic The Gathering",
+          "icon": "⚔️"
+        },
+        {
+          "name": "Community & Culture",
+          "definition": "game design, digital adaptations and apps of board games, accessibility, collecting, the hobby community and its debates",
+          "icon": "🌐"
+        }
+      ]
+    },
+    {
+      "id": "finance",
+      "name": "Markets & Money Weekly",
+      "tagline": "Weekly Markets & Money Dispatch",
+      "accent_color": "#7fd1a0",
+      "public": false,
+      "sections": [
+        {
+          "name": "Markets & Macro",
+          "definition": "stock, bond, commodity and currency market moves, the economy, jobs, inflation and growth data, and what is driving them",
+          "icon": "📈"
+        },
+        {
+          "name": "Central Banks & Rates",
+          "definition": "decisions, minutes and speeches from the Federal Reserve, Bank of Canada, ECB and other central banks, and what they mean for interest rates, mortgages and savings",
+          "icon": "🏦"
+        },
+        {
+          "name": "Earnings & Companies",
+          "definition": "quarterly results, guidance, mergers and acquisitions, IPOs, layoffs, and big moves at individual public companies",
+          "icon": "🏢"
+        },
+        {
+          "name": "Personal Finance",
+          "definition": "saving, investing basics, retirement, taxes, mortgages, credit and debt, insurance, and practical money guides for ordinary households",
+          "icon": "💰"
+        },
+        {
+          "name": "Crypto & Fintech",
+          "definition": "bitcoin and other crypto markets, ETFs and stablecoins, exchanges, payments, banking apps and fintech companies",
+          "icon": "🪙"
+        },
+        {
+          "name": "Regulation & Policy",
+          "definition": "financial regulation, securities enforcement, tax and budget policy, trade and tariffs, and court cases that affect markets or consumers",
+          "icon": "⚖️"
+        },
+        {
+          "name": "Canada",
+          "definition": "Canadian markets (TSX), the Bank of Canada, the Canadian economy, Canadian housing and personal-finance stories, even when they also fit another section",
+          "icon": "🍁"
+        }
+      ]
+    },
+    {
+      "id": "gaming",
+      "name": "Video Games Weekly",
+      "tagline": "Weekly Video Games Dispatch",
+      "accent_color": "#b79cff",
+      "public": false,
+      "sections": [
+        {
+          "name": "Releases & Reviews",
+          "definition": "new game releases, release dates, trailers from showcases, DLC and major updates, and reviews of games that just came out",
+          "icon": "🎮"
+        },
+        {
+          "name": "Industry & Business",
+          "definition": "studio and publisher news, acquisitions, layoffs and closures, earnings, labor and union stories, lawsuits, and business of games analysis",
+          "icon": "💼"
+        },
+        {
+          "name": "Platforms & Hardware",
+          "definition": "PlayStation, Xbox, Nintendo, Steam and PC platform news, new consoles and handhelds, subscriptions such as Game Pass and PS Plus, GPUs and gaming PC hardware",
+          "icon": "🕹️"
+        },
+        {
+          "name": "Indie Spotlight",
+          "definition": "independent and small-studio games, game jams, early access and demo festivals, and standout hidden gems",
+          "icon": "✨"
+        },
+        {
+          "name": "Esports & Competitive",
+          "definition": "esports tournaments and results, competitive scenes, speedrunning records, and team and player news",
+          "icon": "🏆"
+        },
+        {
+          "name": "Deals & Free Games",
+          "definition": "free game giveaways, major sales and bundles, and subscription lineups worth knowing about",
+          "icon": "🏷️"
+        },
+        {
+          "name": "Community & Culture",
+          "definition": "modding, game preservation, accessibility, player controversies, game design discussion, and the people and communities around games",
+          "icon": "🌐"
+        }
+      ]
+    },
+    {
+      "id": "printing3d",
+      "name": "Layer Lines",
+      "tagline": "Weekly 3D Printing Dispatch",
+      "accent_color": "#5ec8e5",
+      "public": false,
+      "sections": [
+        {
+          "name": "New Printers & Hardware",
+          "definition": "new desktop printers, upgrades and accessories from Bambu Lab, Prusa, Creality, Elegoo, Anycubic and others, plus hands-on hardware reviews",
+          "icon": "🖨️"
+        },
+        {
+          "name": "Firmware & Software",
+          "definition": "slicers, firmware and printer software updates, CAD and modeling tools, and model sites such as Printables, MakerWorld and Thingiverse",
+          "icon": "💾"
+        },
+        {
+          "name": "Materials & Filament",
+          "definition": "filament and resin news, new materials, material comparisons and testing, and supply and pricing changes",
+          "icon": "🧵"
+        },
+        {
+          "name": "Projects & Prints",
+          "definition": "impressive, useful or clever prints and projects, mods and upgrades, and creative uses of 3D printing",
+          "icon": "🧰"
+        },
+        {
+          "name": "Industry & Business",
+          "definition": "company news, funding, acquisitions, layoffs, lawsuits between printer makers, and the business of desktop and industrial 3D printing",
+          "icon": "🏢"
+        },
+        {
+          "name": "Guides & Tips",
+          "definition": "how-to guides, troubleshooting, calibration and settings advice, maintenance and buying guides with real substance",
+          "icon": "📘"
+        },
+        {
+          "name": "Community & Policy",
+          "definition": "laws and regulation about 3D printing, patents, safety concerns, open-source versus closed hardware debates, and community news",
+          "icon": "🌐"
+        }
+      ]
+    }
+  ],
+  "widgets": [
+    {
+      "id": "paper_spotlight",
+      "name": "Paper of the week",
+      "description": "The week's most interesting AI research paper, with a short hook and a link to read it.",
+      "topics": [
+        "ai"
+      ],
+      "scope": "edition",
+      "premium": false,
+      "config_fields": []
+    },
+    {
+      "id": "trending_models",
+      "name": "Trending on Hugging Face",
+      "description": "The models climbing fastest on the Hugging Face Hub this week.",
+      "topics": [
+        "ai"
+      ],
+      "scope": "edition",
+      "premium": false,
+      "config_fields": [
+        {
+          "name": "count",
+          "type": "int",
+          "label": "Models shown",
+          "max": 8,
+          "default": 5
+        }
+      ]
+    },
+    {
+      "id": "market_snapshot",
+      "name": "The week in markets",
+      "description": "Where the dollar, bond yields, oil and bitcoin closed the week, and how far they moved.",
+      "topics": [
+        "finance"
+      ],
+      "scope": "edition",
+      "premium": false,
+      "config_fields": []
+    },
+    {
+      "id": "rates_board",
+      "name": "Central bank rates",
+      "description": "Policy rates of the Fed, the Bank of Canada and the ECB, with each one's next meeting.",
+      "topics": [
+        "finance"
+      ],
+      "scope": "edition",
+      "premium": false,
+      "config_fields": []
+    },
+    {
+      "id": "week_ahead",
+      "name": "The week ahead",
+      "description": "Economic releases and central bank meetings coming up in the next seven days.",
+      "topics": [
+        "finance"
+      ],
+      "scope": "edition",
+      "premium": false,
+      "config_fields": []
+    },
+    {
+      "id": "stock_watchlist",
+      "name": "My watchlist",
+      "description": "Your own list of tickers with their weekly close and change.",
+      "topics": [
+        "finance"
+      ],
+      "scope": "personal",
+      "premium": true,
+      "config_fields": [
+        {
+          "name": "tickers",
+          "type": "tickers",
+          "label": "Tickers",
+          "max": 8,
+          "default": [
+            "SHOP",
+            "RY",
+            "AAPL"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "free_games",
+      "name": "Free this week",
+      "description": "Games you can claim for free this week, and until when.",
+      "topics": [
+        "gaming"
+      ],
+      "scope": "edition",
+      "premium": false,
+      "config_fields": [
+        {
+          "name": "store",
+          "type": "choice",
+          "label": "Stores",
+          "options": [
+            "All stores",
+            "Epic Games Store",
+            "Steam",
+            "GOG"
+          ],
+          "default": "All stores"
+        }
+      ]
+    },
+    {
+      "id": "most_played",
+      "name": "Most played on Steam",
+      "description": "The games with the most players on Steam this week.",
+      "topics": [
+        "gaming"
+      ],
+      "scope": "edition",
+      "premium": false,
+      "config_fields": [
+        {
+          "name": "count",
+          "type": "int",
+          "label": "Games shown",
+          "max": 10,
+          "default": 5
+        }
+      ]
+    },
+    {
+      "id": "deals",
+      "name": "Best deals",
+      "description": "The deepest discounts on well-reviewed PC games this week.",
+      "topics": [
+        "gaming"
+      ],
+      "scope": "edition",
+      "premium": false,
+      "config_fields": [
+        {
+          "name": "max_price",
+          "type": "int",
+          "label": "Price under (USD)",
+          "max": 70,
+          "default": 20
+        }
+      ]
+    },
+    {
+      "id": "out_this_week",
+      "name": "Out this week",
+      "description": "Notable games releasing in the coming week, by platform.",
+      "topics": [
+        "gaming"
+      ],
+      "scope": "edition",
+      "premium": false,
+      "config_fields": [
+        {
+          "name": "platform",
+          "type": "choice",
+          "label": "Platform",
+          "options": [
+            "All platforms",
+            "PC",
+            "PlayStation",
+            "Xbox",
+            "Switch"
+          ],
+          "default": "All platforms"
+        }
+      ]
+    },
+    {
+      "id": "crowdfunding_watch",
+      "name": "On Kickstarter & Gamefound",
+      "description": "Board game campaigns in the week's news: where they run and how far along they are.",
+      "topics": [
+        "boardgames"
+      ],
+      "scope": "edition",
+      "premium": false,
+      "config_fields": [
+        {
+          "name": "include_ended",
+          "type": "bool",
+          "label": "Include campaigns that just ended",
+          "default": false
+        }
+      ]
+    },
+    {
+      "id": "release_tracker",
+      "name": "New versions",
+      "description": "New releases of the popular slicers and printer firmwares, with what is new this week.",
+      "topics": [
+        "printing3d"
+      ],
+      "scope": "edition",
+      "premium": false,
+      "config_fields": []
+    },
+    {
+      "id": "model_of_week",
+      "name": "Model of the week",
+      "description": "One standout printable model, with its designer and a link to the files.",
+      "topics": [
+        "printing3d"
+      ],
+      "scope": "edition",
+      "premium": false,
+      "config_fields": []
+    },
+    {
+      "id": "number_of_week",
+      "name": "Number of the week",
+      "description": "One striking number from the week's stories, with the sentence it came from.",
+      "topics": [
+        "*"
+      ],
+      "scope": "edition",
+      "premium": false,
+      "config_fields": []
+    }
+  ]
+}

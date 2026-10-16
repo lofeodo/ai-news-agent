@@ -19,6 +19,7 @@ BUILTIN = (
     "trending_models",
     "rates_board",
     "week_ahead",
+    "market_snapshot",
 )
 
 for _name in BUILTIN:

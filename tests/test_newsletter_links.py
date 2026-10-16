@@ -73,6 +73,35 @@ def test_a_topic_only_readers_link_works_after_the_expiry_date(monkeypatch):
     assert sm.subscribed_ids(api.subs["f@example.com"]) == []
 
 
+# --- asking for a link by email ---------------------------------------------------------------------------
+
+def test_a_topic_only_reader_can_ask_for_links(monkeypatch):
+    api = make_api(monkeypatch, {"f@example.com": _doc("f@example.com", newsletters=("finance",))})
+    api.client.post("/request-unsubscribe", json={"email": "f@example.com"})
+    api.client.post("/request-preferences", json={"email": "f@example.com"})
+    assert [m.subject for m in api.mails] == ["Confirm unsubscription from Markets & Money Weekly",
+                                              "Manage your Latent SpaceMail preferences"]
+    assert 'https://api.test/unsubscribe?token=tok&n=finance"' in api.mails[0].html
+
+
+def test_the_unsubscribe_link_follows_the_page_it_was_asked_from(monkeypatch):
+    api = make_api(monkeypatch, {"a@example.com": _doc()})
+    api.client.post("/request-unsubscribe", json={"email": "a@example.com", "newsletter": "finance"})
+    api.client.post("/request-unsubscribe", json={"email": "a@example.com", "newsletter": "gaming"})  # not subscribed
+    api.client.post("/request-unsubscribe", json={"email": "a@example.com"})
+    assert [m.subject.split(" from ")[1] for m in api.mails] == [
+        "Markets & Money Weekly", "Latent SpaceMail", "Latent SpaceMail"]
+    assert 'https://api.test/unsubscribe?token=tok&n=finance"' in api.mails[0].html
+    assert 'https://api.test/unsubscribe?token=tok"' in api.mails[2].html
+
+
+def test_nobody_subscribed_gets_no_link(monkeypatch):
+    api = make_api(monkeypatch, {"x@example.com": _doc("x@example.com", newsletters=())})
+    for route in ("/request-unsubscribe", "/request-preferences"):
+        assert api.client.post(route, json={"email": "x@example.com"}).status_code == 200
+    assert api.mails == []
+
+
 # --- preferences by emailed link ------------------------------------------------------------------------
 
 def test_preferences_list_the_newsletters(monkeypatch):

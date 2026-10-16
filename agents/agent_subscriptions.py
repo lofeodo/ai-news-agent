@@ -550,12 +550,12 @@ def _confirm_email_html(token: str, newsletter_ids=None) -> str:
     )
 
 
-def _unsubscribe_email_html(token: str) -> str:
-    link = f"{SERVICE_BASE_URL}/unsubscribe?token={token}"
+def _unsubscribe_email_html(token: str, newsletter_id: str = AI) -> str:
+    link = f"{SERVICE_BASE_URL}/unsubscribe?{_link_query(token, newsletter_id)}"
     body = (
         f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#9a9088;margin:0 0 16px 0;">'
         'Someone (hopefully you) asked to unsubscribe this address from '
-        f'<span style="color:#c8b89a;font-weight:700;">Latent SpaceMail</span>.'
+        f'<span style="color:#c8b89a;font-weight:700;">{html_lib.escape(_newsletter_name(newsletter_id))}</span>.'
         '</p>'
         f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#9a9088;margin:0;">'
         'Tap <strong style="color:#c8b89a;">CONFIRM</strong> above or click the button below to complete your unsubscription. '
@@ -720,6 +720,8 @@ class SubscribeRequest(BaseModel):
 
 class EmailOnlyRequest(BaseModel):
     email: Annotated[str, Field(max_length=254)]
+    # /request-unsubscribe: which newsletter the page was about (unsubscribe.html?n=); none = AI if subscribed.
+    newsletter: NewsletterId | None = None
 
 
 class PreferencesUpdate(BaseModel):
@@ -1164,10 +1166,15 @@ def request_unsubscribe(request: Request, req: EmailOnlyRequest):
         return {"status": "ok"}
     db  = _db()
     doc = db.collection(SUBSCRIBERS_COLLECTION).document(email).get()
+    current = subscriptions_model.subscribed_ids(doc.to_dict() if doc.exists else None)
 
-    if doc.exists and doc.to_dict().get("active") and mail_throttle.allow_mail(db, email):
-        _send_email(email, f"Confirm unsubscription from {NEWSLETTER_NAME}",
-                    _unsubscribe_email_html(doc.to_dict()["token"]))
+    if current and mail_throttle.allow_mail(db, email):
+        # The link acts on the newsletter the page named if this address gets it, else on the AI one, else on
+        # the one it gets; the page behind the link offers "unsubscribe from everything" when there are others.
+        wanted = (req.newsletter or "").strip().lower()
+        newsletter = wanted if wanted in current else (AI if AI in current else current[0])
+        _send_email(email, f"Confirm unsubscription from {_newsletter_name(newsletter)}",
+                    _unsubscribe_email_html(doc.to_dict()["token"], newsletter))
     # Same response whether or not the subscriber exists.
     return {"status": "ok"}
 
@@ -1182,7 +1189,8 @@ def request_preferences(request: Request, req: EmailOnlyRequest):
     db  = _db()
     doc = db.collection(SUBSCRIBERS_COLLECTION).document(email).get()
 
-    if doc.exists and doc.to_dict().get("active") and mail_throttle.allow_mail(db, email):
+    if (doc.exists and subscriptions_model.subscribed_ids(doc.to_dict())
+            and mail_throttle.allow_mail(db, email)):
         _send_email(email, f"Manage your {NEWSLETTER_NAME} preferences",
                     _preferences_email_html(doc.to_dict()["token"]))
     return {"status": "ok"}
@@ -1416,6 +1424,8 @@ def _newsletter_choices(data: dict | None, admin: bool) -> dict:
         "newsletters": current,
         "available": [{"id": t.id, "name": t.name, "tagline": t.tagline, "accent_color": t.accent_color,
                        "hidden": not launch.is_public(t.id)} for t in map(topics.get_topic, ids)],
+        "consent_text":         subscriptions_model.CONSENT_TEXT,
+        "consent_text_version": subscriptions_model.CONSENT_CURRENT,
     }
 
 

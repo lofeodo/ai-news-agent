@@ -38,6 +38,13 @@ def test_rss_items_become_articles_with_the_shared_shape():
                  "language": "en", "hn_score": None, "_lang_excerpt": ""}
 
 
+def test_boardgamegeek_image_markup_is_stripped():
+    raw = _rss([("Post", "https://e.com/p", "by Ann [imageid=9200434 medium rep]Devir is releasing Gaudi [+3 chars]",
+                 NOW - timedelta(hours=1))])
+    [a] = rss_source.parse_feed(raw, {"name": "f", "url": "u"}, NOW - timedelta(hours=168))
+    assert a["description"] == "by Ann Devir is releasing Gaudi [+3 chars]"     # other brackets are left alone
+
+
 def test_old_items_are_dropped_and_newest_come_first():
     raw = _rss([("old", "https://e.com/old", "", NOW - timedelta(days=30)),
                 ("mid", "https://e.com/mid", "", NOW - timedelta(days=2)),

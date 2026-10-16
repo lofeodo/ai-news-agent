@@ -18,11 +18,16 @@ EXCERPT_CHARS = 400
 USER_AGENT = "Mozilla/5.0 (compatible; NewsletterBot/1.0; +https://newsletter.lofeodo.com)"
 
 
+# BoardGameGeek blog posts carry their own image markup in the feed text, e.g. "[imageid=9200434 medium rep]".
+_BBCODE_IMAGE = re.compile(r"\[imageid=\d+[^\]]*\]")
+
+
 def _plain_text(html: str | None) -> str:
     """Strip tags and collapse whitespace."""
     if not html:
         return ""
     text = BeautifulSoup(html, "html.parser").get_text(" ")
+    text = _BBCODE_IMAGE.sub("", text)
     return re.sub(r"\s+", " ", text).strip()
 
 

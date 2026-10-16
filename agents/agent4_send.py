@@ -24,6 +24,7 @@ from typing import NamedTuple
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import run_kind
+import topics
 from config import (
     CLICK_TRACKING,
     DATA_DIR,
@@ -145,15 +146,17 @@ def _get_sendgrid_api_key() -> str:
         return key
 
 
-def build_payload(to_email: str, html_body: str, subject: str, click_run_id: str | None = None) -> dict:
+def build_payload(to_email: str, html_body: str, subject: str, click_run_id: str | None = None,
+                  sender_name: str = SENDER_NAME) -> dict:
     """The SendGrid v3 mail/send body. With `click_run_id` it also turns on SendGrid click tracking for this
     message and tags it with the pipeline run id, so the Event Webhook can count clicks per run. The tag is
     the run, never a subscriber. Without it the payload is exactly what it was before click tracking existed.
+    `sender_name` is the From name readers see (the newsletter's own name for topics other than AI).
     """
     personalization = {"to": [{"email": to_email}]}
     payload = {
         "personalizations": [personalization],
-        "from":    {"email": SENDER_EMAIL, "name": SENDER_NAME},
+        "from":    {"email": SENDER_EMAIL, "name": sender_name},
         "subject": subject,
         "content": [{"type": "text/html", "value": html_body}],
     }
@@ -163,10 +166,11 @@ def build_payload(to_email: str, html_body: str, subject: str, click_run_id: str
     return payload
 
 
-def send_email(api_key: str, to_email: str, html_body: str, subject: str, click_run_id: str | None = None) -> None:
+def send_email(api_key: str, to_email: str, html_body: str, subject: str, click_run_id: str | None = None,
+               sender_name: str = SENDER_NAME) -> None:
     """Send one email. Raises on non-2xx (urllib raises on 4xx/5xx)."""
     import urllib.request
-    payload = json.dumps(build_payload(to_email, html_body, subject, click_run_id)).encode("utf-8")
+    payload = json.dumps(build_payload(to_email, html_body, subject, click_run_id, sender_name)).encode("utf-8")
 
     req = urllib.request.Request(
         "https://api.sendgrid.com/v3/mail/send",
@@ -185,15 +189,18 @@ def send_email(api_key: str, to_email: str, html_body: str, subject: str, click_
 # Personalization
 # ---------------------------------------------------------------------------
 
-def _personalize(html: str, token: str) -> str:
+def _personalize(html: str, token: str, topic: str = topics.DEFAULT_TOPIC) -> str:
     """Substitute the per-subscriber footer placeholders embedded by agent3.
 
     Both placeholders must be replaced (option-A contract). The preferences
     link depends on FRONTEND_BASE_URL — malformed until the frontend exists,
-    but we still substitute so the raw placeholder never ships.
+    but we still substitute so the raw placeholder never ships. A newsletter
+    other than AI adds `&n=<id>` so the link acts on that newsletter only; the
+    AI links have no `n` (contract C1), exactly as before.
     """
-    unsub_link = f"{SERVICE_BASE_URL}/unsubscribe?token={token}"
-    prefs_link = f"{FRONTEND_BASE_URL}/preferences.html?token={token}"
+    query = f"token={token}" if topic == topics.DEFAULT_TOPIC else f"token={token}&n={topic}"
+    unsub_link = f"{SERVICE_BASE_URL}/unsubscribe?{query}"
+    prefs_link = f"{FRONTEND_BASE_URL}/preferences.html?{query}"
     html = html.replace("{{UNSUBSCRIBE_URL}}", unsub_link)
     html = html.replace("{{PREFERENCES_URL}}", prefs_link)
     return html
@@ -408,6 +415,7 @@ class LoadedNewsletter(NamedTuple):
     subject: str
     run_id: str
     doc: dict  # the run doc, used to build the click link map
+    topic: str = topics.DEFAULT_TOPIC
 
 
 def _prepare_click_tracking(db, run_id: str, doc: dict) -> str | None:
@@ -431,17 +439,18 @@ def _prepare_click_tracking(db, run_id: str, doc: dict) -> str | None:
         return None
 
 
-def _load_latest_newsletter(db) -> LoadedNewsletter:
-    """Return the most recent run with newsletter_html set: its variants, subject, run id and doc.
+def _load_latest_newsletter(db, topic: str = topics.DEFAULT_TOPIC) -> LoadedNewsletter:
+    """Return the most recent run of `topic` (the AI newsletter by default) with newsletter_html set: its
+    variants, subject, run id and doc.
 
-    variants is a dict keyed by "0_0" / "1_0" / "0_1" / "1_1".
+    variants is a dict keyed by "0_0" / "1_0" / "0_1" / "1_1" (topics other than AI have "0_0" only).
     Falls back to {"0_0": newsletter_html} for old runs that predate variants.
     """
-    # Most recent run doc where agent3 finished saving all variants. Debug runs are skipped, so one made
-    # between the Sunday draft and the Monday send can never be mailed; the test-send service (TEST_SEND_TO,
-    # which only mails its owner) may still pick one up to preview it.
+    # Most recent run doc of this newsletter where agent3 finished saving all variants. Debug runs are skipped,
+    # so one made between the Sunday draft and the Monday send can never be mailed; the test-send service
+    # (TEST_SEND_TO, which only mails its owner) may still pick one up to preview it.
     # Agent4 is triggered by Scheduler independently — it doesn't receive a run_id.
-    doc = run_kind.latest_run(db, FIRESTORE_COLLECTION, release_only=not TEST_SEND_TO)
+    doc = run_kind.latest_run(db, FIRESTORE_COLLECTION, release_only=not TEST_SEND_TO, topic=topic)
     docs = [doc] if doc is not None else []
     if not docs:
         raise RuntimeError("[agent4]  No Firestore document found with newsletter_html set")
@@ -457,22 +466,35 @@ def _load_latest_newsletter(db) -> LoadedNewsletter:
     if not variants:
         variants = {"0_0": data.get("newsletter_html", "")}
     variants = {k: _normalize_image_urls(v) for k, v in variants.items()}
-    subject  = data.get("newsletter_subject") or f"{NEWSLETTER_NAME} — {datetime.now().strftime('%B %d, %Y')}"
+    name     = _sender_name(topic)
+    subject  = data.get("newsletter_subject") or f"{name} — {datetime.now().strftime('%B %d, %Y')}"
     run_id = docs[0].id  # the pipeline_runs doc id, which is what the healthcheck and click_counts key on
     print(f"[agent4]  Loaded newsletter variants from Firestore "
-          f"(run_id={data.get('run_id')}, keys={list(variants.keys())})", flush=True)
-    return LoadedNewsletter(variants, subject, run_id, data)
+          f"(run_id={data.get('run_id')}, topic={topic}, keys={list(variants.keys())})", flush=True)
+    return LoadedNewsletter(variants, subject, run_id, data, topic)
 
 
-def _active_subscribers(db) -> list[dict]:
-    """Return a list of active subscriber dicts (must include email + token)."""
-    docs = (
-        db.collection(SUBSCRIBERS_COLLECTION)
-        .where("active", "==", True)
-        .stream()
-    )
-    subs = [d.to_dict() for d in docs]
-    return subs
+def _sender_name(topic: str) -> str:
+    return SENDER_NAME if topic == topics.DEFAULT_TOPIC else topics.get_topic(topic).name
+
+
+def _active_subscribers(db, topic: str = topics.DEFAULT_TOPIC) -> list[dict]:
+    """Return a list of active subscriber dicts (must include email + token) for one newsletter.
+
+    The AI newsletter keeps its original query on the legacy `active` flag; every other newsletter is a
+    single-field array_contains query on `newsletters` (contract C1, no extra index).
+    """
+    if topic == topics.DEFAULT_TOPIC:
+        docs = (
+            db.collection(SUBSCRIBERS_COLLECTION)
+            .where("active", "==", True)
+            .stream()
+        )
+        subs = [d.to_dict() for d in docs]
+        return subs
+    import subscriptions_model
+    docs = db.collection(SUBSCRIBERS_COLLECTION).where("newsletters", "array_contains", topic).stream()
+    return [d for d in (s.to_dict() for s in docs) if subscriptions_model.is_subscribed(d, topic)]
 
 
 # ---------------------------------------------------------------------------
@@ -500,11 +522,15 @@ def _record_failure(run_id: str, agent_name: str, error: Exception) -> None:
 def _send_all(db, loaded: LoadedNewsletter, subscribers: list, start_time) -> None:
     """The cloud-mode send loop and its summary. Errors propagate to run(), which records them."""
     variants, subject = loaded.variants, loaded.subject
+    is_ai = loaded.topic == topics.DEFAULT_TOPIC
+    # Other newsletters: links carry n=<topic> and the From name is the newsletter's own. The AI call is unchanged.
+    send_kw = {} if is_ai else {"sender_name": _sender_name(loaded.topic)}
 
     # Batch-load section configs for premium subscribers (those with a uid).
     # Legacy/token-only subscribers have uid=None and skip this step.
+    # The premium section reorder exists for the AI newsletter only.
     uid_section_configs: dict = {}
-    if not TEST_SEND_TO:
+    if not TEST_SEND_TO and is_ai:
         try:
             uid_section_configs = _load_user_section_configs(db, subscribers)
             print(f"[agent4]  Section configs loaded for {len(uid_section_configs)} user(s)", flush=True)
@@ -557,9 +583,9 @@ def _send_all(db, loaded: LoadedNewsletter, subscribers: list, start_time) -> No
             except Exception as e:
                 print(f"  [warn]  section config failed for {email}: {e} — using default", flush=True)
 
-        personalized = _personalize(html, token)
+        personalized = _personalize(html, token, loaded.topic)
         try:
-            send_email(api_key, email, personalized, subject, click_run_id=click_run_id)
+            send_email(api_key, email, personalized, subject, click_run_id=click_run_id, **send_kw)
             sent += 1
             if use_markers:
                 _mark_sent(db, loaded.run_id, email)
@@ -622,15 +648,19 @@ def _send_all(db, loaded: LoadedNewsletter, subscribers: list, start_time) -> No
         print(f"[agent4]  Failed to record send_summary to Firestore: {e}", flush=True)
 
 
-def run(run_id: str):
+def run(run_id: str, topic: str | None = None):
     """Read newsletter HTML and send via SendGrid.
 
-    Cloud mode: per-subscriber send loop over active subscribers.
+    Cloud mode: per-subscriber send loop over the active subscribers of `topic` (main.py passes ?topic=<id>;
+    none means the AI newsletter, the original send).
     Local mode: single send to TEST_RECIPIENT_EMAIL (no Firestore).
     Always exits without raising on per-send failures; logs a structured
     send_summary line for Cloud Logging.
     """
     start_time = datetime.now()
+    topic = topics.get_topic(topic).id   # raises on an unknown topic; main.py already refused one
+    # The AI send calls the helpers exactly as before; other newsletters name their topic.
+    topic_kw = {} if topic == topics.DEFAULT_TOPIC else {"topic": topic}
 
     # -------------------------------------------------------------------
     # LOCAL MODE — single send to TEST_RECIPIENT_EMAIL, no Firestore.
@@ -641,7 +671,7 @@ def run(run_id: str):
         html_path    = variant_path if os.path.exists(variant_path) else legacy_path
         with open(html_path, "r", encoding="utf-8") as f:
             html = f.read()
-        subject = f"{NEWSLETTER_NAME} — {datetime.now().strftime('%B %d, %Y')}"
+        subject = f"{_sender_name(topic)} — {datetime.now().strftime('%B %d, %Y')}"
         print(f"[agent4]  Loaded newsletter HTML from {html_path}", flush=True)
 
         if not TEST_RECIPIENT_EMAIL:
@@ -666,13 +696,13 @@ def run(run_id: str):
     db = _fs.Client(project=GCP_PROJECT_ID)
 
     try:
-        loaded = _load_latest_newsletter(db)
+        loaded = _load_latest_newsletter(db, **topic_kw)
 
         if TEST_SEND_TO:
             print(f"[agent4]  TEST_SEND_TO override — sending only to {TEST_SEND_TO}", flush=True)
             subscribers = [{"email": TEST_SEND_TO, "token": "TEST-SEND"}]
         else:
-            subscribers = _active_subscribers(db)
+            subscribers = _active_subscribers(db, **topic_kw)
         print(f"[agent4]  {len(subscribers)} active subscriber(s)", flush=True)
     except StaleNewsletterError as e:
         # Record against the stale run's own doc (what the health check

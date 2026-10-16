@@ -177,9 +177,16 @@ _ISOLATED_RETRIES = {
 }
 _RETRY_DELAY_SECONDS = 5
 
+# Pipeline agents whose runs can overlap in one container: every topic runs weekly on Sunday morning, 30 minutes
+# apart, and the trigger returns before the agent finishes, so Cloud Run may hand a second run to an instance still
+# busy with the first (no --concurrency setting prevents that: the instance has no request in flight). Each of
+# these runs in its own child process (no retry unless listed above), so a watchdog timeout kills that run's child
+# only, never the whole process and with it another topic's run. See docs/architecture.md.
+_CHILD_PROCESS_AGENTS = {"agent1a", "agent1b", "agent2a", "agent2b", "agent3", "agent4"}
+
 _CHILD_CODE = (
-    "import importlib, sys; sys.path.insert(0, sys.argv[1]); "
-    "importlib.import_module(sys.argv[2]).run(sys.argv[3])"
+    "import importlib, json, sys; sys.path.insert(0, sys.argv[1]); "
+    "importlib.import_module(sys.argv[2]).run(sys.argv[3], **json.loads(sys.argv[4]))"
 )
 
 
@@ -194,7 +201,8 @@ def _describe_exit(returncode: int) -> str:
     return f"exit code {returncode}"
 
 
-def _run_isolated(agent_name: str, module_name: str, run_id: str, retries: int, current: dict) -> None:
+def _run_isolated(agent_name: str, module_name: str, run_id: str, retries: int, current: dict,
+                  options: dict | None = None) -> None:
     import subprocess
     import time
 
@@ -203,14 +211,20 @@ def _run_isolated(agent_name: str, module_name: str, run_id: str, retries: int, 
     attempts = retries + 1
 
     for attempt in range(1, attempts + 1):
+        if current.get("expired"):
+            return  # the watchdog fired between attempts and already recorded the timeout
         print(f"[main]  {agent_name} attempt {attempt}/{attempts} (child process, run_id={run_id})", flush=True)
         proc = subprocess.Popen(
-            [sys.executable, "-c", _CHILD_CODE, agents_dir, module_name, run_id],
+            [sys.executable, "-c", _CHILD_CODE, agents_dir, module_name, run_id, json.dumps(options or {})],
             cwd=app_dir,
         )
         current["proc"] = proc
+        if current.get("expired"):
+            proc.kill()  # the deadline passed while the child was starting
         returncode = proc.wait()
         current["proc"] = None
+        if current.get("expired"):
+            return  # killed by the watchdog, which recorded the timeout: no retry, no second error
 
         if returncode == 0:
             print(f"[main]  {module_name} completed successfully on attempt {attempt}/{attempts}", flush=True)
@@ -242,19 +256,23 @@ def _run_agent(agent_name: str, module_name: str, run_id: str, options: dict | N
     """Import the agent module and call its run(run_id) function, under a
     wall-clock watchdog that hard-exits the process if it overruns."""
     timeout = _deadline_seconds()
-    current = {"proc": None}  # child process, for agents in _ISOLATED_RETRIES
+    isolated = agent_name in _CHILD_PROCESS_AGENTS or agent_name in _ISOLATED_RETRIES
+    current = {"proc": None, "expired": False}  # this run's child process, for isolated agents
 
     def _fire() -> None:
         detail = f"{agent_name} exceeded its deadline ({timeout:.0f}s from start)"
+        current["expired"] = True
         try:
-            sys.stderr.write(f"[main]  HARD TIMEOUT — {detail}. Forcing process exit.\n")
+            action = "Killing this run's child process." if isolated else "Forcing process exit."
+            sys.stderr.write(f"[main]  HARD TIMEOUT — {detail}. {action}\n")
             sys.stderr.flush()
             proc = current["proc"]
             if proc is not None:
                 proc.kill()
             _record_failure(agent_name, run_id, f"hard timeout — {detail}")
         finally:
-            os._exit(124)
+            if not isolated:
+                os._exit(124)  # an in-process agent cannot be stopped any other way
 
     watchdog = threading.Timer(timeout, _fire)
     watchdog.daemon = True
@@ -263,8 +281,8 @@ def _run_agent(agent_name: str, module_name: str, run_id: str, options: dict | N
 
     try:
         print(f"[main]  Thread started for {module_name} (run_id={run_id})", flush=True)
-        if agent_name in _ISOLATED_RETRIES:
-            _run_isolated(agent_name, module_name, run_id, _ISOLATED_RETRIES[agent_name], current)
+        if isolated:
+            _run_isolated(agent_name, module_name, run_id, _ISOLATED_RETRIES.get(agent_name, 0), current, options)
             return
         import importlib
         module = importlib.import_module(module_name)
@@ -326,6 +344,15 @@ async def trigger(request: Request):
             return Response(content=f"Unknown force '{force}'. Valid value: 1.", status_code=400)
         if force:
             options = {"force": True}
+    # agent4 takes ?topic=<id>: which newsletter to send (default: the AI one), one Scheduler job per newsletter.
+    if agent_name == "agent4":
+        topic = request.query_params.get("topic")
+        if topic:
+            import topics
+            problem = topics.check_run_request(topic, None)
+            if problem:
+                return Response(content=problem, status_code=400)
+            options = {"topic": topics.get_topic(topic).id}
     # The orchestrator takes ?kind=release|debug. Unflagged means debug, so only the scheduled job publishes.
     if agent_name == "orchestrator":
         kind = request.query_params.get("kind")
@@ -333,7 +360,7 @@ async def trigger(request: Request):
             return Response(content=f"Unknown kind '{kind}'. Valid values: release, debug.", status_code=400)
         if kind:
             options = {"kind": kind}
-        # ?topic=<id> picks the newsletter (default: the AI one). Other topics are debug-only for now.
+        # ?topic=<id> picks the newsletter (default: the AI one); any known topic may be a release run.
         topic = request.query_params.get("topic")
         if topic:
             import topics

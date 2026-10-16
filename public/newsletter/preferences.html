@@ -10,6 +10,31 @@
   <link rel="stylesheet" href="fonts.css">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="topbar.css">
+  <style>
+    /* One block per newsletter, in its own colour (the site's left-bar card motif). */
+    .pref-nl {
+      --accent: var(--nl);   /* --nl is set inline per newsletter; the toggle and checkboxes follow it */
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--nl);
+      padding: 14px 14px 12px;
+      margin-bottom: 10px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .pref-nl.is-off { border-left-color: var(--border); }
+    .pref-nl.is-focus { border-color: var(--nl); background: rgba(255,255,255,0.02); }
+    .pref-nl__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .pref-nl__name { font-family: var(--display); font-weight: 600; font-size: 1.2rem; line-height: 1.15; color: var(--nl); }
+    .pref-nl.is-off .pref-nl__name { color: var(--muted); }
+    .pref-nl__tag { font-size: 0.76rem; color: var(--muted); margin-top: 3px; }
+    .pref-nl__meta { margin-top: 8px; font-size: 0.76rem; color: var(--muted); }
+    .pref-nl__meta a { color: var(--nl); text-decoration: none; }
+    .pref-nl__meta a:hover { text-decoration: underline; }
+    .pref-nl__hidden { font-size: 0.68rem; color: var(--muted); border: 1px dashed var(--border); padding: 1px 6px; margin-left: 6px; vertical-align: middle; font-family: var(--font); }
+    .pref-nl__options { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border); }
+    .pref-nl__options .checkboxes { margin-bottom: 14px; }
+    .pref-nl__options .check-row { text-transform: none; letter-spacing: normal; }
+    .pref-nl__options button[type="submit"] { padding: 10px; font-size: 0.85rem; }
+    .pref-nl .toggle-switch { margin: -6px -6px 0 0; padding: 13px 6px 13px 14px; cursor: pointer; }  /* 44px tap target */  </style>
 </head>
 <body>
   <canvas id="bg-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;will-change:transform;"></canvas>
@@ -19,6 +44,7 @@
       <img src="/images/logo-mark.svg" alt="" height="26" width="26" fetchpriority="high">
     </a>
     <nav class="topbar__nav" aria-label="Main">
+      <a href="/newsletters.html" class="topbar__nav-link" data-href="/newsletters.html">Newsletters</a>
       <a href="/issues.html" class="topbar__nav-link" data-href="/issues.html">Issues<span class="topbar__live"><span class="topbar__live-dot"></span>Live</span></a>
       <a href="/sections.html" class="topbar__nav-link" data-href="/sections.html" id="topbar-sections">Customize</a>
       <a href="/preferences.html" class="topbar__nav-link" data-href="/preferences.html">Preferences</a>
@@ -72,9 +98,19 @@
       <div class="msg" id="subscribe-msg" style="margin-top:14px;"></div>
     </div>
 
-    <!-- Content preferences (shown when subscribed, both flows) -->
+    <!-- Which newsletters this address gets (both flows); each switch saves at once. -->
+    <div class="prefs-section" id="newsletters-section" style="display:none">
+      <div class="prefs-section__header">Your newsletters</div>
+      <div class="email-display" id="nl-email" style="display:none"></div>
+      <p class="note" id="nl-summary" style="margin-bottom:12px"></p>
+      <div id="nl-rows" style="margin-bottom:12px"></div>
+      <p class="note" id="nl-consent" style="font-size:0.76rem"></p>
+      <div class="msg" id="nl-msg" role="status" aria-live="polite"></div>
+    </div>
+
+    <!-- AI newsletter options (shown when subscribed to it, both flows) -->
     <div class="prefs-section" id="content-section" style="display:none">
-      <div class="prefs-section__header">Content</div>
+      <div class="prefs-section__header">Latent SpaceMail options</div>
       <div class="email-display" id="email-display" style="display:none"></div>
       <form id="prefs-form" novalidate>
         <div class="checkboxes">
@@ -92,11 +128,11 @@
       </form>
     </div>
 
-    <!-- Subscription management (account flow only) -->
+    <!-- Subscription management (both flows when the newsletter list is shown; account flow otherwise) -->
     <div class="prefs-section prefs-section--danger" id="subscription-section" style="display:none">
       <div class="prefs-section__header">Subscription</div>
-      <p class="note" style="margin-bottom:14px">Want to stop receiving the newsletter?</p>
-      <button type="button" id="unsub-btn" style="background:transparent;border:1px solid var(--error);color:var(--error);width:100%;font-family:var(--font);font-size:0.82rem;letter-spacing:0.1em;text-transform:uppercase;padding:10px;cursor:pointer;transition:background 0.15s;">Unsubscribe</button>
+      <p class="note" style="margin-bottom:14px">Want to stop receiving every newsletter?</p>
+      <button type="button" id="unsub-btn" style="background:transparent;border:1px solid var(--error);color:var(--error);width:100%;font-family:var(--font);font-size:0.82rem;letter-spacing:0.1em;text-transform:uppercase;padding:10px;cursor:pointer;transition:background 0.15s;">Unsubscribe from everything</button>
       <div class="msg" id="unsub-msg"></div>
     </div>
 
@@ -157,6 +193,102 @@
     let authMode = false; // true = using Firebase Auth, false = token flow
     let userTier = 'free';
 
+    // ── Your newsletters ─────────────────────────────────────────────────────
+    // One block per newsletter: a switch (saves at once), a link to it, and its own options (AI: French/Canada).
+    const nlSection = document.getElementById('newsletters-section');
+    const nlRows    = document.getElementById('nl-rows');
+    const nlMsg     = document.getElementById('nl-msg');
+    const nlSummary = document.getElementById('nl-summary');
+    const focusId   = (new URLSearchParams(location.search).get('n') || '').toLowerCase();
+    let consentVersion = null;
+    const esc = (t) => String(t ?? '').replace(/[&<>"']/g,
+      (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    function chosenNewsletters() {
+      return [...nlRows.querySelectorAll('input[role=switch]:checked')].map((i) => i.value);
+    }
+
+    function blockName(block) {
+      return block.querySelector('.pref-nl__name').firstChild.textContent;
+    }
+
+    function paintBlocks() {
+      nlRows.querySelectorAll('.pref-nl').forEach((b) => {
+        b.classList.toggle('is-off', !b.querySelector('input[role=switch]').checked);
+      });
+      const ids = chosenNewsletters();
+      nlSummary.textContent = ids.length
+        ? `You get ${ids.length === 1 ? '1 newsletter' : `${ids.length} newsletters`}, each as its own email on Monday morning.`
+        : "You don't get any newsletter right now. Switch one on to subscribe.";
+      const aiOptions = document.getElementById('ai-options');
+      if (aiOptions) aiOptions.hidden = !ids.includes('ai');   // AI's options only matter while it is on
+      subscriptionSection.style.display = ids.length ? 'block' : 'none';
+    }
+
+    function renderNewsletters(data) {
+      consentVersion = data.consent_text_version;
+      loadingMsg.style.display = 'none';
+      invalidMsg.style.display = 'none';
+      const on = new Set(data.newsletters || []);
+      nlRows.innerHTML = data.available.map((n) => `
+        <div class="pref-nl" style="--nl:${esc(n.accent_color)}" id="pref-${esc(n.id)}">
+          <div class="pref-nl__head">
+            <div>
+              <div class="pref-nl__name">${esc(n.name)}${n.hidden ? '<span class="pref-nl__hidden">Hidden</span>' : ''}</div>
+              <div class="pref-nl__tag">${esc(n.tagline)}</div>
+            </div>
+            <label class="toggle-switch" aria-label="Get ${esc(n.name)}">
+              <input type="checkbox" role="switch" value="${esc(n.id)}"${on.has(n.id) ? ' checked' : ''}>
+              <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            </label>
+          </div>
+          <p class="pref-nl__meta"><a href="/newsletter.html?id=${encodeURIComponent(n.id)}">About it and its latest issue</a></p>
+          ${n.id === 'ai' ? '<div class="pref-nl__options" id="ai-options"></div>' : ''}
+        </div>`).join('');
+      const aiOptions = document.getElementById('ai-options');
+      if (aiOptions) {
+        aiOptions.appendChild(prefsForm);
+        document.getElementById('include_french').checked = !!(data.prefs && data.prefs.include_french);
+        document.getElementById('include_canada').checked = !!(data.prefs && data.prefs.include_canada);
+      }
+      contentSection.style.display = 'none';   // its form now lives inside the AI block
+      document.getElementById('nl-consent').textContent = data.consent_text || '';
+      nlSection.style.display = 'block';
+      paintBlocks();
+      const focus = focusId && document.getElementById(`pref-${focusId}`);
+      if (focus) {
+        focus.classList.add('is-focus');
+        focus.scrollIntoView({ block: 'center' });
+      }
+    }
+
+    nlRows.addEventListener('change', async (e) => {
+      const box = e.target;
+      if (box.getAttribute('role') !== 'switch') return;   // the AI options save with their own button
+      const name = blockName(box.closest('.pref-nl'));
+      const switches = nlRows.querySelectorAll('input[role=switch]');
+      switches.forEach((i) => { i.disabled = true; });
+      nlMsg.className = 'msg';
+      try {
+        const body = { newsletters: chosenNewsletters(), consent_text_version: consentVersion };
+        const res = authMode
+          ? await authFetch(`${API}/auth/preferences`, { method: 'POST', body: JSON.stringify(body) })
+          : await fetch(`${API}/preferences`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ token, ...body }) });
+        if (!res.ok) throw Object.assign(new Error(res.status), { status: res.status });
+        nlMsg.textContent = box.checked ? `Subscribed to ${name}. It arrives on Monday.` : `Unsubscribed from ${name}.`;
+        nlMsg.className = 'msg visible success';
+      } catch (err) {
+        box.checked = !box.checked;
+        nlMsg.textContent = err.status === 503 ? 'Subscriber limit reached. No spots are open right now.'
+          : `${name} was not saved. Try again.`;
+        nlMsg.className = 'msg visible error';
+      } finally {
+        switches.forEach((i) => { i.disabled = false; });
+        paintBlocks();
+      }
+    });
+
     function showSaveMsg(text, type) {
       saveMsg.textContent = text;
       saveMsg.className = `msg visible ${type}`;
@@ -209,6 +341,10 @@
         userTier = data.tier || 'free';
         if (userTier === 'premium') tierBadge.style.display = 'inline-block';
 
+        if (data.available) {
+          renderNewsletters(data);
+          return;
+        }
         if (!data.subscribed) {
           notSubNotice.style.display = 'block';
           return;
@@ -251,9 +387,16 @@
         loadingMsg.style.display = 'none';
         if (!res.ok) { showInvalid(); return; }
         const data = await res.json();
-        emailDisplay.textContent     = data.email || '';
-        emailDisplay.style.display   = 'block';
-        showPrefsForm(data.prefs);
+        if (data.available) {
+          const nlEmail = document.getElementById('nl-email');
+          nlEmail.textContent   = data.email || '';
+          nlEmail.style.display = 'block';
+          renderNewsletters(data);
+        } else {
+          emailDisplay.textContent     = data.email || '';
+          emailDisplay.style.display   = 'block';
+          showPrefsForm(data.prefs);
+        }
         newLinkSection.style.display = 'block';
       } catch {
         loadingMsg.style.display = 'none';
@@ -294,18 +437,24 @@
       }
     });
 
-    // ── Unsubscribe (account flow) ───────────────────────────────────────────
+    // ── Unsubscribe from everything (account flow, or the emailed link) ──────
     unsubBtn && unsubBtn.addEventListener('click', async () => {
-      if (!confirm('Unsubscribe from Latent SpaceMail?')) return;
+      if (!confirm('Unsubscribe from every newsletter?')) return;
       unsubBtn.disabled = true;
       try {
-        const res = await authFetch(`${API}/auth/unsubscribe`, { method: 'POST' });
+        const res = authMode
+          ? await authFetch(`${API}/auth/unsubscribe`, { method: 'POST', body: JSON.stringify({ all: true }) })
+          : await fetch(`${API}/preferences`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ token, newsletters: [] }) });
         if (res.ok) {
-          unsubMsg.textContent  = 'You\'ve been unsubscribed.';
-          unsubMsg.className    = 'msg visible success';
+          nlRows.querySelectorAll('input[role=switch]').forEach((i) => { i.checked = false; });
+          nlMsg.textContent  = 'You\'ve been unsubscribed from every newsletter.';
+          nlMsg.className    = 'msg visible success';
+          unsubBtn.disabled  = false;
           contentSection.style.display = 'none';
           subscriptionSection.style.display = 'none';
-          notSubNotice.style.display = 'block';
+          if (nlSection.style.display === 'none') notSubNotice.style.display = 'block';
+          else paintBlocks();
         } else {
           unsubMsg.textContent = 'Something went wrong. Please try again.';
           unsubMsg.className   = 'msg visible error';

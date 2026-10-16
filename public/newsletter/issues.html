@@ -68,6 +68,7 @@
       <img src="/images/logo-mark.svg" alt="" height="26" width="26" fetchpriority="high">
     </a>
     <nav class="topbar__nav" aria-label="Main">
+      <a href="/newsletters.html" class="topbar__nav-link" data-href="/newsletters.html">Newsletters</a>
       <a href="/issues.html" class="topbar__nav-link" data-href="/issues.html">Issues<span class="topbar__live"><span class="topbar__live-dot"></span>Live</span></a>
       <a href="/sections.html" class="topbar__nav-link" data-href="/sections.html" id="topbar-sections">Customize</a>
       <a href="/preferences.html" class="topbar__nav-link" data-href="/preferences.html">Preferences</a>
@@ -113,6 +114,13 @@
     title="Latent SpaceMail issue"
     sandbox="allow-popups allow-popups-to-escape-sandbox"
   ></iframe>
+  <script>
+    // ?n=<newsletter> shows that newsletter's archive; the frame starts on the AI issue, so blank it until the list loads.
+    (function () {
+      var n = (new URLSearchParams(location.search).get('n') || 'ai').toLowerCase();
+      if (n !== 'ai') document.getElementById('issue-frame').src = 'about:blank';
+    })();
+  </script>
 
   <script src="share.js"></script>
   <script>LSMShare.attachButton(document.getElementById('share-btn'));</script>
@@ -128,8 +136,11 @@
     const frame  = document.getElementById('issue-frame');
     const toggle = document.getElementById('debug-toggle');
     const navLink = document.querySelector('.topbar__nav-link.active') || document.querySelector('.topbar__nav-link[data-href="/issues.html"]');
-    const latestSrc = frame.getAttribute('src');
-    let publicSrc = latestSrc;
+    // Which newsletter's archive (AI unless ?n= names another). Only the AI one has /issues/latest.
+    const archiveTopic = (new URLSearchParams(location.search).get('n') || 'ai').toLowerCase();
+    const isAiArchive = archiveTopic === 'ai';
+    const latestSrc = isAiArchive ? frame.getAttribute('src') : null;
+    let publicSrc = latestSrc || 'about:blank';
     let debugOn = false;
     let issues = [];          // newest first, from GET /issues
     let current = 0;
@@ -157,8 +168,8 @@
       olderBtn.disabled = i >= issues.length - 1;
       newerBtn.disabled = i <= 0;
       tag.textContent = i === 0 ? 'Latest issue' : `${i} issue${i === 1 ? '' : 's'} ago`;
-      // The newest issue goes through /issues/latest so the page works even when the list does not.
-      publicSrc = i === 0 ? latestSrc : `${API}/issues/${encodeURIComponent(issues[i].run_id)}`;
+      // The newest AI issue goes through /issues/latest so the page works even when the list does not.
+      publicSrc = i === 0 && latestSrc ? latestSrc : `${API}/issues/${encodeURIComponent(issues[i].run_id)}`;
       if (!debugOn) { frame.removeAttribute('srcdoc'); frame.src = publicSrc; }
       if (push) {
         const u = new URL(location.href);
@@ -167,11 +178,21 @@
       }
     }
 
+    // Another newsletter with nothing to show: say so in the frame.
+    function showNoIssues(text) {
+      frame.removeAttribute('src');
+      frame.srcdoc = ISSUE_POLICY + `<body style="margin:0;padding:32px;background:#060606;color:#e8e8e8;font-family:Menlo,Consolas,monospace;line-height:1.6">` +
+        `<p>${esc(text)}</p></body>`;
+    }
+
     async function loadArchive() {
       try {
-        const res = await fetch(`${API}/issues`);
+        const res = await fetch(isAiArchive ? `${API}/issues` : `${API}/issues?topic=${encodeURIComponent(archiveTopic)}`);
+        if (!isAiArchive && res.status === 404) { showNoIssues('This newsletter has no public issues yet.'); return; }
         if (!res.ok) throw new Error(res.status);
         issues = (await res.json()).issues || [];
+        if (!isAiArchive && !issues.length) { showNoIssues('The first issue of this newsletter arrives on a Monday soon.'); return; }
+        if (!isAiArchive && issues.length === 1) { showIssue(0, false); return; }
         if (issues.length < 2) return;   // nothing to switch between
         select.innerHTML = issues.map((it, i) => `<option value="${i}"></option>`).join('');
         [...select.options].forEach((o, i) => { o.textContent = issueLabel(issues[i]); });
@@ -180,7 +201,8 @@
         const at = wanted ? issues.findIndex(it => it.run_id === wanted) : 0;
         showIssue(at > 0 ? at : 0, false);
       } catch (e) {
-        console.error('[issues] archive list failed:', e);   // the latest issue is already showing
+        console.error('[issues] archive list failed:', e);   // the latest AI issue is already showing
+        if (!isAiArchive) showNoIssues("This newsletter's issues couldn't be loaded. Reload to try again.");
       }
     }
 

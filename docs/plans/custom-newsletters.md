@@ -41,7 +41,10 @@ cost scales with content. Planner's assumptions (the worker may refine them and 
   personal widgets with `sample_data`, and returns C6's `{html, size_bytes, warnings}`. Rate limit 20/min per user;
   results cached 10 minutes per definition hash. Same `PREVIEW_CSP` and sandboxed `srcdoc` as the archive.
 - **Catalog:** `GET /catalog` lists visible topics (roadmap A's `launch.visible_topic_ids`, so hidden topics only for
-  admins) with their sections, and widgets from roadmap C's registry if it merged, otherwise just `paper_spotlight`.
+  admins) with their sections, and widgets from roadmap C's registry if it merged (`catalog(for_custom=True)`, so
+  widgets whose source forbids commercial use, such as BoardGameGeek, are never offered), otherwise just
+  `paper_spotlight`. Saving or sending a definition that names such a widget is refused (400 on save; the block is
+  dropped at send).
 - **The old Customize page stays** (AI section reorder) until a follow-up retires it.
 
 ## Files this roadmap owns

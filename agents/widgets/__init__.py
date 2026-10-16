@@ -20,6 +20,8 @@ BUILTIN = (
     "rates_board",
     "week_ahead",
     "market_snapshot",
+    "number_of_week",
+    "crowdfunding_watch",
 )
 
 for _name in BUILTIN:

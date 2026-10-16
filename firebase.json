@@ -2,7 +2,7 @@
   "hosting": {
     "site": "latentspacemail",
     "public": "public/newsletter",
-    "ignore": ["firebase.json", "**/.*"],
+    "ignore": ["firebase.json", "**/.*", "**/*.test.html"],
     "redirects": [
       { "source": "/preview.html", "destination": "/issues.html", "type": 301 }
     ],

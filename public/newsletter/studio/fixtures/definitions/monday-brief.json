@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "name": "My Monday brief",
+  "accent_color": "#7fd1a0",
+  "blocks": [
+    {"type": "intro"},
+    {"type": "widget", "widget": "paper_spotlight", "topic": "ai", "config": {}},
+    {"type": "section", "topic": "ai", "section": "Model & Product Releases", "max_items": 3},
+    {"type": "share"},
+    {"type": "section", "topic": "finance", "section": "Crypto & Fintech", "max_items": 3},
+    {"type": "widget", "widget": "stock_watchlist", "config": {"tickers": ["SHOP", "RY", "AAPL"]}},
+    {"type": "section", "topic": "gaming", "section": "Releases & Reviews", "max_items": 4, "if_empty": "hide"},
+    {"type": "custom_section", "title": "SpaceX", "query": "SpaceX product launches & mission updates", "max_items": 3}
+  ]
+}

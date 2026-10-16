@@ -1,0 +1,258 @@
+{
+  "_note": "Sample content for the studio's mock preview. Every company, product and number here is made up.",
+  "ai": {
+    "Model & Product Releases": [
+      {"title": "Northwind Labs ships Atlas 3 with a million-token context window", "summary": "The new flagship model reads whole codebases in one go and is priced below its predecessor, which matters for teams that hit context limits daily.", "points": 842, "points_source": "hn"},
+      {"title": "Helix AI opens its voice agent API to every developer", "summary": "The real-time voice API leaves its waitlist with per-minute pricing, putting phone-quality assistants within reach of small companies.", "points": 515, "points_source": "hn"},
+      {"title": "Lumen adds a research mode that cites every claim", "summary": "The assistant now plans multi-step searches and links each sentence to a source, a direct answer to complaints about made-up citations.", "points": 377, "points_source": "hn"},
+      {"title": "Tern releases a small model that runs on phones offline", "summary": "A 3-billion-parameter model matches last year's mid-size models on everyday tasks while never leaving the device.", "points": null, "points_source": null},
+      {"title": "Cobalt raises prices for its enterprise API tier", "summary": "Heavy users face a 20% increase next month as the company shifts capacity toward its newest model.", "points": null, "points_source": null}
+    ],
+    "Policy, Law & Regulation": [
+      {"title": "Lawmakers advance a bill requiring labels on AI-generated ads", "summary": "The proposal would fine platforms that run synthetic political ads without a visible disclosure, with a vote expected next month.", "points": 298, "points_source": "hn"},
+      {"title": "Court lets authors' copyright case against an AI lab proceed", "summary": "A judge declined to dismiss claims that training on pirated books was infringement, setting up the first trial on the question.", "points": 611, "points_source": "hn"},
+      {"title": "Regulator publishes its first audit of a hiring algorithm", "summary": "The report found the screening tool rejected older applicants more often and orders the vendor to retrain it within 90 days.", "points": null, "points_source": null},
+      {"title": "City council bans facial recognition in public housing", "summary": "Councillors voted 9 to 2 after residents objected to cameras installed without consultation last spring.", "points": 144, "points_source": "hn"},
+      {"title": "Trade group drafts a code of conduct for AI companions", "summary": "The voluntary rules cover age checks and how apps must respond when a user mentions self-harm.", "points": null, "points_source": null}
+    ],
+    "Open Source & Tools": [
+      {"title": "OpenFold releases open weights for a 70B reasoning model", "summary": "The weights and training recipe are free for commercial use, giving self-hosters a strong alternative to paid APIs.", "points": 1204, "points_source": "hn"},
+      {"title": "A new benchmark measures how often coding agents break tests", "summary": "Researchers found popular agents fix the asked-for bug but quietly break unrelated tests about a third of the time.", "points": 466, "points_source": "hn"},
+      {"title": "Quill, a tiny inference server, hits 10,000 GitHub stars", "summary": "The single-binary server runs open models on a laptop GPU and has become a favourite for local prototyping.", "points": 389, "points_source": "hn"},
+      {"title": "Evalkit 2.0 adds side-by-side human review", "summary": "The open-source evaluation tool now lets teams label model outputs in the browser and track agreement over time.", "points": 121, "points_source": "hn"},
+      {"title": "Community fine-tune makes a small model fluent in French", "summary": "Volunteers trained on public-domain texts and report big gains on Quebec French idioms.", "points": null, "points_source": null}
+    ],
+    "Safety & Alignment": [
+      {"title": "Study finds models behave differently when they think they are tested", "summary": "Researchers show several models answer more cautiously when prompts look like an evaluation, which complicates safety testing.", "points": 733, "points_source": "hn"},
+      {"title": "Interpretability team maps the features behind refusals", "summary": "The paper identifies a handful of internal features that decide whether a model declines a request, and shows they can be audited.", "points": 402, "points_source": "hn"},
+      {"title": "Lab publishes its first third-party red-team report", "summary": "Outside testers found two serious jailbreaks, both fixed before launch, and the lab committed to publishing future reports.", "points": null, "points_source": null},
+      {"title": "Safety institute shares a test set for dangerous chemistry questions", "summary": "Access is limited to vetted labs so the questions cannot leak into training data.", "points": 156, "points_source": "hn"},
+      {"title": "Researchers propose a cheap check for reward hacking", "summary": "A second small model flags answers that game the grader, catching most cases in a coding benchmark.", "points": null, "points_source": null}
+    ],
+    "Industry & Business": [
+      {"title": "Helix AI raises $2 billion at a $30 billion valuation", "summary": "The round, led by sovereign funds, will pay for a new data centre and doubles the company's value in eight months.", "points": 524, "points_source": "hn"},
+      {"title": "Chipmaker's data-centre revenue triples on AI demand", "summary": "Quarterly sales beat forecasts again, though the company warned supply of advanced packaging stays tight into next year.", "points": 318, "points_source": "hn"},
+      {"title": "Cloud provider signs a ten-year power deal with a nuclear plant", "summary": "The agreement guarantees electricity for two AI campuses and revives a reactor scheduled to close.", "points": 287, "points_source": "hn"},
+      {"title": "Northwind Labs acquires a coding-agent startup", "summary": "The deal brings a team of 40 and a product used by large banks; terms were not disclosed.", "points": null, "points_source": null},
+      {"title": "Survey: half of mid-size firms now pay for an AI assistant", "summary": "Adoption doubled in a year, but only one in five firms measures whether it saves time.", "points": null, "points_source": null}
+    ],
+    "Society & Culture": [
+      {"title": "Teachers report a shift from essays to oral exams", "summary": "A national survey finds a third of high-school teachers changed how they grade because of AI writing tools.", "points": 455, "points_source": "hn"},
+      {"title": "Hospital pilot cuts note-taking time for doctors by half", "summary": "An AI scribe drafted visit notes for 200 physicians; patients rated their visits slightly higher during the trial.", "points": 301, "points_source": "hn"},
+      {"title": "Translators' union negotiates the first contract covering AI", "summary": "The agreement sets pay rates for post-editing machine translation and requires disclosure when AI is used.", "points": null, "points_source": null},
+      {"title": "Museum's AI-generated exhibit draws crowds and criticism", "summary": "Visitors queued for hours, while artists protested that the training data used their work without consent.", "points": 98, "points_source": "hn"},
+      {"title": "Libraries launch free AI literacy classes for seniors", "summary": "The six-week course covers spotting synthetic images and scam calls that clone voices.", "points": null, "points_source": null}
+    ],
+    "Canada & Montreal": [
+      {"title": "Montreal lab opens a public centre for responsible AI", "summary": "The centre will offer free audits to non-profits and publish its methods, with funding for five years.", "points": 167, "points_source": "hn"},
+      {"title": "Ottawa announces compute credits for Canadian start-ups", "summary": "Eligible companies can apply for up to $1 million in cloud credits on domestic data centres starting in January.", "points": null, "points_source": null},
+      {"title": "Quebec start-up raises $40 million for medical imaging AI", "summary": "The Series B will fund trials in three provinces and an office in Boston.", "points": null, "points_source": null},
+      {"title": "Toronto researchers release a bilingual speech dataset", "summary": "Ten thousand hours of Canadian English and French speech are now free for research and commercial use.", "points": 88, "points_source": "hn"},
+      {"title": "Privacy commissioner opens an inquiry into a chatbot's data use", "summary": "The office will examine whether conversations were used for training without meaningful consent.", "points": null, "points_source": null}
+    ]
+  },
+  "finance": {
+    "Markets & Macro": [
+      {"title": "Stocks close at a record as inflation cools for a third month", "summary": "Softer price data revived hopes of rate cuts; bond yields fell and rate-sensitive sectors led the gains.", "points": 214, "points_source": "hn"},
+      {"title": "Oil jumps 6% on supply worries", "summary": "Crude had its best week since spring after producers signalled deeper output cuts, lifting energy shares and petrol prices.", "points": null, "points_source": null},
+      {"title": "Job growth slows but wages keep rising", "summary": "Employers added fewer jobs than expected while average pay rose 4%, a mix that keeps central banks cautious.", "points": null, "points_source": null},
+      {"title": "The dollar slides as traders bet on lower rates", "summary": "A weaker greenback helps exporters and makes U.S. holidays cheaper for Canadians.", "points": null, "points_source": null},
+      {"title": "Why bond yields matter for your mortgage renewal", "summary": "Five-year fixed rates track bond yields, so this month's drop could mean cheaper renewals by winter.", "points": 66, "points_source": "hn"}
+    ],
+    "Central Banks & Rates": [
+      {"title": "Central bank holds rates and signals cuts may come in the new year", "summary": "Policymakers kept the rate unchanged but dropped language about further hikes, a shift markets read as dovish.", "points": 188, "points_source": "hn"},
+      {"title": "Minutes show officials split on how fast to ease", "summary": "Some members wanted to cut now to protect jobs; others worried inflation could rebound.", "points": null, "points_source": null},
+      {"title": "Governor warns household debt remains a risk", "summary": "In a speech, the governor said a wave of mortgage renewals at higher rates will squeeze budgets through next year.", "points": null, "points_source": null},
+      {"title": "European rate cut lifts bond markets", "summary": "The quarter-point cut was the third this year and pushed yields lower across the region.", "points": null, "points_source": null},
+      {"title": "What a rate cut actually changes for savers", "summary": "High-interest savings accounts adjust within weeks, while GIC rates have already started to fall.", "points": null, "points_source": null}
+    ],
+    "Earnings & Companies": [
+      {"title": "Retail giant beats forecasts as shoppers trade down", "summary": "Sales of store brands grew fastest, a sign households are still watching prices closely.", "points": null, "points_source": null},
+      {"title": "Bank profits rise but loan-loss provisions climb", "summary": "The big lenders set aside more money for bad loans, mostly on credit cards and commercial real estate.", "points": null, "points_source": null},
+      {"title": "Airline shares fall after a weak holiday outlook", "summary": "Higher fuel costs and softer bookings led the carrier to cut its forecast for the busiest quarter.", "points": null, "points_source": null},
+      {"title": "Software maker agrees to a $9 billion takeover", "summary": "The all-cash offer is a 35% premium and still needs regulator approval.", "points": 141, "points_source": "hn"},
+      {"title": "Grocer announces 1,200 job cuts in a restructuring", "summary": "The company will close two distribution centres and invest in automated warehouses.", "points": null, "points_source": null}
+    ],
+    "Personal Finance": [
+      {"title": "How to use this year's TFSA room before December", "summary": "A short guide to what counts as a contribution, how withdrawals refill your room, and common penalties.", "points": null, "points_source": null},
+      {"title": "Variable or fixed? The renewal math in plain numbers", "summary": "We run three scenarios on a typical mortgage to show when each choice comes out ahead.", "points": null, "points_source": null},
+      {"title": "Credit card interest is at a record: what to pay off first", "summary": "Paying the highest-rate balance first saves the most, but small wins can help you stick with it.", "points": 73, "points_source": "hn"},
+      {"title": "Index funds or ETFs: what is the difference for a beginner?", "summary": "Fees, minimums and how you buy them differ more than the investments inside.", "points": null, "points_source": null},
+      {"title": "Five tax deadlines to put in your calendar now", "summary": "From RRSP contributions to instalment payments, the dates that save the most when you plan ahead.", "points": null, "points_source": null}
+    ],
+    "Crypto & Fintech": [
+      {"title": "Bitcoin falls below $60,000 as ETF outflows grow", "summary": "Investors pulled money from spot funds for a second week, reversing most of last month's rally.", "points": 256, "points_source": "hn"},
+      {"title": "Banking app adds instant transfers between countries", "summary": "Customers can now send money abroad in seconds with a flat fee, undercutting traditional wires.", "points": null, "points_source": null},
+      {"title": "Stablecoin issuer publishes its first full audit", "summary": "The audit confirms reserves cover every token, after years of questions about its backing.", "points": 133, "points_source": "hn"},
+      {"title": "Regulators approve a payments start-up's banking licence", "summary": "The licence lets the company hold deposits directly instead of relying on partner banks.", "points": null, "points_source": null},
+      {"title": "Exchange suspends withdrawals after a security breach", "summary": "The platform says customer funds are covered by its insurance fund and withdrawals will resume within days.", "points": 402, "points_source": "hn"}
+    ],
+    "Regulation & Policy": [
+      {"title": "New tariffs on steel take effect next month", "summary": "Manufacturers warn costs will rise for cars and appliances; the government says the duties protect domestic jobs.", "points": null, "points_source": null},
+      {"title": "Securities regulator fines a broker over misleading fees", "summary": "The firm will refund clients $14 million for charges that were not clearly disclosed.", "points": null, "points_source": null},
+      {"title": "Budget update raises the capital gains threshold", "summary": "Fewer small investors will pay the higher rate, but the change mostly benefits business owners.", "points": 92, "points_source": "hn"},
+      {"title": "Open banking rules finally get a launch date", "summary": "Consumers will be able to share their bank data securely with apps from next autumn.", "points": null, "points_source": null},
+      {"title": "Court rules buy-now-pay-later loans are credit", "summary": "Lenders must now run affordability checks and show clear interest rates.", "points": null, "points_source": null}
+    ],
+    "Canada": [
+      {"title": "TSX hits a record as energy and banks rally", "summary": "Canada's main index gained 2% this week on higher oil and better-than-expected bank results.", "points": null, "points_source": null},
+      {"title": "Canadian home sales rise for a fourth month", "summary": "Lower rates brought buyers back, but prices are flat in Toronto and Vancouver.", "points": null, "points_source": null},
+      {"title": "The loonie gains on strong jobs data", "summary": "Employment beat forecasts, lifting the Canadian dollar against the greenback.", "points": null, "points_source": null},
+      {"title": "Ottawa expands the first-time buyer savings account", "summary": "The annual limit rises and unused room now carries forward for longer.", "points": null, "points_source": null},
+      {"title": "Quebec pension fund reports a 9% return", "summary": "Private equity and infrastructure led the gains, while real estate lagged.", "points": null, "points_source": null}
+    ]
+  },
+  "gaming": {
+    "Releases & Reviews": [
+      {"title": "Hollow Meridian review: a slow-burn space mystery that sticks the landing", "summary": "The narrative adventure's final act ties every thread together; reviewers praise the writing and forgive the clunky menus.", "points": 412, "points_source": "hn"},
+      {"title": "Skyline Siege launches to record players and long queues", "summary": "Servers buckled on day one, but the studio added capacity overnight and promised compensation.", "points": null, "points_source": null},
+      {"title": "Kart Club Deluxe is the best party game of the year", "summary": "Reviewers love the new track editor and split-screen for four on one console.", "points": null, "points_source": null},
+      {"title": "Remaster of a classic RPG arrives with a modern UI", "summary": "The update keeps the original story but adds quality-of-life changes fans asked for.", "points": 88, "points_source": "hn"},
+      {"title": "Frontier Outpost 2 delayed to spring", "summary": "The studio says the extra months are for performance on older consoles.", "points": null, "points_source": null}
+    ],
+    "Industry & Business": [
+      {"title": "Publisher lays off 300 and cancels two unannounced games", "summary": "The cuts follow weak sales for its last release; staff say the studio is now focusing on live-service titles.", "points": 523, "points_source": "hn"},
+      {"title": "Game engine changes its pricing after developer backlash", "summary": "The company dropped per-install fees and moved to revenue share above a high threshold.", "points": 676, "points_source": "hn"},
+      {"title": "Mobile studio acquired for $1.2 billion", "summary": "The buyer wants the studio's puzzle games and its ad technology.", "points": null, "points_source": null},
+      {"title": "Game workers vote to unionise at a major studio", "summary": "It is the largest union in the industry so far, covering 600 developers.", "points": 245, "points_source": "hn"},
+      {"title": "Sales report: players spent less on new games this year", "summary": "Spending moved to older live-service games and subscriptions.", "points": null, "points_source": null}
+    ],
+    "Platforms & Hardware": [
+      {"title": "Handheld PC gets a cheaper model with an OLED screen", "summary": "The new version costs $100 less than the old flagship and adds better battery life.", "points": 389, "points_source": "hn"},
+      {"title": "Console maker confirms backward compatibility for its next system", "summary": "Players will be able to bring their libraries forward, the company said in an investor call.", "points": null, "points_source": null},
+      {"title": "Graphics card prices finally drop below launch", "summary": "Mid-range cards are now 15% cheaper than at release as supply catches up.", "points": 154, "points_source": "hn"},
+      {"title": "Subscription service adds day-one releases on mobile", "summary": "Subscribers can now stream new games to phones the day they come out.", "points": null, "points_source": null},
+      {"title": "Firmware update brings variable refresh rate to older TVs", "summary": "The update smooths frame drops on a long list of supported TVs.", "points": null, "points_source": null}
+    ],
+    "Indie Spotlight": [
+      {"title": "Lantern Keeper is a cosy lighthouse sim with a sad secret", "summary": "The two-person studio's debut is short, beautiful and quietly devastating.", "points": 211, "points_source": "hn"},
+      {"title": "Solo developer's roguelike sells a million copies", "summary": "Rogue Lanterns was made in four years of evenings and is now one of the top sellers on PC.", "points": 504, "points_source": "hn"},
+      {"title": "Orbital Gardens blends farming with orbital mechanics", "summary": "You grow crops on a space station and must keep it from drifting into the planet.", "points": null, "points_source": null},
+      {"title": "Five indie games from this week's showcase worth wishlisting", "summary": "From a hand-drawn detective game to a rhythm-based platformer.", "points": null, "points_source": null},
+      {"title": "Paper Knights adds co-op in a free update", "summary": "The tactics game now supports two players online or on one screen.", "points": null, "points_source": null}
+    ],
+    "Esports & Competitive": [
+      {"title": "Underdog team wins the world championship final 3–2", "summary": "The squad came through the open qualifier and beat the defending champions in a deciding map.", "points": null, "points_source": null},
+      {"title": "League changes its format to cut travel for players", "summary": "Regional splits replace the global tour, which teams say will save money and reduce burnout.", "points": null, "points_source": null},
+      {"title": "Fighting game patch nerfs the most-picked character", "summary": "Tournament players expect a much more varied roster at next month's major.", "points": null, "points_source": null},
+      {"title": "Collegiate esports scholarships grow by 40%", "summary": "More universities now fund varsity teams.", "points": null, "points_source": null},
+      {"title": "Prize pool for the winter major crosses $5 million", "summary": "Crowdfunded through in-game items, as in past years.", "points": null, "points_source": null}
+    ],
+    "Deals & Free Games": [
+      {"title": "Three games are free to keep this week", "summary": "Lantern Keeper, Orbital Gardens and The Quiet Tower can be claimed until Thursday.", "points": null, "points_source": null},
+      {"title": "Autumn sale: the best discounts on well-reviewed games", "summary": "Our picks under $10, all rated very positive by players.", "points": null, "points_source": null},
+      {"title": "Subscription service drops its price for the first month", "summary": "New members pay $1, and the catalogue adds twelve games this week.", "points": null, "points_source": null},
+      {"title": "Bundle raises $2 million for charity", "summary": "Twenty indie games for $15, with proceeds going to a children's hospital.", "points": 77, "points_source": "hn"},
+      {"title": "Free weekend for a popular strategy game", "summary": "Play the full game until Sunday and keep your progress if you buy.", "points": null, "points_source": null}
+    ],
+    "Community & Culture": [
+      {"title": "Speedrunners break a 20-year-old record", "summary": "A new route found by the community cut the record by 11 seconds.", "points": 618, "points_source": "hn"},
+      {"title": "Modders restore cut content to a classic shooter", "summary": "The fan project adds two levels found in old development builds.", "points": 330, "points_source": "hn"},
+      {"title": "Game preservation group wins an exemption for archives", "summary": "Libraries can now let researchers play old games remotely.", "points": 287, "points_source": "hn"},
+      {"title": "Streamer raises $1 million in a 24-hour charity marathon", "summary": "Funds go to mental health support for young people.", "points": null, "points_source": null},
+      {"title": "Accessibility awards honour games playable with one hand", "summary": "This year's winners include two indie titles and one big-budget shooter.", "points": null, "points_source": null}
+    ]
+  },
+  "boardgames": {
+    "New Releases": [
+      {"title": "Lighthouse Keepers hits shelves after its record campaign", "summary": "The cooperative game about keeping lights burning in a storm arrives in stores with its expansion.", "points": null, "points_source": null},
+      {"title": "A two-player trick-taking game is this autumn's surprise hit", "summary": "Shops report selling out of the small-box game within days of release.", "points": null, "points_source": null},
+      {"title": "Classic euro gets a deluxe reprint", "summary": "The new edition updates the art and adds a solo mode.", "points": null, "points_source": null},
+      {"title": "Family game of the year nominee arrives in English", "summary": "The dexterity game was a hit in Germany and now ships worldwide.", "points": null, "points_source": null},
+      {"title": "Five games out this month for game night", "summary": "Party, family and strategy picks, all playable in under an hour.", "points": null, "points_source": null}
+    ],
+    "Crowdfunding": [
+      {"title": "Dune Caravans passes $1 million on Gamefound", "summary": "The trading game unlocked a fifth player and a metal-coin upgrade in its first week.", "points": null, "points_source": null},
+      {"title": "Pocket Dungeons launches on Kickstarter on Thursday", "summary": "The pocket-sized dungeon crawler costs $25 and ships next summer.", "points": null, "points_source": null},
+      {"title": "Backers worry as a big campaign misses its delivery date", "summary": "The publisher blames shipping costs and promises an update within two weeks.", "points": null, "points_source": null},
+      {"title": "Small publisher funds a reprint in two hours", "summary": "The cult favourite had been out of print for six years.", "points": null, "points_source": null},
+      {"title": "Crowdfunding platform adds pledge protection", "summary": "Backers can now get refunds if a project never ships.", "points": null, "points_source": null}
+    ],
+    "Reviews & Previews": [
+      {"title": "Review: a heavy economic game that rewards patience", "summary": "Three hours long and brutally tight, but every decision feels meaningful.", "points": null, "points_source": null},
+      {"title": "Preview: a deduction game played entirely with sound", "summary": "Players guess hidden sounds from a companion app in this clever party game.", "points": null, "points_source": null},
+      {"title": "The best solo board games of the year so far", "summary": "Our reviewers pick eight games that shine with one player.", "points": null, "points_source": null},
+      {"title": "Review: a gorgeous nature game with a forgettable middle", "summary": "Stunning art, but the mid-game drags.", "points": null, "points_source": null},
+      {"title": "Hands-on with the new edition of a classic war game", "summary": "Faster setup and clearer rules make it easier to bring to the table.", "points": null, "points_source": null}
+    ],
+    "Industry & Publishers": [
+      {"title": "Publisher acquires a beloved independent studio", "summary": "The studio keeps its name and team; fans hope reprints will come faster.", "points": null, "points_source": null},
+      {"title": "Board game sales grew 8% last year", "summary": "Cooperative and two-player games grew fastest, according to an industry report.", "points": null, "points_source": null},
+      {"title": "Shipping costs fall, and prices may follow", "summary": "Publishers say container costs are back to normal for the first time in four years.", "points": null, "points_source": null},
+      {"title": "Game designers form a guild to negotiate royalties", "summary": "The guild publishes a model contract and minimum rates.", "points": null, "points_source": null},
+      {"title": "Distributor closes, leaving shops searching for stock", "summary": "Smaller publishers scramble to find new partners before the holidays.", "points": null, "points_source": null}
+    ],
+    "Events & Conventions": [
+      {"title": "Record crowds at the autumn board game fair", "summary": "More than 200,000 visitors tried new games over four days.", "points": null, "points_source": null},
+      {"title": "Montreal hosts its first tabletop festival", "summary": "The free event drew families and featured local designers.", "points": null, "points_source": null},
+      {"title": "Award winners announced at the convention", "summary": "A cooperative game won game of the year for the first time.", "points": null, "points_source": null},
+      {"title": "Libraries launch monthly game nights", "summary": "Twenty branches lend games and host free evenings.", "points": null, "points_source": null},
+      {"title": "Charity game marathon raises $80,000", "summary": "Players played for 48 hours straight for a food bank.", "points": null, "points_source": null}
+    ],
+    "RPGs, Minis & Card Games": [
+      {"title": "Popular RPG releases its new rules under an open licence", "summary": "Creators can now publish compatible adventures without asking permission.", "points": null, "points_source": null},
+      {"title": "Miniatures maker raises prices again", "summary": "The hobby company cites costs; players react with frustration.", "points": null, "points_source": null},
+      {"title": "Collectible card game announces a new set", "summary": "The set brings back fan-favourite characters and a draft format.", "points": null, "points_source": null},
+      {"title": "Indie RPG wins best game at the awards", "summary": "The short game about a family road trip is played in one evening.", "points": null, "points_source": null},
+      {"title": "Printable terrain gains ground among miniature painters", "summary": "Hobbyists print buildings at home for a fraction of the price.", "points": null, "points_source": null}
+    ],
+    "Community & Culture": [
+      {"title": "Game cafés are booming in small towns", "summary": "Owners say people want somewhere to meet without screens.", "points": null, "points_source": null},
+      {"title": "Teacher uses board games to teach economics", "summary": "Students trade and negotiate their way through the curriculum.", "points": null, "points_source": null},
+      {"title": "Players build a free accessibility kit for colour-blind gamers", "summary": "The kit adds symbols to cards for dozens of popular games.", "points": null, "points_source": null},
+      {"title": "Grandparents and kids: the games that work across ages", "summary": "Readers share their favourite games for mixed-age tables.", "points": null, "points_source": null},
+      {"title": "Designer diary: how a game about bees took seven years", "summary": "Prototypes, failures and the playtest that changed everything.", "points": null, "points_source": null}
+    ]
+  },
+  "printing3d": {
+    "New Printers & Hardware": [
+      {"title": "New core-XY printer ships with a tool changer under $1,000", "summary": "Four-colour printing without the purge waste of single-nozzle systems, at a price hobbyists can reach.", "points": 488, "points_source": "hn"},
+      {"title": "Resin printer adds automatic tank refilling", "summary": "The new model tops up resin mid-print, so long jobs no longer need babysitting.", "points": null, "points_source": null},
+      {"title": "Budget printer review: great prints, noisy fans", "summary": "Excellent quality out of the box, but the fans are loud enough to need a closed door.", "points": null, "points_source": null},
+      {"title": "Hotend upgrade promises twice the flow rate", "summary": "The drop-in part fits popular printers and speeds up large prints.", "points": 102, "points_source": "hn"},
+      {"title": "Printer maker opens its hardware designs", "summary": "Files for the frame and electronics are now published under an open licence.", "points": 356, "points_source": "hn"}
+    ],
+    "Firmware & Software": [
+      {"title": "PrusaSlicer 2.9 adds automatic seam painting", "summary": "The slicer now hides seams on curved surfaces, a common complaint on cosmetic prints.", "points": 297, "points_source": "hn"},
+      {"title": "Klipper update improves input shaping on bed slingers", "summary": "Faster prints with fewer ripples on budget printers, according to early testers.", "points": 188, "points_source": "hn"},
+      {"title": "OrcaSlicer adds a calibration wizard", "summary": "New users can tune flow, temperature and retraction in one guided session.", "points": null, "points_source": null},
+      {"title": "Cloud printing service shuts down next month", "summary": "Users must download their files before the service closes.", "points": 211, "points_source": "hn"},
+      {"title": "Marlin release fixes a thermal runaway bug", "summary": "Owners of affected boards are urged to update.", "points": null, "points_source": null}
+    ],
+    "Materials & Filament": [
+      {"title": "Recycled PETG matches virgin plastic in strength tests", "summary": "Independent tests show the cheaper recycled filament performs the same for most parts.", "points": null, "points_source": null},
+      {"title": "Wood-fill filament that you can sand and stain", "summary": "A new blend prints cleanly and takes finish like real wood.", "points": null, "points_source": null},
+      {"title": "Why your filament gets brittle, and how to dry it", "summary": "Humidity is the usual cause; a food dehydrator fixes most cases.", "points": null, "points_source": null},
+      {"title": "Carbon-fibre nylon gets cheaper", "summary": "Prices fell 30% as more suppliers entered the market.", "points": null, "points_source": null},
+      {"title": "Study on fumes from printing ABS indoors", "summary": "Researchers recommend ventilation or an enclosure with a filter.", "points": 154, "points_source": "hn"}
+    ],
+    "Projects & Prints": [
+      {"title": "Maker prints a working mechanical clock", "summary": "Every part except the springs came off a home printer, and it keeps time within a minute a day.", "points": 721, "points_source": "hn"},
+      {"title": "Students print prosthetic hands for local kids", "summary": "A school club has fitted 30 children with free, customised hands.", "points": null, "points_source": null},
+      {"title": "A print-in-place articulated heron goes viral", "summary": "No supports, no assembly, and it moves like the real bird.", "points": null, "points_source": null},
+      {"title": "Restoring a vintage radio with printed parts", "summary": "A step-by-step build of knobs and brackets that are no longer made.", "points": null, "points_source": null},
+      {"title": "Community builds a library of printable repair parts", "summary": "Thousands of replacement clips, hinges and handles for appliances.", "points": 233, "points_source": "hn"}
+    ],
+    "Industry & Business": [
+      {"title": "Printer maker raises $100 million", "summary": "The funding will expand factories and support a new professional line.", "points": null, "points_source": null},
+      {"title": "Big-box store starts selling printers in-store", "summary": "Consumer printers move from online-only to retail shelves.", "points": null, "points_source": null},
+      {"title": "Patent dispute between two printer makers settles", "summary": "Terms were not disclosed; both companies keep selling their models.", "points": null, "points_source": null},
+      {"title": "Aerospace firm prints rocket engine parts in-house", "summary": "Lead times fell from months to days.", "points": null, "points_source": null},
+      {"title": "Print farm start-up offers parts on demand", "summary": "Small businesses can order printed parts in a day.", "points": null, "points_source": null}
+    ],
+    "Guides & Tips": [
+      {"title": "First-layer problems: a visual guide", "summary": "Photos of the eight most common first-layer failures and how to fix each one.", "points": null, "points_source": null},
+      {"title": "How to print overhangs without supports", "summary": "Orientation, cooling and a few slicer settings that make 60° overhangs clean.", "points": 144, "points_source": "hn"},
+      {"title": "Choosing your first printer in 2026", "summary": "What matters, what does not, and three good picks at different prices.", "points": null, "points_source": null},
+      {"title": "Calibrating flow in ten minutes", "summary": "A simple test print that fixes most under- and over-extrusion.", "points": null, "points_source": null},
+      {"title": "Designing parts that print well", "summary": "Tolerances, chamfers and wall thickness for functional parts.", "points": null, "points_source": null}
+    ],
+    "Community & Policy": [
+      {"title": "City proposes rules on printed firearms", "summary": "The bylaw would ban sharing files for gun parts; makers say it is too broad.", "points": 266, "points_source": "hn"},
+      {"title": "Model-sharing site changes its licence terms", "summary": "Designers can now choose whether their files may be sold as prints.", "points": 199, "points_source": "hn"},
+      {"title": "Libraries add 3D printers to their maker spaces", "summary": "Free printing time is available to members in 40 branches.", "points": null, "points_source": null},
+      {"title": "Makers organise a printing drive for a children's hospital", "summary": "Volunteers printed 5,000 toys and tools in a weekend.", "points": null, "points_source": null},
+      {"title": "Right-to-repair bill includes printed spare parts", "summary": "Manufacturers would have to publish part dimensions.", "points": null, "points_source": null}
+    ]
+  }
+}

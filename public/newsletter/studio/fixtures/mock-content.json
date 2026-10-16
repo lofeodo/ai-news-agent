@@ -1,0 +1,32 @@
+{
+  "topic_labels": {
+    "ai": "AI",
+    "finance": "Finance",
+    "gaming": "Video games",
+    "boardgames": "Board games",
+    "printing3d": "3D printing"
+  },
+  "disclaimers": {
+    "finance": "For information only. Nothing here is financial, investment or tax advice."
+  },
+  "default_icon": "📌",
+  "custom_icon": "🔭",
+  "custom_label": "Custom",
+  "toc_label_max": 18,
+  "widget_toc": {
+    "paper_spotlight": [
+      "RES",
+      "RESEARCH"
+    ]
+  },
+  "tagline": "Your weekly briefing",
+  "intro_label": "THIS WEEK",
+  "empty_text": "Nothing notable this week.",
+  "size_warning_bytes": 90000,
+  "placeholders": {
+    "accent": "#abcdef",
+    "link": "#012345",
+    "topic_accent": "#fedcba",
+    "url": "https://example.invalid/__URL__"
+  }
+}

@@ -646,17 +646,21 @@ def _already_subscribed_email_html(token: str, name: str = NEWSLETTER_NAME) -> s
 # ---------------------------------------------------------------------------
 
 def _full_page(title: str, body: str, status: int = 200,
-               action: tuple[str, str] | None = None) -> HTMLResponse:
+               action: tuple[str, str] | list[tuple[str, str]] | None = None) -> HTMLResponse:
     """Full-fidelity page matching the website aesthetic — canvas, logo, card, fonts.
 
-    `action` is an optional (post_url, button_label): the page then carries a form whose
-    button POSTs there. Opening the page itself changes nothing."""
+    `action` is an optional (post_url, button_label), or a list of them: the page then carries a
+    form per action whose button POSTs there (the first is the main button, the others are shown
+    smaller). Opening the page itself changes nothing."""
     base = FRONTEND_BASE_URL or ""
+    actions = [action] if isinstance(action, tuple) else list(action or [])
     form = ""
-    if action:
-        form = (f'<form method="post" action="{html_lib.escape(action[0], quote=True)}">'
-                f'<button type="submit" class="btn-primary-action" style="margin-top:18px;width:100%">'
-                f'{html_lib.escape(action[1])}</button></form>')
+    for n, (url, label) in enumerate(actions):
+        style = ("btn-primary-action", "margin-top:18px;width:100%") if n == 0 else (
+            "btn-secondary-link", "width:100%;background:none;border:0;cursor:pointer;font-family:inherit")
+        form += (f'<form method="post" action="{html_lib.escape(url, quote=True)}">'
+                 f'<button type="submit" class="{style[0]}" style="{style[1]}">'
+                 f'{html_lib.escape(label)}</button></form>')
     return HTMLResponse(status_code=status, content=f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -719,11 +723,21 @@ class EmailOnlyRequest(BaseModel):
 
 class PreferencesUpdate(BaseModel):
     token: Annotated[str, Field(max_length=128)]
-    prefs: Prefs
+    prefs: Prefs | None = None
+    # The complete list of newsletters to get from now on (empty = none); omitted = leave them as they are.
+    newsletters: Annotated[list[NewsletterId], Field(max_length=10)] | None = None
+    consent_text_version: Annotated[str, Field(max_length=40)] | None = None
 
 
 class AuthPreferencesUpdate(BaseModel):
-    prefs: Prefs
+    prefs: Prefs | None = None
+    newsletters: Annotated[list[NewsletterId], Field(max_length=10)] | None = None
+    consent_text_version: Annotated[str, Field(max_length=40)] | None = None
+
+
+class AuthUnsubscribeRequest(BaseModel):
+    newsletter: NewsletterId = "ai"
+    all: bool = False
 
 
 class SectionRefineRequest(BaseModel):
@@ -1211,7 +1225,7 @@ def confirm(
     if not adding:
         # A repeat click, a double click or a mail scanner's visit: already done, nothing more to do.
         return _full_page("Subscription confirmed 🎉",
-                          f"You'll receive {_newsletter_names(current)} every Monday morning.")
+                          f"You'll receive {html_lib.escape(_newsletter_names(current))} every Monday morning.")
 
     # Guard against the race condition where two people hold confirmation
     # links for the last open spot and both click at the same time.
@@ -1250,7 +1264,7 @@ def confirm(
             raise
 
     return _full_page("Subscription confirmed 🎉",
-                 f"You'll receive {_newsletter_names(adding)} every Monday morning.")
+                 f"You'll receive {html_lib.escape(_newsletter_names(adding))} every Monday morning.")
 
 
 _PENDING_FIELDS = ("pending_newsletters", "pending_consent_version", "pending_requested_at")
@@ -1271,16 +1285,37 @@ def _pending_is_fresh(data: dict) -> bool:
 def unsubscribe_page(
     request: Request,
     token: Annotated[str, Query(max_length=128)] = "",
+    n: Annotated[str, Query(max_length=32)] = "",
 ):
-    """Opening the link only shows a button; the unsubscribe happens on the POST below."""
-    if not token or not re.match(r'^[A-Za-z0-9_-]+$', token):
+    """Opening the link only shows a button; the unsubscribe happens on the POST below. `n` names the newsletter
+    the link came from; a link without it (every AI email, every email sent before topics) means the AI one."""
+    newsletter = _link_newsletter(n)
+    if not token or not re.match(r'^[A-Za-z0-9_-]+$', token) or newsletter is None:
         return _INVALID_LINK_PAGE
-    if _find_by_token(_db(), token) is None:
+    doc = _find_by_token(_db(), token)
+    if doc is None:
         return _INVALID_LINK_PAGE
+    others = [i for i in subscriptions_model.subscribed_ids(doc.to_dict()) if i != newsletter]
+    name = _newsletter_name(newsletter)   # button labels are escaped by _full_page; page text is escaped here
+    one = (f"{SERVICE_BASE_URL}/unsubscribe?{_link_query(token, newsletter)}", "Unsubscribe")
+    if not others:
+        return _full_page("Unsubscribe",
+                          f"Press the button to stop receiving {html_lib.escape(name)}. You can re-subscribe any time.",
+                          action=one)
+    everything = (f"{SERVICE_BASE_URL}/unsubscribe?{urlencode({'token': token, 'all': '1'})}",
+                  "Unsubscribe from everything")
     return _full_page("Unsubscribe",
-                      f"Press the button to stop receiving {NEWSLETTER_NAME}. You can re-subscribe any time.",
-                      action=(f"{SERVICE_BASE_URL}/unsubscribe?{urlencode({'token': token})}",
-                              "Unsubscribe"))
+                      f"Press the button to stop receiving {html_lib.escape(name)}. "
+                      f"You also get {html_lib.escape(_newsletter_names(others))}, which stay as they are unless "
+                      "you unsubscribe from everything. You can re-subscribe any time.",
+                      action=[(one[0], f"Unsubscribe from {name}"), everything])
+
+
+def _link_newsletter(n: str) -> str | None:
+    """The newsletter an emailed link names: AI when absent, None when it is not a known newsletter. Hidden topics
+    count: their links reach admins before launch and must keep working after an un-launch."""
+    n = (n or AI).strip().lower()
+    return topics.get_topic(n).id if topics.is_valid_topic(n) else None
 
 
 @router.post("/unsubscribe")
@@ -1288,8 +1323,11 @@ def unsubscribe_page(
 def unsubscribe(
     request: Request,
     token: Annotated[str, Query(max_length=128)] = "",
+    n: Annotated[str, Query(max_length=32)] = "",
+    everything: Annotated[str, Query(alias="all", max_length=1)] = "",
 ):
-    if not token or not re.match(r'^[A-Za-z0-9_-]+$', token):
+    newsletter = _link_newsletter(n)
+    if not token or not re.match(r'^[A-Za-z0-9_-]+$', token) or newsletter is None:
         return _INVALID_LINK_PAGE
 
     db  = _db()
@@ -1297,8 +1335,23 @@ def unsubscribe(
     if doc is None:
         return _INVALID_LINK_PAGE
 
-    doc.reference.update({"active": False})
-    print("[subscriptions]  unsubscribed subscriber", flush=True)
+    data = doc.to_dict()
+    if everything == "1":
+        from google.cloud import firestore as _fs
+        fields = subscriptions_model.remove_all(data)
+        fields.update({k: _fs.DELETE_FIELD for k in _PENDING_FIELDS if k in data})
+        doc.reference.update(fields)
+        print("[subscriptions]  unsubscribed subscriber from everything", flush=True)
+        return _full_page("You've been unsubscribed",
+                          "You won't receive any of our newsletters anymore. You can re-subscribe any time.")
+
+    doc.reference.update(subscriptions_model.remove(data, newsletter))
+    print(f"[subscriptions]  unsubscribed subscriber from {newsletter}", flush=True)
+    others = [i for i in subscriptions_model.subscribed_ids(data) if i != newsletter]
+    if others:
+        return _full_page("You've been unsubscribed",
+                          f"You won't receive {html_lib.escape(_newsletter_name(newsletter))} anymore. "
+                          f"Your other newsletters ({html_lib.escape(_newsletter_names(others))}) are unchanged.")
     return _full_page("You've been unsubscribed",
                  "Sorry to see you go. You can re-subscribe any time.")
 
@@ -1318,7 +1371,7 @@ def get_preferences(
         return JSONResponse(status_code=404, content={"error": "not_found"})
 
     data = doc.to_dict()
-    return {"email": data["email"], "prefs": data.get("prefs") or {}}
+    return {"email": data["email"], "prefs": data.get("prefs") or {}, **_newsletter_choices(data, admin=False)}
 
 
 @router.post("/preferences")
@@ -1332,11 +1385,61 @@ def update_preferences(request: Request, req: PreferencesUpdate):
     if doc is None:
         return JSONResponse(status_code=404, content={"error": "not_found"})
 
-    doc.reference.update({"prefs": {
-        "include_french": req.prefs.include_french,
-        "include_canada": req.prefs.include_canada,
-    }})
+    try:
+        fields = _preference_fields(db, doc.to_dict(), req.prefs, req.newsletters, req.consent_text_version,
+                                    admin=False)
+    except HTTPException as e:
+        return JSONResponse(status_code=e.status_code, content={"error": e.detail})
+    if fields:
+        doc.reference.update(fields)
     return {"status": "ok"}
+
+
+def _newsletter_choices(data: dict | None, admin: bool) -> dict:
+    """What a preferences page shows: the newsletters this address gets, and every one it could get (the visible
+    ones plus any it already has, so an admin's pre-launch subscription still shows on the emailed link)."""
+    current = subscriptions_model.subscribed_ids(data)
+    ids = launch.ordered(set(launch.visible_topic_ids(admin)) | set(current))
+    return {
+        "newsletters": current,
+        "available": [{"id": t.id, "name": t.name, "tagline": t.tagline, "accent_color": t.accent_color,
+                       "hidden": not launch.is_public(t.id)} for t in map(topics.get_topic, ids)],
+    }
+
+
+def _preference_fields(db, data: dict, prefs: Prefs | None, newsletters, consent, admin: bool) -> dict:
+    """Fields to write for a preferences update. The token (or the signed-in account) proves the inbox, so both
+    removing and adding a newsletter are instant. Adding one the caller cannot see is a 404; the first newsletter
+    of someone who had none is a new person under the cap (503 when full)."""
+    fields = {}
+    if prefs is not None:
+        fields["prefs"] = {"include_french": prefs.include_french, "include_canada": prefs.include_canada}
+    if newsletters is None:
+        return fields
+    current = subscriptions_model.subscribed_ids(data)
+    wanted = list(dict.fromkeys(str(i).strip().lower() for i in newsletters))
+    allowed = set(launch.visible_topic_ids(admin)) | set(current)
+    if any(i not in allowed for i in wanted):
+        raise HTTPException(status_code=404, detail="unknown_newsletter")
+    adds = [i for i in wanted if i not in current]
+    if not current and adds and _active_subscriber_count(db) >= MAX_SUBSCRIBERS:
+        raise HTTPException(status_code=503, detail="service_unavailable")
+    merged, now = dict(data), datetime.now(timezone.utc)
+    version = subscriptions_model.consent_version(consent)
+    for i in current:
+        if i not in wanted:
+            merged.update(subscriptions_model.remove(merged, i, now))
+    for i in adds:
+        merged.update(subscriptions_model.add(merged, i, version, now))
+    if adds or len(wanted) != len(current):
+        fields.update({k: merged[k] for k in ("newsletters", "newsletter_meta", "active", "subscribed_any")})
+    if adds and not current and data.get("expires_at"):
+        # A never-confirmed doc: its emailed link proves the inbox just as the confirm button does, so it stops
+        # being a pending sign-up (otherwise the TTL rule on expires_at would delete a real subscriber).
+        from google.cloud import firestore as _fs
+        fields.update({"confirmed_at": now, "expires_at": _fs.DELETE_FIELD,
+                       "token_expires_at": now + ACTION_TOKEN_TTL})
+    return fields
 
 
 # ---------------------------------------------------------------------------
@@ -1439,7 +1542,8 @@ def auth_me(request: Request, user: dict = Depends(get_current_user)):
         "email":          email,
         "display_name":   user.get("name"),
         "email_verified": user.get("email_verified", False),
-        "subscribed":     bool(sub_data and sub_data.get("active")),
+        "subscribed":     bool(sub_data and sub_data.get("active")),   # the AI newsletter, as before
+        "newsletters":    subscriptions_model.subscribed_ids(sub_data),
         "prefs":          (sub_data.get("prefs") or {}) if sub_data else {},
         "tier":           tier,
         "is_admin":       _is_admin(user),
@@ -1534,13 +1638,18 @@ def _subscribe_account(user: dict, send_latest: bool, newsletter: str = AI, cons
 
 @router.post("/auth/unsubscribe")
 @limiter.limit("10/minute")
-def auth_unsubscribe(request: Request, user: dict = Depends(get_verified_user)):
-    """Unsubscribe the authenticated user."""
+def auth_unsubscribe(request: Request, req: AuthUnsubscribeRequest | None = None,
+                     user: dict = Depends(get_verified_user)):
+    """Unsubscribe the authenticated user from one newsletter (the AI one when no body is sent) or from all."""
+    req   = req or AuthUnsubscribeRequest()
     db    = _db()
     email = user["email"].lower()
     ref   = db.collection(SUBSCRIBERS_COLLECTION).document(email)
-    if ref.get().exists:
-        ref.update({"active": False})
+    snap  = ref.get()
+    if snap.exists:
+        data = snap.to_dict()
+        newsletter = req.newsletter.strip().lower()
+        ref.update(subscriptions_model.remove_all(data) if req.all else subscriptions_model.remove(data, newsletter))
     print(f"[subscriptions]  account-based unsubscribe: {email}", flush=True)
     return {"status": "ok"}
 
@@ -1730,10 +1839,11 @@ def auth_get_preferences(request: Request, user: dict = Depends(get_verified_use
     email = user["email"].lower()
     tier  = _get_user_tier(user)
     doc   = db.collection(SUBSCRIBERS_COLLECTION).document(email).get()
-    if not doc.exists or not doc.to_dict().get("active"):
-        return {"subscribed": False, "prefs": {}, "tier": tier}
-    data = doc.to_dict()
-    return {"subscribed": True, "prefs": data.get("prefs") or {}, "tier": tier}
+    data  = doc.to_dict() if doc.exists else None
+    choices = _newsletter_choices(data, admin=_is_admin(user))
+    if not data or not data.get("active"):
+        return {"subscribed": False, "prefs": {}, "tier": tier, **choices}
+    return {"subscribed": True, "prefs": data.get("prefs") or {}, "tier": tier, **choices}
 
 
 @router.post("/auth/preferences")
@@ -1747,12 +1857,13 @@ def auth_update_preferences(
     db    = _db()
     email = user["email"].lower()
     ref   = db.collection(SUBSCRIBERS_COLLECTION).document(email)
-    if not ref.get().exists:
+    snap  = ref.get()
+    if not snap.exists:
         raise HTTPException(status_code=404, detail="not_subscribed")
-    ref.update({"prefs": {
-        "include_french": req.prefs.include_french,
-        "include_canada": req.prefs.include_canada,
-    }})
+    fields = _preference_fields(db, snap.to_dict(), req.prefs, req.newsletters, req.consent_text_version,
+                                admin=_is_admin(user))
+    if fields:
+        ref.update(fields)
     return {"status": "ok"}
 
 

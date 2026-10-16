@@ -18,7 +18,7 @@ ENV_VAR = "PUBLIC_TOPICS"
 _warned: set = set()
 
 
-def _ordered(ids) -> list[str]:
+def ordered(ids) -> list[str]:
     """AI first, then by newsletter name, so every list on the site is in the same order."""
     found = [topics.get_topic(i) for i in dict.fromkeys(ids)]
     found.sort(key=lambda t: (not t.is_default, t.name.lower()))
@@ -35,12 +35,12 @@ def public_topic_ids() -> list[str]:
         elif topic_id not in _warned:
             _warned.add(topic_id)
             print(f"[launch]  ignoring unknown topic {topic_id!r} in {ENV_VAR}", flush=True)
-    return _ordered(ok)
+    return ordered(ok)
 
 
 def visible_topic_ids(is_admin: bool = False) -> list[str]:
     """Topic ids this caller may see: the public ones, or every known topic for an admin."""
-    return _ordered(topics.list_topic_ids()) if is_admin else public_topic_ids()
+    return ordered(topics.list_topic_ids()) if is_admin else public_topic_ids()
 
 
 def is_public(topic_id: str) -> bool:

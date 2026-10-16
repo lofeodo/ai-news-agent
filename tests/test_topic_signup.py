@@ -62,7 +62,7 @@ def test_finance_sign_up_once_launched(monkeypatch):
     assert api.mails[0].subject == "Confirm your subscription to Markets & Money Weekly"
     assert "Markets &amp; Money Weekly" in api.mails[0].html
     r = _confirm(api, api.subs["f@example.com"]["token"])
-    assert "Markets & Money Weekly every Monday" in r.text
+    assert "Markets &amp; Money Weekly every Monday" in r.text
     doc = api.subs["f@example.com"]
     assert doc["newsletters"] == ["finance"] and doc["active"] is False and doc["subscribed_any"] is True
     assert doc["newsletter_meta"]["finance"]["consent_text_version"] == sm.CONSENT_CURRENT

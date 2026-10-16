@@ -76,7 +76,7 @@ def _latest_run_doc(db):
             db.collection(FIRESTORE_COLLECTION)
             .order_by("started_at", direction=firestore.Query.DESCENDING)
             .select(run_kind.SCAN_FIELDS)
-            .limit(50)
+            .limit(run_kind.SCAN_LIMIT)
             .stream()
         )
     ]

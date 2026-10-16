@@ -333,7 +333,7 @@ async def trigger(request: Request):
             return Response(content=f"Unknown kind '{kind}'. Valid values: release, debug.", status_code=400)
         if kind:
             options = {"kind": kind}
-        # ?topic=<id> picks the newsletter (default: the AI one). Other topics are debug-only for now.
+        # ?topic=<id> picks the newsletter (default: the AI one); any known topic may be a release run.
         topic = request.query_params.get("topic")
         if topic:
             import topics

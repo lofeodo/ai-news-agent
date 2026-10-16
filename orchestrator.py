@@ -116,7 +116,7 @@ def run(run_id: str, kind: str = "debug", topic: str | None = None) -> None:
 
     kind is "release" (the official weekly run: published and mailed) or "debug" (the default: previewable only).
     topic names the newsletter (a topics/<id>.yaml profile); none means the AI newsletter. main.py already refuses
-    a bad topic or a non-AI release; the check is repeated here so no caller can create such a run.
+    an unknown topic; the check is repeated here so no caller can create such a run.
     """
     problem = check_run_request(topic, kind)
     if problem:

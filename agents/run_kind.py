@@ -14,8 +14,9 @@ DEBUG = "debug"
 KINDS = (RELEASE, DEBUG)
 
 # How many recent composed runs to look through for the one wanted. Debug runs and other topics' runs sit in
-# the same collection, so look past a burst of them (only the small fields are read while scanning).
-_SCAN_LIMIT = 50
+# the same collection (five newsletters a week, plus debug runs), so look well past a burst of them (only the
+# small fields are read while scanning).
+SCAN_LIMIT = 200
 
 # Fields every scan reads: `topic` is what lets the lookups below skip other newsletters' runs.
 SCAN_FIELDS = ["run_kind", "topic"]
@@ -25,14 +26,17 @@ def is_release(doc: dict | None) -> bool:
     return (doc or {}).get("run_kind", RELEASE) != DEBUG
 
 
-def pick_release_id(rows: list[tuple[str, dict]], sent_only: bool = False) -> str | None:
-    """First doc id in `rows` (newest first) that is a release run; with `sent_only`, one agent4 has also sent.
+def pick_release_id(rows: list[tuple[str, dict]], sent_only: bool = False,
+                    topic: str = topics.DEFAULT_TOPIC) -> str | None:
+    """First doc id in `rows` (newest first) that is a release run of `topic`; with `sent_only`, one agent4 has
+    also sent.
 
-    Only the AI newsletter's runs count: the public pages, agent4 and the health check follow the AI newsletter,
-    and a run of any other topic must never be picked up as "the latest issue" (a doc with no `topic` is AI).
+    Only that newsletter's runs count, so a newer run of another topic is never "the latest issue" of this one
+    (a doc with no `topic` is AI). Callers that name no topic mean the AI newsletter.
     """
     for doc_id, fields in rows:
-        if topics.is_default_topic(fields) and is_release(fields) and (not sent_only or fields.get("agent4_send_summary")):
+        if (topics.topic_id_of(fields) == topic and is_release(fields)
+                and (not sent_only or fields.get("agent4_send_summary"))):
             return doc_id
     return None
 
@@ -100,8 +104,6 @@ def latest_run(db, collection: str, release_only: bool = True, sent_only: bool =
 
     release_only=False also returns debug runs. sent_only=True returns the newest release run that has been
     mailed (it carries agent4's send summary), so a draft still waiting for Monday's send is skipped.
-    A non-AI `topic` is for the admin preview only: it needs release_only=False, because those topics have no
-    release runs.
     Only the cheap fields are read while scanning (run docs can be close to 1 MiB); the chosen doc is then
     fetched in full. Uses the same (newsletter_composed, started_at) index agent4 already depends on.
     """
@@ -112,19 +114,13 @@ def latest_run(db, collection: str, release_only: bool = True, sent_only: bool =
         .where("newsletter_composed", "==", True)
         .order_by("started_at", direction=firestore.Query.DESCENDING)
         .select(SCAN_FIELDS + ["started_at", "agent4_send_summary"])
-        .limit(_SCAN_LIMIT)
+        .limit(SCAN_LIMIT)
         .stream()
     )
     rows = [(d.id, d.to_dict() or {}) for d in scan]
-    if topic == topics.DEFAULT_TOPIC:
-        if sent_only:
-            doc_id = pick_release_id(rows, sent_only=True)
-        else:
-            doc_id = pick_release_id(rows) if release_only else next(
-                (i for i, f in rows if topics.is_default_topic(f)), None)
+    if sent_only or release_only:
+        doc_id = pick_release_id(rows, sent_only=sent_only, topic=topic)
     else:
-        if release_only or sent_only:
-            raise ValueError("only the AI newsletter has release runs")
         doc_id = next((i for i, f in rows if topics.topic_id_of(f) == topic), None)
     if doc_id is None:
         return None

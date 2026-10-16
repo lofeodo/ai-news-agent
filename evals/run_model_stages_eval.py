@@ -208,14 +208,15 @@ def cmd_summaries(args) -> int:
     for it, s_h, s_d, v1, v2, u1, u2 in judged:
         judge_in += u1.input_tokens + u2.input_tokens
         judge_out += u1.output_tokens + u2.output_tokens
-        if not v1 or not v2:
+        # The judge runs with tool_choice auto, so the schema is not enforced: an answer without a verdict is unusable.
+        if not v1 or not v2 or v1.get("better") not in ("A", "B", "tie") or v2.get("better") not in ("A", "B", "tie"):
             tally["unusable"] += 1
             verdict = None
         else:
             w1 = {"A": "haiku", "B": "ds", "tie": "tie"}[v1["better"]]
             w2 = {"A": "ds", "B": "haiku", "tie": "tie"}[v2["better"]]
-            unsupported["haiku"] += int(v1["a_unsupported_claim"]) + int(v2["b_unsupported_claim"])
-            unsupported["ds"] += int(v1["b_unsupported_claim"]) + int(v2["a_unsupported_claim"])
+            unsupported["haiku"] += int(bool(v1.get("a_unsupported_claim"))) + int(bool(v2.get("b_unsupported_claim")))
+            unsupported["ds"] += int(bool(v1.get("b_unsupported_claim"))) + int(bool(v2.get("a_unsupported_claim")))
             if w1 == w2:
                 verdict = w1
                 tally["ties" if w1 == "tie" else f"{'ds' if w1 == 'ds' else 'haiku'}_wins"] += 1
@@ -234,6 +235,7 @@ def cmd_summaries(args) -> int:
         "judge_haiku_preferred": rate_with_ci(tally["haiku_wins"], n),
         "judge_tie": rate_with_ci(tally["ties"], n),
         "judge_order_inconsistent": rate_with_ci(tally["inconsistent"], n),
+        "judge_unusable_answers": rate_with_ci(tally["unusable"], n),
         "judge_unsupported_claim_calls_haiku": _m(unsupported["haiku"], 2 * n),
         "judge_unsupported_claim_calls_ds": _m(unsupported["ds"], 2 * n),
         "fallbacks_to_claude": _m(llm.fallbacks, len(items)),
@@ -245,7 +247,9 @@ def cmd_summaries(args) -> int:
     metrics["cost_usd_ds"] = _m(round(usd_d, 4), len(items))
     _write(f"summaries_model_eval_{date.today().isoformat()}", f"{HAIKU} vs {DS}", metrics, usd_h + usd_d + usd_j,
            "60 frozen articles, production prompt. Pairwise judge = Sonnet 5.5 in both orders, unvalidated (smoke test, "
-           "not a gate). 'inconsistent' = the answer flipped with the order. Read the side-by-side rows file by hand.", rows)
+           "not a gate); with tool_choice auto it often returns no verdict (see judge_unusable_answers), so check that "
+           "first. DeepSeek may serve a repeated prompt from its cache, which understates its cost on a rerun. Read the "
+           "side-by-side rows file by hand.", rows)
     return 0
 
 

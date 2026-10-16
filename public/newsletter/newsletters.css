@@ -134,7 +134,7 @@ body { align-items: stretch; }
   padding: 26px 24px 24px;
   background: rgba(22, 22, 22, 0.94);
   border: 1px solid var(--border);
-  border-left: 4px solid var(--accent);
+  border-left: 4px solid var(--nl, var(--accent));   /* a newsletter's own page sets --nl; the hub keeps amber */
 }
 .nl-signup h2 {
   font-family: var(--display);

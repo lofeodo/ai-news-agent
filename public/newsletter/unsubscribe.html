@@ -148,7 +148,7 @@
           (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         document.getElementById('unsub-pick-rows').innerHTML = current.map((id) => {
           const n = byId[id] || { name: id, tagline: '', accent_color: '#c8b89a' };
-          return `<label class="check-row" style="--accent:${esc(n.accent_color)};text-transform:none;letter-spacing:normal">
+          return `<label class="check-row" style="--accent:${esc(n.accent_color)};text-transform:none;letter-spacing:normal;padding:11px 0;margin:0">
             <input type="checkbox" value="${esc(id)}"${id === newsletter ? ' checked' : ''}>
             <span><span style="color:${esc(n.accent_color)}">${esc(n.name)}</span>
               <span class="check-desc">${esc(n.tagline)}</span></span></label>`;

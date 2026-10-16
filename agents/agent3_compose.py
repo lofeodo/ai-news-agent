@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_XML_TAGS, neutralize_tags
 import tracing
+import topics
 from agent3_dedup_graph import dedup_section
 from config import DATA_DIR, SCORING_MODEL, GCP_PROJECT_ID, USE_FIRESTORE, FIRESTORE_COLLECTION, MAX_SCORE, newsletter_send_date, section_cap, RUNNERS_UP_MAX
 
@@ -875,7 +876,9 @@ def run(run_id: str, force: bool = False):
             papers      = paper_data["papers"]
             by_category = news_data["by_category"]
 
-        papers = require_summarized_papers(papers)
+        topic = topics.get_topic(topics.topic_id_of(doc) if USE_FIRESTORE else os.environ.get("TOPIC"))
+        if topic.spotlight == "papers":
+            papers = require_summarized_papers(papers)
         client = tracing.make_client("agent3", run_id)
 
         print("\n=== Selecting articles per category ===")

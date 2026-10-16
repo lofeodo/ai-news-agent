@@ -26,6 +26,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import config
 import pricing
 import run_kind
+import topics
 from config import GCP_PROJECT_ID, FIRESTORE_COLLECTION, USE_FIRESTORE, ALERT_EMAIL, parse_started_at
 
 import agent4_send  # reuse send_email() / _get_sendgrid_api_key() only
@@ -96,12 +97,14 @@ def _resolve_mode(check: str | None, now: datetime | None = None) -> str:
     return "draft" if sunday else "send"
 
 
-def _check_composition(doc: dict) -> list[str]:
-    """Problems with the composed newsletter itself (draft check): all four variants present and
-    non-trivial, still carrying agent4's per-subscriber placeholders, and dated for the send day."""
+def _check_composition(doc: dict, topic=None) -> list[str]:
+    """Problems with the composed newsletter itself (draft check): every variant of the newsletter's profile
+    (all four for AI) present and non-trivial, still carrying agent4's per-subscriber placeholders, with the
+    spotlight section when the profile has one, and dated for the send day."""
+    topic = topic or topics.get_topic(topics.DEFAULT_TOPIC)
     problems = []
     variants = doc.get("newsletter_variants") or {}
-    for key in VARIANT_KEYS:
+    for key in (VARIANT_KEYS if topic.is_default else topic.variants):
         html = variants.get(key)
         if not html:
             problems.append(f"newsletter variant {key} is missing")
@@ -111,7 +114,7 @@ def _check_composition(doc: dict) -> list[str]:
         for ph in PLACEHOLDERS:
             if ph not in html:
                 problems.append(f"newsletter variant {key} has no {ph} placeholder, so agent4 cannot personalize it")
-        if "<!-- SECTION:Research Spotlights -->" not in html:
+        if topic.spotlight == "papers" and "<!-- SECTION:Research Spotlights -->" not in html:
             problems.append(f"newsletter variant {key} has no spotlight paper section")
         n_articles = html.count(ARTICLE_LINK_MARKER)
         if n_articles < config.MIN_VARIANT_ARTICLES:
@@ -129,9 +132,13 @@ def _check_composition(doc: dict) -> list[str]:
     return problems
 
 
-def _diagnose(doc: dict, mode: str = "send") -> list[str]:
+def _diagnose(doc: dict, mode: str = "send", topic=None) -> list[str]:
     """Return human-readable problem descriptions for one pipeline_runs doc. Empty means healthy.
-    In 'draft' mode the send stage is not expected yet and the composed output is checked instead."""
+    In 'draft' mode the send stage is not expected yet and the composed output is checked instead.
+    `topic` is the run's profile (AI when omitted): a topic without a paper spotlight records its paper
+    stages as empty lists, which count as done."""
+    topic = topic or topics.get_topic(topics.DEFAULT_TOPIC)
+    empty_ok = {"scored_papers", "paper_summaries"} if topic.spotlight == "none" else set()
     draft_only = mode == "draft"
     problems = []
 
@@ -147,12 +154,12 @@ def _diagnose(doc: dict, mode: str = "send") -> list[str]:
     for field, label in EXPECTED_STAGES:
         if draft_only and field == "agent4_send_summary":
             continue
-        if not doc.get(field):
+        if not doc.get(field) and not (field in empty_ok and field in doc):
             problems.append(f"{label} never completed — '{field}' missing from pipeline_runs")
 
     if draft_only:
         if doc.get("newsletter_composed"):
-            problems += _check_composition(doc)
+            problems += _check_composition(doc, topic)
         return problems
 
     send_summary = doc.get("agent4_send_summary")
@@ -423,25 +430,37 @@ def _run(run_id: str, mode: str = "send") -> None:
     from google.cloud import firestore
     db = firestore.Client(project=GCP_PROJECT_ID)
 
+    message, healthy = _ai_report(db, mode)
+    other_text, others_healthy = _other_newsletters_section(db, mode)
+    if other_text:
+        message += "\n\n" + other_text
+    _notify(message, healthy=healthy and others_healthy, mode=mode)
+
+
+def _stale_message(run_id: str, started_at_raw, mode: str) -> str | None:
+    """Why this run is too old to be this week's, or None. Draft checks allow DRAFT_STALE_AFTER_HOURS."""
+    if not started_at_raw:
+        return None
+    age_hours = (datetime.now(timezone.utc) - parse_started_at(started_at_raw)).total_seconds() / 3600
+    stale_after = DRAFT_STALE_AFTER_HOURS if mode == "draft" else STALE_AFTER_HOURS
+    if age_hours <= stale_after:
+        return None
+    return (f"No recent pipeline run found — the most recent pipeline_runs document "
+            f"(run_id={run_id}) started {age_hours:.1f}h ago, at {started_at_raw}. "
+            f"Expected a run to have started within the last {stale_after}h.")
+
+
+def _ai_report(db, mode: str) -> tuple[str, bool]:
+    """The AI newsletter's report (the whole email before other newsletters existed): (text, healthy)."""
+    draft_only = mode == "draft"
     checked_run_id, doc = _latest_run_doc(db)
     if doc is None:
-        _notify("No pipeline_runs document found at all — the pipeline may never have started this week.", healthy=False, mode=mode)
-        return
+        return "No pipeline_runs document found at all — the pipeline may never have started this week.", False
 
     started_at_raw = doc.get("started_at")
-    if started_at_raw:
-        started_at = parse_started_at(started_at_raw)
-        age_hours = (datetime.now(timezone.utc) - started_at).total_seconds() / 3600
-        stale_after = DRAFT_STALE_AFTER_HOURS if draft_only else STALE_AFTER_HOURS
-        if age_hours > stale_after:
-            _notify(
-                f"No recent pipeline run found — the most recent pipeline_runs document "
-                f"(run_id={checked_run_id}) started {age_hours:.1f}h ago, at {started_at_raw}. "
-                f"Expected a run to have started within the last {stale_after}h.",
-                healthy=False,
-                mode=mode,
-            )
-            return
+    stale = _stale_message(checked_run_id, started_at_raw, mode)
+    if stale:
+        return stale, False
 
     problems = _diagnose(doc, mode)
     judge_text, judge_flagged = _judge_section(db, checked_run_id, doc)
@@ -460,14 +479,91 @@ def _run(run_id: str, mode: str = "send") -> None:
 
     if not problems:
         print(f"[healthcheck]  run_id={checked_run_id} looks healthy.", flush=True)
-        _notify(f"Pipeline run {checked_run_id} (started {started_at_raw}) completed successfully. "
-                f"No problems detected.\n\n{drift_text}", healthy=True, mode=mode)
-        return
+        return (f"Pipeline run {checked_run_id} (started {started_at_raw}) completed successfully. "
+                f"No problems detected.\n\n{drift_text}"), True
 
     body_lines = [f"Pipeline run {checked_run_id} (started {started_at_raw}) has problems:", ""]
     body_lines += [f"- {p}" for p in problems]
     body_lines += ["", drift_text]
-    _notify("\n".join(body_lines), healthy=False, mode=mode)
+    return "\n".join(body_lines), False
+
+
+# --- the other newsletters ------------------------------------------------------------------------------
+# A topic is expected when it had a release run in the last EXPECT_TOPIC_DAYS, so a topic whose weekly job
+# stops is flagged (its latest release is then too old) without any configuration, and one that was never
+# scheduled, or was stopped over two weeks ago, is not. Drift, judge, usage and clicks stay AI-only.
+
+EXPECT_TOPIC_DAYS = 15
+
+
+def _recent_rows(db) -> list[tuple[str, dict]]:
+    from google.cloud import firestore
+
+    return [
+        (d.id, d.to_dict() or {})
+        for d in (
+            db.collection(FIRESTORE_COLLECTION)
+            .order_by("started_at", direction=firestore.Query.DESCENDING)
+            .select(run_kind.SCAN_FIELDS + ["started_at"])
+            .limit(run_kind.SCAN_LIMIT)
+            .stream()
+        )
+    ]
+
+
+def _expected_topics(rows: list[tuple[str, dict]], now: datetime | None = None) -> list[str]:
+    """Topics other than AI with a release run started in the last EXPECT_TOPIC_DAYS, in site order."""
+    now = now or datetime.now(timezone.utc)
+    found = set()
+    for _, f in rows:
+        topic_id = topics.topic_id_of(f)
+        if topic_id == topics.DEFAULT_TOPIC or not run_kind.is_release(f) or not topics.is_valid_topic(topic_id):
+            continue
+        started = f.get("started_at")
+        if started and (now - parse_started_at(started)).total_seconds() <= EXPECT_TOPIC_DAYS * 86400:
+            found.add(topic_id)
+    found = [topics.get_topic(t) for t in found]
+    return [t.id for t in sorted(found, key=lambda t: t.name.lower())]
+
+
+def _topic_report(db, rows, topic_id: str, mode: str) -> tuple[list[str], bool]:
+    """One newsletter's lines for the email and whether it is healthy."""
+    topic = topics.get_topic(topic_id)
+    title = f"{topic.name} ({topic.id})"
+    run_id = run_kind.pick_release_id(rows, topic=topic.id)
+    doc = db.collection(FIRESTORE_COLLECTION).document(run_id).get().to_dict() if run_id else None
+    if not doc:
+        return [f"{title}: no release run found."], False
+    started = doc.get("started_at")
+    stale = _stale_message(run_id, started, mode)
+    if stale:
+        return [f"{title}: no release run this week. {stale}"], False
+    problems = _diagnose(doc, mode, topic)
+    notes = _notes(doc, mode)
+    if not problems:
+        return [f"{title}: run {run_id} (started {started}) completed successfully."] + [
+            f"  {n}" for n in notes], True
+    return [f"{title}: run {run_id} (started {started}) has problems:"] + [f"  - {p}" for p in problems] + [
+        f"  {n}" for n in notes], False
+
+
+def _other_newsletters_section(db, mode: str) -> tuple[str, bool]:
+    """Text for every newsletter besides AI that is running ("" when none is), and whether all are healthy.
+    A failure in this part is reported as a problem without hiding the AI report above it."""
+    try:
+        rows = _recent_rows(db)
+        expected = _expected_topics(rows)
+        if not expected:
+            return "", True
+        lines, healthy = ["Other newsletters:"], True
+        for topic_id in expected:
+            topic_lines, ok = _topic_report(db, rows, topic_id, mode)
+            lines += topic_lines
+            healthy = healthy and ok
+        return "\n".join(lines), healthy
+    except Exception as e:
+        print(f"[healthcheck]  other newsletters check failed: {e}", flush=True)
+        return f"Other newsletters: the check failed ({type(e).__name__}: {e}).", False
 
 
 if __name__ == "__main__":

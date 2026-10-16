@@ -180,6 +180,10 @@ def _sections(blocks: list[str]) -> list[tuple[str, str, str]]:
             out.append(("Summary faithfulness", _chip_for(b), _lines_html(lines)))
         elif first.startswith("Reader clicks"):
             out.append(("Reader clicks", _chip_for(b), _lines_html(lines)))
+        elif first.startswith("Other newsletters"):
+            bad = any(s in b for s in ("has problems", "no release run", "check failed"))
+            chip = _chip("problem", _RED) if bad else _chip("all clear", _GREEN)
+            out.append(("Other newsletters", chip, _lines_html(lines[1:] if first == "Other newsletters:" else lines)))
         else:
             out.append(("Details", "", f'<pre style="margin:0;font-family:{_F};font-size:12px;line-height:1.6;'
                                        f'white-space:pre-wrap;color:{_INK};">{_e(b)}</pre>'))

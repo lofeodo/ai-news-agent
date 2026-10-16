@@ -122,8 +122,11 @@ def run_shortlist(by_category: dict, all_articles: list, client, prompt_template
     kept, summary = news_shortlist.shortlist_all(by_category, texts, selection_prompt, client, topic=topic)
     print(f"  [shortlist] {len(kept)}/{len(all_articles)} articles shortlisted for summaries", flush=True)
 
+    hn_ctx = news_shortlist.hn_context(by_category)
+
     def summarize(i: int):
-        return i, summarize_with_text(all_articles[i], texts[i], prompt_template, fallback_template, quebec_style, client)
+        result = summarize_with_text(all_articles[i], texts[i], prompt_template, fallback_template, quebec_style, client)
+        return i, {**result, **hn_ctx.get(i, {})}
 
     with ThreadPoolExecutor(max_workers=MAX_FETCH_WORKERS) as executor:
         results_by_index = dict(executor.map(summarize, sorted(kept)))

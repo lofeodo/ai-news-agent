@@ -124,6 +124,9 @@ def _hn_label(article: dict, scores: list[int]) -> str:
     hn = article.get("hn_score")
     if hn is None:
         return "hn: unknown (not posted to HN)"
+    if article.get("hn_rank") and article.get("hn_of"):
+        # Shortlist mode: the rank was computed over the whole section before the pool was cut down.
+        return f"hn: {hn} points (#{article['hn_rank']} of {article['hn_of']} HN stories in this section)"
     rank = 1 + sum(1 for s in scores if s > hn)
     return f"hn: {hn} points (#{rank} of {len(scores)} HN stories in this section)"
 

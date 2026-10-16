@@ -14,6 +14,9 @@ variants:
 - '0_1'
 - '1_1'
 spotlight: papers
+widgets:
+- id: paper_spotlight
+  placement: after_intro
 max_articles: 0
 categories:
 - name: Model & Product Releases

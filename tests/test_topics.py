@@ -137,3 +137,52 @@ def test_parse_does_not_mutate_input():
     before = copy.deepcopy(raw)
     parse_topic(raw)
     assert raw == before
+
+
+# widgets: (agents/widgets/)
+
+def test_ai_profile_places_the_paper_after_the_intro():
+    assert get_topic("ai").widgets[0] == topics.WidgetEntry("paper_spotlight", "after_intro", {})
+    assert [w.id for w in get_topic("ai").placed_widgets("after_intro")][:1] == ["paper_spotlight"]
+
+
+def test_no_widgets_by_default_and_papers_profile_always_gets_the_paper():
+    assert parse_topic(_minimal()).widgets == ()
+    raw = _ai_raw()
+    raw.pop("widgets")
+    assert [w.id for w in parse_topic(raw).widgets][:1] == ["paper_spotlight"]
+
+
+@pytest.mark.parametrize("widgets, fragment", [
+    ("paper_spotlight", "must be a list"),
+    ([{"id": "nope"}], "unknown widget"),
+    ([{"id": "paper_spotlight", "colour": "red"}], "each widget is a mapping"),
+    ([{"id": "paper_spotlight"}], "not available for this topic"),
+])
+def test_bad_widget_entries_are_rejected(widgets, fragment):
+    raw = _minimal()
+    raw["widgets"] = widgets
+    with pytest.raises(TopicError) as e:
+        parse_topic(raw)
+    assert fragment in str(e.value)
+
+
+@pytest.mark.parametrize("widgets, fragment", [
+    ([{"id": "paper_spotlight", "placement": "sidebar"}], "placement"),
+    ([{"id": "paper_spotlight", "config": {"x": 1}}], "unknown config field"),
+    ([{"id": "paper_spotlight"}, {"id": "paper_spotlight"}], "listed twice"),
+])
+def test_bad_widget_placement_config_and_duplicates(widgets, fragment):
+    raw = _ai_raw()
+    raw["widgets"] = widgets
+    with pytest.raises(TopicError) as e:
+        parse_topic(raw)
+    assert fragment in str(e.value)
+
+
+def test_paper_spotlight_needs_papers():
+    raw = _ai_raw()
+    raw["spotlight"] = "none"
+    with pytest.raises(TopicError) as e:
+        parse_topic(raw)
+    assert "needs spotlight: papers" in str(e.value)

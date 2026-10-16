@@ -173,3 +173,14 @@ Order: **agent1a, agent1b, agent2a, agent2b, agent3** (read `topic`, behave iden
 - Renaming the project/brand from an AI newsletter to a multi-topic engine (README, banner, domain).
 - Where to share each newsletter (r/boardgames self-promo rules, BGG forums, r/3Dprinting, r/BambuLab, r/pcgaming,
   r/personalfinancecanada, etc.): a short launch checklist for the owner when signups exist.
+
+## Results (worker, 2026-10-16)
+
+All 12 steps are done. Deviations from the plan, and what the dry runs showed:
+
+- **Sources:** RSS lives in `agents/rss_source.py` (not a `sources/` package); the HN source takes a `queries` list (Algolia has no OR operator) and `min_points`. Profiles also gained optional `guidelines` (prompt guidance) and `disclaimer` (footer line; finance uses it). Every RSS URL was fetched once and dead or stale feeds were left out (Dicebreaker, Tabletop Gaming News, Fabbaloo, All3DP, VoxelMatters and Printables refuse bots or are stale).
+- **AI newsletter unchanged:** its composed HTML is byte-identical to before for all four shapes (checked against the previous `agent3_compose.py`), its fetchers are called with the same arguments, and its run doc has no new fields.
+- **Found by the dry runs and fixed:** the article cap spread evenly over sites and cut CNBC/BBC to ~3 articles (now HN, then RSS, then NewsAPI); agent2b shortlist mode used the AI selection prompt and caps (now the topic's); finance's stock-tip pieces (dropped Motley Fool Canada); gaming's Esports section was empty (added esports feeds and a query; not re-run); BoardGameGeek image markup leaked into a summary (stripped).
+- **Local dry runs (shortlist mode):** finance 23 articles, gaming 19, board games 19, 3D printing 19, each across all seven sections except where the pool was thin (board games Events: 1; 3D printing Guides & Tips: 1; gaming Esports: 0 before the fix). Cost per topic run is roughly $0.25 to $0.40 (agent1b on Haiku $0.09 to $0.21, plus summaries and selection). A summary can still state a wrong detail (a GTA VI date came out wrong): the summarizer is shared with the AI newsletter, so that is not new.
+- **Windows:** redirecting a local run's output to a file needs `PYTHONUTF8=1`, or the first non-ASCII log character stops it (and a language-filter batch).
+- **Not done / follow-ups** (also in the list above): public signup, schedules, sending, per-topic health check; the evals scans in `evals/` still read all runs, including other topics'.

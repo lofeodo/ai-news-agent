@@ -18,6 +18,7 @@ from scoring_tool import SCORING_TOOL
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_PAPER_SCORING
+import llm
 import tracing
 import spotlight_history
 import topics
@@ -173,11 +174,11 @@ def score_paper(paper: dict, full_text: str) -> dict:
         full_text=truncated_text
     )
 
-    client = tracing.make_client("agent1a", _TRACE_RUN_ID, timeout=60.0)
+    client = llm.make_client("agent1a", _TRACE_RUN_ID, timeout=60.0)
 
     print(f"  [api-call-start] {paper['title'][:40]}", flush=True)
     response = client.messages.create(
-        model=SCORING_MODEL,
+        model=llm.model_for("paper_score"),
         max_tokens=MAX_TOKENS,
         system=GUARD_PAPER_SCORING,
         tools=[SCORING_TOOL],

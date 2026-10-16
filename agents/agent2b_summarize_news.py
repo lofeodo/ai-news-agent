@@ -15,6 +15,7 @@ from prompt_guard import GUARD_NEWS_SUMMARY
 import stage_counter
 import summary_sources
 import topics
+import llm
 import tracing
 from config import (
     DATA_DIR, SCORING_MODEL, NEWS_SUMMARY_MAX_TOKENS,
@@ -68,7 +69,7 @@ def summarize_article(article: dict, text: str | None, prompt_template: str, fal
     try:
         response = claude_call_with_retry(
             client,
-            model=SCORING_MODEL,
+            model=llm.model_for("news_summary"),
             max_tokens=NEWS_SUMMARY_MAX_TOKENS,
             system=GUARD_NEWS_SUMMARY,
             messages=[{"role": "user", "content": prompt}]
@@ -231,7 +232,7 @@ def run(run_id: str):
 
         print(f"Summarizing {len(all_articles)} articles across {len(by_category)} categories...\n")
 
-        client = tracing.make_client("agent2b", run_id)
+        client = llm.make_client("agent2b", run_id)
         tasks  = [(client, article, prompt_template, fallback_template, quebec_style) for article in all_articles]
 
         results_by_index: dict[int, dict] = {}

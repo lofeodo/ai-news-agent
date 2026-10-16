@@ -52,6 +52,11 @@ def make_client(agent: str | None = None, run_id: str | None = None, **client_kw
     (e.g. timeout) go to the Anthropic constructor.
     """
     client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"), **client_kwargs)
+    return wrap_for_tracing(client, agent, run_id)
+
+
+def wrap_for_tracing(client: anthropic.Anthropic, agent: str | None = None, run_id: str | None = None) -> anthropic.Anthropic:
+    """Wrap any Anthropic-SDK client (Claude, or another provider's compatible endpoint) when tracing is on."""
     if tracing_enabled():
         try:
             from langsmith.wrappers import wrap_anthropic

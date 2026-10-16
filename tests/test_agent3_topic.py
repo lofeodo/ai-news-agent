@@ -111,6 +111,15 @@ def test_empty_section_uses_the_generic_text(tmp_path, monkeypatch, demo_topic):
     assert "Nothing notable this week." in html and "No notable releases" not in html
 
 
+def test_footer_disclaimer_is_shown_only_when_the_topic_has_one(demo_topic):
+    import dataclasses
+    with_note = dataclasses.replace(demo_topic, disclaimer="Not advice & <b>no</b> guarantees.")
+    html = a3.compose_html("Intro", [], {"Alpha": [], "Beta": []}, "wk", topic=with_note)
+    footer = html.split("You're receiving this because you subscribed.")[1]
+    assert "Not advice &amp; &lt;b&gt;no&lt;/b&gt; guarantees." in footer          # escaped
+    assert "Not advice" not in a3.compose_html("Intro", [], {"Alpha": [], "Beta": []}, "wk", topic=demo_topic)
+
+
 def test_run_doc_update_uses_the_topics_sections(demo_topic):
     shipped = {"Alpha": [{"url": "https://a"}], "Beta": [], "Industry & Business": [{"url": "https://zzz"}]}
     upd = a3.build_run_doc_update({"0_0": "h"}, "Demo Weekly — wk", shipped, shipped, {"Alpha": [1]}, topic=demo_topic)

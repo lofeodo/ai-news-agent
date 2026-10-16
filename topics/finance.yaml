@@ -1,0 +1,88 @@
+# Markets & Money Weekly: a weekly finance newsletter for retail investors and personal-finance readers.
+# Debug runs only for now (see docs/plans/multi-topic.md). RSS feeds below were fetched once on 2026-10-16.
+id: finance
+name: Markets & Money Weekly
+tagline: Weekly Markets & Money Dispatch
+audience: retail investors and anyone who follows the markets and their own money, in Canada and beyond
+accent_color: "#7fd1a0"
+languages: [en]
+variants: ["0_0"]
+spotlight: none
+max_articles: 500
+disclaimer: For information only. Nothing here is financial, investment or tax advice.
+guidelines: >-
+  Readers are retail investors, not traders. Prefer the story that explains why markets, rates or prices moved
+  and what it means for ordinary savers and investors over a bare price move. Skip stock-tip and "best stocks to
+  buy" promotion, price predictions, and affiliate pieces. A central bank decision, a major earnings result, a
+  regulatory change or a clear personal-finance explainer is worth including. Canadian stories belong in the
+  Canada section even when they also fit another section.
+
+categories:
+  - name: Markets & Macro
+    definition: stock, bond, commodity and currency market moves, the economy, jobs, inflation and growth data, and what is driving them
+    cap: 4
+    icon: "📈"
+  - name: Central Banks & Rates
+    definition: decisions, minutes and speeches from the Federal Reserve, Bank of Canada, ECB and other central banks, and what they mean for interest rates, mortgages and savings
+    cap: 3
+    icon: "🏦"
+  - name: Earnings & Companies
+    definition: quarterly results, guidance, mergers and acquisitions, IPOs, layoffs, and big moves at individual public companies
+    cap: 4
+    icon: "🏢"
+  - name: Personal Finance
+    definition: saving, investing basics, retirement, taxes, mortgages, credit and debt, insurance, and practical money guides for ordinary households
+    cap: 3
+    icon: "💰"
+  - name: Crypto & Fintech
+    definition: bitcoin and other crypto markets, ETFs and stablecoins, exchanges, payments, banking apps and fintech companies
+    cap: 3
+    icon: "🪙"
+  - name: Regulation & Policy
+    definition: financial regulation, securities enforcement, tax and budget policy, trade and tariffs, and court cases that affect markets or consumers
+    cap: 3
+    icon: "⚖️"
+  - name: Canada
+    definition: Canadian markets (TSX), the Bank of Canada, the Canadian economy, Canadian housing and personal-finance stories, even when they also fit another section
+    cap: 3
+    icon: "🍁"
+
+sources:
+  - type: rss
+    feeds:
+      - {name: CNBC Top News, url: "https://www.cnbc.com/id/100003114/device/rss/rss.html", max_items: 30}
+      - {name: CNBC Economy, url: "https://www.cnbc.com/id/20910258/device/rss/rss.html", max_items: 25}
+      - {name: CNBC Investing, url: "https://www.cnbc.com/id/15839069/device/rss/rss.html", max_items: 25}
+      - {name: CNBC Earnings, url: "https://www.cnbc.com/id/15839135/device/rss/rss.html", max_items: 25}
+      - {name: CNBC Personal Finance, url: "https://www.cnbc.com/id/21324812/device/rss/rss.html", max_items: 25}
+      - {name: MarketWatch, url: "https://feeds.content.dowjones.io/public/rss/mw_topstories", max_items: 20}
+      - {name: BBC Business, url: "https://feeds.bbci.co.uk/news/business/rss.xml", max_items: 30}
+      - {name: Guardian Business, url: "https://www.theguardian.com/business/rss", max_items: 20}
+      - {name: Kiplinger, url: "https://www.kiplinger.com/feed/all", max_items: 25}
+      - {name: NerdWallet, url: "https://www.nerdwallet.com/blog/feed/", max_items: 15}
+      - {name: MoneySense, url: "https://www.moneysense.ca/feed/", max_items: 15}
+      - {name: Motley Fool Canada, url: "https://www.fool.ca/feed/", max_items: 15}
+      - {name: Bank of Canada, url: "https://www.bankofcanada.ca/feed/", max_items: 15}
+      - {name: Federal Reserve, url: "https://www.federalreserve.gov/feeds/press_all.xml", max_items: 15}
+      - {name: ECB, url: "https://www.ecb.europa.eu/rss/press.html", max_items: 10}
+      - {name: CoinDesk, url: "https://www.coindesk.com/arc/outboundfeeds/rss/", max_items: 25}
+      - {name: Decrypt, url: "https://decrypt.co/feed", max_items: 20}
+      - {name: Finextra, url: "https://www.finextra.com/rss/headlines.aspx", max_items: 15}
+      - {name: Benzinga, url: "https://www.benzinga.com/feed", max_items: 15}
+  - type: newsapi
+    queries:
+      - '"stock market" OR "Wall Street" OR "S&P 500" OR "Nasdaq" OR "Dow Jones"'
+      - '"Federal Reserve" OR "Bank of Canada" OR "interest rates" OR "rate cut" OR "central bank"'
+      - '"quarterly results" OR "earnings report" OR "earnings beat" OR "earnings miss"'
+      - '"personal finance" OR "mortgage rates" OR "retirement savings" OR TFSA OR RRSP OR "credit score"'
+      - 'bitcoin OR ethereum OR stablecoin OR "crypto regulation" OR fintech'
+      - '"TSX" OR "Toronto Stock Exchange" OR "Canadian dollar" OR "Canadian economy"'
+  - type: hn
+    queries: ["stock market", "interest rates", "federal reserve", "inflation", "fintech", "bitcoin", "ETF"]
+    min_points: 30
+
+paywalled_domains:
+  - barrons.com
+  - investors.com
+  - seekingalpha.com
+  - financialpost.com

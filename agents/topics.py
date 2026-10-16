@@ -72,6 +72,8 @@ class Topic:
     sources: tuple
     paywalled_domains: tuple = ()
     prompts: dict = field(default_factory=dict)
+    guidelines: str = ""    # extra editorial guidance for the categorize and selection prompts
+    disclaimer: str = ""    # one line in the email footer (e.g. "not financial advice")
 
     @property
     def category_names(self) -> list[str]:
@@ -106,6 +108,7 @@ class Topic:
             "topic_name":           self.name,
             "audience":             self.audience,
             "category_definitions": self.category_definitions(),
+            "guidelines":           self.guidelines or "No extra guidance.",
         }
 
     def fill_prompt(self, template: str) -> str:
@@ -243,6 +246,11 @@ def parse_topic(raw: dict, expected_id: str | None = None) -> Topic:
         path = prompts.get(key) or PROMPT_KEYS[key]
         _require(os.path.isfile(os.path.join(ROOT, path)), topic_id, f"prompt file {path!r} does not exist")
 
+    guidelines = raw.get("guidelines") or ""
+    disclaimer = raw.get("disclaimer") or ""
+    _require(isinstance(guidelines, str) and isinstance(disclaimer, str), topic_id,
+             "guidelines and disclaimer must be text")
+
     return Topic(
         id=topic_id,
         name=_str(raw, "name", topic_id),
@@ -257,6 +265,8 @@ def parse_topic(raw: dict, expected_id: str | None = None) -> Topic:
         sources=sources,
         paywalled_domains=tuple(paywalled),
         prompts=dict(prompts),
+        guidelines=guidelines.strip(),
+        disclaimer=disclaimer.strip(),
     )
 
 

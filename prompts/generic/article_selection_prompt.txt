@@ -8,6 +8,9 @@ No HN score. Articles marked "hn: unknown" were never posted to Hacker News, so 
 
 {articles}
 
+Guidance specific to this newsletter:
+{guidelines}
+
 Selection rules:
 - Only include an article if it clearly adds value for this newsletter's readers. This bar applies equally to every article, with or without an HN score.
 - Prefer the articles readers will find most valuable, using the HN score as a heavy signal where it exists and the content otherwise. Good signs in content: a significant announcement, a release or event that changes things for readers, original reporting, a result or finding with real consequences, a practical guide readers can act on. Avoid: minor press releases, thin rewrites of someone else's story, clickbait, and generic opinion with nothing new.

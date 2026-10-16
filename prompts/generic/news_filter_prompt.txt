@@ -13,6 +13,9 @@ Selection criteria:
 - Be generous: when in doubt, include the article
 - If an article fits multiple categories, assign the most specific one
 
+Guidance specific to this newsletter:
+{guidelines}
+
 Exclude:
 - Articles where the subject is mentioned only incidentally
 - Pure opinion pieces with no news value, clickbait, and listicles with nothing new in them

@@ -493,6 +493,10 @@ def compose_html(
     link_color = "#7a6548" if topic.is_default else _darken(accent)
     has_spotlight = topic.spotlight == "papers"
     empty_text = "No notable releases this week." if topic.is_default else "Nothing notable this week."
+    disclaimer_html = (
+        f'<p style="margin:0 0 14px 0;font-family:{_F};font-size:11px;color:{_CHAR};">{_esc(topic.disclaimer)}</p>'
+        if topic.disclaimer else ""
+    )
 
     active_categories = [
         c.name for c in topic.categories
@@ -739,7 +743,7 @@ def compose_html(
         <p style="margin:0 0 14px 0;font-family:{_F};font-size:12px;color:{accent};">
           You're receiving this because you subscribed.
         </p>
-        {address_html}
+        {address_html}{disclaimer_html}
         <p style="margin:0;font-family:{_F};font-size:12px;">
           <a href="{{{{UNSUBSCRIBE_URL}}}}" style="color:{accent};text-decoration:underline;">Unsubscribe</a>
           <span style="color:{accent};">&nbsp;&nbsp;·&nbsp;&nbsp;</span>

@@ -1,0 +1,74 @@
+# Layer Lines: a weekly newsletter for 3D printing hobbyists and makers.
+# Debug runs only for now (see docs/plans/multi-topic.md). RSS feeds below were fetched once on 2026-10-16.
+# Several well-known 3D printing sites (Fabbaloo, All3DP, VoxelMatters, Printables) refuse automated requests,
+# so NewsAPI and Hacker News searches carry more of the load here.
+id: printing3d
+name: Layer Lines
+tagline: Weekly 3D Printing Dispatch
+audience: 3D printing hobbyists and makers, from first-time printer owners to people running a print farm
+accent_color: "#5ec8e5"
+languages: [en]
+variants: ["0_0"]
+spotlight: none
+max_articles: 400
+guidelines: >-
+  Readers own or are about to buy a desktop printer (FDM or resin) and want to know what to buy, what to print,
+  and how to print better. Prefer news about specific printers, slicers, firmware, filament and useful projects
+  over corporate funding press releases about industrial additive manufacturing, unless the story clearly matters
+  to hobbyists. Skip affiliate deal roundups and generic "best 3D printers" lists with nothing new. Regulation
+  and legal stories (for example 3D printed firearm laws or patents that affect printers) belong in the
+  Community & Policy section.
+
+categories:
+  - name: New Printers & Hardware
+    definition: new desktop printers, upgrades and accessories from Bambu Lab, Prusa, Creality, Elegoo, Anycubic and others, plus hands-on hardware reviews
+    cap: 4
+    icon: "🖨️"
+  - name: Firmware & Software
+    definition: slicers, firmware and printer software updates, CAD and modeling tools, and model sites such as Printables, MakerWorld and Thingiverse
+    cap: 3
+    icon: "💾"
+  - name: Materials & Filament
+    definition: filament and resin news, new materials, material comparisons and testing, and supply and pricing changes
+    cap: 3
+    icon: "🧵"
+  - name: Projects & Prints
+    definition: impressive, useful or clever prints and projects, mods and upgrades, and creative uses of 3D printing
+    cap: 3
+    icon: "🧰"
+  - name: Industry & Business
+    definition: company news, funding, acquisitions, layoffs, lawsuits between printer makers, and the business of desktop and industrial 3D printing
+    cap: 3
+    icon: "🏢"
+  - name: Guides & Tips
+    definition: how-to guides, troubleshooting, calibration and settings advice, maintenance and buying guides with real substance
+    cap: 3
+    icon: "📘"
+  - name: Community & Policy
+    definition: laws and regulation about 3D printing, patents, safety concerns, open-source versus closed hardware debates, and community news
+    cap: 3
+    icon: "🌐"
+
+sources:
+  - type: rss
+    feeds:
+      - {name: 3DPrint.com, url: "https://3dprint.com/feed/", max_items: 15}
+      - {name: 3D Printing Industry, url: "https://3dprintingindustry.com/feed/", max_items: 15}
+      - {name: 3DNatives, url: "https://www.3dnatives.com/en/feed/", max_items: 15}
+      - {name: Hackaday 3D Printer Hacks, url: "https://hackaday.com/category/3d-printer-hacks/feed/", max_items: 15}
+      - {name: Tom's Hardware 3D Printing, url: "https://www.tomshardware.com/feeds/tag/3d-printing", max_items: 15}
+      - {name: Adafruit 3D Printing, url: "https://blog.adafruit.com/category/3d-printing/feed/", max_items: 15}
+      - {name: Make, url: "https://makezine.com/feed/", max_items: 10}
+      - {name: Prusa Blog, url: "https://blog.prusa3d.com/feed/", max_items: 10}
+      - {name: Bambu Lab Blog, url: "https://blog.bambulab.com/rss/", max_items: 10}
+      - {name: Elegoo Blog, url: "https://www.elegoo.com/blogs/news.atom", max_items: 10}
+  - type: newsapi
+    queries:
+      - '"3D printing" OR "3D printer" OR "3D printers" OR "3D-printed"'
+      - '"Bambu Lab" OR "Prusa" OR "Creality" OR "Elegoo" OR "Anycubic" OR "Snapmaker"'
+      - '"additive manufacturing" OR "resin printer" OR "FDM" OR "metal 3D printing"'
+      - '("3D printed" OR "3D printing") AND (law OR bill OR regulation OR ban OR lawsuit OR patent)'
+      - '"MakerWorld" OR "Printables" OR "Thingiverse" OR "PrusaSlicer" OR "Bambu Studio" OR "OrcaSlicer"'
+  - type: hn
+    queries: ["3D printing", "3D printer", "Bambu Lab", "Prusa", "filament"]
+    min_points: 20

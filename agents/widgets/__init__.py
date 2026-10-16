@@ -10,7 +10,9 @@
 from . import registry  # noqa: F401
 from .base import ProduceContext, Widget, WidgetSkip  # noqa: F401
 
-BUILTIN = ()
+BUILTIN = (
+    "paper_spotlight",
+)
 
 for _name in BUILTIN:
     __import__(f"{__name__}.{_name}")

@@ -19,7 +19,42 @@ Take a screenshot in each after changes. Flag any layout, overflow, or interacti
 - Never commit directly to `main`; if on `main`, create a feature branch first.
 - Stage only the files that belong to the unit (`git add <paths>`), never `git add -A`, so unrelated changes and secrets stay out.
 - Write a short conventional-style message (`feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `build:`, `ci:`, `chore:`) describing the one change.
-- **Never push unless explicitly asked by the user.** Committing is automatic; pushing is not.
+
+### One PR per roadmap, shipped by the agent
+
+The owner runs many agents at once and does not want to approve or merge PRs by hand. The `protect-main` ruleset requires a PR and the `pytest` check but **0 approving reviews**, so CI is the gate.
+
+- **One branch and one PR per roadmap**, not per step. Commit per step (above), push the branch after the first verified step, and open a **draft PR** early; keep it updated as steps land. Split a step into its own PR only if it is risky and independent of the rest.
+- **Agents push their own feature branch and open, update, ready and auto-merge their own PR.** When the work is done: run the full test suite, mark the PR ready, run `gh pr merge --auto --squash --delete-branch`, and let GitHub merge when `pytest` passes. Use the `/ship` skill for this.
+- **Never** push to `main`, force-push, or merge with a red check.
+- **Larger work starts with `/plan`**: a planning agent asks the owner a few up-front questions, then writes `docs/plans/<name>.md`. After that the worker agent decides on its own (see below) and does not ask.
+
+### Agent independence
+
+Ask the owner only for things that are irreversible, outward-facing, or ambiguous in intent. For everything else, pick the sensible default, note the decision in the PR description, and carry on.
+
+| Situation | Rule |
+|---|---|
+| Tests | Run relevant tests before every commit and the full suite before marking the PR ready. Never ask. |
+| UI change | Do the three browser checks (above) before the last commit. Never ask. |
+| Design choice with a clear default | Choose it, record it in the PR. |
+| Scope growth | Log it as a follow-up in the PR; continue. Stop only if it changes the roadmap's goal. |
+| Test/CI failure | Fix it. After 3 failed attempts, stop and report. |
+| Prod, secrets, IAM, Firestore data, subscriber-facing sends | Do not touch. Report what is needed. |
+| **Deploys** | **Agents never deploy.** Ask the owner using the deploy request format below. |
+
+**Talking to the owner.** They are juggling several agents and forget what each one is doing. Every question, deploy request and final report starts with a plain-language recap: *what this work is, in one or two sentences, and why it matters*, before any detail. No file names, flags or jargon in the recap. Then give a recommendation, not a menu.
+
+**Deploy request format** (use when work is merged and something needs deploying):
+1. **What we're doing** — one or two plain sentences, no jargon.
+2. **What changes for readers/subscribers/the pipeline** if deployed.
+3. **Why deploy now (or why wait)** — your recommendation, including timing relative to the Sunday 12:00 PM pipeline and Monday 7:00 AM send. Avoid deploying in the hours before those.
+4. **Risk and rollback** — how likely it is to go wrong, and the one-line way back.
+5. **The exact commands** to run (services in dependency order), in a code block, then how to check it worked.
+
+**Up-front questions** (planning agent only): at most 3, each with a one-sentence plain explanation, a recommended answer, and what changes depending on the answer. Cover scope, anything irreversible or risky, and deploy timing. If the owner is away, state the assumption you made and proceed.
+
+**Final report** (end of every job): recap in plain words, the PR link and whether it auto-merged, what was tested, decisions made on the owner's behalf, and the deploy request if one is needed.
 
 ## What This Project Does
 

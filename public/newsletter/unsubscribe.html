@@ -60,6 +60,11 @@
       </div>
       <p class="subtitle" style="margin-bottom:20px">Confirm that you want to unsubscribe from <span class="nl-name">Latent SpaceMail</span>. You can re-subscribe any time.</p>
       <button type="button" id="unsub-btn" style="width:100%;background:transparent;border:1px solid var(--error);color:var(--error);font-family:var(--font);font-size:0.82rem;letter-spacing:0.1em;text-transform:uppercase;padding:12px;cursor:pointer;transition:background 0.15s,box-shadow 0.15s;margin-bottom:16px;">Confirm unsubscribe</button>
+      <!-- Several newsletters: tick the ones to stop (the one the link named starts ticked). -->
+      <div id="unsub-picks" hidden>
+        <div class="checkboxes" id="unsub-pick-rows" style="margin-bottom:6px"></div>
+        <button type="button" id="unsub-picked-btn" class="btn-primary-action" style="margin:10px 0 6px">Unsubscribe from selected</button>
+      </div>
       <button type="button" id="unsub-all-btn" class="btn-secondary-link" style="width:100%;background:none;border:0;cursor:pointer;font-family:inherit;display:none">Unsubscribe from everything</button>
       <div class="msg" id="unsub-msg"></div>
     </div>
@@ -134,12 +139,55 @@
       emailSection.style.display   = 'none';
       accountEmail.textContent     = user.email;
       accountSection.style.display = 'block';
-      // Offer "everything" only to someone who gets more than this one newsletter.
-      authFetch(`${API}/auth/me`).then((r) => (r.ok ? r.json() : null)).then((me) => {
-        const others = ((me && me.newsletters) || []).filter((id) => id !== newsletter);
-        if (others.length) unsubAllBtn.style.display = 'block';
+      // Someone who gets several newsletters picks which to stop; one newsletter keeps the single button.
+      authFetch(`${API}/auth/preferences`).then((r) => (r.ok ? r.json() : null)).then((data) => {
+        const current = (data && data.newsletters) || [];
+        if (current.filter((id) => id !== newsletter).length === 0) return;
+        const byId = Object.fromEntries((data.available || []).map((n) => [n.id, n]));
+        const esc = (t) => String(t ?? '').replace(/[&<>"']/g,
+          (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        document.getElementById('unsub-pick-rows').innerHTML = current.map((id) => {
+          const n = byId[id] || { name: id, tagline: '', accent_color: '#c8b89a' };
+          return `<label class="check-row" style="--accent:${esc(n.accent_color)};text-transform:none;letter-spacing:normal">
+            <input type="checkbox" value="${esc(id)}"${id === newsletter ? ' checked' : ''}>
+            <span><span style="color:${esc(n.accent_color)}">${esc(n.name)}</span>
+              <span class="check-desc">${esc(n.tagline)}</span></span></label>`;
+        }).join('');
+        accountSection.querySelector('.subtitle').textContent =
+          `You get ${current.length} newsletters. Tick the ones to stop. You can re-subscribe any time.`;
+        unsubBtn.style.display = 'none';
+        document.getElementById('unsub-picks').hidden = false;
+        unsubAllBtn.style.display = 'block';
+        currentList = current;
       }).catch(() => {});
     }
+
+    let currentList = [];
+    document.getElementById('unsub-picked-btn').addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      const picked = [...document.querySelectorAll('#unsub-pick-rows input:checked')].map((i) => i.value);
+      if (!picked.length) {
+        unsubMsg.textContent = 'Tick at least one newsletter to stop.';
+        unsubMsg.className = 'msg visible error';
+        return;
+      }
+      btn.disabled = true;
+      try {
+        const keep = currentList.filter((id) => !picked.includes(id));
+        const res = await authFetch(`${API}/auth/preferences`, { method: 'POST', body: JSON.stringify({ newsletters: keep }) });
+        if (!res.ok) throw new Error(res.status);
+        unsubMsg.textContent = keep.length
+          ? `Done. You still get ${keep.length === 1 ? 'one newsletter' : `${keep.length} newsletters`}; change them any time in Preferences.`
+          : "You've been unsubscribed from every newsletter.";
+        unsubMsg.className = 'msg visible success';
+        document.getElementById('unsub-picks').hidden = true;
+        unsubAllBtn.style.display = 'none';
+      } catch {
+        unsubMsg.textContent = 'Something went wrong. Please try again.';
+        unsubMsg.className = 'msg visible error';
+        btn.disabled = false;
+      }
+    });
 
     unsubAllBtn.addEventListener('click', async () => {
       unsubAllBtn.disabled = true;

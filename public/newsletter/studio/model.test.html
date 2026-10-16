@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>Studio model tests</title>
+  <style>
+    body { background: #0f0f0f; color: #e8e8e8; font: 14px/1.5 Menlo, Consolas, monospace; padding: 24px; }
+    .pass { color: #7ec8a0; } .fail { color: #e07070; } h1 { font-size: 18px; } #summary { font-weight: 700; margin: 12px 0; }
+  </style>
+</head>
+<body>
+  <h1>studio/model.js</h1>
+  <!-- Run during the UI check: serve public/newsletter and open /studio/model.test.html. The summary line reads
+       "PASS n/n" or "FAIL k of n"; data-result on <body> is "pass" or "fail" for scripted checks. -->
+  <div id="summary">running…</div>
+  <ol id="out"></ol>
+  <script type="module">
+    import * as M from './model.js';
+
+    const out = document.getElementById('out');
+    const results = [];
+    function test(name, fn) {
+      try { fn(); results.push([name, null]); }
+      catch (e) { results.push([name, e.message || String(e)]); }
+    }
+    function eq(a, b, msg = '') {
+      const [x, y] = [JSON.stringify(a), JSON.stringify(b)];
+      if (x !== y) throw new Error(`${msg} expected ${y}, got ${x}`);
+    }
+    function ok(v, msg = 'expected truthy') { if (!v) throw new Error(msg); }
+
+    const catalog = await (await fetch('fixtures/catalog.json')).json();
+    const defs = await Promise.all(['monday-brief', 'single-section'].map(
+      async n => [n, await (await fetch(`fixtures/definitions/${n}.json`)).json()]));
+    const ai = M.topicById(catalog, 'ai');
+    const fin = M.topicById(catalog, 'finance');
+    const sec = (t, i, n) => M.sectionBlock(t.id, t.sections[i].name, n);
+
+    for (const [name, def] of defs) {
+      test(`${name}: fromDefinition -> serialize round-trips`, () => eq(M.serialize(M.fromDefinition(def)), def));
+      test(`${name}: passes validate`, () => eq(M.validate(M.fromDefinition(def), catalog), []));
+    }
+
+    test('fromDefinition gives every block a distinct key', () => {
+      const s = M.fromDefinition(defs[0][1]);
+      eq(new Set(s.blocks.map(b => b.key)).size, s.blocks.length);
+    });
+
+    test('addBlock appends and returns its key', () => {
+      const r = M.addBlock(M.emptyState(), sec(ai, 0));
+      eq(r.state.blocks.length, 1); eq(r.state.blocks[0].key, r.key); ok(!r.error);
+    });
+
+    test('operations never mutate their input', () => {
+      const s0 = M.addBlock(M.emptyState(), sec(ai, 0)).state;
+      const snap = JSON.stringify(s0);
+      const k = s0.blocks[0].key;
+      M.setItems(s0, k, 5); M.removeBlock(s0, k); M.rename(s0, 'x'); M.recolor(s0, '#000000');
+      M.addBlock(s0, sec(ai, 1)); M.moveBlock(s0, k, 0);
+      eq(JSON.stringify(s0), snap);
+    });
+
+    test('the intro always goes first and cannot be moved', () => {
+      let s = M.addBlock(M.emptyState(), sec(ai, 0)).state;
+      s = M.addBlock(s, sec(ai, 1)).state;
+      const r = M.addBlock(s, { type: 'intro' }, 2);
+      eq(r.state.blocks[0].type, 'intro');
+      eq(M.moveBlock(r.state, r.key, 2).blocks[0].type, 'intro');
+      const last = r.state.blocks[2].key;
+      eq(M.indexOf(M.moveBlock(r.state, last, 0), last), 1, 'nothing goes above the intro:');
+      eq(M.indexOf(M.addBlock(r.state, sec(ai, 2), 0).state, r.state.blocks[0].key), 0);
+    });
+
+    test('limits: 8 sections, plain message', () => {
+      let s = M.emptyState();
+      for (let i = 0; i < 7; i++) s = M.addBlock(s, sec(ai, i)).state;
+      s = M.addBlock(s, sec(fin, 0)).state;
+      const r = M.addBlock(s, sec(fin, 1));
+      eq(r.error, 'Up to 8 sections.'); eq(r.state, s);
+    });
+
+    test('limits: 3 custom sections, 4 widgets, 12 blocks', () => {
+      let s = M.emptyState();
+      for (const q of ['a', 'b', 'c']) s = M.addBlock(s, M.customBlock(q, q)).state;
+      eq(M.addBlock(s, M.customBlock('d', 'd')).error, 'Up to 3 custom sections.');
+      let w = M.emptyState();
+      for (const id of ['paper_spotlight', 'market_snapshot', 'rates_board', 'week_ahead']) {
+        w = M.addBlock(w, M.widgetBlock(M.widgetById(catalog, id))).state;
+      }
+      eq(M.addBlock(w, M.widgetBlock(M.widgetById(catalog, 'free_games'))).error, 'Up to 4 widgets.');
+      let b = M.emptyState();
+      for (let i = 0; i < 7; i++) b = M.addBlock(b, sec(ai, i)).state;
+      for (const id of ['paper_spotlight', 'market_snapshot', 'rates_board', 'week_ahead']) {
+        b = M.addBlock(b, M.widgetBlock(M.widgetById(catalog, id))).state;
+      }
+      b = M.addBlock(b, { type: 'share' }).state;
+      eq(b.blocks.length, 12);
+      eq(M.addBlock(b, M.customBlock('x', 'x')).error, 'Up to 12 blocks in one newsletter.');
+    });
+
+    test('duplicates are refused; intro and share once', () => {
+      let s = M.addBlock(M.emptyState(), sec(ai, 0)).state;
+      eq(M.addBlock(s, sec(ai, 0, 5)).error, 'That is already in your newsletter.');
+      s = M.addBlock(s, { type: 'share' }).state;
+      eq(M.addBlock(s, { type: 'share' }).error, 'The share strip is already in your newsletter.');
+      s = M.addBlock(s, M.customBlock('SpaceX', 'SpaceX  launches')).state;
+      eq(M.addBlock(s, M.customBlock('Other', 'spacex launches')).error, 'That is already in your newsletter.');
+    });
+
+    test('remove then restore puts the block back where it was', () => {
+      let s = M.emptyState();
+      for (let i = 0; i < 3; i++) s = M.addBlock(s, sec(ai, i)).state;
+      const k = s.blocks[1].key;
+      const r = M.removeBlock(s, k);
+      eq(r.state.blocks.length, 2); eq(r.removed.index, 1);
+      eq(M.restoreBlock(r.state, r.removed), s);
+      eq(M.restoreBlock(s, r.removed), s, 'restoring twice is a no-op:');
+    });
+
+    test('moveBy and moveBlock clamp to the list', () => {
+      let s = M.emptyState();
+      for (let i = 0; i < 3; i++) s = M.addBlock(s, sec(ai, i)).state;
+      const [a, b, c] = s.blocks.map(x => x.key);
+      eq(M.moveBy(s, a, 1).blocks.map(x => x.key), [b, a, c]);
+      eq(M.moveBy(s, a, -1), s);
+      eq(M.moveBlock(s, a, 99).blocks.map(x => x.key), [b, c, a]);
+    });
+
+    test('setItems clamps to 1..5; setIfEmpty hides and resets', () => {
+      const s = M.addBlock(M.emptyState(), sec(ai, 0)).state;
+      const k = s.blocks[0].key;
+      eq(M.setItems(s, k, 9).blocks[0].max_items, 5);
+      eq(M.setItems(s, k, 0).blocks[0].max_items, 1);
+      const h = M.setIfEmpty(s, k, 'hide');
+      eq(M.serialize(h).blocks[0].if_empty, 'hide');
+      eq('if_empty' in M.serialize(M.setIfEmpty(h, k, 'note')).blocks[0], false);
+    });
+
+    test('widgets: defaults from config fields; personal widgets have no topic', () => {
+      const wl = M.widgetBlock(M.widgetById(catalog, 'stock_watchlist'));
+      eq(wl.config, { tickers: ['SHOP', 'RY', 'AAPL'] }); eq('topic' in wl, false);
+      eq(M.widgetBlock(M.widgetById(catalog, 'number_of_week'), 'gaming').topic, 'gaming');
+      eq(M.widgetBlock(M.widgetById(catalog, 'free_games')).topic, 'gaming');
+    });
+
+    test('validate: names, colours, empty newsletter, widget settings', () => {
+      eq(M.validate(M.emptyState('', '#zzzzzz'), catalog).map(e => e.message), [
+        'Give your newsletter a name.', 'The colour must look like #7fd1a0.', 'Add at least one section or widget.']);
+      eq(M.validate(M.emptyState('<b>', '#aabbcc'), catalog)[0].message,
+        'The name must be at most 60 characters, without < or >.');
+      let s = M.addBlock(M.emptyState(), M.widgetBlock(M.widgetById(catalog, 'stock_watchlist'))).state;
+      const k = s.blocks[0].key;
+      eq(M.validate(M.setConfig(s, k, 'tickers', []), catalog), [{ key: k, message: 'Tickers: add at least one.' }]);
+      eq(M.validate(M.setConfig(s, k, 'tickers', ['NOT A TICKER']), catalog)[0].message,
+        'Tickers: “NOT A TICKER” is not a ticker symbol.');
+      const w = M.addBlock(M.emptyState(), M.widgetBlock(M.widgetById(catalog, 'free_games'))).state;
+      eq(M.validate(M.setWidgetTopic(w, w.blocks[0].key, 'finance'), catalog)[0].message,
+        'Pick which newsletter this widget draws from.');
+    });
+
+    test('validate flags unknown sections against the catalog', () => {
+      const s = M.addBlock(M.emptyState(), M.sectionBlock('ai', 'Not a section')).state;
+      eq(M.validate(s, catalog)[0].message, 'Latent SpaceMail no longer has this section.');
+    });
+
+    test('starterFor builds a valid ready-made copy', () => {
+      for (const t of catalog.topics) {
+        const s = M.starterFor(t, catalog);
+        eq(M.validate(s, catalog), [], `${t.id}:`);
+        eq(s.blocks[0].type, 'intro'); eq(s.accent_color, t.accent_color);
+        eq(M.counts(s).section, Math.min(t.sections.length, 8));
+      }
+      eq(M.starterFor(ai, catalog).blocks[1].widget, 'paper_spotlight');
+    });
+
+    test('serialize trims text and keeps C3 field order', () => {
+      let s = M.addBlock(M.rename(M.emptyState(), '  Hi  '), M.customBlock(' T ', ' q ')).state;
+      eq(M.serialize(s), { version: 1, name: 'Hi', accent_color: '#c8b89a',
+        blocks: [{ type: 'custom_section', title: 'T', query: 'q', max_items: 3 }] });
+    });
+
+    test('sameDefinition ignores keys', () => {
+      const a = M.fromDefinition(defs[0][1]); const b = M.fromDefinition(defs[0][1]);
+      ok(M.sameDefinition(a, b)); ok(!M.sameDefinition(a, M.rename(b, 'Other')));
+    });
+
+    test('normalizeHex, darken (matches palette.darken), parseTickers', () => {
+      eq(M.normalizeHex('ABC'), '#aabbcc'); eq(M.normalizeHex(' #7FD1A0 '), '#7fd1a0'); eq(M.normalizeHex('#12'), null);
+      eq(M.recolor(M.emptyState(), 'nope').accent_color, '#c8b89a');
+      eq(M.darken('#7fd1a0'), '#3f6850'); eq(M.darken('#c8b89a'), '#645c4d');
+      eq(M.parseTickers('shop, ry  aapl,SHOP'), ['SHOP', 'RY', 'AAPL']);
+    });
+
+    test('contrast', () => {
+      eq(Math.round(M.contrast('#ffffff', '#000000')), 21); eq(M.contrast('#777777', '#777777'), 1);
+    });
+
+    const failed = results.filter(r => r[1]);
+    for (const [name, err] of results) {
+      const li = document.createElement('li');
+      li.className = err ? 'fail' : 'pass';
+      li.textContent = err ? `FAIL ${name}: ${err}` : `PASS ${name}`;
+      out.appendChild(li);
+    }
+    const summary = document.getElementById('summary');
+    summary.textContent = failed.length ? `FAIL ${failed.length} of ${results.length}` : `PASS ${results.length}/${results.length}`;
+    summary.className = failed.length ? 'fail' : 'pass';
+    document.body.dataset.result = failed.length ? 'fail' : 'pass';
+  </script>
+</body>
+</html>

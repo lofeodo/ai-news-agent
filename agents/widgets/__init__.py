@@ -15,6 +15,7 @@ BUILTIN = (
     "release_tracker",
     "free_games",
     "most_played",
+    "deals",
 )
 
 for _name in BUILTIN:

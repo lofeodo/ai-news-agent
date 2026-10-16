@@ -10,6 +10,11 @@ accent_color: "#f2a65a"
 languages: [en]
 variants: ["0_0"]
 spotlight: none
+widgets:
+- id: number_of_week
+  placement: after_intro
+- id: crowdfunding_watch
+  placement: after_sections
 max_articles: 400
 guidelines: >-
   Readers love the hobby: new games, crowdfunding campaigns, and what is worth buying or playing. Prefer news about

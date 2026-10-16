@@ -14,7 +14,7 @@ from .registry import register
 CHART_URL = "https://api.steampowered.com/ISteamChartsService/GetMostPlayedGames/v1/"
 APP_URL = "https://store.steampowered.com/api/appdetails?appids={appid}&filters=basic"
 STORE_APP = "https://store.steampowered.com/app/{appid}"
-TOP_N = 10
+TOP_N = 8          # ten rows came to just over the 8 KB fragment cap
 NAME_TIMEOUT = 5
 
 
@@ -26,7 +26,7 @@ def _int(v):
 class MostPlayed(Widget):
     id = "most_played"
     name = "Most played on Steam"
-    description = "The ten games with the most players on Steam this week, and how they moved."
+    description = "The games with the most players on Steam this week, and how they moved."
     topics = ("gaming",)
     commercial_use = False
     max_age_hours = 8 * 24     # Steam rolls the chart up weekly

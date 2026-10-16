@@ -38,6 +38,15 @@ def test_render_never_raises_on_odd_data(wid, data):
     registry.get(wid).render(data, {}, LOOK)
 
 
+@pytest.mark.parametrize("wid", [w.id for w in registry.all_widgets() if w.kind == "external" and not w.keys])
+def test_keyless_widgets_produce_ok_from_the_recordings_through_every_check(wid):
+    """Real-size data through the runner's JSON, size and fragment checks (a 10-row Steam chart once failed)."""
+    from widget_fakes import all_fixture_routes, ctx
+    from widgets.runner import produce_edition_widgets
+    res = produce_edition_widgets(ctx(all_fixture_routes(), week="2026-10-19"), [{"id": wid}])
+    assert res.summary() == {wid: "ok"}, res.status
+
+
 @pytest.mark.parametrize("wid", [w.id for w in registry.all_widgets() if w.kind == "external"])
 def test_external_widgets_show_a_source(wid):
     assert "Source:" in registry.get(wid).render(registry.get(wid).sample_data(), {}, LOOK)

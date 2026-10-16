@@ -20,8 +20,10 @@ def _routes(**over):
 
 
 def test_fixture_render():
-    data = W.produce(ctx(_routes()), {})
-    assert len(data["rows"]) == 10 and data["rows"][0]["name"] == "Counter-Strike 2"
+    res = produce_edition_widgets(ctx(_routes()), [{"id": "most_played"}])   # through the size checks
+    assert res.summary() == {"most_played": "ok"}
+    data = res.data["most_played"]
+    assert len(data["rows"]) == 8 and data["rows"][0]["name"] == "Counter-Strike 2"
     assert data["as_of"].startswith("2026-10-15")
     html = W.render(data, {}, None)
     assert "Counter-Strike 2" in html and "1,165,887" in html
@@ -43,8 +45,7 @@ def test_name_lookup_failures_drop_rows():
         return _app_route(url, kw)
     data = W.produce(ctx({**_routes(), "appdetails": flaky}), {})
     names = [r["name"] for r in data["rows"]]
-    # the recording names only the top 10, so the 11th and 12th cannot fill in here
-    assert "Counter-Strike 2" not in names and len(names) == 9
+    assert "Counter-Strike 2" not in names and len(names) == 8   # the 9th fills in
 
 
 def test_chart_errors_fail_and_old_chart_is_stale():

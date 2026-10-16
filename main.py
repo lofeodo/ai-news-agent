@@ -333,6 +333,14 @@ async def trigger(request: Request):
             return Response(content=f"Unknown kind '{kind}'. Valid values: release, debug.", status_code=400)
         if kind:
             options = {"kind": kind}
+        # ?topic=<id> picks the newsletter (default: the AI one). Other topics are debug-only for now.
+        topic = request.query_params.get("topic")
+        if topic:
+            import topics
+            problem = topics.check_run_request(topic, kind)
+            if problem:
+                return Response(content=problem, status_code=400)
+            options = {**(options or {}), "topic": topic.strip().lower()}
 
     print(f"[main]  Starting {agent_name} in background thread (run_id={run_id})...", flush=True)
     thread = threading.Thread(target=_run_agent, args=(agent_name, module_name, run_id, options), daemon=True)

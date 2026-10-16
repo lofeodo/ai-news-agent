@@ -221,14 +221,13 @@ def is_non_latin(text: str) -> bool:
     return False
 
 
-def cap_articles(articles: list, limit: int) -> list:
-    """At most `limit` articles, spread across publishers so one chatty feed cannot crowd out the rest.
+# Which articles survive an article cap first: Hacker News stories (they carry the community score), then
+# curated RSS feeds (a topic lists them by hand), then NewsAPI, whose long tail of sites is the first to go.
+_CAP_TIER = {"hackernews": 0, "rss": 1}
 
-    Round-robin over the article hosts; within a host, articles with a community score come first (highest
-    first), the rest keep their order (feeds list newest first). limit <= 0 means no cap.
-    """
-    if limit <= 0 or len(articles) <= limit:
-        return articles
+
+def _spread(articles: list, limit: int) -> list:
+    """`limit` articles spread over the sites: round-robin over hosts, scored articles first within a host."""
     by_host: dict = {}
     for a in articles:
         by_host.setdefault(urlparse(a.get("url", "")).hostname or "", []).append(a)
@@ -239,7 +238,26 @@ def cap_articles(articles: list, limit: int) -> list:
         for q in queues:
             if q and len(kept) < limit:
                 kept.append(q.pop(0))
-    print(f"  Capped at {limit} articles (from {len(articles)}), spread over {len(by_host)} sites")
+    return kept
+
+
+def cap_articles(articles: list, limit: int) -> list:
+    """At most `limit` articles. Whole tiers are kept in priority order (see _CAP_TIER); the tier that does not
+    fit is cut down evenly across its sites, so one chatty site cannot crowd out the rest. limit <= 0 = no cap."""
+    if limit <= 0 or len(articles) <= limit:
+        return articles
+    tiers: dict = {}
+    for a in articles:
+        tiers.setdefault(_CAP_TIER.get(a.get("source"), 2), []).append(a)
+    kept = []
+    for tier in sorted(tiers):
+        room = limit - len(kept)
+        if room <= 0:
+            break
+        group = tiers[tier]
+        kept += group if len(group) <= room else _spread(group, room)
+    print(f"  Capped at {limit} articles (from {len(articles)}); kept per tier "
+          f"{ {t: sum(1 for a in kept if _CAP_TIER.get(a.get('source'), 2) == t) for t in sorted(tiers)} }")
     return kept
 
 

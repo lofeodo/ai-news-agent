@@ -48,6 +48,24 @@ def test_cap_spreads_over_sites_and_prefers_scored():
     assert out[0]["title"] == "T3"                      # the scored article leads its site's queue
 
 
+def test_cap_keeps_hn_and_rss_before_newsapi():
+    rss = [{**_art(i, "cnbc.com"), "source": "rss"} for i in range(30)]
+    hn = [{**_art(100 + i, f"hn{i}.example", score=50), "source": "hackernews"} for i in range(3)]
+    api = [{**_art(200 + i, f"site{i}.example"), "source": "newsapi"} for i in range(100)]
+    out = a1b.cap_articles(api + rss + hn, 50)
+    assert len(out) == 50
+    assert sum(a["source"] == "hackernews" for a in out) == 3 and sum(a["source"] == "rss" for a in out) == 30
+    assert sum(a["source"] == "newsapi" for a in out) == 17
+
+
+def test_cap_trims_rss_only_when_it_alone_is_too_big():
+    rss = [{**_art(i, f"feed{i % 5}.example"), "source": "rss"} for i in range(40)]
+    api = [{**_art(200 + i), "source": "newsapi"} for i in range(10)]
+    out = a1b.cap_articles(rss + api, 20)
+    assert len(out) == 20 and all(a["source"] == "rss" for a in out)
+    assert {a["url"].split("/")[2] for a in out} == {f"feed{i}.example" for i in range(5)}
+
+
 def test_cap_zero_or_large_keeps_everything():
     arts = [_art(i) for i in range(5)]
     assert a1b.cap_articles(arts, 0) is arts

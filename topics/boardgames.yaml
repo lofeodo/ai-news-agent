@@ -1,0 +1,71 @@
+# Tabletop Weekly: a weekly newsletter for board game and tabletop hobbyists.
+# Debug runs only for now (see docs/plans/multi-topic.md). RSS feeds below were fetched once on 2026-10-16.
+# Board game news is thin on RSS (Dicebreaker and Tabletop Gaming News have gone quiet), so NewsAPI and
+# Hacker News searches carry more of the load here than in the other topics.
+id: boardgames
+name: Tabletop Weekly
+tagline: Weekly Board Games & Tabletop Dispatch
+audience: board game and tabletop hobbyists, from casual players to collectors, designers and convention-goers
+accent_color: "#f2a65a"
+languages: [en]
+variants: ["0_0"]
+spotlight: none
+max_articles: 400
+guidelines: >-
+  Readers love the hobby: new games, crowdfunding campaigns, and what is worth buying or playing. Prefer news about
+  specific games and publishers, convention news, and substantive reviews or previews over generic "best games
+  for..." listicles, retailer promotions, and ordinary store discounts. Crowdfunding stories should be about a
+  campaign that is live or just funded, not a recap of old ones. Role-playing games, miniatures wargames and
+  collectible card games belong in their own section.
+
+categories:
+  - name: New Releases
+    definition: announcements and releases of board games, expansions, reprints and new editions, including release dates and what is coming from major publishers
+    cap: 4
+    icon: "🎲"
+  - name: Crowdfunding
+    definition: Kickstarter and Gamefound campaigns for board games and tabletop products, new launches, funded milestones and delivery news
+    cap: 3
+    icon: "🚀"
+  - name: Reviews & Previews
+    definition: reviews, previews, first impressions, strategy and how-to-play pieces, and well-argued best-of lists for specific games
+    cap: 3
+    icon: "📝"
+  - name: Industry & Publishers
+    definition: publisher and designer news, acquisitions, tariffs and pricing, distribution, retail and game store news, awards and lawsuits
+    cap: 3
+    icon: "🏢"
+  - name: Events & Conventions
+    definition: Gen Con, Essen Spiel, Origins, PAX Unplugged and other conventions, game fairs, tournaments and the Spiel des Jahres and other awards
+    cap: 2
+    icon: "🎪"
+  - name: RPGs, Minis & Card Games
+    definition: tabletop role-playing games such as Dungeons & Dragons, miniatures games such as Warhammer, and collectible and living card games such as Magic The Gathering
+    cap: 3
+    icon: "⚔️"
+  - name: Community & Culture
+    definition: game design, digital adaptations and apps of board games, accessibility, collecting, the hobby community and its debates
+    cap: 3
+    icon: "🌐"
+
+sources:
+  - type: rss
+    feeds:
+      - {name: BoardGameGeek News, url: "https://boardgamegeek.com/rss/blog/1", max_items: 20}
+      - {name: Meeple Mountain, url: "https://www.meeplemountain.com/feed/", max_items: 15}
+      - {name: BoardGameWire, url: "https://boardgamewire.com/index.php/feed/", max_items: 10}
+      - {name: Board Game Quest, url: "https://www.boardgamequest.com/feed/", max_items: 10}
+      - {name: TheGamer Tabletop, url: "https://www.thegamer.com/feed/category/tabletop/", max_items: 15}
+      - {name: Wargamer, url: "https://www.wargamer.com/feed", max_items: 40}
+      - {name: Opinionated Gamers, url: "https://opinionatedgamers.com/feed/", max_items: 10}
+      - {name: Zatu, url: "https://www.zatu.co.uk/blogs/news.atom", max_items: 15}
+  - type: newsapi
+    queries:
+      - '"board game" OR "board games" OR "tabletop game" OR "tabletop games"'
+      - '"Kickstarter" AND ("board game" OR "tabletop" OR "card game")'
+      - '"Dungeons & Dragons" OR "Magic: The Gathering" OR "Warhammer" OR "Pathfinder"'
+      - '"Gen Con" OR "Essen Spiel" OR "Origins Game Fair" OR "PAX Unplugged" OR "board game convention"'
+      - '"Catan" OR "Ticket to Ride" OR "Wingspan" OR "Gloomhaven" OR "Hasbro" OR "Asmodee" OR "Games Workshop"'
+  - type: hn
+    queries: ["board game", "tabletop game", "Kickstarter board game", "Dungeons & Dragons", "Magic: The Gathering"]
+    min_points: 15

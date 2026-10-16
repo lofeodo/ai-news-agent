@@ -17,6 +17,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_PAPER_SUMMARY
 import stage_counter
 import summary_sources
+import topics
 import tracing
 from config import (
     DATA_DIR, SCORING_MODEL, PAPER_SUMMARY_MAX_TOKENS, WORD_CUTOFF,
@@ -253,10 +254,14 @@ def run(run_id: str):
     start_time = datetime.now()
 
     try:
+        no_spotlight = topics.topic_for_run(run_id, USE_FIRESTORE).spotlight == "none"
         with open("prompts/paper_summary_prompt.txt", "r", encoding="utf-8") as f:
             prompt_template = f.read()
 
-        if USE_FIRESTORE:
+        if no_spotlight:
+            papers, candidates = [], []
+            print("[agent2a]  topic has no paper spotlight: nothing to summarize", flush=True)
+        elif USE_FIRESTORE:
             from google.cloud import firestore as _fs
             doc_snap = _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).get()
             doc      = doc_snap.to_dict()
@@ -277,7 +282,10 @@ def run(run_id: str):
 
         client = tracing.make_client("agent2a", run_id)
 
-        results, sources, replaced = summarize_with_fallback(papers, candidates, prompt_template, client)
+        if no_spotlight:
+            results, sources, replaced = [], [], False
+        else:
+            results, sources, replaced = summarize_with_fallback(papers, candidates, prompt_template, client)
 
         if replaced:
             _swap_recorded_pick(run_id, papers, results)
@@ -294,7 +302,8 @@ def run(run_id: str):
         if USE_FIRESTORE:
             from google.cloud import firestore as _fs
             _fs.Client(project=GCP_PROJECT_ID).collection(FIRESTORE_COLLECTION).document(run_id).update({
-                "paper_summaries": results
+                "paper_summaries": results,
+                **({"agent2a_skipped": "no spotlight for topic"} if no_spotlight else {}),
             })
             print(f"[agent2a]  Saved paper_summaries to Firestore (run_id={run_id})")
             n_src = summary_sources.save_sources(_fs.Client(project=GCP_PROJECT_ID), run_id, "paper", sources)

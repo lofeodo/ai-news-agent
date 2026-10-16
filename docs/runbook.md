@@ -68,6 +68,16 @@ Each `pipeline_runs` doc has `run_kind`: `release` or `debug` (no field = releas
 - Preview a debug run: sign in to the site with an admin account (`ADMIN_EMAILS` on agent-subscriptions) and click **Debug run** in the top bar (or the toggle on the Issues page). It shows the newest composed run of any kind; "Back to published" returns to the public issue.
 - To publish a debug run by hand (rare), set `run_kind` to `release` on its doc in the Firestore console.
 
+## 2b-2. Other topics (finance, gaming, board games, 3D printing)
+
+Besides the AI newsletter the pipeline can write `finance`, `gaming`, `boardgames` and `printing3d` (profiles in `topics/`). They are **debug runs only** for now: nothing is scheduled, nothing is mailed, and they never appear on the public site, in the archive or in the health check.
+
+- Start one: call the orchestrator with `?topic=<id>` and no `kind`: `curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" "<orchestrator-url>/?topic=gaming"`. `kind=release` with a topic other than `ai` is refused with a 400. An unknown topic is a 400 too.
+- View it: sign in as an admin, open the Issues page, click **Debug run** and pick the topic in the dropdown (`/issues.html?debug=1&topic=gaming` opens it directly). A topic that has never run says so.
+- Locally: `python orchestrator.py --topic gaming` (writes to `data/`, so run one topic at a time). On Windows set `PYTHONUTF8=1` when redirecting the output to a file, or the first non-ASCII character in a log line stops the run.
+- A topic run costs Claude calls (roughly the language filter, one categorize pass and the summaries, so a few tenths of a dollar with `AGENT2B_MODE=shortlist`); the NewsAPI free plan allows 100 requests a day and a topic uses 5 to 7.
+- Turning a topic on weekly is not a config change yet: it needs a Scheduler job, lifting the release block, subscriber topic preferences and a send path. See the follow-ups in `docs/plans/multi-topic.md`.
+
 ## 2c. Newsletter archive
 
 `GET /issues` lists, and `GET /issues/{run_id}` serves (`/issues/latest` is the newest), composed runs whose `run_kind` is **explicitly**

@@ -1,0 +1,81 @@
+# Video Games Weekly: a weekly newsletter for people who love playing and following video games.
+# Debug runs only for now (see docs/plans/multi-topic.md). RSS feeds below were fetched once on 2026-10-16.
+id: gaming
+name: Video Games Weekly
+tagline: Weekly Video Games Dispatch
+audience: people who love playing and following video games, from big releases to indie hits and the business behind them
+accent_color: "#b79cff"
+languages: [en]
+variants: ["0_0"]
+spotlight: none
+max_articles: 500
+guidelines: >-
+  Readers play on every platform (PC, PlayStation, Xbox, Switch, mobile), so do not favour one. Prefer news that
+  tells a reader what to play, what is changing in the industry, or what a platform holder just announced over
+  rumour, leaks, and "everything we know" recaps. Reviews and release news from major outlets are good; so are
+  small indie finds. Skip pure clickbait, console-war takes, and daily deal roundups of ordinary discounts (a big
+  sale or a free game giveaway is fine).
+
+categories:
+  - name: Releases & Reviews
+    definition: new game releases, release dates, trailers from showcases, DLC and major updates, and reviews of games that just came out
+    cap: 4
+    icon: "🎮"
+  - name: Industry & Business
+    definition: studio and publisher news, acquisitions, layoffs and closures, earnings, labor and union stories, lawsuits, and business of games analysis
+    cap: 3
+    icon: "💼"
+  - name: Platforms & Hardware
+    definition: PlayStation, Xbox, Nintendo, Steam and PC platform news, new consoles and handhelds, subscriptions such as Game Pass and PS Plus, GPUs and gaming PC hardware
+    cap: 3
+    icon: "🕹️"
+  - name: Indie Spotlight
+    definition: independent and small-studio games, game jams, early access and demo festivals, and standout hidden gems
+    cap: 3
+    icon: "✨"
+  - name: Esports & Competitive
+    definition: esports tournaments and results, competitive scenes, speedrunning records, and team and player news
+    cap: 2
+    icon: "🏆"
+  - name: Deals & Free Games
+    definition: free game giveaways, major sales and bundles, and subscription lineups worth knowing about
+    cap: 3
+    icon: "🏷️"
+  - name: Community & Culture
+    definition: modding, game preservation, accessibility, player controversies, game design discussion, and the people and communities around games
+    cap: 3
+    icon: "🌐"
+
+sources:
+  - type: rss
+    feeds:
+      - {name: Eurogamer, url: "https://www.eurogamer.net/feed", max_items: 40}
+      - {name: PC Gamer, url: "https://www.pcgamer.com/rss/", max_items: 40}
+      - {name: Rock Paper Shotgun, url: "https://www.rockpapershotgun.com/feed", max_items: 40}
+      - {name: VGC, url: "https://www.videogameschronicle.com/feed/", max_items: 15}
+      - {name: GamesIndustry.biz, url: "https://www.gamesindustry.biz/feed", max_items: 35}
+      - {name: Game Developer, url: "https://www.gamedeveloper.com/rss.xml", max_items: 15}
+      - {name: Nintendo Life, url: "https://www.nintendolife.com/feeds/latest", max_items: 25}
+      - {name: Push Square, url: "https://www.pushsquare.com/feeds/latest", max_items: 25}
+      - {name: Pure Xbox, url: "https://www.purexbox.com/feeds/latest", max_items: 25}
+      - {name: Polygon, url: "https://www.polygon.com/rss/index.xml", max_items: 15}
+      - {name: Kotaku, url: "https://kotaku.com/rss", max_items: 20}
+      - {name: IGN, url: "https://feeds.feedburner.com/ign/all", max_items: 25}
+      - {name: GameSpot, url: "https://www.gamespot.com/feeds/mashup/", max_items: 20}
+      - {name: Esports Insider, url: "https://esportsinsider.com/feed", max_items: 10}
+      - {name: Hotspawn, url: "https://hotspawn.com/feed", max_items: 10}
+      - {name: GINX Esports TV, url: "https://ginx.tv/en/rss", max_items: 15}
+      - {name: Dexerto, url: "https://www.dexerto.com/feed/", max_items: 15}
+  - type: newsapi
+    queries:
+      - '"PlayStation 5" OR PS5 OR "PlayStation Plus" OR "Sony Interactive"'
+      - '"Xbox" OR "Game Pass" OR "Microsoft Gaming"'
+      - '"Nintendo Switch" OR "Nintendo Switch 2" OR "Nintendo Direct"'
+      - '"Steam" OR "Valve" OR "Steam Deck" OR "PC gaming"'
+      - '"video game" AND (studio OR layoffs OR acquisition OR publisher)'
+      - '"video game" AND (review OR release OR launch OR trailer)'
+      - '"indie game" OR "game jam" OR "early access"'
+      - 'esports OR "Counter-Strike 2" OR "League of Legends" OR Valorant OR "Dota 2" OR "Esports World Cup"'
+  - type: hn
+    queries: ["video game", "Steam", "Nintendo", "PlayStation", "Xbox", "game engine", "indie game", "Epic Games"]
+    min_points: 30

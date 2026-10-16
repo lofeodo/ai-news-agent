@@ -14,9 +14,12 @@ class Sel:
 
     def __init__(self, picks=1, runners=1, fail_for=()):
         self.picks, self.runners, self.fail_for, self.calls = picks, runners, set(fail_for), []
+        self.prompts, self.topics = [], []
 
-    def __call__(self, category, candidates, prompt, client):
+    def __call__(self, category, candidates, prompt, client, topic=None):
         self.calls.append((category, [c["_idx"] for c in candidates]))
+        self.prompts.append(prompt)
+        self.topics.append(topic)
         if category in self.fail_for:
             raise RuntimeError("boom")
         usable = [c for c in candidates if (c.get("description") or "").strip()]
@@ -180,3 +183,34 @@ def test_run_shortlist_mode_summarizes_only_the_shortlist(monkeypatch, tmp_path)
     assert len(out["by_category"]["Safety & Alignment"]) == 3
     assert out["shortlist"]["articles_in"] == 8 and out["shortlist"]["shortlisted"] == 3
     assert all(a["summary"] for a in out["by_category"]["Safety & Alignment"])
+
+
+def test_shortlist_gives_the_default_selector_the_topic(demo_topic):
+    seen = {}
+
+    def fake_default_select():
+        def select(category, pool, prompt, client, topic=None):
+            seen["topic"] = topic
+            return SimpleNamespace(picks=pool[:1], runners_up=[])
+        return select
+
+    import news_shortlist
+    original = news_shortlist._default_select
+    news_shortlist._default_select = fake_default_select
+    try:
+        ns.shortlist_category("C", [art(0, desc="d")], ["t"], "p", None, topic=demo_topic)
+    finally:
+        news_shortlist._default_select = original
+    assert seen["topic"] is demo_topic
+
+
+def test_run_shortlist_mode_uses_the_topics_selection_prompt(monkeypatch, tmp_path, demo_topic):
+    monkeypatch.setenv("AGENT2B_MODE", "shortlist")
+    monkeypatch.setenv("TOPIC", "demo")
+    client = _setup(monkeypatch, tmp_path)
+    sel = Sel(picks=2, runners=1)
+    monkeypatch.setattr(ns, "_default_select", lambda: sel)
+    a2b.run("t")
+    assert sel.prompts and 'editor of "Demo Weekly"' in sel.prompts[0]
+    assert all(t is demo_topic for t in sel.topics)
+    assert "at most {cap}" in sel.prompts[0] or "{cap}" in sel.prompts[0]      # still a template for agent3's selector

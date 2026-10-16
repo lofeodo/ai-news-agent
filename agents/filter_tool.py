@@ -84,6 +84,14 @@ _item["properties"]["confidence"] = {
 }
 _item["required"] = ["index", "category", "confidence"]
 
+def build_filter_tool(categories: list, with_confidence: bool = False) -> dict:
+    """The filter_articles tool for another topic: same shape as FILTER_TOOL, with that topic's categories."""
+    tool = copy.deepcopy(FILTER_TOOL_WITH_CONFIDENCE if with_confidence else FILTER_TOOL)
+    tool["description"] = "Filter a list of news articles for relevance to the newsletter and assign each a category"
+    tool["input_schema"]["properties"]["articles"]["items"]["properties"]["category"]["enum"] = list(categories)
+    return tool
+
+
 FETCH_ARTICLE_TOOL = {
     "name": "fetch_article_text",
     "description": "Download the full text of the article at this URL (first ~1500 words). Use it when the title and description are not enough to pick the category.",

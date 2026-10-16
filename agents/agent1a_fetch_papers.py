@@ -20,6 +20,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_PAPER_SCORING
 import tracing
 import spotlight_history
+import topics
 import trending_papers
 import paper_shortlist
 from config import (
@@ -308,6 +309,39 @@ def _record_failure(run_id: str, agent_name: str, error: Exception) -> None:
         print(f"[{agent_name}]  Failed to record failure to Firestore: {record_error}", flush=True)
 
 
+SKIP_REASON = "no spotlight for topic"
+
+
+def skip_spotlight(run_id: str, start_time: datetime) -> None:
+    """A topic with no paper spotlight: nothing to fetch or score. Record an empty result and publish
+    papers-scored all the same, so agent2a runs, counts itself and the rest of the chain is untouched."""
+    print(f"[agent1a]  {SKIP_REASON}: nothing to fetch or score", flush=True)
+    os.makedirs(DATA_DIR, exist_ok=True)
+    with open(os.path.join(DATA_DIR, "scored_papers.json"), "w", encoding="utf-8") as f:
+        json.dump({
+            "run_at": start_time.isoformat(), "elapsed_seconds": 0, "total_sampled": 0, "total_scored": 0,
+            "total_failed": 0, "top_papers": [], "paper_candidates": [], "all_scored": [], "skipped": SKIP_REASON,
+        }, f, indent=2, ensure_ascii=False)
+
+    if USE_FIRESTORE:
+        from google.cloud import firestore, pubsub_v1
+        db = firestore.Client(project=GCP_PROJECT_ID)
+        db.collection("pipeline_runs").document(run_id).set(
+            {
+                "scored_papers": [],
+                "paper_candidates": [],
+                "agent1a_skipped": SKIP_REASON,
+                "started_at": datetime.now(timezone.utc).isoformat(),
+                "run_id": run_id,
+            },
+            merge=True,
+        )
+        publisher  = pubsub_v1.PublisherClient()
+        topic_path = publisher.topic_path(GCP_PROJECT_ID, TOPIC_PAPERS_SCORED)
+        publisher.publish(topic_path, json.dumps({"run_id": run_id}).encode("utf-8")).result(timeout=30)
+        print(f"[agent1a]  Published to {TOPIC_PAPERS_SCORED} (run_id={run_id})")
+
+
 def run(run_id: str):
     """Main agent logic. Called by main.py (Cloud Run) or orchestrator.py."""
     global _TRACE_RUN_ID
@@ -315,6 +349,9 @@ def run(run_id: str):
     start_time = datetime.now()
 
     try:
+        if topics.topic_for_run(run_id, USE_FIRESTORE).spotlight == "none":
+            skip_spotlight(run_id, start_time)
+            return
         seen = spotlight_history.load_seen_ids(USE_FIRESTORE, GCP_PROJECT_ID, DATA_DIR, run_id)
         warning = None
         if seen.failed:

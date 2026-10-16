@@ -14,6 +14,7 @@
 #   - Publishes a single message to the "pipeline-start" Pub/Sub topic
 #   - Exits — the rest of the pipeline is event-driven from there
 
+import argparse
 import json
 import os
 import sys
@@ -29,6 +30,7 @@ from config import (
     FIRESTORE_COLLECTION,
     USE_FIRESTORE,
 )
+from topics import DEFAULT_TOPIC, check_run_request
 
 
 def generate_run_id() -> str:
@@ -48,20 +50,27 @@ def publish_pubsub(topic_name: str, payload: dict) -> None:
     print(f"[orchestrator]  Published to {topic_name} — message_id={message_id}")
 
 
-def create_firestore_run_document(run_id: str, kind: str = "debug") -> None:
-    """Create the coordination document for this pipeline run."""
+def create_firestore_run_document(run_id: str, kind: str = "debug", topic: str | None = None) -> None:
+    """Create the coordination document for this pipeline run.
+
+    `topic` is written only for a non-AI topic: a doc with no `topic` is an AI run, so the AI newsletter's
+    docs stay exactly as they were before topics existed.
+    """
     from google.cloud import firestore
 
     db  = firestore.Client(project=GCP_PROJECT_ID)
     ref = db.collection(FIRESTORE_COLLECTION).document(run_id)
-    ref.set({
+    doc = {
         "run_id":             run_id,
         "started_at":         datetime.now(timezone.utc).isoformat(),
         "status":             "running",
         "run_kind":           kind,
         "agent2_completions": 0,
-    })
-    print(f"[orchestrator]  Firestore document created for run_id={run_id} (run_kind={kind})")
+    }
+    if topic and topic != DEFAULT_TOPIC:
+        doc["topic"] = topic
+    ref.set(doc)
+    print(f"[orchestrator]  Firestore document created for run_id={run_id} (run_kind={kind}, topic={topic or DEFAULT_TOPIC})")
 
 
 def run_local(run_id: str) -> None:
@@ -92,28 +101,43 @@ def run_local(run_id: str) -> None:
     print(f"\n[orchestrator]  Pipeline complete — run_id={run_id}")
 
 
-def run_cloud(run_id: str, kind: str = "debug") -> None:
+def run_cloud(run_id: str, kind: str = "debug", topic: str | None = None) -> None:
     """Create Firestore coordination document and publish pipeline-start event."""
     print(f"\n[orchestrator]  Cloud run — run_id={run_id}\n")
 
-    create_firestore_run_document(run_id, kind)
+    create_firestore_run_document(run_id, kind, topic)
     publish_pubsub(TOPIC_PIPELINE_START, {"run_id": run_id})
 
     print("[orchestrator]  Pipeline started — agents will trigger each other via Pub/Sub")
 
 
-def run(run_id: str, kind: str = "debug") -> None:
+def run(run_id: str, kind: str = "debug", topic: str | None = None) -> None:
     """Entry point called by main.py when deployed as a Cloud Run service.
 
     kind is "release" (the official weekly run: published and mailed) or "debug" (the default: previewable only).
+    topic names the newsletter (a topics/<id>.yaml profile); none means the AI newsletter. main.py already refuses
+    a bad topic or a non-AI release; the check is repeated here so no caller can create such a run.
     """
-    run_cloud(run_id, kind)
+    problem = check_run_request(topic, kind)
+    if problem:
+        raise ValueError(problem)
+    run_cloud(run_id, kind, topic)
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Start a pipeline run (local sequential, or cloud when USE_FIRESTORE=true).")
+    parser.add_argument("--topic", default=os.environ.get("TOPIC") or DEFAULT_TOPIC,
+                        help="newsletter topic id, a topics/<id>.yaml profile (default: ai)")
+    args = parser.parse_args()
+    problem = check_run_request(args.topic, "debug")
+    if problem:
+        parser.error(problem)
+    # Local agents read the topic from the environment (cloud agents read it from the run doc).
+    os.environ["TOPIC"] = args.topic
+
     run_id = generate_run_id()
 
     if USE_FIRESTORE:
-        run_cloud(run_id)
+        run_cloud(run_id, topic=args.topic)
     else:
         run_local(run_id)

@@ -1,0 +1,12 @@
+Write a 1-2 sentence summary of the following news article for "{topic_name}", a newsletter for {audience}. State what happened and the single most important implication for them. Be specific and cut anything that isn't essential.
+{style_instruction}
+Style rules:
+- No em dashes (—) or en dashes (–). Use commas or short sentences instead.
+- No filler words like "importantly", "notably", "crucially", or "interestingly".
+- No headers, titles, or markdown of any kind.
+- Short sentences are better than long ones.
+
+Article title: {title}
+
+Article text:
+{text}

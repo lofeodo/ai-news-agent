@@ -46,6 +46,7 @@ import ids
 import mail_throttle
 import run_kind
 import sendgrid_webhook
+import topics
 from prompt_guard import GUARD_TOPIC_REFINE, neutralize_tags
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -927,20 +928,37 @@ def archive_issue(request: Request, run_id: str):
     return HTMLResponse(content=_render_preview(data), status_code=200, headers=headers)
 
 
+@router.get("/auth/admin/topics")
+@limiter.limit("30/minute")
+def admin_topics(request: Request, user: dict = Depends(get_verified_user)):
+    """Admin only: the newsletter topics (topics/*.yaml) a debug run can belong to, the AI newsletter first."""
+    if not _is_admin(user):
+        raise HTTPException(status_code=403, detail="forbidden")
+    found = [topics.get_topic(t) for t in topics.list_topic_ids()]
+    found.sort(key=lambda t: (not t.is_default, t.name.lower()))
+    return {"topics": [{"id": t.id, "name": t.name, "tagline": t.tagline} for t in found]}
+
+
 @router.get("/auth/admin/issues")
 @limiter.limit("30/minute")
 def admin_preview(
     request: Request,
     run: Annotated[str, Query(max_length=64)] = "latest",
     variant: Annotated[str, Query(max_length=8)] = "",
+    topic: Annotated[str, Query(max_length=32)] = "",
     user: dict = Depends(get_verified_user),
 ):
-    """Admin only: any run, debug ones included. `run` is "latest" (newest composed run of any kind) or a run id."""
+    """Admin only: any run, debug ones included. `run` is "latest" (newest composed run of one topic, any kind;
+    the AI newsletter unless `topic` says otherwise) or a run id."""
     if not _is_admin(user):
         raise HTTPException(status_code=403, detail="forbidden")
+    if topic and not topics.is_valid_topic(topic):
+        raise HTTPException(status_code=400, detail="unknown_topic")
     db = _db()
     if run == "latest":
-        doc = run_kind.latest_run(db, FIRESTORE_COLLECTION, release_only=False)
+        other = topics.get_topic(topic).id if topic else topics.DEFAULT_TOPIC
+        doc = (run_kind.latest_run(db, FIRESTORE_COLLECTION, release_only=False) if other == topics.DEFAULT_TOPIC
+               else run_kind.latest_run(db, FIRESTORE_COLLECTION, release_only=False, topic=other))
     elif ids.is_doc_id(run):
         doc = db.collection(FIRESTORE_COLLECTION).document(run).get()
         doc = doc if doc.exists else None
@@ -949,10 +967,13 @@ def admin_preview(
     if doc is None:
         raise HTTPException(status_code=404, detail="no_run")
     data = doc.to_dict()
+    run_topic = topics.topic_id_of(data)
     return {
-        "run_id":   doc.id,
-        "run_kind": data.get("run_kind", run_kind.RELEASE),
-        "html":     _render_preview(data, variant),
+        "run_id":     doc.id,
+        "run_kind":   data.get("run_kind", run_kind.RELEASE),
+        "topic":      run_topic,
+        "topic_name": topics.get_topic(run_topic).name if topics.is_valid_topic(run_topic) else run_topic,
+        "html":       _render_preview(data, variant),
     }
 
 

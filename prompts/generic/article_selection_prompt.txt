@@ -1,0 +1,26 @@
+You are the editor of "{topic_name}", a weekly newsletter for {audience}. Select the best articles from the list below, at most {cap}, for the "{category}" section.
+
+The articles are listed in no particular order. Position in the list means nothing.
+
+Hacker News score. Some articles have an HN score: the number of upvotes the story received on Hacker News, a large tech community. Treat it as a strong signal of how much readers will value the article, and weigh it heavily. Compare it with the other scored articles in this section rather than against any fixed bar. Some topics naturally draw fewer votes than others, so a story ranked #1 of 6 in its section is a strong pick even if its raw score looks modest.
+
+No HN score. Articles marked "hn: unknown" were never posted to Hacker News, so there is no data on them and they are not low-scored. For many of this newsletter's readers the best stories never reach Hacker News at all. Do not count the missing score against them or rank them below scored articles because of it. Judge them on their content.
+
+{articles}
+
+Guidance specific to this newsletter:
+{guidelines}
+
+Selection rules:
+- Only include an article if it clearly adds value for this newsletter's readers. This bar applies equally to every article, with or without an HN score.
+- Prefer the articles readers will find most valuable, using the HN score as a heavy signal where it exists and the content otherwise. Good signs in content: a significant announcement, a release or event that changes things for readers, original reporting, a result or finding with real consequences, a practical guide readers can act on. Avoid: minor press releases, thin rewrites of someone else's story, clickbait, and generic opinion with nothing new.
+- Dedup: if two articles cover the same event or announcement (even from different outlets), keep only the single most informative one.
+- Select at most {cap} articles. Fewer is fine: a section with one great story and nothing else notable can have 1 or 2. Do not pad with filler to reach {cap}.
+- List your selection in the order the articles should appear in the newsletter, most valuable first.
+
+Runners-up. After your selection, also list up to {runners_up} runners-up: the next-best articles you would add if one of your picks turned out to be a duplicate or had to be dropped. Apply the same standards as for the picks and do not pad with filler; fewer is fine. Runners-up must not repeat a pick, and should be different stories from your picks. Most valuable first.
+
+Respond with ONLY a JSON object of indices:
+{{"selected": [2, 7, 14], "runners_up": [3, 9, 20]}}
+
+No explanation. No preamble. Just the JSON object.

@@ -46,6 +46,14 @@ Coordination happens at two levels on purpose:
 
 Why LangGraph is *not* used across agents: [docs/decisions/0001-langgraph-inside-agents.md](decisions/0001-langgraph-inside-agents.md).
 
+## Topics
+
+The pipeline is topic-agnostic. A run's topic is written on its `pipeline_runs` doc by the orchestrator (`POST /?topic=<id>`, written only for a non-AI topic: a doc with no `topic` is the AI newsletter, so its docs are unchanged) and every agent reads its profile from `topics/<id>.yaml` (`agents/topics.py`; local runs read `$TOPIC`). Pub/Sub payloads are still just `{run_id}`.
+
+What a profile changes, stage by stage: **agent1b** takes its sources (Hacker News, NewsAPI, RSS), languages, paywalls, article cap, categories and categorize prompt from it (the confidence review loop is AI-only); **agent1a/2a** skip a topic with no paper spotlight but still record an empty stage and count, so agent3 is triggered as usual; **agent2b** uses the topic's summary prompts (shortlist mode too, with the topic's section caps); **agent3** takes its name, tagline, accent colour, sections, caps, variants and selection and intro prompts from it, and omits the spotlight and share strip for topics without them. For the AI profile every value equals the old hardcoded one (the composed HTML is byte-identical, checked when this was built).
+
+Safety rails: non-AI topics are debug-only, and every lookup that picks "the latest run" (`run_kind`, the health check, `drift_history`) skips other topics' runs, so a topic draft can never be mailed, published or checked as the AI newsletter. Not built yet: topic signup and sending, schedules, and a per-topic health check.
+
 ## Inside agent 1b (LangGraph)
 
 ```mermaid

@@ -14,6 +14,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_NEWS_SUMMARY
 import stage_counter
 import summary_sources
+import topics
 import tracing
 from config import (
     DATA_DIR, SCORING_MODEL, NEWS_SUMMARY_MAX_TOKENS,
@@ -103,7 +104,7 @@ def summarize_with_text(article: dict, text: str | None, prompt_template: str, f
 
 
 def run_shortlist(by_category: dict, all_articles: list, client, prompt_template: str, fallback_template: str,
-                  quebec_style: str) -> tuple[dict, set, dict]:
+                  quebec_style: str, topic=None) -> tuple[dict, set, dict]:
     """AGENT2B_MODE=shortlist: fetch all texts, shortlist per category, summarize only the shortlist.
 
     Returns (results_by_index, kept_indices, summary). Indices are positions in `all_articles`.
@@ -116,9 +117,9 @@ def run_shortlist(by_category: dict, all_articles: list, client, prompt_template
         texts = dict(executor.map(fetch, range(len(all_articles))))
     print(f"  [shortlist] fetched {sum(1 for t in texts.values() if t)}/{len(texts)} article texts", flush=True)
 
-    with open("prompts/article_selection_prompt.txt", "r", encoding="utf-8") as f:
-        selection_prompt = f.read()
-    kept, summary = news_shortlist.shortlist_all(by_category, texts, selection_prompt, client)
+    topic = topic or topics.get_topic()
+    selection_prompt = topic.read_filled_prompt("selection")     # agent3's selection prompt, for this topic
+    kept, summary = news_shortlist.shortlist_all(by_category, texts, selection_prompt, client, topic=topic)
     print(f"  [shortlist] {len(kept)}/{len(all_articles)} articles shortlisted for summaries", flush=True)
 
     hn_ctx = news_shortlist.hn_context(by_category)
@@ -202,11 +203,10 @@ def run(run_id: str):
     start_time = datetime.now()
 
     try:
-        with open("prompts/news_summary_prompt.txt", "r", encoding="utf-8") as f:
-            prompt_template = f.read()
-
-        with open("prompts/news_summary_fallback_prompt.txt", "r", encoding="utf-8") as f:
-            fallback_template = f.read()
+        topic = topics.topic_for_run(run_id, USE_FIRESTORE)
+        print(f"[agent2b]  topic: {topic.id}", flush=True)
+        prompt_template   = topic.read_filled_prompt("news_summary")
+        fallback_template = topic.read_filled_prompt("news_summary_fallback")
 
         with open("prompts/quebec_french_style.txt", "r", encoding="utf-8") as f:
             quebec_style = f.read()
@@ -242,7 +242,7 @@ def run(run_id: str):
         if news_shortlist.agent2b_mode() == news_shortlist.MODE_SHORTLIST:
             print("[agent2b]  AGENT2B_MODE=shortlist: summarizing only the shortlisted articles", flush=True)
             results_by_index, only_indices, shortlist_summary = run_shortlist(
-                by_category, all_articles, client, prompt_template, fallback_template, quebec_style)
+                by_category, all_articles, client, prompt_template, fallback_template, quebec_style, topic=topic)
         else:
             with ThreadPoolExecutor(max_workers=MAX_FETCH_WORKERS) as executor:
                 future_to_index = {executor.submit(process_article, t): i for i, t in enumerate(tasks)}

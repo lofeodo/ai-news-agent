@@ -10,10 +10,12 @@ import run_kind
 from auth_middleware import get_current_user
 
 
-def _snap(html, kind=None, doc_id="r1"):
+def _snap(html, kind=None, doc_id="r1", topic=None):
     data = {"newsletter_variants": {"0_1": html}}
     if kind:
         data["run_kind"] = kind
+    if topic:
+        data["topic"] = topic
     return SimpleNamespace(id=doc_id, exists=True, to_dict=lambda: data)
 
 
@@ -24,8 +26,11 @@ def client(monkeypatch):
         collection=lambda name: SimpleNamespace(document=lambda i: SimpleNamespace(get=lambda: _snap("<p>exact</p>", "debug", i)))))
     seen = []
 
-    def fake_latest(db, collection, release_only=True):
+    def fake_latest(db, collection, release_only=True, topic="ai"):
         seen.append(release_only)
+        if topic != "ai":
+            seen.append(topic)
+            return _snap(f"<p>{topic} draft</p>", "debug", f"{topic}-1", topic=topic) if topic != "empty" else None
         return _snap("<p>debug</p>", "debug", "d1") if not release_only else _snap("<p>release</p>")
 
     monkeypatch.setattr(run_kind, "latest_run", fake_latest)
@@ -88,3 +93,68 @@ def test_preview_page_frame_has_limited_sandbox():
     html = (Path(__file__).resolve().parent.parent / "public/newsletter/issues.html").read_text(encoding="utf-8")
     assert 'sandbox="allow-popups allow-popups-to-escape-sandbox"' in html
     assert "allow-scripts" not in html and "allow-same-origin" not in html
+
+
+# --- topics -----------------------------------------------------------------------------------------
+
+def test_admin_preview_reports_the_ai_topic_by_default(client):
+    _as(client, "admin@example.com")
+    body = client.get("/auth/admin/issues").json()
+    assert body["topic"] == "ai" and body["topic_name"] == "Latent SpaceMail"
+    assert client.seen == [False]                       # the AI lookup is called exactly as before
+
+
+def test_admin_can_open_another_topics_latest_run(client, demo_topic):
+    _as(client, "admin@example.com")
+    body = client.get("/auth/admin/issues?topic=demo").json()
+    assert body["run_id"] == "demo-1" and body["topic"] == "demo" and body["topic_name"] == "Demo Weekly"
+    assert "demo draft" in body["html"]
+    assert client.seen == [False, "demo"]
+
+
+def test_topic_ai_is_the_default_lookup(client):
+    _as(client, "admin@example.com")
+    assert client.get("/auth/admin/issues?topic=ai").json()["run_id"] == "d1"
+    assert client.seen == [False]
+
+
+def test_topic_with_no_runs_is_a_404(client, monkeypatch, demo_topic):
+    monkeypatch.setattr(run_kind, "latest_run", lambda *a, **k: None)
+    _as(client, "admin@example.com")
+    assert client.get("/auth/admin/issues?topic=demo").status_code == 404
+
+
+def test_unknown_topic_is_a_400(client):
+    _as(client, "admin@example.com")
+    assert client.get("/auth/admin/issues?topic=nope").status_code == 400
+    assert client.get("/auth/admin/issues?topic=../ai").status_code == 400
+
+
+def test_topic_param_is_admin_only(client, demo_topic):
+    _as(client, "someone@example.com")
+    assert client.get("/auth/admin/issues?topic=demo").status_code == 403
+
+
+def test_public_pages_ignore_the_topic_param(client, demo_topic):
+    assert "release" in client.get("/issues/latest?topic=demo").text
+    assert client.seen == [True]
+
+
+def test_topic_list_is_admin_only(client):
+    assert client.get("/auth/admin/topics").status_code == 401
+    _as(client, "someone@example.com")
+    assert client.get("/auth/admin/topics").status_code == 403
+
+
+def test_topic_list_has_the_ai_newsletter_first(client, demo_topic):
+    _as(client, "admin@example.com")
+    found = client.get("/auth/admin/topics").json()["topics"]
+    assert [t["id"] for t in found] == ["ai", "demo"]
+    assert found[0]["name"] == "Latent SpaceMail" and found[1]["tagline"] == "A demo"
+    assert all(set(t) == {"id", "name", "tagline"} for t in found)
+
+
+def test_topic_list_has_every_shipped_profile(client):
+    _as(client, "admin@example.com")
+    ids_ = [t["id"] for t in client.get("/auth/admin/topics").json()["topics"]]
+    assert ids_[0] == "ai" and sorted(ids_) == ["ai", "boardgames", "finance", "gaming", "printing3d"]

@@ -14,6 +14,8 @@
 │   ├── auth_middleware.py          # Firebase ID token verification (FastAPI dependency)
 │   ├── agent1b_graph.py            # LangGraph implementation of agent1b (state, nodes, review loop)
 │   ├── article_fetch.py            # Shared article-text fetcher (agent1b review + agent2b)
+│   ├── topics.py                   # Topic profile loader/validator (topics/*.yaml), topic of a run, run-request check
+│   ├── rss_source.py               # RSS/Atom feeds as an agent1b news source
 │   ├── trending_papers.py          # Hugging Face Daily Papers shortlist for agent1a
 │   ├── spotlight_history.py        # Papers already spotlighted (Firestore / local file)
 │   ├── summary_sources.py          # Saves the text each summary was written from (for the judge)
@@ -25,7 +27,9 @@
 │   ├── report_html.py              # Renders the health check report as newsletter-styled HTML
 │   ├── filter_tool.py              # Claude tool schemas for news categorization + review
 │   └── scoring_tool.py             # Claude tool schema for paper scoring
+├── topics/                         # One YAML profile per newsletter: ai, finance, gaming, boardgames, printing3d
 ├── prompts/
+│   ├── generic/                    # Prompts every non-AI topic uses (filled with the topic's name, audience, categories)
 │   ├── scoring_rubric.txt          # 8-dimension paper scoring prompt
 │   ├── judge_prompt.txt            # Summary-faithfulness judge prompt
 │   ├── paper_summary_prompt.txt    # Paper mini-review prompt

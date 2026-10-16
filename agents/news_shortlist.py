@@ -13,6 +13,7 @@
 # replacement. Anything that goes wrong for a category keeps the whole category (today's behavior),
 # so a failure here can cost money but never drops news.
 
+import functools
 import os
 from concurrent.futures import ThreadPoolExecutor
 
@@ -70,13 +71,17 @@ def _default_select():
     return select_with_runners_up
 
 
-def shortlist_category(category, articles, texts, prompt_template, client, select_fn=None):
+def shortlist_category(category, articles, texts, prompt_template, client, select_fn=None, topic=None):
     """Indices (into `articles`) worth summarizing for one category.
 
     Two passes like agent3: the full pool, and the English-only pool when French articles exist, so
     both newsletter variants have candidates. Picks plus runners-up of each pass are kept.
     """
-    select = select_fn or _default_select()
+    # The default selector is agent3's; `topic` gives it the topic's section caps. An injected select_fn
+    # (tests) keeps the four-argument form.
+    # The AI newsletter's call stays exactly the original four-argument one (its caps are the default ones).
+    other_topic = {"topic": topic} if topic is not None and not topic.is_default else {}
+    select = select_fn or functools.partial(_default_select(), **other_topic)
     candidates = make_candidates(articles, texts)
     kept: set[int] = set()
 
@@ -93,7 +98,7 @@ def shortlist_category(category, articles, texts, prompt_template, client, selec
 
 
 def shortlist_all(by_category: dict, texts: dict, prompt_template: str, client,
-                  select_fn=None, max_workers: int = 7):
+                  select_fn=None, max_workers: int = 7, topic=None):
     """(kept, summary). `kept` holds global article indices in agent2b's flattened order;
     `texts` maps that same global index to the fetched text (or None).
 
@@ -111,7 +116,7 @@ def shortlist_all(by_category: dict, texts: dict, prompt_template: str, client,
             return category, set(), False
         local_texts = [texts.get(offset + i) for i in range(len(articles))]
         try:
-            local = shortlist_category(category, articles, local_texts, prompt_template, client, select_fn)
+            local = shortlist_category(category, articles, local_texts, prompt_template, client, select_fn, topic)
             return category, {offset + i for i in local}, False
         except Exception as e:
             print(f"  [shortlist] '{category}': selection failed ({e}); keeping the whole category", flush=True)

@@ -56,6 +56,8 @@
       background-repeat: no-repeat; background-position: right 10px center;
     }
     .issuebar__tag { color: var(--muted); font-size: 12px; white-space: nowrap; }
+    /* Admin-only strip shown in the issue bar's place while the debug run is on: pick which newsletter topic. */
+    .issuebar__select--topic { flex: 0 1 320px; }
     @media (max-width: 480px) { .issuebar__tag { display: none; } .issuebar__select { flex: 1 1 auto; } }
 
   </style>
@@ -99,6 +101,11 @@
     <span class="issuebar__tag" id="issue-tag"></span>
   </div>
 
+  <div class="issuebar" id="debugbar" hidden>
+    <span class="issuebar__tag" id="debug-tag">Debug run of</span>
+    <select class="issuebar__select issuebar__select--topic" id="topic-select" aria-label="Choose a newsletter topic"></select>
+  </div>
+
   <iframe
     id="issue-frame"
     class="issue-frame"
@@ -131,6 +138,10 @@
     const olderBtn = document.getElementById('issue-older');
     const newerBtn = document.getElementById('issue-newer');
     const tag = document.getElementById('issue-tag');
+    const debugbar = document.getElementById('debugbar');
+    const topicSelect = document.getElementById('topic-select');
+    let topicList = [];       // admin only, from GET /auth/admin/topics; the AI newsletter first
+    let topicId = new URLSearchParams(location.search).get('topic') || 'ai';
 
     // "Latent SpaceMail — September 28, 2026" -> "September 28, 2026"
     function issueLabel(it) {
@@ -184,24 +195,71 @@
     // Same content policy the public response sends, for the inline (srcdoc) copy.
     const ISSUE_POLICY = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https: data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">`;
 
+    const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    function showTopicBar() {
+      debugbar.hidden = topicList.length < 2;
+      topicSelect.value = topicId;
+    }
+
+    // A topic that has never been run: say so in the frame, and keep the picker so another topic can be chosen.
+    function showNoRun() {
+      const name = (topicList.find(t => t.id === topicId) || { name: topicId }).name;
+      frame.removeAttribute('src');
+      frame.srcdoc = ISSUE_POLICY + `<body style="margin:0;padding:32px;background:#060606;color:#e8e8e8;font-family:Menlo,Consolas,monospace;line-height:1.6">` +
+        `<p>No debug run for ${esc(name)} yet.</p>` +
+        `<p style="color:#8b8b8b;font-size:13px">Start one by calling the orchestrator with <code>?topic=${esc(topicId)}</code> (no <code>kind</code>), then reload.</p></body>`;
+    }
+
     async function showDebug() {
       toggle.disabled = true;
       try {
-        const res = await authFetch(`${API}/auth/admin/issues?run=latest`);
-        if (!res.ok) throw new Error(res.status);
-        const run = await res.json();
-        frame.removeAttribute('src');
-        frame.srcdoc = ISSUE_POLICY + run.html;
-        if (navLink) navLink.title = `${run.run_kind} run ${run.run_id}`;
+        const q = topicId && topicId !== 'ai' ? `&topic=${encodeURIComponent(topicId)}` : '';
+        const res = await authFetch(`${API}/auth/admin/issues?run=latest${q}`);
+        const none = res.status === 404 && q !== '';
+        if (!res.ok && !none) throw new Error(res.status);
+        if (none) {
+          showNoRun();
+          if (navLink) navLink.removeAttribute('title');
+        } else {
+          const run = await res.json();
+          frame.removeAttribute('src');
+          frame.srcdoc = ISSUE_POLICY + run.html;
+          if (navLink) navLink.title = `${run.topic_name || run.topic} ${run.run_kind} run ${run.run_id}`;
+        }
         toggle.setAttribute('aria-pressed', 'true');
         toggle.textContent = 'Back to published';
         debugOn = true;
         bar.hidden = true;
+        showTopicBar();
       } catch (e) {
         console.error('[issues] debug run failed:', e);
         toggle.textContent = 'No run found';
       } finally {
         toggle.disabled = false;
+      }
+    }
+
+    topicSelect.addEventListener('change', () => {
+      topicId = topicSelect.value;
+      const u = new URL(location.href);
+      if (topicId === 'ai') u.searchParams.delete('topic'); else u.searchParams.set('topic', topicId);
+      history.replaceState(null, '', u);
+      showDebug();
+    });
+
+    async function loadTopics() {
+      try {
+        const res = await authFetch(`${API}/auth/admin/topics`);
+        if (!res.ok) throw new Error(res.status);
+        topicList = (await res.json()).topics || [];
+        topicSelect.innerHTML = topicList.map(t => `<option value="${esc(t.id)}">${esc(t.name)}</option>`).join('');
+        if (!topicList.some(t => t.id === topicId)) topicId = 'ai';
+        topicSelect.value = topicId;
+      } catch (e) {
+        console.error('[issues] topic list failed:', e);   // the debug run still works, for the AI newsletter
+        topicList = [];
+        topicId = 'ai';
       }
     }
 
@@ -212,6 +270,7 @@
       toggle.setAttribute('aria-pressed', 'false');
       toggle.textContent = 'Debug run';
       debugOn = false;
+      debugbar.hidden = true;
       bar.hidden = issues.length < 2;
     }
 
@@ -225,6 +284,7 @@
           const me  = res.ok ? await res.json() : null;
           if (me?.is_admin) {
             toggle.style.display = 'inline-block';
+            await loadTopics();
             if (new URLSearchParams(location.search).get('debug') === '1') showDebug();
           }
         } catch (e) { console.error('[issues] /auth/me failed:', e); }

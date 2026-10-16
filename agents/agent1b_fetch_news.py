@@ -13,11 +13,13 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
 import config
-from filter_tool import CATEGORIES, FILTER_TOOL, FILTER_TOOL_WITH_CONFIDENCE, LANGUAGE_FILTER_TOOL
+from filter_tool import CATEGORIES, FILTER_TOOL, FILTER_TOOL_WITH_CONFIDENCE, LANGUAGE_FILTER_TOOL, build_filter_tool
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_XML_ARTICLES, neutralize_tags
 from drift import summarize_audit
+from rss_source import fetch_rss_articles
+import topics
 from config import (
     DATA_DIR, SCORING_MODEL, MAX_TOKENS, FILTER_MAX_TOKENS,
     NEWS_FETCH_SIZE, NEWSAPI_QUERIES,
@@ -43,22 +45,7 @@ _semaphore = threading.Semaphore(MAX_CONCURRENT_CLAUDE_CALLS)
 # Fetching
 # ---------------------------------------------------------------------------
 
-def fetch_hn_articles() -> list:
-    """Fetch the week's top HN stories (last LOOKBACK_HOURS) by points, via Algolia search.
-
-    Not the official topstories.json: that is the *current* front page, whose ranking
-    decays with age, so by Monday morning most of the week's biggest stories had
-    already fallen off it. No points floor — HN_MAX_HITS alone bounds the volume.
-    """
-    print(f"Fetching Hacker News stories (last {LOOKBACK_HOURS}h)...")
-
-    cutoff_timestamp = int((datetime.now(timezone.utc) - timedelta(hours=LOOKBACK_HOURS)).timestamp())
-    params = {
-        "tags":           "story",
-        "numericFilters": f"created_at_i>{cutoff_timestamp}",
-        "hitsPerPage":    HN_MAX_HITS,
-    }
-
+def _hn_search(params: dict) -> list:
     response = requests.get(HN_SEARCH_URL, params=params, timeout=30)
     response.raise_for_status()
 
@@ -75,6 +62,43 @@ def fetch_hn_articles() -> list:
             "language":    "en",
             "hn_score":    hit.get("points") or 0,
         })
+    return articles
+
+
+def fetch_hn_articles(queries: list | None = None, min_points: int = 0) -> list:
+    """Fetch the week's top HN stories (last LOOKBACK_HOURS) by points, via Algolia search.
+
+    Not the official topstories.json: that is the *current* front page, whose ranking
+    decays with age, so by Monday morning most of the week's biggest stories had
+    already fallen off it. No points floor — HN_MAX_HITS alone bounds the volume.
+
+    With `queries` (a topic that is not AI), each query is searched on its own, since Algolia has no OR
+    operator, keeping stories with at least `min_points`; the results are merged.
+    """
+    print(f"Fetching Hacker News stories (last {LOOKBACK_HOURS}h)...")
+
+    cutoff_timestamp = int((datetime.now(timezone.utc) - timedelta(hours=LOOKBACK_HOURS)).timestamp())
+    base = {
+        "tags":           "story",
+        "numericFilters": f"created_at_i>{cutoff_timestamp}",
+        "hitsPerPage":    HN_MAX_HITS,
+    }
+
+    if not queries:
+        articles = _hn_search(base)
+    else:
+        articles = []
+        for query in queries:
+            params = {**base, "query": query}
+            if min_points:
+                params["numericFilters"] += f",points>={min_points}"
+            try:
+                found = _hn_search(params)
+            except Exception as e:
+                print(f"  [hn error] {query!r}: {type(e).__name__}")
+                continue
+            print(f"  {query!r}: {len(found)} stories")
+            articles.extend(found)
 
     print(f"  Got {len(articles)} HN articles")
     return articles
@@ -115,9 +139,10 @@ def fetch_newsapi_query(query: str, from_time: str, api_key: str) -> list:
     return articles
 
 
-def fetch_newsapi_articles() -> list:
-    """Run all NEWSAPI_QUERIES and merge results."""
-    print(f"Fetching NewsAPI articles ({len(NEWSAPI_QUERIES)} queries)...")
+def fetch_newsapi_articles(queries: list | None = None) -> list:
+    """Run all NEWSAPI_QUERIES (or the given `queries`, for another topic) and merge results."""
+    queries = NEWSAPI_QUERIES if queries is None else queries
+    print(f"Fetching NewsAPI articles ({len(queries)} queries)...")
 
     api_key = os.environ.get("NEWS_API_KEY")
     if not api_key:
@@ -126,8 +151,8 @@ def fetch_newsapi_articles() -> list:
     from_time = (datetime.now(timezone.utc) - timedelta(hours=LOOKBACK_HOURS)).strftime("%Y-%m-%dT%H:%M:%S")
 
     all_articles = []
-    for i, query in enumerate(NEWSAPI_QUERIES, 1):
-        print(f"  Query {i}/{len(NEWSAPI_QUERIES)}: {query[:60]}...")
+    for i, query in enumerate(queries, 1):
+        print(f"  Query {i}/{len(queries)}: {query[:60]}...")
         try:
             results = fetch_newsapi_query(query, from_time, api_key)
             print(f"    got {len(results)} articles")
@@ -138,6 +163,30 @@ def fetch_newsapi_articles() -> list:
 
     print(f"  Got {len(all_articles)} NewsAPI articles (before dedup)")
     return all_articles
+
+
+def fetch_topic_articles(topic) -> list:
+    """Every source of a topic's profile, in profile order, merged into one list.
+
+    The AI newsletter's sources (the plain weekly HN top and the NEWSAPI_QUERIES list) are called exactly as
+    they always were, with no arguments.
+    """
+    articles = []
+    for source in topic.sources:
+        kind = source["type"]
+        if kind == "hn":
+            if source.get("queries"):
+                articles += fetch_hn_articles(source["queries"], source.get("min_points") or 0)
+            else:
+                articles += fetch_hn_articles()
+        elif kind == "newsapi":
+            if list(source["queries"]) == NEWSAPI_QUERIES:
+                articles += fetch_newsapi_articles()
+            else:
+                articles += fetch_newsapi_articles(list(source["queries"]))
+        elif kind == "rss":
+            articles += fetch_rss_articles(source["feeds"], LOOKBACK_HOURS)
+    return articles
 
 
 # ---------------------------------------------------------------------------
@@ -156,8 +205,8 @@ def is_social_media(url: str) -> bool:
     return host in _SOCIAL_MEDIA_HOSTS
 
 
-def is_paywalled(url: str) -> bool:
-    for domain in PAYWALLED_DOMAINS:
+def is_paywalled(url: str, extra_domains=()) -> bool:
+    for domain in (*PAYWALLED_DOMAINS, *extra_domains):
         if domain in url:
             return True
     return False
@@ -172,7 +221,49 @@ def is_non_latin(text: str) -> bool:
     return False
 
 
-def prefilter(articles: list) -> list:
+# Which articles survive an article cap first: Hacker News stories (they carry the community score), then
+# curated RSS feeds (a topic lists them by hand), then NewsAPI, whose long tail of sites is the first to go.
+_CAP_TIER = {"hackernews": 0, "rss": 1}
+
+
+def _spread(articles: list, limit: int) -> list:
+    """`limit` articles spread over the sites: round-robin over hosts, scored articles first within a host."""
+    by_host: dict = {}
+    for a in articles:
+        by_host.setdefault(urlparse(a.get("url", "")).hostname or "", []).append(a)
+    for group in by_host.values():
+        group.sort(key=lambda a: -(a.get("hn_score") or -1))   # stable: unscored keep their order
+    kept, queues = [], [list(g) for g in by_host.values()]
+    while len(kept) < limit and any(queues):
+        for q in queues:
+            if q and len(kept) < limit:
+                kept.append(q.pop(0))
+    return kept
+
+
+def cap_articles(articles: list, limit: int) -> list:
+    """At most `limit` articles. Whole tiers are kept in priority order (see _CAP_TIER); the tier that does not
+    fit is cut down evenly across its sites, so one chatty site cannot crowd out the rest. limit <= 0 = no cap."""
+    if limit <= 0 or len(articles) <= limit:
+        return articles
+    tiers: dict = {}
+    for a in articles:
+        tiers.setdefault(_CAP_TIER.get(a.get("source"), 2), []).append(a)
+    kept = []
+    for tier in sorted(tiers):
+        room = limit - len(kept)
+        if room <= 0:
+            break
+        group = tiers[tier]
+        kept += group if len(group) <= room else _spread(group, room)
+    print(f"  Capped at {limit} articles (from {len(articles)}); kept per tier "
+          f"{ {t: sum(1 for a in kept if _CAP_TIER.get(a.get('source'), 2) == t) for t in sorted(tiers)} }")
+    return kept
+
+
+def prefilter(articles: list, topic=None) -> list:
+    """Code-level cleaning. A topic adds its own paywalled domains and an article cap (the AI newsletter has none)."""
+    extra_paywalls = topic.paywalled_domains if topic else ()
     seen_urls = set()
     filtered  = []
     stats     = {"no_url": 0, "no_title": 0, "social_media": 0, "paywalled": 0, "non_latin": 0, "duplicate": 0}
@@ -190,7 +281,7 @@ def prefilter(articles: list) -> list:
         if is_social_media(url):
             stats["social_media"] += 1
             continue
-        if is_paywalled(url):
+        if is_paywalled(url, extra_paywalls):
             stats["paywalled"] += 1
             continue
         if is_non_latin(title):
@@ -205,6 +296,8 @@ def prefilter(articles: list) -> list:
 
     print(f"  Pre-filter removed: {stats}")
     print(f"  Remaining: {len(filtered)} articles")
+    if topic:
+        filtered = cap_articles(filtered, topic.max_articles)
     return filtered
 
 
@@ -287,7 +380,7 @@ def format_samples_for_lang_prompt(articles: list) -> str:
     return "\n".join(blocks)
 
 
-def language_filter_batch(batch: list, batch_index: int, client: anthropic.Anthropic) -> list:
+def language_filter_batch(batch: list, batch_index: int, client: anthropic.Anthropic, allowed=("en", "fr")) -> list:
     samples = format_samples_for_lang_prompt(batch)
     prompt  = LANG_FILTER_PROMPT.format(samples=samples)
 
@@ -324,8 +417,8 @@ def language_filter_batch(batch: list, batch_index: int, client: anthropic.Anthr
             continue
         labelled.add(idx)
         article = {k: v for k, v in batch[idx].items() if k != "_lang_excerpt"}
-        if language == "other":
-            print(f"  [lang] drop other: {urlparse(article['url']).hostname} | {article['title'][:70]}")
+        if language not in allowed:
+            print(f"  [lang] drop {language}: {urlparse(article['url']).hostname} | {article['title'][:70]}")
             continue
         results.append({**article, "language": language})
 
@@ -336,7 +429,7 @@ def language_filter_batch(batch: list, batch_index: int, client: anthropic.Anthr
     return results
 
 
-def language_filter(articles: list, client=None) -> list:
+def language_filter(articles: list, client=None, allowed=("en", "fr")) -> list:
     n_batches = (len(articles) + LANG_BATCH_SIZE - 1) // LANG_BATCH_SIZE
     print(f"\nLanguage filtering {len(articles)} articles in {n_batches} batch(es)...")
 
@@ -346,7 +439,7 @@ def language_filter(articles: list, client=None) -> list:
     all_results = []
     with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_CLAUDE_CALLS) as executor:
         future_to_batch = {
-            _submit(executor, language_filter_batch, batch, i + 1, client): i
+            _submit(executor, language_filter_batch, batch, i + 1, client, allowed): i
             for i, batch in enumerate(batches)
         }
         for future in as_completed(future_to_batch):
@@ -381,6 +474,7 @@ def filter_batch(batch: list, batch_index: int, prompt_template: str, client: an
                  tool: dict = FILTER_TOOL, with_confidence: bool = False) -> list:
     formatted = format_articles_for_prompt(batch)
     prompt    = prompt_template.format(articles=formatted)
+    valid_categories = tool["input_schema"]["properties"]["articles"]["items"]["properties"]["category"]["enum"]
 
     with _semaphore:
         response = claude_call_with_retry(
@@ -409,7 +503,7 @@ def filter_batch(batch: list, batch_index: int, prompt_template: str, client: an
     for item in selected:
         idx      = item.get("index")
         category = item.get("category")
-        if category not in CATEGORIES:
+        if category not in valid_categories:
             print(f"  [warning] batch {batch_index}: invalid category {category!r}, skipping")
         elif not isinstance(idx, int) or isinstance(idx, bool):
             print(f"  [warning] batch {batch_index}: non-integer index {idx!r}, skipping")
@@ -425,21 +519,27 @@ def filter_batch(batch: list, batch_index: int, prompt_template: str, client: an
     return results
 
 
-def filter_and_categorize(articles: list, client=None, with_confidence: bool = False) -> list:
+def filter_and_categorize(articles: list, client=None, with_confidence: bool = False, topic=None) -> list:
+    """Filter for relevance and categorize. `topic` (a non-AI topic) supplies the prompt and the category list;
+    without one this is the AI newsletter's original behaviour."""
     n_batches = (len(articles) + FILTER_BATCH_SIZE - 1) // FILTER_BATCH_SIZE
     print(f"\nFiltering and categorizing {len(articles)} articles in {n_batches} batches...")
 
-    with open("prompts/news_filter_prompt.txt", "r", encoding="utf-8") as f:
-        prompt_template = f.read()
+    custom = topic is not None and not topic.is_default
+    if custom:
+        prompt_template = topic.read_filled_prompt("news_filter")
+        tool = build_filter_tool(topic.category_names, with_confidence)
+    else:
+        with open("prompts/news_filter_prompt.txt", "r", encoding="utf-8") as f:
+            prompt_template = f.read()
+        tool = FILTER_TOOL_WITH_CONFIDENCE if with_confidence else FILTER_TOOL
 
-    tool = FILTER_TOOL
     if with_confidence:
         with open("prompts/news_filter_confidence_addendum.txt", "r", encoding="utf-8") as f:
             addendum = f.read()
         marker = "Articles:\n{articles}"
         assert marker in prompt_template
         prompt_template = prompt_template.replace(marker, addendum + marker)
-        tool = FILTER_TOOL_WITH_CONFIDENCE
 
     client = client or anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
 
@@ -541,14 +641,14 @@ def _write_review_audit(run_id: str, state: dict) -> None:
         print(f"[agent1b]  Failed to write review audit (ignored): {e}", flush=True)
 
 
-def pool_warning(by_category: dict) -> str | None:
+def pool_warning(by_category: dict, topic=None) -> str | None:
     """A short note when the selected pool is thin, else None. The run continues either way;
     the health check reports the note."""
     total = sum(len(v) for v in by_category.values())
     notes = []
     if total < config.MIN_NEWS_ARTICLES:
         notes.append(f"only {total} articles selected (expected at least {config.MIN_NEWS_ARTICLES})")
-    thin = [f"{c} ({len(by_category.get(c, []))})" for c in CATEGORIES
+    thin = [f"{c} ({len(by_category.get(c, []))})" for c in (topic.category_names if topic else CATEGORIES)
             if len(by_category.get(c, [])) < config.MIN_ARTICLES_PER_CATEGORY]
     if thin:
         notes.append(f"fewer than {config.MIN_ARTICLES_PER_CATEGORY} articles in: " + ", ".join(thin))
@@ -560,13 +660,17 @@ def run(run_id: str):
     start_time = datetime.now()
 
     try:
+        topic = topics.topic_for_run(run_id, USE_FIRESTORE)
+        print(f"[agent1b]  topic: {topic.id}", flush=True)
         graph_state = None
         if AGENT1B_MODE == "single_pass":
+            if not topic.is_default:
+                raise RuntimeError(f"AGENT1B_MODE=single_pass only supports the AI newsletter, not {topic.id!r}")
             all_articles, filtered = collect_and_categorize_single_pass()
         else:
             # Imported lazily: keeps langgraph off the import path of every other service.
             import agent1b_graph
-            graph_state  = agent1b_graph.run_graph(run_id)
+            graph_state  = agent1b_graph.run_graph(run_id, topic=topic)
             all_articles = graph_state["articles"]
             filtered     = graph_state["final"]
 
@@ -579,7 +683,7 @@ def run(run_id: str):
             cat = article["category"]
             by_category.setdefault(cat, []).append(article)
 
-        warning = pool_warning(by_category)
+        warning = pool_warning(by_category, topic)
         if warning:
             print(f"[agent1b]  WARNING: {warning}")
 

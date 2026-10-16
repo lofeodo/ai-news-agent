@@ -27,7 +27,7 @@ import sys
 import time
 from datetime import datetime, timezone, timedelta
 from typing import Annotated
-from urllib.parse import urlencode
+from urllib.parse import parse_qs, urlencode
 
 import anthropic
 import requests
@@ -647,15 +647,17 @@ def _already_subscribed_email_html(token: str, name: str = NEWSLETTER_NAME) -> s
 # ---------------------------------------------------------------------------
 
 def _full_page(title: str, body: str, status: int = 200,
-               action: tuple[str, str] | list[tuple[str, str]] | None = None) -> HTMLResponse:
+               action: tuple[str, str] | list[tuple[str, str]] | None = None,
+               extra: str = "") -> HTMLResponse:
     """Full-fidelity page matching the website aesthetic — canvas, logo, card, fonts.
 
     `action` is an optional (post_url, button_label), or a list of them: the page then carries a
     form per action whose button POSTs there (the first is the main button, the others are shown
-    smaller). Opening the page itself changes nothing."""
+    smaller). `extra` is ready-made HTML placed before those forms (already escaped by the caller).
+    Opening the page itself changes nothing."""
     base = FRONTEND_BASE_URL or ""
     actions = [action] if isinstance(action, tuple) else list(action or [])
-    form = ""
+    form = extra
     for n, (url, label) in enumerate(actions):
         style = ("btn-primary-action", "margin-top:18px;width:100%") if n == 0 else (
             "btn-secondary-link", "width:100%;background:none;border:0;cursor:pointer;font-family:inherit")
@@ -1307,28 +1309,57 @@ def unsubscribe_page(
     token: Annotated[str, Query(max_length=128)] = "",
     n: Annotated[str, Query(max_length=32)] = "",
 ):
-    """Opening the link only shows a button; the unsubscribe happens on the POST below. `n` names the newsletter
-    the link came from; a link without it (every AI email, every email sent before topics) means the AI one."""
+    """Opening the link changes nothing; the unsubscribe happens on the POST below. `n` names the newsletter the
+    link came from; a link without it (every AI email, every email sent before topics) means the AI one.
+
+    Someone who gets one newsletter sees one button, as before. Someone who gets several sees a checklist of all
+    of them with the link's own newsletter ticked, plus "unsubscribe from everything" and a way to manage them."""
     newsletter = _link_newsletter(n)
     if not token or not re.match(r'^[A-Za-z0-9_-]+$', token) or newsletter is None:
         return _INVALID_LINK_PAGE
     doc = _find_by_token(_db(), token)
     if doc is None:
         return _INVALID_LINK_PAGE
-    others = [i for i in subscriptions_model.subscribed_ids(doc.to_dict()) if i != newsletter]
+    return _unsubscribe_chooser(token, newsletter, subscriptions_model.subscribed_ids(doc.to_dict()))
+
+
+def _unsubscribe_chooser(token: str, newsletter: str, current: list[str], note: str = "") -> HTMLResponse:
     name = _newsletter_name(newsletter)   # button labels are escaped by _full_page; page text is escaped here
     one = (f"{SERVICE_BASE_URL}/unsubscribe?{_link_query(token, newsletter)}", "Unsubscribe")
-    if not others:
+    if not [i for i in current if i != newsletter]:
         return _full_page("Unsubscribe",
                           f"Press the button to stop receiving {html_lib.escape(name)}. You can re-subscribe any time.",
                           action=one)
-    everything = (f"{SERVICE_BASE_URL}/unsubscribe?{urlencode({'token': token, 'all': '1'})}",
-                  "Unsubscribe from everything")
+    rows = []
+    for i in current:
+        t = topics.get_topic(i)
+        checked = " checked" if i == newsletter else ""
+        rows.append(
+            f'<label class="check-row" style="--accent:{t.accent_color};text-transform:none;letter-spacing:normal">'
+            f'<input type="checkbox" name="pick" value="{t.id}"{checked}>'
+            f'<span><span style="color:{t.accent_color}">{html_lib.escape(t.name)}</span>'
+            f'<span class="check-desc">{html_lib.escape(t.tagline)}</span></span></label>')
+    post = html_lib.escape(f"{SERVICE_BASE_URL}/unsubscribe?{urlencode({'token': token})}", quote=True)
+    manage = html_lib.escape(f"{FRONTEND_BASE_URL}/preferences.html?{_link_query(token, newsletter)}", quote=True)
+    error = f'<p class="msg visible error" style="margin:0 0 14px">{html_lib.escape(note)}</p>' if note else ""
+    chooser = (
+        f'<form method="post" action="{post}" style="margin-top:6px">{error}'
+        f'<input type="hidden" name="form" value="1">'
+        f'<div class="checkboxes" style="margin-bottom:6px">{"".join(rows)}</div>'
+        f'<button type="submit" class="btn-primary-action" style="margin-top:12px;width:100%">'
+        f'Unsubscribe from selected</button></form>'
+    )
+    everything = html_lib.escape(f"{SERVICE_BASE_URL}/unsubscribe?{urlencode({'token': token, 'all': '1'})}",
+                                 quote=True)
+    footer = (f'<form method="post" action="{everything}"><button type="submit" class="btn-secondary-link" '
+              f'style="width:100%;background:none;border:0;cursor:pointer;font-family:inherit">'
+              f'Unsubscribe from everything</button></form>'
+              f'<p class="note" style="margin-top:6px;text-align:center">'
+              f'<a href="{manage}">Manage all your newsletters instead</a></p>')
     return _full_page("Unsubscribe",
-                      f"Press the button to stop receiving {html_lib.escape(name)}. "
-                      f"You also get {html_lib.escape(_newsletter_names(others))}, which stay as they are unless "
-                      "you unsubscribe from everything. You can re-subscribe any time.",
-                      action=[(one[0], f"Unsubscribe from {name}"), everything])
+                      f"You get {len(current)} newsletters from us. Tick the ones to stop, then press the button. "
+                      "You can re-subscribe any time.",
+                      extra=chooser + footer)
 
 
 def _link_newsletter(n: str) -> str | None:
@@ -1340,12 +1371,23 @@ def _link_newsletter(n: str) -> str | None:
 
 @router.post("/unsubscribe")
 @limiter.limit("10/minute")
-def unsubscribe(
+async def unsubscribe(
     request: Request,
     token: Annotated[str, Query(max_length=128)] = "",
     n: Annotated[str, Query(max_length=32)] = "",
     everything: Annotated[str, Query(alias="all", max_length=1)] = "",
 ):
+    """The button press. Either the checklist form (body `form=1&pick=<id>...`), or a query-only POST: no `n`
+    means the AI newsletter (every old email), `n=<id>` one newsletter, `all=1` everything."""
+    picks = None
+    if request.headers.get("content-type", "").startswith("application/x-www-form-urlencoded"):
+        form = parse_qs((await request.body())[:4096].decode("utf-8", "replace"))
+        if form.get("form") == ["1"]:
+            picks = [p.strip().lower() for p in form.get("pick", [])][:10]
+    return await run_in_threadpool(_unsubscribe, token, n, everything, picks)
+
+
+def _unsubscribe(token: str, n: str, everything: str, picks: list[str] | None):
     newsletter = _link_newsletter(n)
     if not token or not re.match(r'^[A-Za-z0-9_-]+$', token) or newsletter is None:
         return _INVALID_LINK_PAGE
@@ -1356,6 +1398,23 @@ def unsubscribe(
         return _INVALID_LINK_PAGE
 
     data = doc.to_dict()
+    current = subscriptions_model.subscribed_ids(data)
+    if picks is not None and everything != "1":
+        chosen = [i for i in current if i in picks]
+        if not chosen:
+            return _unsubscribe_chooser(token, newsletter, current, note="Tick at least one newsletter to stop.")
+        merged = dict(data)
+        for i in chosen:
+            merged.update(subscriptions_model.remove(merged, i))
+        doc.reference.update({k: merged[k] for k in ("newsletters", "newsletter_meta", "active", "subscribed_any")})
+        print(f"[subscriptions]  unsubscribed subscriber from {len(chosen)} newsletter(s)", flush=True)
+        kept = [i for i in current if i not in chosen]
+        if kept:
+            return _full_page("You've been unsubscribed",
+                              f"You won't receive {html_lib.escape(_newsletter_names(chosen))} anymore. "
+                              f"You still get {html_lib.escape(_newsletter_names(kept))}.")
+        return _full_page("You've been unsubscribed", "Sorry to see you go. You can re-subscribe any time.")
+
     if everything == "1":
         from google.cloud import firestore as _fs
         fields = subscriptions_model.remove_all(data)

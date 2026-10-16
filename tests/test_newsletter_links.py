@@ -41,12 +41,40 @@ def test_unsubscribe_from_everything(monkeypatch):
     assert sm.subscribed_ids(doc) == [] and doc["subscribed_any"] is False and "pending_newsletters" not in doc
 
 
-def test_the_page_names_the_newsletter_and_offers_everything(monkeypatch):
-    api = make_api(monkeypatch, {"a@example.com": _doc()})
+def test_the_page_lists_every_newsletter_with_the_links_own_ticked(monkeypatch):
+    api = make_api(monkeypatch, {"a@example.com": _doc(newsletters=("ai", "finance", "gaming"))})
     r = api.client.get("/unsubscribe", params={"token": "tok", "n": "finance"})
-    assert "stop receiving Markets &amp; Money Weekly" in r.text and "Latent SpaceMail" in r.text
-    assert "Unsubscribe from everything" in r.text and "all=1" in r.text and "n=finance" in r.text
-    assert sm.subscribed_ids(api.subs["a@example.com"]) == ["ai", "finance"]   # opening changes nothing
+    assert 'name="pick" value="finance" checked' in r.text
+    assert 'name="pick" value="ai">' in r.text and 'name="pick" value="gaming">' in r.text
+    assert "You get 3 newsletters" in r.text and "Unsubscribe from selected" in r.text
+    assert "Unsubscribe from everything" in r.text and "all=1" in r.text
+    assert "https://site.test/preferences.html?token=tok&amp;n=finance" in r.text   # manage instead
+    assert sm.subscribed_ids(api.subs["a@example.com"]) == ["ai", "finance", "gaming"]   # opening changes nothing
+
+
+def test_the_checklist_unsubscribes_from_the_ticked_ones(monkeypatch):
+    api = make_api(monkeypatch, {"a@example.com": _doc(newsletters=("ai", "finance", "gaming"))})
+    r = api.client.post("/unsubscribe?token=tok&n=finance", content="form=1&pick=finance&pick=gaming&pick=nope",
+                        headers={"Content-Type": "application/x-www-form-urlencoded"})
+    assert "You won't receive Markets &amp; Money Weekly and Video Games Weekly anymore" in r.text
+    assert "You still get Latent SpaceMail" in r.text
+    doc = api.subs["a@example.com"]
+    assert sm.subscribed_ids(doc) == ["ai"] and doc["active"] is True
+
+
+def test_the_checklist_with_nothing_ticked_changes_nothing(monkeypatch):
+    api = make_api(monkeypatch, {"a@example.com": _doc()})
+    r = api.client.post("/unsubscribe?token=tok", content="form=1",
+                        headers={"Content-Type": "application/x-www-form-urlencoded"})
+    assert "Tick at least one newsletter" in r.text and 'name="pick"' in r.text
+    assert sm.subscribed_ids(api.subs["a@example.com"]) == ["ai", "finance"]
+
+
+def test_the_checklist_needs_a_valid_token(monkeypatch):
+    api = make_api(monkeypatch, {"a@example.com": _doc()})
+    r = api.client.post("/unsubscribe?token=wrong", content="form=1&pick=ai",
+                        headers={"Content-Type": "application/x-www-form-urlencoded"})
+    assert r.status_code == 404 and sm.subscribed_ids(api.subs["a@example.com"]) == ["ai", "finance"]
 
 
 def test_an_ai_only_reader_sees_the_page_as_before(monkeypatch):

@@ -18,6 +18,7 @@ from prompt_guard import GUARD_PAPER_SUMMARY
 import stage_counter
 import summary_sources
 import topics
+import llm
 import tracing
 from config import (
     DATA_DIR, SCORING_MODEL, PAPER_SUMMARY_MAX_TOKENS, WORD_CUTOFF,
@@ -91,7 +92,7 @@ def summarize_paper(paper: dict, text: str, prompt_template: str, client: anthro
     with _semaphore:
         response = claude_call_with_retry(
             client,
-            model=SCORING_MODEL,
+            model=llm.model_for("paper_summary"),
             max_tokens=PAPER_SUMMARY_MAX_TOKENS,
             system=GUARD_PAPER_SUMMARY,
             messages=[{"role": "user", "content": prompt}]
@@ -104,7 +105,7 @@ def summarize_paper(paper: dict, text: str, prompt_template: str, client: anthro
         with _semaphore:
             response = claude_call_with_retry(
                 client,
-                model=SCORING_MODEL,
+                model=llm.model_for("paper_summary"),
                 max_tokens=PAPER_SUMMARY_MAX_TOKENS,
                 system=GUARD_PAPER_SUMMARY,
                 messages=[
@@ -280,7 +281,7 @@ def run(run_id: str):
             candidates = scored.get("paper_candidates") or []
         print(f"Summarizing {len(papers)} papers...\n")
 
-        client = tracing.make_client("agent2a", run_id)
+        client = llm.make_client("agent2a", run_id)
 
         if no_spotlight:
             results, sources, replaced = [], [], False

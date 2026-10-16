@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_XML_TAGS, neutralize_tags
+import llm
 import tracing
 import topics
 from agent3_dedup_graph import dedup_section
@@ -229,7 +230,7 @@ def select_with_runners_up(
 
     response = claude_call_with_retry(
         client,
-        model=SCORING_MODEL,
+        model=llm.model_for("select"),
         max_tokens=SELECTION_MAX_TOKENS,
         system=_PROMPT_INJECTION_GUARD,
         messages=[{"role": "user", "content": prompt}],
@@ -317,7 +318,7 @@ def write_intro(
 
     response = claude_call_with_retry(
         client,
-        model=SCORING_MODEL,
+        model=llm.model_for("select"),
         max_tokens=INTRO_MAX_TOKENS,
         system=_PROMPT_INJECTION_GUARD,
         messages=[{"role": "user", "content": prompt}],
@@ -531,7 +532,7 @@ def run(run_id: str, force: bool = False):
         intro_prompt     = topic.read_filled_prompt("intro")
         if topic.spotlight == "papers":
             papers = require_summarized_papers(papers)
-        client = tracing.make_client("agent3", run_id)
+        client = llm.make_client("agent3", run_id)
 
         print("\n=== Selecting articles per category ===")
         # Two selection passes per category:

@@ -272,7 +272,7 @@ Structured outputs use tool use instead of parsing free text:
 - `scoring_tool.py` – `score_paper` tool with 7-dimension schema
 - `filter_tool.py` – `filter_articles` and `filter_by_language` tools. Graph mode (agent1b) uses `FILTER_TOOL_WITH_CONFIDENCE` (same tool name plus a required 1–5 `confidence` per article; the original `FILTER_TOOL` is untouched for `single_pass`), and the review loop uses `fetch_article_text` (executed by the `tool_exec` node) and `submit_category` (the model's structured final answer, handled in `llm_call`).
 
-All Claude calls use `claude-haiku-4-5-20251001` (configured in `config.py`).
+All Claude calls use `claude-haiku-4-5-20251001` (configured in `config.py`). Every stage gets its model and client from `agents/llm.py` (`model_for("<stage>")`, `make_client`), so a stage can be pointed at DeepSeek with `MODEL_<STAGE>=deepseek-flash` (needs `DEEPSEEK_API_KEY`; unset = Haiku; a DeepSeek error falls back to Haiku). Benchmarked 2026-10-16 (`docs/cost-reduction-roadmap.md` Step 6): fine for the language filter and categorize, not for paper scoring or news summaries. Not switched on in production until deployed with those variables.
 
 ## Key Environment Variables
 
@@ -302,6 +302,7 @@ All Claude calls use `claude-haiku-4-5-20251001` (configured in `config.py`).
 | `REVIEW_CONFIDENCE_THRESHOLD` / `REVIEW_MAX_ARTICLES` / `REVIEW_MAX_ITERATIONS` / `REVIEW_FETCH_TIMEOUT` | agent1b review loop (defaults `4` / `0` / `3` / `10`; `REVIEW_MAX_ARTICLES=0` = review off, the default) |
 | `LANGSMITH_TRACING` / `LANGSMITH_API_KEY` / `LANGSMITH_PROJECT` | agent1b opt-in tracing; both the flag and the key are required, otherwise a no-op. Production project: `latent-spacemail-prod` |
 | `AGENT1A_MODE` / `AGENT1A_FULLTEXT_TOP_K` | agent1a: `full` (default) or `abstract_first` (abstract pass, then full text for the top K, default 8; opt-in cost cut, no-redeploy switch) |
+| `MODEL_<STAGE>` / `DEEPSEEK_API_KEY` | `agents/llm.py`: stages `LANG_FILTER`, `CATEGORIZE`, `PAPER_SCORE`, `NEWS_SUMMARY`, `PAPER_SUMMARY`, `SELECT`; unset = Haiku; `deepseek-flash` routes that stage to DeepSeek (fallback to Haiku per call on error). The key is a secret like the others. Not set in production yet |
 | `AGENT2B_MODE` | agent2b: `all` (default, summarize everything) or `shortlist` (summarize only a first-pass selection; opt-in cost cut, no-redeploy switch) |
 | `AGENT3_DEDUP_MODE` / `DEDUP_MAX_ITERATIONS` | agent3 duplicate removal: `graph` (default) or `off` (rollback); max fallback checks per section and pass (default 6) |
 | `CLICK_TRACKING` | agent4: `true` turns on SendGrid click tracking and tags each email with the run id (default off; set to `true` on agent4 and agent4-test on 2026-10-06) |

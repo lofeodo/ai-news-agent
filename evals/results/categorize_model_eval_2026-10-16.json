@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "name": "categorize_model_eval_2026-10-16",
+  "created_at": "2026-10-16T15:52:54.668272+00:00",
+  "git_sha": "5ebf567",
+  "model": "claude-haiku-4-5-20251001 vs deepseek-flash",
+  "cost_usd": 0.0974,
+  "notes": "Frozen 500 articles (300-char snippets, same as the review eval); owner's 100 gold labels. DeepSeek priced off-peak. Gold labels may be anchored by the first-pass category shown to the labeler. Accuracy counts an article the model did not return at all as wrong (coverage is reported separately). Use ds_a ($0.0096) for DeepSeek's cost: ds_b repeated the same prompts and was served from DeepSeek's cache (879 input tokens billed).",
+  "metrics": {
+    "accuracy_haiku": {
+      "value": 0.53,
+      "n": 100,
+      "ci_low": 0.4328885697009936,
+      "ci_high": 0.6248918204065873
+    },
+    "coverage_haiku": {
+      "value": 0.92,
+      "n": 100,
+      "ci_low": 0.8500189229905127,
+      "ci_high": 0.9589065385156194
+    },
+    "accuracy_ds_a": {
+      "value": 0.63,
+      "n": 100,
+      "ci_low": 0.5322052958094291,
+      "ci_high": 0.7181763946567546
+    },
+    "coverage_ds_a": {
+      "value": 0.96,
+      "n": 100,
+      "ci_low": 0.9016292856411208,
+      "ci_high": 0.9843366960084523
+    },
+    "accuracy_ds_b": {
+      "value": 0.56,
+      "n": 100,
+      "ci_low": 0.4622810465167698,
+      "ci_high": 0.6532797336983921
+    },
+    "coverage_ds_b": {
+      "value": 0.92,
+      "n": 100,
+      "ci_low": 0.8500189229905127,
+      "ci_high": 0.9589065385156194
+    },
+    "agreement_ds_a_vs_haiku": {
+      "value": 0.8444444444444444,
+      "n": 90,
+      "ci_low": 0.7556715472270163,
+      "ci_high": 0.9050172440508919
+    },
+    "agreement_ds_b_vs_ds_a": {
+      "value": 0.8876404494382022,
+      "n": 89,
+      "ci_low": 0.8053898870598024,
+      "ci_high": 0.93781256663344
+    },
+    "cost_usd_haiku": {
+      "value": 0.0834,
+      "n": 500,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "tokens_haiku": {
+      "value": [
+        41525,
+        8370
+      ],
+      "n": 500,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "cost_usd_ds_a": {
+      "value": 0.0096,
+      "n": 500,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "tokens_ds_a": {
+      "value": [
+        34667,
+        7265
+      ],
+      "n": 500,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "cost_usd_ds_b": {
+      "value": 0.0044,
+      "n": 500,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "tokens_ds_b": {
+      "value": [
+        879,
+        7162
+      ],
+      "n": 500,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "fallbacks_to_claude": {
+      "value": 0,
+      "n": 500,
+      "ci_low": null,
+      "ci_high": null
+    }
+  }
+}

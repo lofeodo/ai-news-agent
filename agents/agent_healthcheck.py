@@ -27,6 +27,7 @@ import config
 import pricing
 import run_kind
 import topics
+import widget_report
 from config import GCP_PROJECT_ID, FIRESTORE_COLLECTION, USE_FIRESTORE, ALERT_EMAIL, parse_started_at
 
 import agent4_send  # reuse send_email() / _get_sendgrid_api_key() only
@@ -434,6 +435,7 @@ def _run(run_id: str, mode: str = "send") -> None:
     other_text, others_healthy = _other_newsletters_section(db, mode)
     if other_text:
         message += "\n\n" + other_text
+    message += widget_report.section(db, FIRESTORE_COLLECTION)
     _notify(message, healthy=healthy and others_healthy, mode=mode)
 
 

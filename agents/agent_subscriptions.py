@@ -40,12 +40,14 @@ from slowapi.util import get_remote_address
 
 logger = logging.getLogger(__name__)
 
-from auth_middleware import get_current_user, get_verified_user
+from auth_middleware import get_current_user, get_optional_user, get_verified_user
 import click_counts
 import ids
+import launch
 import mail_throttle
 import run_kind
 import sendgrid_webhook
+import subscriptions_model
 import topics
 from prompt_guard import GUARD_TOPIC_REFINE, neutralize_tags
 
@@ -926,6 +928,46 @@ def archive_issue(request: Request, run_id: str):
     if not run_kind.is_archived_release(data):
         return HTMLResponse("<p>Issue not found.</p>", status_code=404, headers=headers)
     return HTMLResponse(content=_render_preview(data), status_code=200, headers=headers)
+
+
+_LATEST_ISSUES_CACHE: dict = {"at": 0.0, "value": None}
+
+
+def _latest_issue_ids(db) -> dict[str, str]:
+    """{topic: newest archived issue id}, cached like /spots so page views don't each scan pipeline_runs."""
+    now = time.monotonic()
+    if _LATEST_ISSUES_CACHE["value"] is None or now - _LATEST_ISSUES_CACHE["at"] > SPOTS_CACHE_SECONDS:
+        _LATEST_ISSUES_CACHE["value"] = run_kind.latest_archived_by_topic(db, FIRESTORE_COLLECTION)
+        _LATEST_ISSUES_CACHE["at"] = now
+    return _LATEST_ISSUES_CACHE["value"]
+
+
+def _newsletter_card(topic_id: str, latest: dict) -> dict:
+    t = topics.get_topic(topic_id)
+    return {
+        "id":           t.id,
+        "name":         t.name,
+        "tagline":      t.tagline,
+        "accent_color": t.accent_color,
+        "spotlight":    t.spotlight,
+        "sections":     [{"name": c.name, "icon": c.icon} for c in t.categories],
+        "latest_issue": latest.get(t.id),
+        "hidden":       not launch.is_public(t.id),
+    }
+
+
+@router.get("/newsletters")
+@limiter.limit("30/minute")
+def list_newsletters(request: Request, user: dict | None = Depends(get_optional_user)):
+    """Public: the ready-made newsletters this caller may see (hidden topics too for an admin, flagged `hidden`),
+    AI first, plus the consent wording every signup form shows next to the newsletter names."""
+    admin = bool(user) and _is_admin(user)
+    latest = _latest_issue_ids(_db())
+    return {
+        "newsletters":          [_newsletter_card(i, latest) for i in launch.visible_topic_ids(admin)],
+        "consent_text":         subscriptions_model.CONSENT_TEXT,
+        "consent_text_version": subscriptions_model.CONSENT_CURRENT,
+    }
 
 
 @router.get("/auth/admin/topics")

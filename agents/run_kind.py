@@ -73,6 +73,27 @@ def list_releases(db, collection: str, limit: int = 200) -> list[dict]:
     return out
 
 
+def latest_archived_by_topic(db, collection: str, limit: int = 200) -> dict[str, str]:
+    """{topic id: run id of its newest explicitly flagged, composed release run}, from one scan of the small fields.
+    Topics with no such run in the window are absent."""
+    from google.cloud import firestore
+
+    scan = (
+        db.collection(collection)
+        .where("newsletter_composed", "==", True)
+        .order_by("started_at", direction=firestore.Query.DESCENDING)
+        .select(SCAN_FIELDS + ["newsletter_composed", "started_at"])
+        .limit(limit)
+        .stream()
+    )
+    out: dict[str, str] = {}
+    for d in scan:
+        f = d.to_dict() or {}
+        if f.get("run_kind") == RELEASE and f.get("newsletter_composed"):
+            out.setdefault(topics.topic_id_of(f), d.id)
+    return out
+
+
 def latest_run(db, collection: str, release_only: bool = True, sent_only: bool = False,
                topic: str = topics.DEFAULT_TOPIC):
     """The newest composed pipeline run of one topic (the AI newsletter by default) as a Firestore snapshot, or None.

@@ -27,6 +27,17 @@ def get_current_user(authorization: str | None = Header(default=None)) -> dict:
         raise HTTPException(status_code=401, detail="invalid_token")
 
 
+def get_optional_user(authorization: str | None = Header(default=None)) -> dict | None:
+    """For public routes that show admins a little more: the decoded token, or None when there is no valid one.
+    Never raises, so a stale token on a public page reads as a signed-out visitor rather than an error."""
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
+    try:
+        return get_current_user(authorization)
+    except HTTPException:
+        return None
+
+
 async def get_verified_user(user: dict = Depends(get_current_user)) -> dict:
     """Like get_current_user, but the sign-in provider must have verified the address."""
     email = user.get("email")

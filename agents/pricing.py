@@ -24,6 +24,16 @@ CACHE_READ_MULT = 0.10
 # newer tokenizer (~30% more tokens per text than Haiku 4.5), so estimate from its own reported usage.
 _PRICES = {config.SCORING_MODEL: (1.0, 5.0), config.JUDGE_MODEL: (2.0, 10.0)}
 
+# DeepSeek, verified 2026-10-16 against https://api-docs.deepseek.com/quick_start/pricing (cache-miss input).
+# Peak is 01:00-04:00 and 06:00-10:00 UTC Monday-Friday and costs twice the off-peak rate; the Sunday-noon
+# pipeline run is off-peak, so the plain model id carries the off-peak price and "@peak" the doubled one.
+_PRICES.update({
+    "deepseek-flash": (0.15, 0.60),
+    "deepseek-flash@peak": (0.30, 1.20),
+    "deepseek-v4-pro": (0.66, 1.98),
+    "deepseek-v4-pro@peak": (1.32, 3.96),
+})
+
 
 def register_price(model, input_per_mtok, output_per_mtok):
     _PRICES[model] = (input_per_mtok, output_per_mtok)

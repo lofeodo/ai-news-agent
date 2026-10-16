@@ -151,7 +151,10 @@ colour `#rrggbb`; name 1 to 60 characters with no angle brackets; unknown block 
 the newsletter (personal widgets need premium; a widget with `commercial_use: False` is rejected in every custom
 newsletter, because custom newsletters are the paid product). A widget block's `topic` says whose edition supplies the data; it is
 omitted for personal widgets. Section blocks from different topics may share a name; the renderer
-shows the topic name as a small label when a newsletter mixes topics.
+shows the topic name as a small label when a newsletter mixes topics. A section block may also carry
+`"if_empty": "note"` (the default: an empty section shows "Nothing notable this week.") or `"hide"` (an empty
+section is left out); added by roadmap B. A custom section's `title` follows the name rule and its `query` is 1 to
+200 characters with no angle brackets.
 
 A ready-made newsletter's definition is derived from its profile (`newsletter_def.from_topic(topic)`): intro, the
 topic's widgets at their placement, every category in profile order with its cap, and share (AI only, as today).

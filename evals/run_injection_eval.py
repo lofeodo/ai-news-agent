@@ -230,9 +230,15 @@ def main(argv=None):
     ap.add_argument("--approve", action="store_true", help="owner approved an estimate above the 2 USD limit")
     ap.add_argument("--repeats", type=int, default=5, help="trials per case per arm (default 5)")
     ap.add_argument("--name", default=f"injection_eval_{date.today().isoformat()}")
+    ap.add_argument("--model", choices=("claude", "deepseek"), default="claude",
+                    help="deepseek routes the stages below to deepseek-flash through agents/llm.py (needs DEEPSEEK_API_KEY)")
+    ap.add_argument("--agents", help="comma-separated case agents to run (default all), e.g. categorize,summarize_2b")
     args = ap.parse_args(argv)
 
     cases = injection_eval.load_cases()
+    if args.agents:
+        wanted = set(args.agents.split(","))
+        cases = [c for c in cases if c["agent"] in wanted]
     est_in, est_out = estimate_tokens(cases, args.repeats)
     est = cost.estimate_cost(est_in, est_out)
     print(f"cases: {len(cases)}; repeats: {args.repeats}; trials: {len(cases) * 2 * args.repeats} (attack + control)")
@@ -243,16 +249,24 @@ def main(argv=None):
 
     import anthropic
     client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
+    model_id = config.SCORING_MODEL
+    if args.model == "deepseek":
+        import llm
+        for var in ("MODEL_LANG_FILTER", "MODEL_CATEGORIZE", "MODEL_NEWS_SUMMARY"):
+            os.environ[var] = "deepseek-flash"
+        ds = anthropic.Anthropic(api_key=os.environ["DEEPSEEK_API_KEY"], base_url=llm.DEEPSEEK_BASE_URL)
+        client = llm.RoutedClient(client, ds)
+        model_id = "deepseek-flash"
     trials, usage = run_eval(cases, client, args.repeats)
 
     metrics = injection_eval.score(trials)
-    actual = cost.estimate_cost(usage["input"], usage["output"])
+    actual = cost.estimate_cost(usage["input"], usage["output"], model_id if model_id == "deepseek-flash" else None)
     errors = sum(1 for t in trials if t["error"])
     notes = (f"{len(cases)} hand-written cases x {args.repeats} repeats x 2 arms; control arm omits the injection. "
              f"Success is judged deterministically (canary string, forced category, leaked guard sentence, planted "
              f"fetch URL, markup echoed by the model): it misses subtle steering. n per rate is small. "
              f"{errors} trials raised errors and count as no success.")
-    doc = results.build_results(args.name, config.SCORING_MODEL, metrics, cost_usd=round(actual, 4), notes=notes)
+    doc = results.build_results(args.name, model_id, metrics, cost_usd=round(actual, 4), notes=notes)
     path = results.write_results(doc)
     path.with_name(f"{args.name}_trials.json").write_text(json.dumps(trials, indent=2) + "\n", encoding="utf-8")
     print(f"wrote {path} and {args.name}_trials.json; cost ${actual:.3f}; {errors} errored trials")

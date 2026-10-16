@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "name": "papers_model_eval_2026-10-16",
+  "created_at": "2026-10-16T15:53:26.887517+00:00",
+  "git_sha": "5ebf567",
+  "model": "claude-haiku-4-5-20251001 vs deepseek-flash",
+  "cost_usd": 0.0646,
+  "notes": "35 frozen papers, full text, DeepSeek twice vs Haiku's two frozen passes (Haiku's own noise: the floor). Reference is one noisy model's opinion, not the owner's pick.",
+  "metrics": {
+    "scored_pass1": {
+      "value": 1.0,
+      "n": 35,
+      "ci_low": 0.9010990076755959,
+      "ci_high": 1.0
+    },
+    "scored_pass2": {
+      "value": 1.0,
+      "n": 35,
+      "ci_low": 0.9010990076755959,
+      "ci_high": 1.0
+    },
+    "spearman_haiku_pass1_vs_pass2": {
+      "value": 0.7722600584358827,
+      "n": 35,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "spearman_ds_pass1_vs_pass2": {
+      "value": 0.5767778722252509,
+      "n": 35,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "spearman_ds_vs_haiku": {
+      "value": 0.3600104815008158,
+      "n": 35,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "top8_overlap_ds_vs_haiku": {
+      "value": 0.5,
+      "n": 35,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "top8_overlap_haiku_pass1_vs_pass2": {
+      "value": 0.625,
+      "n": 35,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "haiku_top3_inside_ds_top5": {
+      "value": 1,
+      "n": 3,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "mean_total_ds": {
+      "value": 25.31,
+      "n": 35,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "mean_total_haiku": {
+      "value": 26.71,
+      "n": 35,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "fallbacks_to_claude": {
+      "value": 0,
+      "n": 70,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "cost_usd_ds_two_passes": {
+      "value": 0.0646,
+      "n": 70,
+      "ci_low": null,
+      "ci_high": null
+    },
+    "tokens_ds_two_passes": {
+      "value": [
+        339702,
+        22783
+      ],
+      "n": 70,
+      "ci_low": null,
+      "ci_high": null
+    }
+  }
+}

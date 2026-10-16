@@ -1,0 +1,97 @@
+{
+ "definition": {
+  "version": 1,
+  "name": "My Monday brief",
+  "accent_color": "#5b8def",
+  "blocks": [
+   {"type": "intro"},
+   {"type": "widget", "widget": "paper_spotlight", "topic": "ai", "config": {}},
+   {"type": "section", "topic": "ai", "section": "Model & Product Releases", "max_items": 3},
+   {"type": "section", "topic": "finance", "section": "Crypto & Fintech", "max_items": 3},
+   {"type": "section", "topic": "gaming", "section": "Releases & Reviews", "max_items": 4},
+   {"type": "custom_section", "title": "SpaceX", "query": "SpaceX product launches & mission updates", "max_items": 3},
+   {"type": "share"}
+  ]
+ },
+ "editions": {
+  "ai": {
+   "topic": "ai", "run_id": "fixture-ai", "run_kind": "release", "week_of": "2026-10-19",
+   "created_at": "2026-10-18T16:40:12Z", "intro": "Editor's note for the AI issue.",
+   "sections": {
+    "Model & Product Releases": {
+     "icon": "🚀",
+     "picks": [
+      {"title": "A lab ships a smaller model that runs on a laptop", "url": "https://example.com/ai/laptop-model", "summary": "The release trades a little accuracy for a model that fits in 8 GB of memory, which puts offline assistants within reach of ordinary machines.", "source": "hackernews", "language": "en", "published_at": null, "points": 812, "points_source": "hn"},
+      {"title": "Un nouveau modèle ouvert pour le français", "url": "https://example.com/ai/modele-francais", "summary": "Un consortium publie un modèle entraîné surtout sur des textes en français, sous licence ouverte.", "source": "newsapi", "language": "fr", "published_at": null, "points": null, "points_source": null},
+      {"title": "Coding assistant adds a review mode", "url": "https://example.com/ai/review-mode", "summary": "The assistant now reads a whole pull request and leaves comments, instead of only completing lines.", "source": "hackernews", "language": "en", "published_at": null, "points": 340, "points_source": "hn"}
+     ],
+     "picks_en": [
+      {"title": "A lab ships a smaller model that runs on a laptop", "url": "https://example.com/ai/laptop-model", "summary": "The release trades a little accuracy for a model that fits in 8 GB of memory, which puts offline assistants within reach of ordinary machines.", "source": "hackernews", "language": "en", "published_at": null, "points": 812, "points_source": "hn"},
+      {"title": "Coding assistant adds a review mode", "url": "https://example.com/ai/review-mode", "summary": "The assistant now reads a whole pull request and leaves comments, instead of only completing lines.", "source": "hackernews", "language": "en", "published_at": null, "points": 340, "points_source": "hn"},
+      {"title": "Speech model handles twelve new languages", "url": "https://example.com/ai/speech", "summary": "An update to an open speech recognizer adds twelve languages with little training data.", "source": "rss", "language": "en", "published_at": null, "points": null, "points_source": null}
+     ],
+     "runners_up": [
+      {"title": "Image model gets a cheaper tier", "url": "https://example.com/ai/image-tier", "summary": "A lower-priced plan with slower generation aims at hobbyists.", "source": "newsapi", "language": "en", "published_at": null, "points": null, "points_source": null}
+     ]
+    }
+   },
+   "widgets": ["paper_spotlight"]
+  },
+  "finance": {
+   "topic": "finance", "run_id": "fixture-finance", "run_kind": "release", "week_of": "2026-10-19",
+   "created_at": "2026-10-18T16:52:03Z", "intro": "Editor's note for the finance issue.",
+   "sections": {
+    "Crypto & Fintech": {
+     "icon": "🪙",
+     "picks": [
+      {"title": "Stablecoin rules move ahead in two countries", "url": "https://example.com/fin/stablecoin-rules", "summary": "Both proposals would require issuers to hold cash reserves and publish monthly audits, a step toward treating stablecoins like bank deposits.", "source": "rss", "language": "en", "published_at": null, "points": null, "points_source": null},
+      {"title": "A payments app adds instant transfers abroad", "url": "https://example.com/fin/instant-transfers", "summary": "Transfers to twenty countries now settle in seconds, with a flat fee shown before sending.", "source": "hackernews", "language": "en", "published_at": null, "points": 95, "points_source": "hn"}
+     ],
+     "runners_up": [
+      {"title": "Bitcoin ETF flows turn positive again", "url": "https://example.com/fin/etf-flows", "summary": "After three weeks of outflows, funds took in new money as prices steadied.", "source": "newsapi", "language": "en", "published_at": null, "points": null, "points_source": null},
+      {"title": "Neobank reports its first profitable quarter", "url": "https://example.com/fin/neobank", "summary": "Lower marketing spend and higher interest income did most of the work.", "source": "rss", "language": "en", "published_at": null, "points": null, "points_source": null}
+     ]
+    },
+    "Markets & Macro": {"icon": "📈", "picks": [], "runners_up": []}
+   },
+   "widgets": []
+  },
+  "gaming": {
+   "topic": "gaming", "run_id": "fixture-gaming", "run_kind": "release", "week_of": "2026-10-19",
+   "created_at": "2026-10-18T17:05:44Z", "intro": "Editor's note for the games issue.",
+   "sections": {
+    "Releases & Reviews": {
+     "icon": "🎮",
+     "picks": [
+      {"title": "A quiet puzzle game wins over reviewers", "url": "https://example.com/games/puzzle", "summary": "Critics praise its hand-drawn levels and a final act that rethinks every rule the game taught you.", "source": "rss", "language": "en", "published_at": null, "points": null, "points_source": null},
+      {"title": "Long-awaited sequel arrives with a new engine", "url": "https://example.com/games/sequel", "summary": "Reviews call the open world bigger but emptier, with frame-rate trouble on older consoles.", "source": "rss", "language": "en", "published_at": null, "points": null, "points_source": null},
+      {"title": "Indie racer leaves early access", "url": "https://example.com/games/racer", "summary": "Version 1.0 adds a career mode and split-screen play.", "source": "hackernews", "language": "en", "published_at": null, "points": 120, "points_source": "hn"}
+     ],
+     "runners_up": [
+      {"title": "Remaster of a 2004 classic gets a release date", "url": "https://example.com/games/remaster", "summary": "It lands in February with rebuilt cutscenes.", "source": "rss", "language": "en", "published_at": null, "points": null, "points_source": null}
+     ]
+    }
+   },
+   "widgets": []
+  }
+ },
+ "pools": {
+  "SpaceX product launches & mission updates": {
+   "query": "SpaceX product launches & mission updates", "week_of": "2026-10-19", "created_at": "2026-10-18T18:00:00Z",
+   "picks": [
+    {"title": "Heavy rocket completes its fifth test flight", "url": "https://example.com/space/test-flight", "summary": "Both stages came back intact, and the company says the next flight will carry real satellites.", "source": "newsapi", "language": "en", "published_at": null, "points": 1500, "points_source": "hn"},
+    {"title": "Satellite internet reaches two more countries", "url": "https://example.com/space/internet", "summary": "Regulators approved service after a year of talks over spectrum.", "source": "rss", "language": "en", "published_at": null, "points": null, "points_source": null}
+   ],
+   "runners_up": [
+    {"title": "Crew capsule mission set for spring", "url": "https://example.com/space/crew", "summary": "Four astronauts will spend six months on the station.", "source": "rss", "language": "en", "published_at": null, "points": null, "points_source": null}
+   ]
+  }
+ },
+ "widget_data": {
+  "paper_spotlight": {
+   "papers": [
+    {"title": "Small Models Can Check Their Own Work", "authors": ["A. Researcher", "B. Scientist", "C. Engineer", "D. Student"], "summary": "A training trick teaches compact models to spot and fix their own mistakes before answering. On math benchmarks the 3B model now matches one ten times its size.", "hf_url": "https://huggingface.co/papers/2610.00001", "scores": {"total": 36, "upvotes": 412}}
+   ]
+  }
+ }
+}

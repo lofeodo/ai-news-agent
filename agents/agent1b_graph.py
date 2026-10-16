@@ -26,6 +26,7 @@ from langgraph.types import Send
 
 import agent1b_fetch_news as a1b
 import topics
+import llm
 import tracing
 from prompt_guard import GUARD_REVIEW, neutralize_tags
 from config import SCORING_MODEL
@@ -321,7 +322,7 @@ def build_graph(client=None, fetcher: Callable | None = None, cfg: ReviewConfig 
     (default: the AI newsletter). The review loop is AI-only, so another topic never reviews."""
     cfg     = cfg or ReviewConfig.from_env()
     topic   = topic or topics.get_topic()
-    client  = client or tracing.make_client("agent1b", run_id)
+    client  = client or llm.make_client("agent1b", run_id)
     if fetcher is None:
         from article_fetch import fetch_article_text_result
         fetcher = fetch_article_text_result

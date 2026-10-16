@@ -24,7 +24,7 @@ Fetches full article text with `newspaper3k` (GitHub repos via the GitHub API, T
 Both agent 2a and 2b atomically increment `agent2_completions` in the Firestore run document using a Firestore transaction. The one that pushes the counter to 2 publishes `content-summarized` to trigger agent 3.
 
 **Agent 3 — Compose**
-Runs two article-selection passes per category (all languages, English-only) to support subscriber preference variants. Calls Claude to pick the best articles per category: 3 by default, more only for major stories. Each article is labelled with its HN points and its rank among the section's HN stories (vote counts vary by topic, so there is no fixed threshold); articles without an HN score are not penalized, and are shown in a seeded-shuffle order so list position carries no signal. Writes a 2-3 sentence editor's note. Renders 4 HTML variants keyed by `{include_french}_{include_canada}`. The spotlight paper renders as a dark hero card directly under the editor's note, linking to its Hugging Face page, and a one-line share strip follows the first news section. Saves all variants to Firestore (shrinking the run document's large article pools first, to stay under Firestore's 1 MiB document cap) (the live preview reads the newest release run from there).
+Runs two article-selection passes per category (all languages, English-only) to support subscriber preference variants. Calls Claude to pick the best articles per category: 3 by default, more only for major stories. Each article is labelled with its HN points and its rank among the section's HN stories (vote counts vary by topic, so there is no fixed threshold); articles without an HN score are not penalized, and are shown in a seeded-shuffle order so list position carries no signal. Writes a 2-3 sentence editor's note. Renders 4 HTML variants keyed by `{include_french}_{include_canada}`. The spotlight paper renders as a dark hero card directly under the editor's note, linking to its Hugging Face page, and a one-line share strip follows the first news section. Saves all variants to Firestore (shrinking the run document's large article pools first, to stay under Firestore's 1 MiB document cap) (the live preview reads the newest release run from there). Before that it saves the run's [edition](#editions-newsletter-definitions-and-the-renderer), the week's picks and runners-up that custom newsletters are built from.
 
 **Agent 4 — Send**
 Triggered separately by Cloud Scheduler at 7 AM Monday, a day after the pipeline drafted the newsletter (Sunday 12 PM; the issue is dated the send day). Loads the most recent run's newsletter variants from Firestore, queries active subscribers, picks each subscriber's variant by preference key, substitutes `{{UNSUBSCRIBE_URL}}` and `{{PREFERENCES_URL}}` placeholders with per-subscriber token links, and sends via SendGrid. Logs a structured JSON send summary to stdout for Cloud Logging, and also writes it to the run's Firestore document (`agent4_send_summary`, `agent4_completed_at`) so delivery success is queryable, not just visible in logs. With `CLICK_TRACKING=true` it also turns on SendGrid click tracking and tags each email with the run id (never a subscriber id); see [Click signal](monitoring.md#click-signal). Refuses to send (raises instead) if the newsletter it found is more than 24 hours old — a stalled pipeline upstream of agent 3 otherwise leaves the most recent *composed* run pointing at an older week's content, which agent 4 would ship silently with no error. The stalled-pipeline case it guards against is described under [Design decisions](design-decisions.md).
@@ -61,6 +61,38 @@ Every topic drafts on Sunday morning, 30 minutes apart, so two topics' runs can 
 - **Two runs can share a container.** No service sets `--concurrency`, and setting `--concurrency=1` would not help: `main.py` answers the trigger at once and runs the agent in a background thread, so Cloud Run sees an idle instance and may route the next topic's push to it while the first run is still working.
 - **The watchdog was the hazard.** It ended a run that overran with `os._exit`, which would also have killed any other run in the process. Now every pipeline agent (`_CHILD_PROCESS_AGENTS` in `main.py`: agent1a, 1b, 2a, 2b, 3 and 4) runs in its own child process, as agent2b already did for crash isolation (only agent2b retries). A timeout kills that run's child, records `{agent}_error = "hard timeout — …"` on that run's doc and leaves the process and other runs alone. The orchestrator and the health check still run in-process (one short run at a time) and keep the hard exit.
 - **State is per run or AI-only.** The `agent2_completions` counter and the `agent2a_counted` / `agent2b_counted` / `content_summarized_published` flags live on `pipeline_runs/{run_id}`; agent4's sent markers are `pipeline_runs/{run_id}/sent/*`; `click_links` / `click_counts` are keyed by run id; `spotlighted_papers` is written only by topics with `spotlight: papers` (the AI newsletter). The `data/*.json` files agents write in cloud mode are never read back there (cloud agents read their inputs from the run doc), and a child process gives each run its own module state (Claude-call semaphores, caches).
+
+## Editions, newsletter definitions and the renderer
+
+The email engine separates *gathering* content (once per topic per week) from *assembling* an email (in code,
+per newsletter). Why: [docs/decisions/0003-editions-and-definitions.md](decisions/0003-editions-and-definitions.md).
+
+- **Editions** (`agents/editions.py`). After selection and duplicate removal, and before it prunes the run doc's
+  article pools, agent 3 saves `editions/{run_id}` (local mode: `data/edition.json`): topic, `run_kind`, `week_of`
+  (send date, `YYYY-MM-DD`), the editor's note, and per section `picks` (what the email shipped, all-languages
+  pass), `picks_en` (English-only pass, only when different) and `runners_up` (the remaining ranked pool of both
+  passes, minus anything the dedup step judged a duplicate). Articles keep only `title, url, summary, source,
+  language, published_at, points, points_source`, and only summarized ones. A size guard trims runners-up above
+  900 KB. `expires_at` is 400 days out, for an optional Firestore TTL rule. The write is best effort: a failure
+  sets `agent3_edition_error` on the run doc and the run carries on. `editions.latest(db, topic)` returns a topic's
+  newest release edition, `editions.for_week(db, topic, week_of)` one week's; neither needs a composite index.
+- **Newsletter definitions** (`agents/newsletter_def.py`). An ordered list of blocks (`intro`, `widget`,
+  `section`, `custom_section`, `share`) with a name and accent colour, validated by `parse()` (all rules listed in
+  the master plan's contract C3; every error is reported at once). `from_topic(topic)` gives a ready-made
+  newsletter's definition: intro, the paper spotlight for `spotlight: papers`, every category in profile order with
+  its cap, and the share strip after the first section for AI.
+- **Renderer** (`agents/render/`). `render(definition, content, look, prefs)` walks the blocks and returns the HTML
+  and its size; `compose_html` is now a thin wrapper that renders `from_topic(topic)`, so ready-made emails are
+  drawn by the same code, byte for byte as before (pinned by golden files in `tests/fixtures/render/`).
+  `render_from_editions(definition, editions_by_topic, pools_by_query, widget_data, prefs)` assembles a custom
+  newsletter: each section takes its picks (`picks_en` for an English-only reader, the default) and then its
+  runners-up up to `max_items`; a missing edition, section, custom pool or widget data drops that block with a
+  warning; it warns above 90 KB (Gmail clips at about 102 KB). Emails that mix topics label each section with its
+  topic in that topic's colour, mark sections `<!-- SECTION:<topic>:<name> -->` (single-topic emails keep
+  `<!-- SECTION:<name> -->` for agent 4's AI reorder), show each used topic's disclaimer once, and open with a
+  templated line instead of a Claude-written note. Widgets are drawn by a plug-in `render_widget(block, ctx)`;
+  the default knows only the paper spotlight. `python tools/render_sample.py` writes a mixed sample to
+  `data/sample_mixed.html`.
 
 ## Inside agent 1b (LangGraph)
 

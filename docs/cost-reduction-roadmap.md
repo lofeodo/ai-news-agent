@@ -116,6 +116,8 @@ That is **49% less** (about $1.00 a week, roughly $52 a year). The run composed 
   3. Larger batches (25 -> 50) to cut the repeated instructions; a small gain, and a longer answer per call means a larger blast radius if one fails.
 - **Quality gate (the owner's rule):** on a frozen pool measure two numbers against today's filter: foreign-language articles that get through (must not rise) and English or French articles wrongly dropped (must not rise). Any article the cheap path and the current filter disagree on goes to the owner to settle. Needs a labelled pool: a fresh unfiltered fetch labelled by today's filter, with every disagreement and a sample of agreements checked by hand.
 - **Rollback:** a no-redeploy switch such as `AGENT1B_LANG_MODE=claude` (today's behavior stays the default and the baseline).
+- **Idea 1 built (2026-10-16, PR #146, not deployed):** `AGENT1B_LANG_MODE=exceptions` (default `claude`). New tool `report_language_exceptions` (`checked` count + only the `fr`/`other` articles); unlisted articles are English. Design decision: an empty list is a valid "all English", so a failed call must not look like one. A wrong `checked`, an empty response or a cut-off answer makes that batch fall back to today's full-label call, which is stricter than the exceptions list could be on its own, and the batch is never silently read as English. Unit-tested without network.
+- **Eval harness:** `python -m evals.run_lang_filter_eval` (three arms on one fresh unfiltered pool: today's filter twice as the noise floor, and exceptions mode; every article the arms disagree on goes to a rows file for the owner to settle). Dry run on 2026-10-16: 1,522 articles after the prefilter (61 batches), estimated **$2.53**, over the $2 guard, so it waits for the owner's OK. Results are not in yet.
 
 Remaining Step 3 work: the language filter above, then prompt caching and the batch API, and a second measurement from the 2026-10-18 release run.
 
@@ -123,8 +125,8 @@ Where each original idea stands:
 - **agent2b** (summarize only what can ship): done as the shortlist mode, live. Batching several articles per call was the lower-risk alternative and was not needed.
 - **agent1a** (abstracts first, PDFs for the top ~8): done, live.
 - **agent1b language filter**: planned, sub-step 4 above. Not started.
-- **Prompt caching**: open. Check first that the shared system prompts and rubrics are large enough to be cacheable at all (there is a minimum prompt size); if they are not, drop it.
-- **Batch API** (50% off): open. The pipeline has a ~19h window between Sunday noon and Monday 7 AM, but a stage that feeds the 1:15 PM draft health check cannot wait for a batch, so check which stages are not on that path.
+- **Prompt caching**: **dropped (checked 2026-10-16).** The largest static prompt or rubric in `prompts/` is 3.1 KB (about 800 tokens) and the rest are 0.5-2 KB, far under the minimum cacheable prefix (about 4,096 tokens for Haiku 4.5). What makes each call big is unique per-call text (article batches, PDFs), which cannot be cached.
+- **Batch API** (50% off): **not recommended (checked 2026-10-16).** Every Claude stage (agent1a, 1b, 2a, 2b, 3) sits before the 1:15 PM Sunday draft health check, and batches are asynchronous (up to 24h), so using them would need an async hand-off between stages and moving the draft check later. For at most ~$0.50 a week (half of ~$1.05) that is a production schedule and pipeline-control change; revisit only if the owner wants it.
 
 ### Step 4: Verify prices and pick candidates
 Web research done 2026-10-15 found **conflicting figures between aggregator sites**, so nothing below is a decision. Treat these as the shortlist to verify against each provider's own pricing page (which this step does, recording the date and URL for each number):

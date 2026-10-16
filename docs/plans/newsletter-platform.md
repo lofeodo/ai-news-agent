@@ -212,15 +212,37 @@ the definition limits above keep custom newsletters under it.
 
 ## The roadmaps
 
-| Id | Plan | What it delivers | Depends on |
-|---|---|---|---|
-| **A** | [`topic-signup-and-sending.md`](topic-signup-and-sending.md) | Weekly release runs, signup, per-newsletter unsubscribe, sending and health check for the four new topics, each behind a launch switch. Contract C1. | nothing |
-| **B** | [`editions-and-renderer.md`](editions-and-renderer.md) | Editions (C2), newsletter definitions (C3) and the block renderer; agent3 renders ready-made newsletters through it, byte-identical. | nothing |
-| **C** | [`widgets.md`](widgets.md) | Widget framework (C4), the paper of the week as the first widget, a researched catalog of widgets per topic, admin widget gallery. | nothing; only its integration step (15) binds to B, with a fallback if B has not merged |
-| **D** | [`newsletter-studio-ui.md`](newsletter-studio-ui.md) | The studio: build, reorder and live-preview a custom newsletter, desktop and phone, against a mock of C6. | nothing (mock API) |
-| **F** | [`custom-topic-sourcing.md`](custom-topic-sourcing.md) | Weekly articles for custom sections ("SpaceX"), with a budget cap (C5). | nothing |
-| **E** | [`custom-newsletters.md`](custom-newsletters.md) | The real C6 API, saving and previewing custom newsletters, and agent4 sending them; switches the studio from mock to real. | **A and B**; uses C, D, F if merged (each optional) |
-| **G** | not written yet | Payments (Stripe), plans and the upgrade flow. Written after the studio has been used by invited members. | E |
+| Id | Plan | What it delivers | Depends on | Status (2026-10-16) |
+|---|---|---|---|---|
+| **A** | [`topic-signup-and-sending.md`](topic-signup-and-sending.md) | Weekly release runs, signup, per-newsletter unsubscribe, sending and health check for the four new topics, each behind a launch switch. Contract C1. | nothing | in progress (PR #152) |
+| **B** | [`editions-and-renderer.md`](editions-and-renderer.md) | Editions (C2), newsletter definitions (C3) and the block renderer; agent3 renders ready-made newsletters through it, byte-identical. | nothing | **merged** (PR #151); agent3 not deployed, on purpose (see below) |
+| **C** | [`widgets.md`](widgets.md) | Widget framework (C4), the paper of the week as the first widget, a researched catalog of widgets per topic, admin widget gallery. | nothing; only its integration step (15) binds to B, which has merged | no PR yet |
+| **D** | [`newsletter-studio-ui.md`](newsletter-studio-ui.md) | The studio: build, reorder and live-preview a custom newsletter, desktop and phone, against a mock of C6. | nothing (mock API) | no PR yet |
+| **F** | [`custom-topic-sourcing.md`](custom-topic-sourcing.md) | Weekly articles for custom sections ("SpaceX"), with a budget cap (C5). | nothing | no PR yet |
+| **E** | [`custom-newsletters.md`](custom-newsletters.md) | The real C6 API, saving and previewing custom newsletters, and agent4 sending them; switches the studio from mock to real. | **A and B**; uses C, D, F if merged (each optional) | waiting for A |
+| **G** | not written yet | Payments (Stripe), plans and the upgrade flow. Written after the studio has been used by invited members. | E | not written |
+
+### Roadmap B as built (what C and E bind to)
+
+- **Code:** `agents/newsletter_def.py` (`parse(raw, widgets=, custom=, premium=)`, `to_dict`, `from_topic`),
+  `agents/editions.py` (`build_edition`, `save`, `latest`, `for_week`), `agents/render/` (`render`,
+  `render_from_editions`, `Content`, `Look`, `RenderResult`). Why: ADR `docs/decisions/0003-editions-and-definitions.md`.
+- **C3 additions:** section blocks take an optional `if_empty: "note" | "hide"`; a custom section's `query` is 1 to
+  200 characters (both written into C3 above).
+- **For C (widgets):** pass the registry to `newsletter_def.parse(..., widgets=<registry>)` (entries need `scope`,
+  `topics`, `premium`, `commercial_use`, as attributes or keys) and to the renderer as
+  `render_widget(block, ctx) -> html` (`ctx.content.widgets[widget_id]` holds the data); a widget that should appear
+  in the table of contents adds its label to `render.engine.WIDGET_TOC`. The default plug-in knows only
+  `paper_spotlight`, whose data is `{"papers": [...]}`. The ready-made emails are pinned byte for byte by
+  `tests/test_render_goldens.py`; regenerate with `python tests/make_render_goldens.py` only for an intended change.
+- **For E (custom newsletters):** `render.render_from_editions(definition, editions_by_topic, pools_by_query,
+  widget_data, prefs)` is pure; E loads `editions.latest(db, topic)` per topic used, the C5 pools keyed by each
+  custom section's `query`, and widget data (until C stores edition widget data, the paper comes from the run doc's
+  `paper_summaries`, same id as the edition). Readers are English-only unless `prefs["include_french"]`. It returns
+  `warnings` for anything left out and above 90 KB. Note that `editions.latest` returns *release* editions only, so
+  non-AI topics have none until A's release runs.
+- **Deploy:** agent3 writes `editions/{run_id}` only once deployed. Nothing reads editions before E, so agent3 is
+  deployed together with A or E rather than on its own.
 
 ## Running roadmaps in parallel
 
@@ -233,7 +255,7 @@ week 1 ────────────────────────�
  F  custom topic sourcing ────────────────────────────────┘
 ```
 
-**A, B, C, D and F can all start now, in parallel.** E starts when A and B have merged. To keep five parallel PRs from
+**A, B, C, D and F can all start now, in parallel** (B merged 2026-10-16). E starts when A and B have merged. To keep five parallel PRs from
 colliding:
 
 | File or area | Owner (only this roadmap edits it) | Others |

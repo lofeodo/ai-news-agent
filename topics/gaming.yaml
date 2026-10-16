@@ -62,6 +62,10 @@ sources:
       - {name: Kotaku, url: "https://kotaku.com/rss", max_items: 20}
       - {name: IGN, url: "https://feeds.feedburner.com/ign/all", max_items: 25}
       - {name: GameSpot, url: "https://www.gamespot.com/feeds/mashup/", max_items: 20}
+      - {name: Esports Insider, url: "https://esportsinsider.com/feed", max_items: 10}
+      - {name: Hotspawn, url: "https://hotspawn.com/feed", max_items: 10}
+      - {name: GINX Esports TV, url: "https://ginx.tv/en/rss", max_items: 15}
+      - {name: Dexerto, url: "https://www.dexerto.com/feed/", max_items: 15}
   - type: newsapi
     queries:
       - '"PlayStation 5" OR PS5 OR "PlayStation Plus" OR "Sony Interactive"'
@@ -71,6 +75,7 @@ sources:
       - '"video game" AND (studio OR layoffs OR acquisition OR publisher)'
       - '"video game" AND (review OR release OR launch OR trailer)'
       - '"indie game" OR "game jam" OR "early access"'
+      - 'esports OR "Counter-Strike 2" OR "League of Legends" OR Valorant OR "Dota 2" OR "Esports World Cup"'
   - type: hn
     queries: ["video game", "Steam", "Nintendo", "PlayStation", "Xbox", "game engine", "indie game", "Epic Games"]
     min_points: 30

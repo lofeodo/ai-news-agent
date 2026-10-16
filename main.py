@@ -105,6 +105,8 @@ if os.environ.get("AGENT_NAME", "").strip() == "agent_subscriptions":
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
     app.include_router(subscriptions_router)
+    from admin_widgets import router as admin_widgets_router   # admin widget gallery (docs/widgets.md)
+    app.include_router(admin_widgets_router)
 
 
 # ── Hard runtime limits ──────────────────────────────────────────────────────

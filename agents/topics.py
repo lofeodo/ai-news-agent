@@ -28,6 +28,10 @@ KNOWN_SOURCE_TYPES = {"hn", "newsapi", "rss"}
 VARIANT_FLAGS = {"include_canada"}
 
 MAX_CATEGORIES = 7
+MAX_PLACED_WIDGETS = 4
+# Where a profile's widget goes in the ready-made email. "none" = produced every run and kept with the edition
+# (custom newsletters can use it) but not shown in this newsletter's own email.
+WIDGET_PLACEMENTS = ("after_intro", "before_sections", "after_sections", "none")
 DEFAULT_SECTION_CAP = 3
 DEFAULT_MAX_ARTICLES = 600   # cap after prefilter for topics that set none (AI sets 0 = no cap)
 
@@ -58,6 +62,13 @@ class Category:
 
 
 @dataclass(frozen=True)
+class WidgetEntry:
+    id: str
+    placement: str = "after_intro"
+    config: dict = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class Topic:
     id: str
     name: str
@@ -74,6 +85,7 @@ class Topic:
     prompts: dict = field(default_factory=dict)
     guidelines: str = ""    # extra editorial guidance for the categorize and selection prompts
     disclaimer: str = ""    # one line in the email footer (e.g. "not financial advice")
+    widgets: tuple = ()     # WidgetEntry, in profile order (agents/widgets/)
 
     @property
     def category_names(self) -> list[str]:
@@ -123,6 +135,9 @@ class Topic:
 
     def read_filled_prompt(self, key: str) -> str:
         return self.fill_prompt(self.read_prompt(key))
+
+    def placed_widgets(self, placement: str) -> list:
+        return [w for w in self.widgets if w.placement == placement]
 
     def variant_prefs(self) -> dict:
         return {key: KNOWN_VARIANTS[key] for key in self.variants}
@@ -186,6 +201,42 @@ def _parse_source(raw, topic_id: str) -> dict:
         _require(mp is None or (isinstance(mp, int) and not isinstance(mp, bool) and mp >= 0), topic_id,
                  "hn min_points must be a non-negative integer")
     return raw
+
+
+def _parse_widgets(raw, topic_id: str, spotlight: str) -> tuple:
+    """The profile's `widgets:` list. Unknown ids, widgets not offered for this topic and bad configs are profile
+    errors. A `spotlight: papers` profile always has paper_spotlight (added after the intro if not listed)."""
+    import widgets
+    from widgets.config import ConfigError, validate
+
+    raw = raw or []
+    _require(isinstance(raw, list), topic_id, "widgets must be a list")
+    entries, seen = [], set()
+    for item in raw:
+        _require(isinstance(item, dict) and set(item) <= {"id", "placement", "config"}, topic_id,
+                 "each widget is a mapping with id, placement and optional config")
+        wid = item.get("id")
+        widget = widgets.registry.get(wid) if isinstance(wid, str) else None
+        _require(widget is not None, topic_id, f"unknown widget {wid!r}")
+        _require(wid not in seen, topic_id, f"widget {wid!r} listed twice")
+        _require(widget.scope == "edition" and widgets.registry.available_for(widget, topic_id), topic_id,
+                 f"widget {wid!r} is not available for this topic")
+        placement = item.get("placement", "after_intro")
+        _require(placement in WIDGET_PLACEMENTS, topic_id,
+                 f"widget {wid!r}: placement must be one of {', '.join(WIDGET_PLACEMENTS)}")
+        try:
+            config = validate(widget.config_fields, item.get("config"))
+        except ConfigError as e:
+            raise TopicError(f"topic {topic_id!r}: widget {wid!r}: {e}") from None
+        seen.add(wid)
+        entries.append(WidgetEntry(wid, placement, config))
+    if spotlight == "papers" and "paper_spotlight" not in seen:
+        entries.insert(0, WidgetEntry("paper_spotlight", "after_intro", {}))
+    _require(spotlight == "papers" or "paper_spotlight" not in seen, topic_id,
+             "paper_spotlight needs spotlight: papers")
+    _require(sum(e.placement != "none" for e in entries) <= MAX_PLACED_WIDGETS, topic_id,
+             f"at most {MAX_PLACED_WIDGETS} widgets in the email")
+    return tuple(entries)
 
 
 def parse_topic(raw: dict, expected_id: str | None = None) -> Topic:
@@ -267,6 +318,7 @@ def parse_topic(raw: dict, expected_id: str | None = None) -> Topic:
         prompts=dict(prompts),
         guidelines=guidelines.strip(),
         disclaimer=disclaimer.strip(),
+        widgets=_parse_widgets(raw.get("widgets"), topic_id, spotlight),
     )
 
 

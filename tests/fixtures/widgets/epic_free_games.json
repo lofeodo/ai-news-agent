@@ -1,0 +1,376 @@
+{
+ "data": {
+  "Catalog": {
+   "searchStore": {
+    "elements": [
+     {
+      "title": "Sker Ritual",
+      "id": "6aab3ddef4f84fbc9dd81c60f9d8549c",
+      "namespace": "156c17659ff0468bb533eba104a1f19f",
+      "description": "The round-based co-op survival FPS and spin-off to the award-winning British horror, Maid of Sker. Play solo or up to 4 players to survive the supernatural onslaught of the Quiet Ones.",
+      "effectiveDate": "2024-07-18T17:00:00.000Z",
+      "offerType": "BASE_GAME",
+      "expiryDate": null,
+      "viewableDate": "2023-10-01T07:00:00.000Z",
+      "status": "ACTIVE",
+      "isCodeRedemptionOnly": false,
+      "productSlug": null,
+      "urlSlug": "8dbc8d70481d4c0b8412d3aec76a35a1",
+      "url": null,
+      "catalogNs": {
+       "mappings": [
+        {
+         "pageSlug": "sker-ritual-aac702",
+         "pageType": "productHome"
+        }
+       ]
+      },
+      "price": {
+       "totalPrice": {
+        "discountPrice": 2899,
+        "originalPrice": 2899,
+        "voucherDiscount": 0,
+        "discount": 0,
+        "currencyCode": "CAD",
+        "currencyInfo": {
+         "decimals": 2
+        },
+        "fmtPrice": {
+         "originalPrice": "CA$28.99",
+         "discountPrice": "CA$28.99",
+         "intermediatePrice": "CA$28.99"
+        },
+        "dualPrice": null
+       },
+       "lineOffers": [
+        {
+         "appliedRules": []
+        }
+       ]
+      },
+      "promotions": {
+       "promotionalOffers": [],
+       "upcomingPromotionalOffers": [
+        {
+         "promotionalOffers": [
+          {
+           "startDate": "2026-10-22T15:00:00.000Z",
+           "endDate": "2026-10-29T15:00:00.000Z",
+           "discountSetting": {
+            "discountType": "PERCENTAGE",
+            "discountPercentage": 0
+           }
+          }
+         ]
+        }
+       ]
+      }
+     },
+     {
+      "title": "Bad Cheese",
+      "id": "6a846880836044a2adad614ac771f487",
+      "namespace": "a0c80bf673a548bc97b4bb25abfaf2b4",
+      "description": "Bad Cheese is a psychological horror inspired by the eerie charm of 1920s animation. \nStep into the tiny paws of a mouse spending the weekend at home with a dysfunctional Dad while Mom's away. \nBe on ",
+      "effectiveDate": "2026-01-09T16:00:00.000Z",
+      "offerType": "BASE_GAME",
+      "expiryDate": null,
+      "viewableDate": "2026-01-09T16:00:00.000Z",
+      "status": "ACTIVE",
+      "isCodeRedemptionOnly": false,
+      "productSlug": null,
+      "urlSlug": "ae5d8fc5541f42eea105f64121dba382",
+      "url": null,
+      "catalogNs": {
+       "mappings": [
+        {
+         "pageSlug": "bad-cheese-4256d9",
+         "pageType": "productHome"
+        }
+       ]
+      },
+      "price": {
+       "totalPrice": {
+        "discountPrice": 0,
+        "originalPrice": 1499,
+        "voucherDiscount": 0,
+        "discount": 1499,
+        "currencyCode": "CAD",
+        "currencyInfo": {
+         "decimals": 2
+        },
+        "fmtPrice": {
+         "originalPrice": "CA$14.99",
+         "discountPrice": "0",
+         "intermediatePrice": "0"
+        },
+        "dualPrice": null
+       },
+       "lineOffers": [
+        {
+         "appliedRules": [
+          {
+           "id": "041a72f3ffdd4b7383e797c5a876eace",
+           "endDate": "2026-10-22T15:00:00.000Z",
+           "discountSetting": {
+            "discountType": "PERCENTAGE"
+           }
+          }
+         ]
+        }
+       ]
+      },
+      "promotions": {
+       "promotionalOffers": [
+        {
+         "promotionalOffers": [
+          {
+           "startDate": "2026-10-15T15:00:00.000Z",
+           "endDate": "2026-10-22T15:00:00.000Z",
+           "discountSetting": {
+            "discountType": "PERCENTAGE",
+            "discountPercentage": 0
+           }
+          }
+         ]
+        }
+       ],
+       "upcomingPromotionalOffers": []
+      }
+     },
+     {
+      "title": "Agent A: A puzzle in disguise",
+      "id": "db1202a30c5541dd99cdf54c918a9348",
+      "namespace": "45f125178d8c4bc18e1827a307bcc5c0",
+      "description": "A suave secret agent adventure game. Your mission (should you choose to accept) is to infiltrate enemy spy Ruby La Rouge’s secret hideaway and put a stop to her evil plans!",
+      "effectiveDate": "2026-04-28T17:00:00.000Z",
+      "offerType": "BASE_GAME",
+      "expiryDate": null,
+      "viewableDate": "2026-04-28T17:00:00.000Z",
+      "status": "ACTIVE",
+      "isCodeRedemptionOnly": false,
+      "productSlug": null,
+      "urlSlug": "agent-a-a-puzzle-in-disguise",
+      "url": null,
+      "catalogNs": {
+       "mappings": [
+        {
+         "pageSlug": "agent-a-a-puzzle-in-disguise-42fe5f",
+         "pageType": "productHome"
+        }
+       ]
+      },
+      "price": {
+       "totalPrice": {
+        "discountPrice": 0,
+        "originalPrice": 2299,
+        "voucherDiscount": 0,
+        "discount": 2299,
+        "currencyCode": "CAD",
+        "currencyInfo": {
+         "decimals": 2
+        },
+        "fmtPrice": {
+         "originalPrice": "CA$22.99",
+         "discountPrice": "0",
+         "intermediatePrice": "0"
+        },
+        "dualPrice": null
+       },
+       "lineOffers": [
+        {
+         "appliedRules": [
+          {
+           "id": "28cd2d9591744f10a9cbf75ce638a255",
+           "endDate": "2026-10-22T15:00:00.000Z",
+           "discountSetting": {
+            "discountType": "PERCENTAGE"
+           }
+          }
+         ]
+        }
+       ]
+      },
+      "promotions": {
+       "promotionalOffers": [
+        {
+         "promotionalOffers": [
+          {
+           "startDate": "2026-10-15T15:00:00.000Z",
+           "endDate": "2026-10-22T15:00:00.000Z",
+           "discountSetting": {
+            "discountType": "PERCENTAGE",
+            "discountPercentage": 0
+           }
+          }
+         ]
+        }
+       ],
+       "upcomingPromotionalOffers": []
+      }
+     },
+     {
+      "title": "Home - A Unique Horror Adventure",
+      "id": "06190191cede42afb633fe89ef08c27e",
+      "namespace": "c7e46cce751b40b6937e878abd0fc531",
+      "description": "Home is a unique horror adventure set in a beautifully-realized pixel world. It’s a murder mystery with a twist – because you decide what ultimately happens.",
+      "effectiveDate": "2099-01-01T00:00:00.000Z",
+      "offerType": "BASE_GAME",
+      "expiryDate": null,
+      "viewableDate": "2026-10-14T18:25:38.000Z",
+      "status": "ACTIVE",
+      "isCodeRedemptionOnly": false,
+      "productSlug": null,
+      "urlSlug": "ff70f2b02fd842f8961f7729af25cda9",
+      "url": null,
+      "catalogNs": {
+       "mappings": [
+        {
+         "pageSlug": "home-19212a",
+         "pageType": "productHome"
+        }
+       ]
+      },
+      "price": {
+       "totalPrice": {
+        "discountPrice": 569,
+        "originalPrice": 569,
+        "voucherDiscount": 0,
+        "discount": 0,
+        "currencyCode": "CAD",
+        "currencyInfo": {
+         "decimals": 2
+        },
+        "fmtPrice": {
+         "originalPrice": "CA$5.69",
+         "discountPrice": "CA$5.69",
+         "intermediatePrice": "CA$5.69"
+        },
+        "dualPrice": null
+       },
+       "lineOffers": [
+        {
+         "appliedRules": []
+        }
+       ]
+      },
+      "promotions": {
+       "promotionalOffers": [],
+       "upcomingPromotionalOffers": [
+        {
+         "promotionalOffers": [
+          {
+           "startDate": "2026-10-22T15:00:00.000Z",
+           "endDate": "2026-10-29T15:00:00.000Z",
+           "discountSetting": {
+            "discountType": "PERCENTAGE",
+            "discountPercentage": 0
+           }
+          }
+         ]
+        }
+       ]
+      }
+     },
+     {
+      "title": "Them's Fightin' Herds",
+      "id": "1f723b00df58467998c4984ca39915ad",
+      "namespace": "a567c32599bf4d4fb609e424f3691b39",
+      "description": "Them's Fightin' Herds",
+      "effectiveDate": "2022-12-19T16:00:00.000Z",
+      "offerType": "BASE_GAME",
+      "expiryDate": null,
+      "viewableDate": "2022-12-19T15:55:00.000Z",
+      "status": "ACTIVE",
+      "isCodeRedemptionOnly": false,
+      "productSlug": "thems-fightin-herds/home",
+      "urlSlug": "thems-fightin-herds",
+      "url": null,
+      "catalogNs": {
+       "mappings": [
+        {
+         "pageSlug": "thems-fightin-herds",
+         "pageType": "productHome"
+        }
+       ]
+      },
+      "price": {
+       "totalPrice": {
+        "discountPrice": 2199,
+        "originalPrice": 2199,
+        "voucherDiscount": 0,
+        "discount": 0,
+        "currencyCode": "CAD",
+        "currencyInfo": {
+         "decimals": 2
+        },
+        "fmtPrice": {
+         "originalPrice": "CA$21.99",
+         "discountPrice": "CA$21.99",
+         "intermediatePrice": "CA$21.99"
+        },
+        "dualPrice": null
+       },
+       "lineOffers": [
+        {
+         "appliedRules": []
+        }
+       ]
+      },
+      "promotions": null
+     },
+     {
+      "title": "Model Builder: Complete Edition",
+      "id": "d3e5b556640144bfa5de2d5d3b283d68",
+      "namespace": "23499f64e5304139b514c3e674c5c0d6",
+      "description": "Join the latest trend in simulation games, bring out your creativity and make awesome-looking models with the base game and all available DLCs. Assemble, customize and display your creations, whether ",
+      "effectiveDate": "2023-01-16T17:00:00.000Z",
+      "offerType": "BASE_GAME",
+      "expiryDate": null,
+      "viewableDate": "2023-01-16T17:00:00.000Z",
+      "status": "ACTIVE",
+      "isCodeRedemptionOnly": false,
+      "productSlug": null,
+      "urlSlug": "3f18c54a6e00424ba6e8f4422167cac7",
+      "url": null,
+      "catalogNs": {
+       "mappings": [
+        {
+         "pageSlug": "model-builder-complete-edition-f9b456",
+         "pageType": "productHome"
+        }
+       ]
+      },
+      "price": {
+       "totalPrice": {
+        "discountPrice": 2279,
+        "originalPrice": 2279,
+        "voucherDiscount": 0,
+        "discount": 0,
+        "currencyCode": "CAD",
+        "currencyInfo": {
+         "decimals": 2
+        },
+        "fmtPrice": {
+         "originalPrice": "CA$22.79",
+         "discountPrice": "CA$22.79",
+         "intermediatePrice": "CA$22.79"
+        },
+        "dualPrice": null
+       },
+       "lineOffers": [
+        {
+         "appliedRules": []
+        }
+       ]
+      },
+      "promotions": null
+     }
+    ],
+    "paging": {
+     "count": 40,
+     "total": 14
+    }
+   }
+  }
+ }
+}

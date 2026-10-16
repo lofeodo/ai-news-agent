@@ -94,13 +94,10 @@ WIDGET_TOC = {"paper_spotlight": ("RES", "RESEARCH")}
 
 
 def default_render_widget(block: WidgetBlock, ctx: RenderContext) -> str:
-    """The widget plug-in until roadmap C's registry replaces it: knows only the paper spotlight.
-    Returns "" (the block is left out) for anything else."""
-    if block.widget == "paper_spotlight":
-        data = ctx.content.widgets.get("paper_spotlight") or {}
-        return blocks.research_rows(data.get("papers") or [])
-    ctx.warnings.append(f"widget {block.widget!r} left out: no renderer for it")
-    return ""
+    """The widget plug-in: draws the block from the widget registry (agents/widgets/plugin.py). Returns ""
+    (the block is left out, with a warning) for an unknown widget or one with no data."""
+    from widgets.plugin import render_widget   # imported here: the widgets package imports this module
+    return render_widget(block, ctx)
 
 
 def _topic(topic_id: str):

@@ -8,6 +8,13 @@ accent_color: "#b79cff"
 languages: [en]
 variants: ["0_0"]
 spotlight: none
+widgets:
+- id: free_games
+  placement: after_intro
+- id: most_played      # non-commercial: fine in this free newsletter, never offered in premium
+  placement: after_sections
+- id: deals
+  placement: after_sections
 max_articles: 500
 guidelines: >-
   Readers play on every platform (PC, PlayStation, Xbox, Switch, mobile), so do not favour one. Prefer news that

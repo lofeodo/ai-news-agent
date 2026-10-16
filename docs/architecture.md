@@ -79,8 +79,9 @@ per newsletter). Why: [docs/decisions/0003-editions-and-definitions.md](decision
 - **Newsletter definitions** (`agents/newsletter_def.py`). An ordered list of blocks (`intro`, `widget`,
   `section`, `custom_section`, `share`) with a name and accent colour, validated by `parse()` (all rules listed in
   the master plan's contract C3; every error is reported at once). `from_topic(topic)` gives a ready-made
-  newsletter's definition: intro, the paper spotlight for `spotlight: papers`, every category in profile order with
-  its cap, and the share strip after the first section for AI.
+  newsletter's definition: intro, the profile's widgets placed `after_intro` / `before_sections` (the AI paper
+  spotlight), every category in profile order with its cap, the share strip after the first section for AI, then
+  the `after_sections` widgets.
 - **Renderer** (`agents/render/`). `render(definition, content, look, prefs)` walks the blocks and returns the HTML
   and its size; `compose_html` is now a thin wrapper that renders `from_topic(topic)`, so ready-made emails are
   drawn by the same code, byte for byte as before (pinned by golden files in `tests/fixtures/render/`).
@@ -91,7 +92,12 @@ per newsletter). Why: [docs/decisions/0003-editions-and-definitions.md](decision
   topic in that topic's colour, mark sections `<!-- SECTION:<topic>:<name> -->` (single-topic emails keep
   `<!-- SECTION:<name> -->` for agent 4's AI reorder), show each used topic's disclaimer once, and open with a
   templated line instead of a Claude-written note. Widgets are drawn by a plug-in `render_widget(block, ctx)`;
-  the default knows only the paper spotlight. `python tools/render_sample.py` writes a mixed sample to
+  the default is the widget registry (`agents/widgets/plugin.py`).
+- **Widgets** (`agents/widgets/`, [widgets.md](widgets.md)). After writing the intro, agent 3 produces the
+  topic's widgets in a bounded pool (20 s each, 90 s in all, size caps), stores them under
+  `pipeline_runs/{run_id}/widgets/*` with a `widgets_summary` on the run doc, and passes their data to the
+  renderer. A widget that fails is left out of the email; it never fails the run. The paper spotlight still draws
+  from agent 3's own paper list, so the AI email is unchanged. `python tools/render_sample.py` writes a mixed sample to
   `data/sample_mixed.html`.
 
 ## Studio (custom newsletter builder)

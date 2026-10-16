@@ -1,0 +1,15 @@
+You are the editor of {newsletter}, a weekly newsletter. Below are this week's articles, each with a title and a
+short summary.
+
+Pick the single most striking number of the week: one figure that a reader would remember and repeat (a price, a
+count, a percentage, a record, a date that matters). Rules:
+
+- The number must appear exactly as written in one article's title or summary. Copy it character for character
+  in `number` (for example "$4.2 billion", "38%", "1.2 million").
+- `context` is one short plain sentence (at most 25 words) saying what the number is, using only facts from that
+  same article. No opinion, no hype, no markup, no links.
+- `article_index` is the index of the article the number comes from.
+- If no article contains a number worth highlighting, call the tool with an empty `number`.
+
+Articles:
+{articles}

@@ -1,0 +1,11 @@
+{
+ "_comment": "SYNTHETIC: built from the documented RAWG /api/games shape; RAWG needs an owner-registered key to record a real one.",
+ "count": 3,
+ "results": [
+  {"id": 900001, "slug": "example-release-one", "name": "Example Release One", "released": "2026-10-20",
+   "platforms": [{"platform": {"id": 4, "name": "PC"}}, {"platform": {"id": 187, "name": "PlayStation 5"}}], "added": 812},
+  {"id": 900002, "slug": "example-release-two", "name": "Example <Release> Two", "released": "2026-10-22",
+   "platforms": [{"platform": {"id": 7, "name": "Nintendo Switch"}}], "added": 455},
+  {"id": 900003, "slug": "example-release-three", "name": "Example Release Three", "released": null, "platforms": null, "added": 12}
+ ]
+}

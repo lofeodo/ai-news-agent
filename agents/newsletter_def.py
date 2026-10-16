@@ -22,11 +22,11 @@ IF_EMPTY = ("note", "hide")   # an empty section shows "Nothing notable this wee
 
 _COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 
-# The widgets this module knows when the caller passes none. Roadmap C replaces this with its registry
-# (agents/widgets/); each entry needs only the attributes read by _widget_attr.
-DEFAULT_WIDGETS = {
-    "paper_spotlight": {"scope": "edition", "topics": ("ai",), "premium": False, "commercial_use": True},
-}
+def default_widget_catalog() -> dict:
+    """The widgets parse() knows when the caller passes none: the widget registry (agents/widgets/). Imported here
+    because the widgets package imports the renderer, which imports this module."""
+    from widgets import registry
+    return registry.definitions_catalog()
 
 
 class DefinitionError(ValueError):
@@ -125,7 +125,7 @@ def parse(raw, *, widgets=None, custom: bool = True, premium: bool = True) -> De
     member's own newsletter (the paid product, where a non-commercial widget is never allowed); `premium` says
     whether the owner may use premium widgets.
     """
-    catalog = DEFAULT_WIDGETS if widgets is None else widgets
+    catalog = default_widget_catalog() if widgets is None else widgets
     if not isinstance(catalog, dict):
         catalog = {w: {} for w in catalog}
     errors: list[str] = []
@@ -261,13 +261,17 @@ def to_dict(definition: Definition) -> dict:
 
 
 def from_topic(topic) -> Definition:
-    """A ready-made newsletter's definition: intro, the paper spotlight for `spotlight: papers`, every category
-    in profile order with its cap, and the share strip after the first section (AI only, as today)."""
-    blocks = [IntroBlock()]
-    if topic.spotlight == "papers":
-        blocks.append(WidgetBlock("paper_spotlight", topic.id))
+    """A ready-made newsletter's definition: intro, the profile's widgets placed after_intro then
+    before_sections (the AI paper spotlight), every category in profile order with its cap, the share strip after
+    the first section (AI only, as today), then the after_sections widgets. Widgets placed "none" are produced
+    for the edition but not shown here."""
+    def widget_blocks(placement):
+        return [WidgetBlock(w.id, topic.id, dict(w.config)) for w in topic.widgets if w.placement == placement]
+
+    blocks = [IntroBlock()] + widget_blocks("after_intro") + widget_blocks("before_sections")
     for i, c in enumerate(topic.categories):
         blocks.append(SectionBlock(topic.id, c.name, c.cap))
         if i == 0 and topic.is_default:
             blocks.append(ShareBlock())
+    blocks += widget_blocks("after_sections")
     return Definition(name=topic.name, accent_color=topic.accent_color, blocks=tuple(blocks))

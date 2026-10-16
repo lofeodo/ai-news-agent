@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Widget gallery</title>
+  <link rel="icon" type="image/svg+xml" href="/images/logo-mark.svg">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f0f0f; --panel: #151515; --border: #2a2a2a; --text: #e8e8e8; --muted: #8b8b8b;
+      --accent: #c8b89a; --ok: #4ade80; --bad: #f87171; --warn: #d4a843;
+      --font: 'Menlo', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+    }
+    [hidden] { display: none !important; }
+    html, body { background: var(--bg); color: var(--text); font-family: var(--font); }
+    body { padding: 24px 16px 64px; }
+    main { max-width: 1120px; margin: 0 auto; }
+    a { color: var(--accent); }
+    h1 { font-size: 22px; letter-spacing: -0.3px; margin-bottom: 6px; }
+    .lede { color: var(--muted); font-size: 13px; line-height: 1.6; max-width: 720px; }
+
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 20px 0 8px; }
+    .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+    .seg button {
+      background: var(--panel); color: var(--muted); border: 0; font: 13px var(--font);
+      padding: 8px 12px; cursor: pointer; min-height: 36px;
+    }
+    .seg button + button { border-left: 1px solid var(--border); }
+    .seg button[aria-pressed="true"] { background: #232019; color: var(--accent); }
+    .seg button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    select {
+      background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 4px;
+      font: 13px var(--font); padding: 8px 30px 8px 10px; min-height: 36px; max-width: 100%;
+      -webkit-appearance: none; appearance: none;   /* iOS draws a white native control otherwise */
+      background-color: var(--panel);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238b8b8b' stroke-width='1.5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 10px center;
+    }
+    .status { color: var(--muted); font-size: 13px; margin: 16px 0; line-height: 1.6; }
+
+    .widget { border-top: 1px solid var(--border); padding: 22px 0 8px; }
+    .widget__head { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; margin-bottom: 6px; }
+    .widget__name { font-size: 16px; font-weight: 700; }
+    .widget__id { color: var(--muted); font-size: 12px; }
+    .widget__desc { color: #bdbdbd; font-size: 13px; line-height: 1.5; margin-bottom: 8px; }
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .tag { font-size: 11px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; }
+    .tag--ok { color: var(--ok); border-color: #1f4d33; }
+    .tag--bad { color: var(--bad); border-color: #5a2626; }
+    .tag--warn { color: var(--warn); border-color: #5a4a1f; }
+    .frame-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 6px; }
+    .frame {
+      display: block; border: 1px solid var(--border); background: #060606; width: 640px; height: 160px;
+    }
+    .frame--phone { width: 375px; max-width: 100%; }   /* a 393px iPhone has 361px inside the page padding */
+    .none { color: var(--muted); font-size: 13px; font-style: italic; padding: 8px 0 12px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Widget gallery</h1>
+  <p class="lede">Admins only. Every widget as it renders in an email: its sample data, or the last data a real run
+    produced. <a href="/">Back to the site</a></p>
+
+  <div class="controls" id="controls" hidden>
+    <div class="seg" role="group" aria-label="Width">
+      <button type="button" data-width="desktop" aria-pressed="true">Desktop</button>
+      <button type="button" data-width="phone" aria-pressed="false">Phone</button>
+    </div>
+    <div class="seg" role="group" aria-label="Data">
+      <button type="button" data-source="sample" aria-pressed="true">Sample</button>
+      <button type="button" data-source="latest" aria-pressed="false">Latest run</button>
+    </div>
+    <select id="topic-filter" aria-label="Topic">
+      <option value="">All topics</option>
+    </select>
+  </div>
+  <p class="status" id="status">Loading…</p>
+  <div id="list"></div>
+</main>
+
+<script type="module">
+  import { auth, onAuthStateChanged, authFetch } from './auth.js';
+
+  const API = (() => {
+    const h = location.hostname;
+    if (h === 'localhost' || h === '127.0.0.1') return 'http://localhost:8000';
+    return 'https://agent-subscriptions-zozrn33sna-nn.a.run.app';
+  })();
+  // The same content policy the public issue view uses: no script, https images, inline styles only.
+  const POLICY = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https: data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">`;
+  const STATUS_LABEL = { ok: 'ok', failed: 'failed', skipped_no_key: 'skipped: no key', timed_out: 'timed out',
+                         empty: 'nothing that week', stale: 'stale' };
+
+  const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const statusEl = document.getElementById('status');
+  const list = document.getElementById('list');
+  const controls = document.getElementById('controls');
+  const topicFilter = document.getElementById('topic-filter');
+  let widgets = [];
+  let width = window.innerWidth < 700 ? 'phone' : 'desktop';
+  let source = 'sample';
+
+  function tags(w) {
+    const out = [];
+    out.push(`<span class="tag">${esc(w.topics.join(', '))}</span>`);
+    out.push(`<span class="tag">${esc(w.scope)} · ${esc(w.kind)}</span>`);
+    if (!w.commercial_use) out.push('<span class="tag tag--warn">non-commercial: free newsletters only</span>');
+    if (w.premium) out.push('<span class="tag">premium</span>');
+    if (w.keys.length) out.push(`<span class="tag tag--warn">needs ${esc(w.keys.join(', '))} on agent3</span>`);
+    for (const p of w.placed_in) out.push(`<span class="tag">in ${esc(p.topic)}: ${esc(p.placement)}</span>`);
+    if (!w.placed_in.length) out.push('<span class="tag">in no profile</span>');
+    if (w.last_status) {
+      const s = w.last_status.status;
+      const cls = s === 'ok' ? 'tag--ok' : (s === 'failed' || s === 'timed_out' || s === 'stale') ? 'tag--bad' : 'tag--warn';
+      out.push(`<span class="tag ${cls}">last run: ${esc(STATUS_LABEL[s] || s)}</span>`);
+    }
+    return out.join('');
+  }
+
+  function fit(frame) {
+    try {
+      const doc = frame.contentDocument;
+      if (doc && doc.body) frame.style.height = Math.max(80, doc.documentElement.scrollHeight + 4) + 'px';
+    } catch (e) { /* cross-origin: keep the default height */ }
+  }
+
+  function render() {
+    const topic = topicFilter.value;
+    const shown = widgets.filter(w => !topic || w.topics.includes(topic) || w.topics.includes('*'));
+    list.innerHTML = '';
+    for (const w of shown) {
+      const html = source === 'latest' ? (w.latest && w.latest.html) : w.sample_html;
+      const sec = document.createElement('section');
+      sec.className = 'widget';
+      const caption = source === 'latest' && w.latest
+        ? `<p class="widget__desc">From ${esc(w.latest.run_kind)} run ${esc(w.latest.run_id)} (${esc(w.latest.topic)}).</p>` : '';
+      sec.innerHTML =
+        `<div class="widget__head"><span class="widget__name">${esc(w.name)}</span><span class="widget__id">${esc(w.id)}</span></div>` +
+        `<p class="widget__desc">${esc(w.description)}</p><div class="tags">${tags(w)}</div>${caption}`;
+      if (html) {
+        const wrap = document.createElement('div');
+        wrap.className = 'frame-wrap';
+        const frame = document.createElement('iframe');
+        frame.className = 'frame' + (width === 'phone' ? ' frame--phone' : '');
+        frame.title = `${w.name} preview`;
+        // No scripts can run inside, so same-origin only lets this page measure the height.
+        frame.setAttribute('sandbox', 'allow-same-origin allow-popups allow-popups-to-escape-sandbox');
+        frame.addEventListener('load', () => { fit(frame); setTimeout(() => fit(frame), 250); });
+        frame.srcdoc = POLICY + html;
+        wrap.appendChild(frame);
+        sec.appendChild(wrap);
+      } else {
+        sec.insertAdjacentHTML('beforeend', `<p class="none">${source === 'latest' ? 'No run has produced it yet.' : 'Renders nothing.'}</p>`);
+      }
+      list.appendChild(sec);
+    }
+    statusEl.textContent = `${shown.length} widget${shown.length === 1 ? '' : 's'}.`;
+  }
+
+  function press(group, attr, value) {
+    for (const b of group.querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset[attr] === value));
+  }
+
+  document.querySelectorAll('[data-width]').forEach(b => b.addEventListener('click', () => {
+    width = b.dataset.width; press(b.parentElement, 'width', width); render();
+  }));
+  document.querySelectorAll('[data-source]').forEach(b => b.addEventListener('click', () => {
+    source = b.dataset.source; press(b.parentElement, 'source', source); render();
+  }));
+  topicFilter.addEventListener('change', render);
+  press(document.querySelector('[data-width]').parentElement, 'width', width);
+
+  async function load() {
+    try {
+      const res = await authFetch(`${API}/auth/admin/widgets`);
+      if (res.status === 403) { statusEl.textContent = 'This page is for admins only.'; return; }
+      if (!res.ok) throw new Error(res.status);
+      widgets = (await res.json()).widgets || [];
+      const topics = [...new Set(widgets.flatMap(w => w.topics).filter(t => t !== '*'))].sort();
+      topicFilter.insertAdjacentHTML('beforeend', topics.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join(''));
+      controls.hidden = false;
+      render();
+    } catch (e) {
+      console.error('[widgets] load failed:', e);
+      statusEl.textContent = "The gallery couldn't be loaded. Reload to try again.";
+    }
+  }
+
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      statusEl.innerHTML = 'Sign in as an admin to see the gallery: <a href="/login.html">sign in</a>, then come back to this page.';
+      controls.hidden = true;
+      list.innerHTML = '';
+      return;
+    }
+    load();
+  });
+</script>
+</body>
+</html>

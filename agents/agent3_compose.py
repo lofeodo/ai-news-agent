@@ -20,6 +20,7 @@ import editions
 import newsletter_def
 import render
 import run_kind
+from widgets import edition as widget_edition
 from render.blocks import render_article_card, render_paper_card  # noqa: F401  (re-exported)
 from render.palette import AMBER as _AMBER, darken as _darken  # noqa: F401  (re-exported)
 from render.text import esc as _esc, safe_url as _safe_url, strip_markdown_headers as _strip_markdown_headers  # noqa: F401
@@ -348,15 +349,17 @@ def compose_html(
     week_of: str,
     include_canada: bool = True,
     topic=None,
+    widgets: dict | None = None,
 ) -> str:
     """The newsletter email. `topic` (default: the AI newsletter) supplies the name, tagline, accent colour,
     sections and icons; everything else is the shared layout. Drawn by the block renderer from the topic's
-    ready-made definition (newsletter_def.from_topic)."""
+    ready-made definition (newsletter_def.from_topic). `widgets` is this run's widget data by id; the paper
+    spotlight always draws from `papers`, as before."""
     topic = topic or topics.get_topic()
     content = render.Content(
         intro=intro,
         sections={(topic.id, cat): arts for cat, arts in selected_by_category.items()},
-        widgets={"paper_spotlight": {"papers": papers}},
+        widgets={**(widgets or {}), "paper_spotlight": {"papers": papers}},
     )
     return render.render(newsletter_def.from_topic(topic), content, render.Look.from_topic(topic, week_of),
                          {"include_canada": include_canada}).html
@@ -413,7 +416,7 @@ def _duplicate_urls(audits: list, category: str) -> set:
 
 
 def write_edition(topic, run_id: str, kind: str, intro: str, selected_all: dict, selected_en: dict,
-                  pools: dict, audits: list) -> str | None:
+                  pools: dict, audits: list, widget_ids=None) -> str | None:
     """Save this run's edition (editions/{run_id}; data/edition.json in local mode). Best effort: returns the
     error text on failure (the caller records it as agent3_edition_error) and never raises."""
     try:
@@ -421,7 +424,8 @@ def write_edition(topic, run_id: str, kind: str, intro: str, selected_all: dict,
                        for cat, pool in pools.items()}
         edition = editions.build_edition(
             topic, run_id, kind, newsletter_send_date().date().isoformat(), intro, selected_all, selected_en,
-            clean_pools, ["paper_spotlight"] if topic.spotlight == "papers" else [])
+            clean_pools, widget_ids if widget_ids is not None else
+            (["paper_spotlight"] if topic.spotlight == "papers" else []))
         if USE_FIRESTORE:
             from google.cloud import firestore as _fs
             editions.save(_fs.Client(project=GCP_PROJECT_ID), edition)
@@ -576,12 +580,23 @@ def run(run_id: str, force: bool = False):
         intro = write_intro(papers, selected_all, intro_prompt, client)
         print(f"  Intro: {intro[:100]}...")
 
+        print("\n=== Producing widgets ===")
+        widget_db = None
+        if USE_FIRESTORE:
+            from google.cloud import firestore as _fs
+            widget_db = _fs.Client(project=GCP_PROJECT_ID)
+        widget_result = widget_edition.produce_for_run(
+            topic, run_id, week=newsletter_send_date().date().isoformat(), picks=selected_all,
+            run_doc={"paper_summaries": papers}, client=client, db=widget_db,
+            data_dir=None if USE_FIRESTORE else DATA_DIR, collection=FIRESTORE_COLLECTION)
+
         print("\n=== Composing HTML variants ===")
         week_of = newsletter_send_date().strftime("%B %d, %Y")
         newsletter_variants: dict[str, str] = {}
         for key, prefs in topic.variant_prefs().items():
             selection = selected_all if prefs["include_french"] else selected_en
-            html = compose_html(intro, papers, selection, week_of, include_canada=prefs["include_canada"], topic=topic)
+            html = compose_html(intro, papers, selection, week_of, include_canada=prefs["include_canada"], topic=topic,
+                                widgets=widget_result.data)
             newsletter_variants[key] = html
             print(f"  Variant {key}: {len(html):,} chars")
 
@@ -599,7 +614,11 @@ def run(run_id: str, force: bool = False):
 
         print("\n=== Saving the edition ===")
         kind = run_kind.RELEASE if USE_FIRESTORE and run_kind.is_release(doc) else run_kind.DEBUG
-        edition_error = write_edition(topic, run_id, kind, intro, selected_all, selected_en, pools, dedup_audits)
+        edition_widgets = list(widget_result.data)
+        if topic.spotlight == "papers" and "paper_spotlight" not in edition_widgets:
+            edition_widgets.insert(0, "paper_spotlight")   # the email always has it (drawn from `papers`)
+        edition_error = write_edition(topic, run_id, kind, intro, selected_all, selected_en, pools, dedup_audits,
+                                      edition_widgets)
 
         if USE_FIRESTORE:
             from google.cloud import firestore as _fs

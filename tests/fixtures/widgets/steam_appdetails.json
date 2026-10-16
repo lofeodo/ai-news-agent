@@ -1,0 +1,92 @@
+{
+ "730": {
+  "success": true,
+  "data": {
+   "type": "game",
+   "name": "Counter-Strike 2",
+   "steam_appid": 730,
+   "is_free": true
+  }
+ },
+ "570": {
+  "success": true,
+  "data": {
+   "type": "game",
+   "name": "Dota 2",
+   "steam_appid": 570,
+   "is_free": true
+  }
+ },
+ "578080": {
+  "success": true,
+  "data": {
+   "type": "game",
+   "name": "PUBG: BATTLEGROUNDS",
+   "steam_appid": 578080,
+   "is_free": true
+  }
+ },
+ "431960": {
+  "success": true,
+  "data": {
+   "type": "game",
+   "name": "Wallpaper Engine",
+   "steam_appid": 431960,
+   "is_free": false
+  }
+ },
+ "1422450": {
+  "success": true,
+  "data": {
+   "type": "game",
+   "name": "Deadlock",
+   "steam_appid": 1422450,
+   "is_free": false
+  }
+ },
+ "1867240": {
+  "success": true,
+  "data": {
+   "type": "game",
+   "name": "WARDOGS",
+   "steam_appid": 1867240,
+   "is_free": false
+  }
+ },
+ "1172470": {
+  "success": true,
+  "data": {
+   "type": "game",
+   "name": "Apex Legends™",
+   "steam_appid": 1172470,
+   "is_free": true
+  }
+ },
+ "3393110": {
+  "success": true,
+  "data": {
+   "type": "game",
+   "name": "AION 2",
+   "steam_appid": 3393110,
+   "is_free": true
+  }
+ },
+ "1808500": {
+  "success": true,
+  "data": {
+   "type": "game",
+   "name": "ARC Raiders",
+   "steam_appid": 1808500,
+   "is_free": false
+  }
+ },
+ "2676230": {
+  "success": true,
+  "data": {
+   "type": "advertising",
+   "name": "FiveM",
+   "steam_appid": 2676230,
+   "is_free": false
+  }
+ }
+}

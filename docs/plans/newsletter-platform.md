@@ -183,6 +183,11 @@ Edition widget data is stored at `pipeline_runs/{run_id}/widgets/{widget_id}`; p
 `widget_cache/{widget_id}__{config_hash}__{week}` with `expires_at` (Firestore TTL). A widget that fails to produce
 is left out of that week's email; it never fails a run or a send.
 
+Added by roadmap C (as built): `kind` (`external`, `derived`, `pipeline`), `keys` (env vars the source needs;
+missing = `skipped_no_key`, and such a widget is left out of the studio catalog), `max_age_hours`, and `toc` (a
+table-of-contents entry). A topic profile's `widgets:` entries take a `placement` of `after_intro`,
+`before_sections`, `after_sections` or `none` (produced for the edition but not shown in that newsletter).
+
 ### C5. Custom pool
 
 Produced weekly per unique custom section query (roadmap F), `custom_pools/{query_hash}__{week}`:
@@ -216,7 +221,7 @@ the definition limits above keep custom newsletters under it.
 |---|---|---|---|---|
 | **A** | [`topic-signup-and-sending.md`](topic-signup-and-sending.md) | Weekly release runs, signup, per-newsletter unsubscribe, sending and health check for the four new topics, each behind a launch switch. Contract C1. | nothing | in progress (PR #152) |
 | **B** | [`editions-and-renderer.md`](editions-and-renderer.md) | Editions (C2), newsletter definitions (C3) and the block renderer; agent3 renders ready-made newsletters through it, byte-identical. | nothing | **merged** (PR #151); agent3 not deployed, on purpose (see below) |
-| **C** | [`widgets.md`](widgets.md) | Widget framework (C4), the paper of the week as the first widget, a researched catalog of widgets per topic, admin widget gallery. | nothing; only its integration step (15) binds to B, which has merged | no PR yet |
+| **C** | [`widgets.md`](widgets.md) | Widget framework (C4), the paper of the week as the first widget, a researched catalog of widgets per topic, admin widget gallery. | nothing; only its integration step (15) binds to B, which has merged | built (PR #155); see "Roadmap C as built" |
 | **D** | [`newsletter-studio-ui.md`](newsletter-studio-ui.md) | The studio: build, reorder and live-preview a custom newsletter, desktop and phone, against a mock of C6. | nothing (mock API) | **done** (PR #156); hosting not deployed |
 | **F** | [`custom-topic-sourcing.md`](custom-topic-sourcing.md) | Weekly articles for custom sections ("SpaceX"), with a budget cap (C5). | nothing | no PR yet |
 | **E** | [`custom-newsletters.md`](custom-newsletters.md) | The real C6 API, saving and previewing custom newsletters, and agent4 sending them; switches the studio from mock to real. | **A and B**; uses C, D, F if merged (each optional) | waiting for A |
@@ -243,6 +248,24 @@ the definition limits above keep custom newsletters under it.
   non-AI topics have none until A's release runs.
 - **Deploy:** agent3 writes `editions/{run_id}` only once deployed. Nothing reads editions before E, so agent3 is
   deployed together with A or E rather than on its own.
+
+### Roadmap C as built (what E binds to)
+
+- **Code:** `agents/widgets/` (registry, runner, store, ui, plug-in, one module per widget), docs in
+  `docs/widgets.md`. The renderer's default `render_widget` is now the registry, so `render_from_editions` draws any
+  widget whose data it is given.
+- **For E:** validate custom definitions with `newsletter_def.parse(raw, widgets=widgets.registry.definitions_catalog(),
+  custom=True, premium=...)` (rejects non-commercial widgets); serve `widgets.registry.catalog(for_custom=True)` as
+  C6's `widgets` list; load a topic's edition widget data with `widgets.store.load_edition(db, edition["run_id"])`
+  (the edition's `widgets` list names what produced); for personal widgets call
+  `widgets.store.get_or_produce_personal(db, widget, config, week)` at preview and send (cached per config and week;
+  needs a Firestore TTL on `widget_cache.expires_at`). No personal widget ships yet.
+- **Edition widgets are produced only when a profile lists them.** `trending_models` is in no profile (AI readers
+  see no change); E adds it to `topics/ai.yaml` with `placement: none` if custom newsletters should get it.
+- **Deploy:** agent3 (produces widgets for the four topics; the AI email is unchanged), healthcheck (Widgets
+  section), agent-subscriptions (admin gallery API), hosting (`widgets.html`).
+- **For D's studio:** the registry's `config_fields` use exactly the C6 types (`tickers`, `choice`, `int`, `bool`),
+  so the studio's config forms work unchanged once `GET /catalog` serves `registry.catalog(for_custom=True)`.
 
 ### Roadmap D as built (what E binds to)
 

@@ -32,6 +32,7 @@ Credentials (API keys and similar) are supplied to the services at runtime and a
 | `ADMIN_TOKEN` | agent_subscriptions | Token for `GET /stats` (send as `Authorization: Bearer`); the route is off while unset. The home page uses the public `GET /spots` instead |
 | `ALERT_EMAIL` | agent_healthcheck | Where the draft and send health checks email their reports; never used for subscriber-facing sends |
 | `GOOGLE_OAUTH_CLIENT_ID` | agent_subscriptions | Google OAuth 2.0 Web client ID for server-side Google Sign-In (not secret) |
+| `BGG_API_TOKEN` / `RAWG_API_KEY` | agent3 | Keys for the `bgg_hot` and `out_this_week` widgets, mounted from Secret Manager. Unset (the default) = the widget is skipped; see [widgets](widgets.md#keys) |
 
 ## Topic profiles
 
@@ -49,6 +50,7 @@ One pipeline writes any number of newsletters. Everything that differs between t
 | `paywalled_domains` | Added to the global list in `config.py` |
 | `guidelines` | Extra editorial guidance pasted into the categorize and selection prompts; the cheapest place to tune a topic's quality |
 | `disclaimer` | One line in the email footer (finance uses it) |
+| `widgets` | Optional list of `{id, placement, config}`: the [widgets](widgets.md) this newsletter shows. `placement` is `after_intro` (default), `before_sections`, `after_sections`, or `none` (produced for the edition, not shown); at most 4 shown. An unknown id, a widget not offered for the topic or a bad `config` is a profile error. A `spotlight: papers` profile always has `paper_spotlight` |
 | `prompts` | Optional paths overriding the generic prompts in `prompts/generic/` (`news_filter`, `selection`, `intro`, `news_summary`, `news_summary_fallback`). The AI profile names its original files |
 
 **Add a topic:** copy a profile, change the fields, check every RSS URL returns recent items (a feed with nothing from the last week adds nothing), and run `python orchestrator.py --topic <id>` locally. Nothing else needs registering: the orchestrator, the admin topic picker and the tests discover profiles from the folder.

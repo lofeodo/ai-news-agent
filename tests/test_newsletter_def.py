@@ -126,7 +126,9 @@ def test_widget_catalog_is_injectable():
     errors = _errors(_blocks(*four, {"type": "widget", "widget": "anywhere", "topic": "ai"}), widgets=WIDGETS)
     assert any("at most 4 widget blocks" in e for e in errors)
     assert nd.parse(_blocks({"type": "widget", "widget": "market_snapshot", "topic": "finance"}), widgets=WIDGETS)
-    assert "market_snapshot" in _errors(_blocks({"type": "widget", "widget": "market_snapshot", "topic": "finance"}))[0]
+    # The default catalog is the widget registry: it knows market_snapshot, not a widget nobody built.
+    assert nd.parse(_blocks({"type": "widget", "widget": "market_snapshot", "topic": "finance"}))
+    assert "stock_watchlist" in _errors(_blocks({"type": "widget", "widget": "stock_watchlist", "topic": "finance"}))[0]
     # A plain set of ids works too.
     assert nd.parse(_blocks({"type": "widget", "widget": "x", "topic": "gaming"}), widgets={"x"})
 
@@ -164,9 +166,14 @@ def test_from_topic_ai_has_the_paper_first_and_share_after_the_first_section():
     assert types.count("share") == 1 and types.count("widget") == 1
 
 
-def test_from_topic_without_spotlight_has_no_widget_or_share():
-    types = [b.type for b in nd.from_topic(topics.get_topic("finance")).blocks]
-    assert "widget" not in types and "share" not in types
+def test_from_topic_without_spotlight_has_its_profile_widgets_but_no_paper_or_share():
+    topic = topics.get_topic("finance")
+    blocks = nd.from_topic(topic).blocks
+    widgets = [b.widget for b in blocks if b.type == "widget"]
+    assert widgets == [w.id for w in topic.placed_widgets("after_intro")] + [
+        w.id for w in topic.placed_widgets("after_sections")]
+    assert "paper_spotlight" not in widgets and "share" not in [b.type for b in blocks]
+    assert blocks[1].type == "widget" and blocks[-1].type == "widget"   # above the sections, and below
 
 
 def test_custom_sections_alone_or_with_one_topic():

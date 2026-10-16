@@ -1,0 +1,211 @@
+{
+ "terms": {
+  "url": "https://www.bankofcanada.ca/terms/"
+ },
+ "seriesDetail": {
+  "BD.CDN.10YR.DQ.YLD": {
+   "label": "Benchmark bond yield, 10-year",
+   "description": "The yield on the Government of Canada 10-year benchmark bond. This series represents the prevailing market interest rate for the 10-year Government of Canada bond and is used as a reference for financial market analysis and reporting.",
+   "dimension": {
+    "key": "d",
+    "name": "Date"
+   },
+   "dateFormat": "daily",
+   "metadata": {
+    "unit": "Percent",
+    "frequency": "Business daily"
+   }
+  },
+  "BD.CDN.2YR.DQ.YLD": {
+   "label": "Benchmark bond yield, 2-year",
+   "description": "The yield on the Government of Canada 2-year benchmark bond. This series reflects the prevailing interest rate for the 2-year term and is used to monitor short-term government borrowing costs.",
+   "dimension": {
+    "key": "d",
+    "name": "Date"
+   },
+   "dateFormat": "daily",
+   "metadata": {
+    "unit": "Percent",
+    "frequency": "Business daily"
+   }
+  },
+  "FXEURCAD": {
+   "label": "EUR/CAD",
+   "description": "Daily average exchange rate of the euro in Canadian dollars.",
+   "dimension": {
+    "key": "d",
+    "name": "Date"
+   },
+   "dateFormat": "daily",
+   "metadata": {
+    "unit": "Canadian dollars per euro",
+    "frequency": "Business daily"
+   }
+  },
+  "FXUSDCAD": {
+   "label": "USD/CAD",
+   "description": "Daily average exchange rate of the US dollar in Canadian dollars.",
+   "dimension": {
+    "key": "d",
+    "name": "Date"
+   },
+   "dateFormat": "daily",
+   "metadata": {
+    "unit": "Canadian dollars per US dollar",
+    "frequency": "Business daily"
+   }
+  }
+ },
+ "observations": [
+  {
+   "d": "2026-10-15",
+   "FXUSDCAD": {
+    "v": "1.4196"
+   },
+   "BD.CDN.10YR.DQ.YLD": {
+    "v": "3.83"
+   },
+   "BD.CDN.2YR.DQ.YLD": {
+    "v": "3.20"
+   },
+   "FXEURCAD": {
+    "v": "1.5912"
+   }
+  },
+  {
+   "d": "2026-10-14",
+   "FXUSDCAD": {
+    "v": "1.4263"
+   },
+   "BD.CDN.10YR.DQ.YLD": {
+    "v": "3.85"
+   },
+   "BD.CDN.2YR.DQ.YLD": {
+    "v": "3.21"
+   },
+   "FXEURCAD": {
+    "v": "1.5883"
+   }
+  },
+  {
+   "d": "2026-10-13",
+   "FXUSDCAD": {
+    "v": "1.4222"
+   },
+   "BD.CDN.10YR.DQ.YLD": {
+    "v": "3.87"
+   },
+   "BD.CDN.2YR.DQ.YLD": {
+    "v": "3.19"
+   },
+   "FXEURCAD": {
+    "v": "1.5919"
+   }
+  },
+  {
+   "d": "2026-10-09",
+   "FXUSDCAD": {
+    "v": "1.4271"
+   },
+   "BD.CDN.10YR.DQ.YLD": {
+    "v": "3.86"
+   },
+   "BD.CDN.2YR.DQ.YLD": {
+    "v": "3.18"
+   },
+   "FXEURCAD": {
+    "v": "1.5978"
+   }
+  },
+  {
+   "d": "2026-10-08",
+   "FXUSDCAD": {
+    "v": "1.4240"
+   },
+   "BD.CDN.10YR.DQ.YLD": {
+    "v": "3.93"
+   },
+   "BD.CDN.2YR.DQ.YLD": {
+    "v": "3.24"
+   },
+   "FXEURCAD": {
+    "v": "1.5950"
+   }
+  },
+  {
+   "d": "2026-10-07",
+   "FXUSDCAD": {
+    "v": "1.4257"
+   },
+   "BD.CDN.10YR.DQ.YLD": {
+    "v": "3.94"
+   },
+   "BD.CDN.2YR.DQ.YLD": {
+    "v": "3.23"
+   },
+   "FXEURCAD": {
+    "v": "1.5953"
+   }
+  },
+  {
+   "d": "2026-10-06",
+   "FXUSDCAD": {
+    "v": "1.4226"
+   },
+   "BD.CDN.10YR.DQ.YLD": {
+    "v": "3.92"
+   },
+   "BD.CDN.2YR.DQ.YLD": {
+    "v": "3.23"
+   },
+   "FXEURCAD": {
+    "v": "1.6017"
+   }
+  },
+  {
+   "d": "2026-10-05",
+   "FXUSDCAD": {
+    "v": "1.4254"
+   },
+   "BD.CDN.10YR.DQ.YLD": {
+    "v": "3.96"
+   },
+   "BD.CDN.2YR.DQ.YLD": {
+    "v": "3.26"
+   },
+   "FXEURCAD": {
+    "v": "1.5974"
+   }
+  },
+  {
+   "d": "2026-10-02",
+   "FXUSDCAD": {
+    "v": "1.4246"
+   },
+   "BD.CDN.10YR.DQ.YLD": {
+    "v": "3.93"
+   },
+   "BD.CDN.2YR.DQ.YLD": {
+    "v": "3.25"
+   },
+   "FXEURCAD": {
+    "v": "1.6037"
+   }
+  },
+  {
+   "d": "2026-10-01",
+   "FXUSDCAD": {
+    "v": "1.4243"
+   },
+   "BD.CDN.10YR.DQ.YLD": {
+    "v": "3.94"
+   },
+   "BD.CDN.2YR.DQ.YLD": {
+    "v": "3.27"
+   },
+   "FXEURCAD": {
+    "v": "1.6030"
+   }
+  }
+ ]
+}

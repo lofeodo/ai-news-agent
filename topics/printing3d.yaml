@@ -10,6 +10,11 @@ accent_color: "#5ec8e5"
 languages: [en]
 variants: ["0_0"]
 spotlight: none
+widgets:
+- id: number_of_week
+  placement: after_intro
+- id: release_tracker
+  placement: after_sections
 max_articles: 400
 guidelines: >-
   Readers own or are about to buy a desktop printer (FDM or resin) and want to know what to buy, what to print,

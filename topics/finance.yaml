@@ -8,6 +8,13 @@ accent_color: "#7fd1a0"
 languages: [en]
 variants: ["0_0"]
 spotlight: none
+widgets:
+- id: market_snapshot
+  placement: after_intro
+- id: rates_board
+  placement: after_sections
+- id: week_ahead
+  placement: after_sections
 max_articles: 500
 disclaimer: For information only. Nothing here is financial, investment or tax advice.
 guidelines: >-

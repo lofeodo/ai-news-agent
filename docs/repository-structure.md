@@ -11,6 +11,9 @@
 │   ├── render/                     # Block renderer: engine (render), from_editions, blocks, shell, palette, text
 │   ├── newsletter_def.py           # Newsletter definitions (ordered blocks): validator, from_topic
 │   ├── editions.py                 # Editions: build, save, latest / for_week lookups
+│   ├── widgets/                    # Widgets (docs/widgets.md): registry, runner, store, ui, one module per widget
+│   ├── widget_report.py            # Health check's informational Widgets section
+│   ├── admin_widgets.py            # GET /auth/admin/widgets (admin widget gallery), mounted for agent-subscriptions
 │   ├── agent4_send.py              # Per-subscriber personalization + SendGrid send
 │   ├── agent_healthcheck.py        # Standalone health check + alert (draft check Sunday, send check Monday)
 │   ├── agent_subscriptions.py      # Subscription FastAPI service (separate deployment)
@@ -61,6 +64,7 @@
 ├── evals/                          # Evaluation harnesses, frozen fixtures, labels, results/*.json (see evals/README.md)
 ├── tests/                          # pytest suite (stubbed Claude client + fetcher; no network or keys)
 │   └── fixtures/render/            # Email golden files (make_render_goldens.py) + edition fixtures
+│   └── fixtures/widgets/           # Recorded widget source responses (two synthetic, for keyed sources)
 │   ├── conftest.py / fakes*.py     # Path setup; scripted fake Anthropic client, fetcher and Firestore
 │   └── test_*.py                   # agents, graph, evals, drift, judge, click signal, injection defences
 ├── docs/

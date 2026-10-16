@@ -167,6 +167,11 @@ def item_list(items) -> Raw:
                + "".join(out) + "</table>")
 
 
+def accent_of(look) -> str:
+    """The newsletter's accent from a render Look (or AMBER when there is none, e.g. a bare preview)."""
+    return getattr(look, "accent", None) or AMBER
+
+
 def card(widget_id: str, title: str, body: str, accent: str, icon: str = "", aside=None,
          footer: str = "") -> str:
     """The widget shell: one table row, dark card with the newsletter's accent bar, kicker title (and an

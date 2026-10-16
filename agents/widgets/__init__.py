@@ -12,6 +12,7 @@ from .base import ProduceContext, Widget, WidgetSkip  # noqa: F401
 
 BUILTIN = (
     "paper_spotlight",
+    "release_tracker",
 )
 
 for _name in BUILTIN:

@@ -1,0 +1,2 @@
+# Render goldens are compared byte for byte; never convert their line endings.
+tests/fixtures/render/** -text

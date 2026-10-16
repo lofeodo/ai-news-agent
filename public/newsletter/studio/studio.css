@@ -703,6 +703,20 @@ body.is-dragging-any, body.is-dragging-any * { cursor: grabbing !important; user
   background: #0d0d0d;
 }
 .pv__status { font-size: 0.74rem; color: var(--st-dim); margin-top: 6px; min-height: 1.2em; }
+.pv[data-state="pending"] .pv__frame iframe,
+.pv[data-state="loading"] .pv__frame iframe,
+.pv[data-state="stale"] .pv__frame iframe { opacity: .55; transition: opacity .2s; }
+.pv[data-state="stale"] .pv__status { color: #e8c88a; }
+
+.meter__row { display: flex; justify-content: space-between; gap: 12px; font-size: 0.72rem; color: var(--muted); }
+.meter__value { color: var(--text); font-variant-numeric: tabular-nums; }
+.meter__track { position: relative; display: block; height: 4px; margin-top: 6px; background: #222; overflow: hidden; }
+.meter__fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--success); transition: width .3s var(--ease), background .2s; }
+.meter__mark { position: absolute; top: 0; bottom: 0; width: 1px; background: #666; }
+.meter[data-level="warn"] .meter__fill { background: #e0b062; }
+.meter[data-level="over"] .meter__fill { background: var(--error); }
+.meter__note { font-size: 0.72rem; color: #e8c88a; margin-top: 6px; }
+.meter[data-level="over"] .meter__note { color: var(--error); }
 .pv[data-state="error"] .pv__status { color: var(--error); }
 .pv__warnings { list-style: none; font-size: 0.74rem; color: #e8c88a; }
 .pv__warnings li { margin-top: 6px; padding-left: 14px; position: relative; line-height: 1.5; }

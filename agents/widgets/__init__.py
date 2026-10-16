@@ -17,6 +17,7 @@ BUILTIN = (
     "most_played",
     "deals",
     "trending_models",
+    "rates_board",
 )
 
 for _name in BUILTIN:

@@ -113,8 +113,12 @@ def render_article_card(article: dict, is_last: bool = False, accent: str = AMBE
     )
 
 
-def section_strip(num: str, icon: str, label: str, accent: str) -> str:
-    """Dark section-number strip (editorial zine style)."""
+def section_strip(num: str, icon: str, label: str, accent: str,
+                  topic_label: str | None = None, topic_accent: str | None = None) -> str:
+    """Dark section-number strip (editorial zine style). In an email that mixes topics, `topic_label` names the
+    section's topic in that topic's accent colour ("Finance · Crypto & Fintech")."""
+    if topic_label:
+        label = f'<span style="color:{topic_accent or accent};">{topic_label}</span> &middot; {label}'
     return (
         f'<tr><td class="mob-pad" style="background:{D2};padding:13px 40px;">'
         f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">\n'
@@ -172,13 +176,14 @@ def share_strip() -> str:
     )
 
 
-def section_rows(name: str, num: str, icon: str, body: str, accent: str, marker: str | None = None) -> str:
+def section_rows(name: str, num: str, icon: str, body: str, accent: str, marker: str | None = None,
+                 topic_label: str | None = None, topic_accent: str | None = None) -> str:
     """A news section: SECTION markers around the strip and the white body row. The markers enable
     per-subscriber filtering/reordering in agent4; `marker` overrides the name inside them."""
     marker = marker or name
     return (
         f'<!-- SECTION:{marker} -->\n'
-        + section_strip(num, icon, name, accent)
+        + section_strip(num, icon, name, accent, topic_label, topic_accent)
         + f'<tr><td class="mob-pad" style="background:{WHITE};padding:28px 40px;">\n'
           f'{body}\n'
           f'</td></tr>\n'

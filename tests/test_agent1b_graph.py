@@ -125,7 +125,7 @@ def test_final_articles_have_original_shape_no_confidence():
 def _run_agent(monkeypatch, tmp_path, mode, client):
     monkeypatch.setattr(a1b, "AGENT1B_MODE", mode)
     monkeypatch.setattr(a1b.anthropic, "Anthropic", lambda **kw: client)   # single-pass builds its own client
-    monkeypatch.setattr(g, "run_graph", lambda run_id: REAL_RUN_GRAPH(run_id, client=client, fetcher=Fetcher(),
+    monkeypatch.setattr(g, "run_graph", lambda run_id, **kw: REAL_RUN_GRAPH(run_id, client=client, fetcher=Fetcher(),
                                                              cfg=g.ReviewConfig(fetch_timeout=1)))
     a1b.run("t")
     with open(tmp_path / "news_filtered.json", encoding="utf-8") as f:

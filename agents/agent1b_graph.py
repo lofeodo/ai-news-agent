@@ -25,6 +25,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send
 
 import agent1b_fetch_news as a1b
+import topics
 import tracing
 from prompt_guard import GUARD_REVIEW, neutralize_tags
 from config import SCORING_MODEL
@@ -315,9 +316,11 @@ def build_review_graph(client, fetcher: Callable, cfg: ReviewConfig):
 
 
 def build_graph(client=None, fetcher: Callable | None = None, cfg: ReviewConfig | None = None,
-                run_id: str | None = None):
-    """Compile the agent1b graph. client/fetcher are injectable for tests."""
+                run_id: str | None = None, topic=None):
+    """Compile the agent1b graph. client/fetcher are injectable for tests. `topic` is the newsletter's profile
+    (default: the AI newsletter). The review loop is AI-only, so another topic never reviews."""
     cfg     = cfg or ReviewConfig.from_env()
+    topic   = topic or topics.get_topic()
     client  = client or tracing.make_client("agent1b", run_id)
     if fetcher is None:
         from article_fetch import fetch_article_text_result
@@ -328,24 +331,25 @@ def build_graph(client=None, fetcher: Callable | None = None, cfg: ReviewConfig 
         return meter, MeteredClient(client, meter)
 
     def fetch(state: AgentState) -> dict:
-        articles = a1b.fetch_hn_articles() + a1b.fetch_newsapi_articles()
+        articles = a1b.fetch_topic_articles(topic)
         print(f"\nMerged: {len(articles)} articles total")
         return {"articles": articles}
 
     def prefilter(state: AgentState) -> dict:
         print("Pre-filtering...")
-        return {"articles": a1b.prefilter(state["articles"])}
+        return {"articles": a1b.prefilter(state["articles"], topic)}
 
     def language_filter(state: AgentState) -> dict:
         meter, mclient = _metered("language_filter")
-        articles = a1b.language_filter(state["articles"], client=mclient)
+        articles = a1b.language_filter(state["articles"], client=mclient, allowed=tuple(topic.languages))
         return {"articles": articles, "token_usage": {"language_filter": meter.as_usage()}}
 
     def categorize(state: AgentState) -> dict:
         meter, mclient = _metered("categorize")
         # Review off: ask for plain categories (no confidence in tool or prompt).
-        review_on = cfg.max_articles > 0
-        categorized = a1b.filter_and_categorize(state["articles"], client=mclient, with_confidence=review_on)
+        review_on = cfg.max_articles > 0 and topic.is_default
+        categorized = a1b.filter_and_categorize(state["articles"], client=mclient, with_confidence=review_on,
+                                                topic=topic)
 
         low = [a for a in categorized
                if review_on and (a.get("confidence") is None or a["confidence"] < cfg.confidence_threshold)]
@@ -404,10 +408,11 @@ def build_graph(client=None, fetcher: Callable | None = None, cfg: ReviewConfig 
     return g.compile()
 
 
-def run_graph(run_id: str, client=None, fetcher: Callable | None = None, cfg: ReviewConfig | None = None) -> dict:
+def run_graph(run_id: str, client=None, fetcher: Callable | None = None, cfg: ReviewConfig | None = None,
+              topic=None) -> dict:
     """Run the graph; returns the final state (articles, final, audit, token_usage, ...)."""
     tracing.configure()
-    graph = build_graph(client=client, fetcher=fetcher, cfg=cfg, run_id=run_id)
+    graph = build_graph(client=client, fetcher=fetcher, cfg=cfg, run_id=run_id, topic=topic)
     return graph.invoke(
         {"run_id": run_id, "reviewed": [], "tool_call_counts": {}, "token_usage": {}},
         config={"run_name": "agent1b", "tags": ["agent1b"], "metadata": {"run_id": run_id},

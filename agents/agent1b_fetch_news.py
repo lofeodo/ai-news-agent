@@ -13,12 +13,13 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
 import config
-from filter_tool import CATEGORIES, FILTER_TOOL, FILTER_TOOL_WITH_CONFIDENCE, LANGUAGE_FILTER_TOOL
+from filter_tool import CATEGORIES, FILTER_TOOL, FILTER_TOOL_WITH_CONFIDENCE, LANGUAGE_FILTER_TOOL, build_filter_tool
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from prompt_guard import GUARD_XML_ARTICLES, neutralize_tags
 from drift import summarize_audit
 from rss_source import fetch_rss_articles
+import topics
 from config import (
     DATA_DIR, SCORING_MODEL, MAX_TOKENS, FILTER_MAX_TOKENS,
     NEWS_FETCH_SIZE, NEWSAPI_QUERIES,
@@ -204,8 +205,8 @@ def is_social_media(url: str) -> bool:
     return host in _SOCIAL_MEDIA_HOSTS
 
 
-def is_paywalled(url: str) -> bool:
-    for domain in PAYWALLED_DOMAINS:
+def is_paywalled(url: str, extra_domains=()) -> bool:
+    for domain in (*PAYWALLED_DOMAINS, *extra_domains):
         if domain in url:
             return True
     return False
@@ -220,7 +221,31 @@ def is_non_latin(text: str) -> bool:
     return False
 
 
-def prefilter(articles: list) -> list:
+def cap_articles(articles: list, limit: int) -> list:
+    """At most `limit` articles, spread across publishers so one chatty feed cannot crowd out the rest.
+
+    Round-robin over the article hosts; within a host, articles with a community score come first (highest
+    first), the rest keep their order (feeds list newest first). limit <= 0 means no cap.
+    """
+    if limit <= 0 or len(articles) <= limit:
+        return articles
+    by_host: dict = {}
+    for a in articles:
+        by_host.setdefault(urlparse(a.get("url", "")).hostname or "", []).append(a)
+    for group in by_host.values():
+        group.sort(key=lambda a: -(a.get("hn_score") or -1))   # stable: unscored keep their order
+    kept, queues = [], [list(g) for g in by_host.values()]
+    while len(kept) < limit and any(queues):
+        for q in queues:
+            if q and len(kept) < limit:
+                kept.append(q.pop(0))
+    print(f"  Capped at {limit} articles (from {len(articles)}), spread over {len(by_host)} sites")
+    return kept
+
+
+def prefilter(articles: list, topic=None) -> list:
+    """Code-level cleaning. A topic adds its own paywalled domains and an article cap (the AI newsletter has none)."""
+    extra_paywalls = topic.paywalled_domains if topic else ()
     seen_urls = set()
     filtered  = []
     stats     = {"no_url": 0, "no_title": 0, "social_media": 0, "paywalled": 0, "non_latin": 0, "duplicate": 0}
@@ -238,7 +263,7 @@ def prefilter(articles: list) -> list:
         if is_social_media(url):
             stats["social_media"] += 1
             continue
-        if is_paywalled(url):
+        if is_paywalled(url, extra_paywalls):
             stats["paywalled"] += 1
             continue
         if is_non_latin(title):
@@ -253,6 +278,8 @@ def prefilter(articles: list) -> list:
 
     print(f"  Pre-filter removed: {stats}")
     print(f"  Remaining: {len(filtered)} articles")
+    if topic:
+        filtered = cap_articles(filtered, topic.max_articles)
     return filtered
 
 
@@ -335,7 +362,7 @@ def format_samples_for_lang_prompt(articles: list) -> str:
     return "\n".join(blocks)
 
 
-def language_filter_batch(batch: list, batch_index: int, client: anthropic.Anthropic) -> list:
+def language_filter_batch(batch: list, batch_index: int, client: anthropic.Anthropic, allowed=("en", "fr")) -> list:
     samples = format_samples_for_lang_prompt(batch)
     prompt  = LANG_FILTER_PROMPT.format(samples=samples)
 
@@ -372,8 +399,8 @@ def language_filter_batch(batch: list, batch_index: int, client: anthropic.Anthr
             continue
         labelled.add(idx)
         article = {k: v for k, v in batch[idx].items() if k != "_lang_excerpt"}
-        if language == "other":
-            print(f"  [lang] drop other: {urlparse(article['url']).hostname} | {article['title'][:70]}")
+        if language not in allowed:
+            print(f"  [lang] drop {language}: {urlparse(article['url']).hostname} | {article['title'][:70]}")
             continue
         results.append({**article, "language": language})
 
@@ -384,7 +411,7 @@ def language_filter_batch(batch: list, batch_index: int, client: anthropic.Anthr
     return results
 
 
-def language_filter(articles: list, client=None) -> list:
+def language_filter(articles: list, client=None, allowed=("en", "fr")) -> list:
     n_batches = (len(articles) + LANG_BATCH_SIZE - 1) // LANG_BATCH_SIZE
     print(f"\nLanguage filtering {len(articles)} articles in {n_batches} batch(es)...")
 
@@ -394,7 +421,7 @@ def language_filter(articles: list, client=None) -> list:
     all_results = []
     with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_CLAUDE_CALLS) as executor:
         future_to_batch = {
-            _submit(executor, language_filter_batch, batch, i + 1, client): i
+            _submit(executor, language_filter_batch, batch, i + 1, client, allowed): i
             for i, batch in enumerate(batches)
         }
         for future in as_completed(future_to_batch):
@@ -429,6 +456,7 @@ def filter_batch(batch: list, batch_index: int, prompt_template: str, client: an
                  tool: dict = FILTER_TOOL, with_confidence: bool = False) -> list:
     formatted = format_articles_for_prompt(batch)
     prompt    = prompt_template.format(articles=formatted)
+    valid_categories = tool["input_schema"]["properties"]["articles"]["items"]["properties"]["category"]["enum"]
 
     with _semaphore:
         response = claude_call_with_retry(
@@ -457,7 +485,7 @@ def filter_batch(batch: list, batch_index: int, prompt_template: str, client: an
     for item in selected:
         idx      = item.get("index")
         category = item.get("category")
-        if category not in CATEGORIES:
+        if category not in valid_categories:
             print(f"  [warning] batch {batch_index}: invalid category {category!r}, skipping")
         elif not isinstance(idx, int) or isinstance(idx, bool):
             print(f"  [warning] batch {batch_index}: non-integer index {idx!r}, skipping")
@@ -473,21 +501,37 @@ def filter_batch(batch: list, batch_index: int, prompt_template: str, client: an
     return results
 
 
-def filter_and_categorize(articles: list, client=None, with_confidence: bool = False) -> list:
+def _fill_topic_vars(template: str, topic) -> str:
+    """Put a topic's name, audience and category definitions into a generic prompt template.
+
+    Braces in the inserted text are doubled so the later str.format(articles=...) leaves them alone.
+    """
+    for key, value in topic.prompt_vars().items():
+        template = template.replace("{" + key + "}", value.replace("{", "{{").replace("}", "}}"))
+    return template
+
+
+def filter_and_categorize(articles: list, client=None, with_confidence: bool = False, topic=None) -> list:
+    """Filter for relevance and categorize. `topic` (a non-AI topic) supplies the prompt and the category list;
+    without one this is the AI newsletter's original behaviour."""
     n_batches = (len(articles) + FILTER_BATCH_SIZE - 1) // FILTER_BATCH_SIZE
     print(f"\nFiltering and categorizing {len(articles)} articles in {n_batches} batches...")
 
-    with open("prompts/news_filter_prompt.txt", "r", encoding="utf-8") as f:
-        prompt_template = f.read()
+    custom = topic is not None and not topic.is_default
+    if custom:
+        prompt_template = _fill_topic_vars(topic.read_prompt("news_filter"), topic)
+        tool = build_filter_tool(topic.category_names, with_confidence)
+    else:
+        with open("prompts/news_filter_prompt.txt", "r", encoding="utf-8") as f:
+            prompt_template = f.read()
+        tool = FILTER_TOOL_WITH_CONFIDENCE if with_confidence else FILTER_TOOL
 
-    tool = FILTER_TOOL
     if with_confidence:
         with open("prompts/news_filter_confidence_addendum.txt", "r", encoding="utf-8") as f:
             addendum = f.read()
         marker = "Articles:\n{articles}"
         assert marker in prompt_template
         prompt_template = prompt_template.replace(marker, addendum + marker)
-        tool = FILTER_TOOL_WITH_CONFIDENCE
 
     client = client or anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_1ST_API_KEY"))
 
@@ -589,14 +633,14 @@ def _write_review_audit(run_id: str, state: dict) -> None:
         print(f"[agent1b]  Failed to write review audit (ignored): {e}", flush=True)
 
 
-def pool_warning(by_category: dict) -> str | None:
+def pool_warning(by_category: dict, topic=None) -> str | None:
     """A short note when the selected pool is thin, else None. The run continues either way;
     the health check reports the note."""
     total = sum(len(v) for v in by_category.values())
     notes = []
     if total < config.MIN_NEWS_ARTICLES:
         notes.append(f"only {total} articles selected (expected at least {config.MIN_NEWS_ARTICLES})")
-    thin = [f"{c} ({len(by_category.get(c, []))})" for c in CATEGORIES
+    thin = [f"{c} ({len(by_category.get(c, []))})" for c in (topic.category_names if topic else CATEGORIES)
             if len(by_category.get(c, [])) < config.MIN_ARTICLES_PER_CATEGORY]
     if thin:
         notes.append(f"fewer than {config.MIN_ARTICLES_PER_CATEGORY} articles in: " + ", ".join(thin))
@@ -608,13 +652,17 @@ def run(run_id: str):
     start_time = datetime.now()
 
     try:
+        topic = topics.topic_for_run(run_id, USE_FIRESTORE)
+        print(f"[agent1b]  topic: {topic.id}", flush=True)
         graph_state = None
         if AGENT1B_MODE == "single_pass":
+            if not topic.is_default:
+                raise RuntimeError(f"AGENT1B_MODE=single_pass only supports the AI newsletter, not {topic.id!r}")
             all_articles, filtered = collect_and_categorize_single_pass()
         else:
             # Imported lazily: keeps langgraph off the import path of every other service.
             import agent1b_graph
-            graph_state  = agent1b_graph.run_graph(run_id)
+            graph_state  = agent1b_graph.run_graph(run_id, topic=topic)
             all_articles = graph_state["articles"]
             filtered     = graph_state["final"]
 
@@ -627,7 +675,7 @@ def run(run_id: str):
             cat = article["category"]
             by_category.setdefault(cat, []).append(article)
 
-        warning = pool_warning(by_category)
+        warning = pool_warning(by_category, topic)
         if warning:
             print(f"[agent1b]  WARNING: {warning}")
 

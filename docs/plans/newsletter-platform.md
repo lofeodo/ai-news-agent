@@ -210,7 +210,7 @@ the definition limits above keep custom newsletters under it.
 | **A** | [`topic-signup-and-sending.md`](topic-signup-and-sending.md) | Weekly release runs, signup, per-newsletter unsubscribe, sending and health check for the four new topics, each behind a launch switch. Contract C1. | nothing | in progress (PR #152) |
 | **B** | [`editions-and-renderer.md`](editions-and-renderer.md) | Editions (C2), newsletter definitions (C3) and the block renderer; agent3 renders ready-made newsletters through it, byte-identical. | nothing | **merged** (PR #151); agent3 not deployed, on purpose (see below) |
 | **C** | [`widgets.md`](widgets.md) | Widget framework (C4), the paper of the week as the first widget, a researched catalog of widgets per topic, admin widget gallery. | nothing; only its integration step (15) binds to B, which has merged | no PR yet |
-| **D** | [`newsletter-studio-ui.md`](newsletter-studio-ui.md) | The studio: build, reorder and live-preview a custom newsletter, desktop and phone, against a mock of C6. | nothing (mock API) | no PR yet |
+| **D** | [`newsletter-studio-ui.md`](newsletter-studio-ui.md) | The studio: build, reorder and live-preview a custom newsletter, desktop and phone, against a mock of C6. | nothing (mock API) | **done** (PR #156); hosting not deployed |
 | **F** | [`custom-topic-sourcing.md`](custom-topic-sourcing.md) | Weekly articles for custom sections ("SpaceX"), with a budget cap (C5). | nothing | no PR yet |
 | **E** | [`custom-newsletters.md`](custom-newsletters.md) | The real C6 API, saving and previewing custom newsletters, and agent4 sending them; switches the studio from mock to real. | **A and B**; uses C, D, F if merged (each optional) | waiting for A |
 | **G** | not written yet | Payments (Stripe), plans and the upgrade flow. Written after the studio has been used by invited members. | E | not written |
@@ -236,6 +236,23 @@ the definition limits above keep custom newsletters under it.
   non-AI topics have none until A's release runs.
 - **Deploy:** agent3 writes `editions/{run_id}` only once deployed. Nothing reads editions before E, so agent3 is
   deployed together with A or E rather than on its own.
+
+### Roadmap D as built (what E binds to)
+
+- **Page:** `public/newsletter/studio.html` + `public/newsletter/studio/` (see `docs/architecture.md#studio-custom-newsletter-builder`).
+  It already calls every C6 route through `studio/api.js`; it switches from the mock to the real API by itself
+  as soon as `GET /catalog` stops answering 404. E does not edit the page beyond the items below.
+- **What the page expects from E's routes:** `GET /catalog` in the exact C6 shape, sent with the sign-in token
+  when there is one (so admins get hidden topics, shown with a "Not launched" tag); a 400 on save carries
+  `{"errors": [...]}` (top level or under `detail`) in `newsletter_def`'s own wording, where a `block N (...)`
+  prefix puts the message on block N; a 409 (or `detail: "limit_reached"`) when the member already has `limit`
+  newsletters; `POST /auth/newsletters/preview` returns `warnings` in `render_from_editions`' wording.
+- **For E to add:** `studio.html` to `ALLOWED_RETURN_PAGES` in `auth.js` (today "Sign in" from the studio returns
+  to the home page); the top-bar Studio link (after A merged); custom sections preview as "left out" until F's
+  pools exist, which the page shows as a warning.
+- **Widget catalog:** the mock lists the planned widgets of `widgets.md` (`tests/make_studio_fixtures.py` `WIDGETS`).
+  When C merges, `GET /catalog` serves C's registry; keep the C6 widget fields so the page's config forms (types
+  `int`, `choice`, `bool`, `tickers`) keep working.
 
 ## Running roadmaps in parallel
 

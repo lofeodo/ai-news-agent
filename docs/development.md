@@ -45,6 +45,18 @@ firebase serve --only hosting
 # serve those paths.
 ```
 
+**Open the newsletter studio without a backend (mock mode):**
+```bash
+python -m http.server 8765 --directory public/newsletter
+# http://127.0.0.1:8765/studio.html?mock=1              the full studio (premium)
+# http://127.0.0.1:8765/studio.html?mock=1&as=free      the upgrade gate over the sample
+# http://127.0.0.1:8765/studio.html?mock=1&as=signedout the sign-in pitch over the sample
+# http://127.0.0.1:8765/studio/model.test.html          model tests (prints PASS n/n)
+```
+Mock mode uses made-up stories and keeps saved newsletters in the browser's `localStorage`. After changing a topic
+profile or the renderer, run `python tests/make_studio_fixtures.py` to redraw the mock's fixtures (the test suite
+fails until you do).
+
 ## Deployment
 
 **Build and push to Artifact Registry:**

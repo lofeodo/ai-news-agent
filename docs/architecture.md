@@ -86,6 +86,33 @@ per newsletter). Why: [docs/decisions/0003-editions-and-definitions.md](decision
   the default knows only the paper spotlight. `python tools/render_sample.py` writes a mixed sample to
   `data/sample_mixed.html`.
 
+## Studio (custom newsletter builder)
+
+The premium page where a member builds their own newsletter: `public/newsletter/studio.html` (roadmap D,
+[docs/plans/newsletter-studio-ui.md](plans/newsletter-studio-ui.md)). Unlinked and `noindex` until roadmap E adds
+the top-bar link. Plain ES modules, no build step:
+
+- `studio/model.js`: the definition being edited and every change to it as pure functions (add, remove, move,
+  items, widget settings, name, colour), the contract C3 limits as plain messages ("Up to 8 sections."), and
+  `serialize()` to C3 JSON. Tested in the browser by `studio/model.test.html` (not deployed).
+- `studio/api.js`: the studio API (contract C6) through `authFetch`, errors mapped to user messages.
+  `connect()` picks the API for the page load: the mock with `?mock=1`, or when `GET /catalog` answers 404 (until
+  roadmap E builds the routes); the real API otherwise.
+- `studio/mock-api.js`: the same functions against fixtures. Saved newsletters live in `localStorage`
+  (`lsm_studio_mock_v1`), refine is simulated, and the preview is assembled from `studio/fixtures/fragments/`, which
+  `python tests/make_studio_fixtures.py` draws with the real renderer (placeholders in place of names and colours).
+  The mock's preview is byte-identical to `render_from_editions` for the same sample content. Its catalog comes
+  from `topics/*.yaml` plus the planned widget list (`docs/plans/widgets.md`, minus BoardGameGeek);
+  `tests/test_studio_fixtures.py` fails when the profiles, the renderer or the fixtures drift apart.
+- `studio/app.js` (gating, layout, state), `library.js` (what can be added, custom-section refine through the
+  existing `POST /auth/sections/refine`), `canvas.js` (the blocks), `dnd.js` (pointer-event drag and drop, so touch
+  works), `preview.js` (600 ms debounce, sandboxed `srcdoc` with the archive's content policy, Desktop/Phone
+  width, size meter), `manage.js` (switch, save with server errors mapped onto blocks, subscribe, delete).
+- **Gating:** the page reads `tier` from `/auth/me`; signed-out visitors get a pitch and free members the upgrade
+  gate, each over a read-only sample newsletter (mock content). The server enforces premium on every route.
+- **Layout:** three columns from 1100 px (library, newsletter, preview), two below with the preview sliding over,
+  and on phones Build/Preview tabs with the library as a bottom sheet.
+
 ## Inside agent 1b (LangGraph)
 
 ```mermaid

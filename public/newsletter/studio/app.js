@@ -39,15 +39,18 @@ export const ctx = {
   limit: 3,
   started: false,         // false: show the "start from" choices instead of the blocks
 
-  /** Replace the state, re-render, and refresh the preview. */
-  set(next, { preview = true, focus = null } = {}) {
+  /** Replace the state, re-render, and refresh the preview. `render: false` skips rebuilding the page (a text
+   *  field being typed into keeps its caret); the counts, dirty mark and preview still update. */
+  set(next, { preview = true, focus = null, render = true } = {}) {
     if (ctx.readOnly || next === ctx.state) return;
     ctx.state = next;
     ctx.started = true;
-    renderAll();
+    if (render) renderAll();
+    else { applyAccent(ctx.state.accent_color); ctx.renderCounts?.(); ctx.onChange?.(); }
     if (focus) focusBlock(focus);
     if (preview) requestPreview();
   },
+  liveErrors: new Map(),
   isDirty() {
     if (!ctx.started) return false;
     return ctx.saved ? !M.sameDefinition(ctx.saved.state, ctx.state) : ctx.state.blocks.length > 0;
@@ -110,7 +113,8 @@ function openLibrary() {
   returnFocus = document.activeElement;
   studio.dataset.libraryOpen = 'true';
   $('scrim').hidden = false;
-  setTimeout(() => $('lib-search').focus({ preventScroll: true }), 50);
+  // The heading, not the search box: focusing a field would open the keyboard over the sheet.
+  setTimeout(() => $('lib-title').focus({ preventScroll: true }), 50);
 }
 
 function closeLibrary() {
@@ -183,6 +187,7 @@ function renderAll() {
   renderLibrary();
   renderCanvas();
   renderEmpty();
+  ctx.onChange?.();
 }
 
 function renderEmpty() {
@@ -223,8 +228,9 @@ function startFrom(state, message) {
   renderAll();
   requestPreview({ now: true });
   announce(message);
-  $('nl-name').focus();
-  $('nl-name').select();
+  // On phones, focusing the name would pop the keyboard over the newsletter just started.
+  if (phone.matches) $('blocks-title').focus();
+  else { $('nl-name').focus(); $('nl-name').select(); }
 }
 
 // ── Gate ─────────────────────────────────────────────────────────────────────

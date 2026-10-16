@@ -55,7 +55,7 @@
     <!-- Library: what can be added. A column on desktop and tablet, a sheet on phones. -->
     <section class="lib" id="library" aria-labelledby="lib-title">
       <div class="lib__head">
-        <h2 class="col-title" id="lib-title">Add to your newsletter</h2>
+        <h2 class="col-title" id="lib-title" tabindex="-1">Add to your newsletter</h2>
         <button type="button" class="icon-btn lib__close" id="lib-close" aria-label="Close the library">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
         </button>
@@ -73,7 +73,7 @@
       <div class="canvas__scroll" id="canvas-scroll">
         <div class="masthead" id="masthead">
           <label class="masthead__label" for="nl-name">Newsletter name</label>
-          <input type="text" id="nl-name" class="masthead__name" maxlength="60" autocomplete="off" spellcheck="false">
+          <textarea id="nl-name" class="masthead__name" maxlength="60" rows="1" autocomplete="off" spellcheck="false"></textarea>
           <div class="masthead__rule" aria-hidden="true"></div>
           <div class="masthead__colour" id="colour-picker"></div>
         </div>

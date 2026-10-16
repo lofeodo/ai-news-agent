@@ -1,0 +1,1184 @@
+{
+ "week_of": "October 19, 2026",
+ "intro": "A busy week: <three> big launches & a {{PREFERENCES_URL}} test. A busy week: <three> big launches & a {{PREFERENCES_URL}} test. A busy week: <three> big launches & a {{PREFERENCES_URL}} test. A busy week: <three> big launches & a {{PREFERENCES_URL}} test. ",
+ "papers": [
+  {
+   "title": "Scaling <Sparse> Experts & Friends",
+   "authors": [
+    "Ada Lovelace",
+    "Alan Turing",
+    "Grace Hopper",
+    "Edsger Dijkstra"
+   ],
+   "summary": "## Heading the model added\nA hook about the paper, in two short sentences. It matters.",
+   "hf_url": "https://huggingface.co/papers/2610.00001",
+   "pdf_url": "https://arxiv.org/pdf/2610.00001",
+   "scores": {
+    "total": 37,
+    "upvotes": 1234
+   }
+  }
+ ],
+ "topics": {
+  "ai": {
+   "selected_all": {
+    "Model & Product Releases": [
+     {
+      "title": "Model & Product Releases story 0 for ai",
+      "url": "https://news.example/ai/model/0",
+      "summary": "What happened in Model & Product Releases (0), and why it matters to readers of ai.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Nouvelle 9 en Model & Product Releases",
+      "url": "javascript:alert(1)",
+      "summary": "Résumé en français 9 — Model & Product Releases.",
+      "description": "",
+      "source": "hackernews",
+      "language": "fr",
+      "hn_score": null
+     }
+    ],
+    "Policy, Law & Regulation": [
+     {
+      "title": "Policy, Law & Regulation story 0 for ai",
+      "url": "https://news.example/ai/policy,/0",
+      "summary": "What happened in Policy, Law & Regulation (0), and why it matters to readers of ai.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Policy, Law & Regulation {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/ai/policy,/1",
+      "summary": "What happened in Policy, Law & Regulation (1), and why it matters to readers of ai.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     },
+     {
+      "title": "Policy, Law & Regulation story 2 for ai",
+      "url": "https://news.example/ai/policy,/2",
+      "summary": "",
+      "description": "Only a description for Policy, Law & Regulation 2.",
+      "source": "rss",
+      "language": "en",
+      "hn_score": 0,
+      "used_fallback": true
+     }
+    ],
+    "Open Source & Tools": [],
+    "Safety & Alignment": [],
+    "Industry & Business": [
+     {
+      "title": "Nouvelle 9 en Industry & Business",
+      "url": "javascript:alert(1)",
+      "summary": "Résumé en français 9 — Industry & Business.",
+      "description": "",
+      "source": "hackernews",
+      "language": "fr",
+      "hn_score": null
+     }
+    ],
+    "Society & Culture": [
+     {
+      "title": "Society & Culture story 0 for ai",
+      "url": "https://news.example/ai/society/0",
+      "summary": "What happened in Society & Culture (0), and why it matters to readers of ai.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Society & Culture {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/ai/society/1",
+      "summary": "What happened in Society & Culture (1), and why it matters to readers of ai.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     }
+    ],
+    "Canada & Montreal": [
+     {
+      "title": "Canada & Montreal story 0 for ai",
+      "url": "https://news.example/ai/canada/0",
+      "summary": "What happened in Canada & Montreal (0), and why it matters to readers of ai.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Canada & Montreal {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/ai/canada/1",
+      "summary": "What happened in Canada & Montreal (1), and why it matters to readers of ai.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     },
+     {
+      "title": "Canada & Montreal story 2 for ai",
+      "url": "https://news.example/ai/canada/2",
+      "summary": "",
+      "description": "Only a description for Canada & Montreal 2.",
+      "source": "rss",
+      "language": "en",
+      "hn_score": 0,
+      "used_fallback": true
+     }
+    ]
+   },
+   "selected_en": {
+    "Model & Product Releases": [
+     {
+      "title": "Model & Product Releases story 0 for ai",
+      "url": "https://news.example/ai/model/0",
+      "summary": "What happened in Model & Product Releases (0), and why it matters to readers of ai.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Model & Product Releases {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/ai/model/1",
+      "summary": "What happened in Model & Product Releases (1), and why it matters to readers of ai.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     }
+    ],
+    "Policy, Law & Regulation": [
+     {
+      "title": "Policy, Law & Regulation story 0 for ai",
+      "url": "https://news.example/ai/policy,/0",
+      "summary": "What happened in Policy, Law & Regulation (0), and why it matters to readers of ai.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Policy, Law & Regulation {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/ai/policy,/1",
+      "summary": "What happened in Policy, Law & Regulation (1), and why it matters to readers of ai.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     },
+     {
+      "title": "Policy, Law & Regulation story 2 for ai",
+      "url": "https://news.example/ai/policy,/2",
+      "summary": "",
+      "description": "Only a description for Policy, Law & Regulation 2.",
+      "source": "rss",
+      "language": "en",
+      "hn_score": 0,
+      "used_fallback": true
+     }
+    ],
+    "Open Source & Tools": [],
+    "Safety & Alignment": [],
+    "Industry & Business": [
+     {
+      "title": "Industry & Business story 0 for ai",
+      "url": "https://news.example/ai/industry/0",
+      "summary": "What happened in Industry & Business (0), and why it matters to readers of ai.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     }
+    ],
+    "Society & Culture": [
+     {
+      "title": "Society & Culture story 0 for ai",
+      "url": "https://news.example/ai/society/0",
+      "summary": "What happened in Society & Culture (0), and why it matters to readers of ai.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Society & Culture {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/ai/society/1",
+      "summary": "What happened in Society & Culture (1), and why it matters to readers of ai.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     }
+    ],
+    "Canada & Montreal": [
+     {
+      "title": "Canada & Montreal story 0 for ai",
+      "url": "https://news.example/ai/canada/0",
+      "summary": "What happened in Canada & Montreal (0), and why it matters to readers of ai.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Canada & Montreal {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/ai/canada/1",
+      "summary": "What happened in Canada & Montreal (1), and why it matters to readers of ai.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     },
+     {
+      "title": "Canada & Montreal story 2 for ai",
+      "url": "https://news.example/ai/canada/2",
+      "summary": "",
+      "description": "Only a description for Canada & Montreal 2.",
+      "source": "rss",
+      "language": "en",
+      "hn_score": 0,
+      "used_fallback": true
+     }
+    ]
+   }
+  },
+  "finance": {
+   "selected_all": {
+    "Markets & Macro": [
+     {
+      "title": "Markets & Macro story 0 for finance",
+      "url": "https://news.example/finance/markets/0",
+      "summary": "What happened in Markets & Macro (0), and why it matters to readers of finance.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Markets & Macro {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/finance/markets/1",
+      "summary": "What happened in Markets & Macro (1), and why it matters to readers of finance.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     }
+    ],
+    "Central Banks & Rates": [
+     {
+      "title": "Central Banks & Rates story 0 for finance",
+      "url": "https://news.example/finance/central/0",
+      "summary": "What happened in Central Banks & Rates (0), and why it matters to readers of finance.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Central Banks & Rates {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/finance/central/1",
+      "summary": "What happened in Central Banks & Rates (1), and why it matters to readers of finance.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     },
+     {
+      "title": "Central Banks & Rates story 2 for finance",
+      "url": "https://news.example/finance/central/2",
+      "summary": "",
+      "description": "Only a description for Central Banks & Rates 2.",
+      "source": "rss",
+      "language": "en",
+      "hn_score": 0,
+      "used_fallback": true
+     }
+    ],
+    "Earnings & Companies": [],
+    "Personal Finance": [],
+    "Crypto & Fintech": [
+     {
+      "title": "Crypto & Fintech story 0 for finance",
+      "url": "https://news.example/finance/crypto/0",
+      "summary": "What happened in Crypto & Fintech (0), and why it matters to readers of finance.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     }
+    ],
+    "Regulation & Policy": [
+     {
+      "title": "Regulation & Policy story 0 for finance",
+      "url": "https://news.example/finance/regulation/0",
+      "summary": "What happened in Regulation & Policy (0), and why it matters to readers of finance.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Regulation & Policy {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/finance/regulation/1",
+      "summary": "What happened in Regulation & Policy (1), and why it matters to readers of finance.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     }
+    ],
+    "Canada": [
+     {
+      "title": "Canada story 0 for finance",
+      "url": "https://news.example/finance/canada/0",
+      "summary": "What happened in Canada (0), and why it matters to readers of finance.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Canada {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/finance/canada/1",
+      "summary": "What happened in Canada (1), and why it matters to readers of finance.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     },
+     {
+      "title": "Canada story 2 for finance",
+      "url": "https://news.example/finance/canada/2",
+      "summary": "",
+      "description": "Only a description for Canada 2.",
+      "source": "rss",
+      "language": "en",
+      "hn_score": 0,
+      "used_fallback": true
+     }
+    ]
+   },
+   "selected_en": {
+    "Markets & Macro": [
+     {
+      "title": "Markets & Macro story 0 for finance",
+      "url": "https://news.example/finance/markets/0",
+      "summary": "What happened in Markets & Macro (0), and why it matters to readers of finance.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Markets & Macro {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/finance/markets/1",
+      "summary": "What happened in Markets & Macro (1), and why it matters to readers of finance.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     }
+    ],
+    "Central Banks & Rates": [
+     {
+      "title": "Central Banks & Rates story 0 for finance",
+      "url": "https://news.example/finance/central/0",
+      "summary": "What happened in Central Banks & Rates (0), and why it matters to readers of finance.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Central Banks & Rates {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/finance/central/1",
+      "summary": "What happened in Central Banks & Rates (1), and why it matters to readers of finance.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     },
+     {
+      "title": "Central Banks & Rates story 2 for finance",
+      "url": "https://news.example/finance/central/2",
+      "summary": "",
+      "description": "Only a description for Central Banks & Rates 2.",
+      "source": "rss",
+      "language": "en",
+      "hn_score": 0,
+      "used_fallback": true
+     }
+    ],
+    "Earnings & Companies": [],
+    "Personal Finance": [],
+    "Crypto & Fintech": [
+     {
+      "title": "Crypto & Fintech story 0 for finance",
+      "url": "https://news.example/finance/crypto/0",
+      "summary": "What happened in Crypto & Fintech (0), and why it matters to readers of finance.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     }
+    ],
+    "Regulation & Policy": [
+     {
+      "title": "Regulation & Policy story 0 for finance",
+      "url": "https://news.example/finance/regulation/0",
+      "summary": "What happened in Regulation & Policy (0), and why it matters to readers of finance.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Regulation & Policy {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/finance/regulation/1",
+      "summary": "What happened in Regulation & Policy (1), and why it matters to readers of finance.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     }
+    ],
+    "Canada": [
+     {
+      "title": "Canada story 0 for finance",
+      "url": "https://news.example/finance/canada/0",
+      "summary": "What happened in Canada (0), and why it matters to readers of finance.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Canada {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/finance/canada/1",
+      "summary": "What happened in Canada (1), and why it matters to readers of finance.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     },
+     {
+      "title": "Canada story 2 for finance",
+      "url": "https://news.example/finance/canada/2",
+      "summary": "",
+      "description": "Only a description for Canada 2.",
+      "source": "rss",
+      "language": "en",
+      "hn_score": 0,
+      "used_fallback": true
+     }
+    ]
+   }
+  },
+  "gaming": {
+   "selected_all": {
+    "Releases & Reviews": [
+     {
+      "title": "Releases & Reviews story 0 for gaming",
+      "url": "https://news.example/gaming/releases/0",
+      "summary": "What happened in Releases & Reviews (0), and why it matters to readers of gaming.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Releases & Reviews {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/gaming/releases/1",
+      "summary": "What happened in Releases & Reviews (1), and why it matters to readers of gaming.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     }
+    ],
+    "Industry & Business": [
+     {
+      "title": "Industry & Business story 0 for gaming",
+      "url": "https://news.example/gaming/industry/0",
+      "summary": "What happened in Industry & Business (0), and why it matters to readers of gaming.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Industry & Business {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/gaming/industry/1",
+      "summary": "What happened in Industry & Business (1), and why it matters to readers of gaming.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     },
+     {
+      "title": "Industry & Business story 2 for gaming",
+      "url": "https://news.example/gaming/industry/2",
+      "summary": "",
+      "description": "Only a description for Industry & Business 2.",
+      "source": "rss",
+      "language": "en",
+      "hn_score": 0,
+      "used_fallback": true
+     }
+    ],
+    "Platforms & Hardware": [],
+    "Indie Spotlight": [],
+    "Esports & Competitive": [
+     {
+      "title": "Esports & Competitive story 0 for gaming",
+      "url": "https://news.example/gaming/esports/0",
+      "summary": "What happened in Esports & Competitive (0), and why it matters to readers of gaming.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     }
+    ],
+    "Deals & Free Games": [
+     {
+      "title": "Deals & Free Games story 0 for gaming",
+      "url": "https://news.example/gaming/deals/0",
+      "summary": "What happened in Deals & Free Games (0), and why it matters to readers of gaming.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Deals & Free Games {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/gaming/deals/1",
+      "summary": "What happened in Deals & Free Games (1), and why it matters to readers of gaming.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     }
+    ],
+    "Community & Culture": [
+     {
+      "title": "Community & Culture story 0 for gaming",
+      "url": "https://news.example/gaming/community/0",
+      "summary": "What happened in Community & Culture (0), and why it matters to readers of gaming.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Community & Culture {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/gaming/community/1",
+      "summary": "What happened in Community & Culture (1), and why it matters to readers of gaming.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     },
+     {
+      "title": "Community & Culture story 2 for gaming",
+      "url": "https://news.example/gaming/community/2",
+      "summary": "",
+      "description": "Only a description for Community & Culture 2.",
+      "source": "rss",
+      "language": "en",
+      "hn_score": 0,
+      "used_fallback": true
+     }
+    ]
+   },
+   "selected_en": {
+    "Releases & Reviews": [
+     {
+      "title": "Releases & Reviews story 0 for gaming",
+      "url": "https://news.example/gaming/releases/0",
+      "summary": "What happened in Releases & Reviews (0), and why it matters to readers of gaming.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Releases & Reviews {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/gaming/releases/1",
+      "summary": "What happened in Releases & Reviews (1), and why it matters to readers of gaming.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     }
+    ],
+    "Industry & Business": [
+     {
+      "title": "Industry & Business story 0 for gaming",
+      "url": "https://news.example/gaming/industry/0",
+      "summary": "What happened in Industry & Business (0), and why it matters to readers of gaming.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Industry & Business {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/gaming/industry/1",
+      "summary": "What happened in Industry & Business (1), and why it matters to readers of gaming.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     },
+     {
+      "title": "Industry & Business story 2 for gaming",
+      "url": "https://news.example/gaming/industry/2",
+      "summary": "",
+      "description": "Only a description for Industry & Business 2.",
+      "source": "rss",
+      "language": "en",
+      "hn_score": 0,
+      "used_fallback": true
+     }
+    ],
+    "Platforms & Hardware": [],
+    "Indie Spotlight": [],
+    "Esports & Competitive": [
+     {
+      "title": "Esports & Competitive story 0 for gaming",
+      "url": "https://news.example/gaming/esports/0",
+      "summary": "What happened in Esports & Competitive (0), and why it matters to readers of gaming.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     }
+    ],
+    "Deals & Free Games": [
+     {
+      "title": "Deals & Free Games story 0 for gaming",
+      "url": "https://news.example/gaming/deals/0",
+      "summary": "What happened in Deals & Free Games (0), and why it matters to readers of gaming.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Deals & Free Games {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/gaming/deals/1",
+      "summary": "What happened in Deals & Free Games (1), and why it matters to readers of gaming.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     }
+    ],
+    "Community & Culture": [
+     {
+      "title": "Community & Culture story 0 for gaming",
+      "url": "https://news.example/gaming/community/0",
+      "summary": "What happened in Community & Culture (0), and why it matters to readers of gaming.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Community & Culture {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/gaming/community/1",
+      "summary": "What happened in Community & Culture (1), and why it matters to readers of gaming.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     },
+     {
+      "title": "Community & Culture story 2 for gaming",
+      "url": "https://news.example/gaming/community/2",
+      "summary": "",
+      "description": "Only a description for Community & Culture 2.",
+      "source": "rss",
+      "language": "en",
+      "hn_score": 0,
+      "used_fallback": true
+     }
+    ]
+   }
+  },
+  "boardgames": {
+   "selected_all": {
+    "New Releases": [
+     {
+      "title": "New Releases story 0 for boardgames",
+      "url": "https://news.example/boardgames/new/0",
+      "summary": "What happened in New Releases (0), and why it matters to readers of boardgames.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in New Releases {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/boardgames/new/1",
+      "summary": "What happened in New Releases (1), and why it matters to readers of boardgames.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     }
+    ],
+    "Crowdfunding": [
+     {
+      "title": "Crowdfunding story 0 for boardgames",
+      "url": "https://news.example/boardgames/crowdfunding/0",
+      "summary": "What happened in Crowdfunding (0), and why it matters to readers of boardgames.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Crowdfunding {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/boardgames/crowdfunding/1",
+      "summary": "What happened in Crowdfunding (1), and why it matters to readers of boardgames.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     },
+     {
+      "title": "Crowdfunding story 2 for boardgames",
+      "url": "https://news.example/boardgames/crowdfunding/2",
+      "summary": "",
+      "description": "Only a description for Crowdfunding 2.",
+      "source": "rss",
+      "language": "en",
+      "hn_score": 0,
+      "used_fallback": true
+     }
+    ],
+    "Reviews & Previews": [],
+    "Industry & Publishers": [],
+    "Events & Conventions": [
+     {
+      "title": "Events & Conventions story 0 for boardgames",
+      "url": "https://news.example/boardgames/events/0",
+      "summary": "What happened in Events & Conventions (0), and why it matters to readers of boardgames.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     }
+    ],
+    "RPGs, Minis & Card Games": [
+     {
+      "title": "RPGs, Minis & Card Games story 0 for boardgames",
+      "url": "https://news.example/boardgames/rpgs,/0",
+      "summary": "What happened in RPGs, Minis & Card Games (0), and why it matters to readers of boardgames.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in RPGs, Minis & Card Games {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/boardgames/rpgs,/1",
+      "summary": "What happened in RPGs, Minis & Card Games (1), and why it matters to readers of boardgames.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     }
+    ],
+    "Community & Culture": [
+     {
+      "title": "Community & Culture story 0 for boardgames",
+      "url": "https://news.example/boardgames/community/0",
+      "summary": "What happened in Community & Culture (0), and why it matters to readers of boardgames.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Community & Culture {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/boardgames/community/1",
+      "summary": "What happened in Community & Culture (1), and why it matters to readers of boardgames.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     },
+     {
+      "title": "Community & Culture story 2 for boardgames",
+      "url": "https://news.example/boardgames/community/2",
+      "summary": "",
+      "description": "Only a description for Community & Culture 2.",
+      "source": "rss",
+      "language": "en",
+      "hn_score": 0,
+      "used_fallback": true
+     }
+    ]
+   },
+   "selected_en": {
+    "New Releases": [
+     {
+      "title": "New Releases story 0 for boardgames",
+      "url": "https://news.example/boardgames/new/0",
+      "summary": "What happened in New Releases (0), and why it matters to readers of boardgames.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in New Releases {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/boardgames/new/1",
+      "summary": "What happened in New Releases (1), and why it matters to readers of boardgames.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     }
+    ],
+    "Crowdfunding": [
+     {
+      "title": "Crowdfunding story 0 for boardgames",
+      "url": "https://news.example/boardgames/crowdfunding/0",
+      "summary": "What happened in Crowdfunding (0), and why it matters to readers of boardgames.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Crowdfunding {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/boardgames/crowdfunding/1",
+      "summary": "What happened in Crowdfunding (1), and why it matters to readers of boardgames.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     },
+     {
+      "title": "Crowdfunding story 2 for boardgames",
+      "url": "https://news.example/boardgames/crowdfunding/2",
+      "summary": "",
+      "description": "Only a description for Crowdfunding 2.",
+      "source": "rss",
+      "language": "en",
+      "hn_score": 0,
+      "used_fallback": true
+     }
+    ],
+    "Reviews & Previews": [],
+    "Industry & Publishers": [],
+    "Events & Conventions": [
+     {
+      "title": "Events & Conventions story 0 for boardgames",
+      "url": "https://news.example/boardgames/events/0",
+      "summary": "What happened in Events & Conventions (0), and why it matters to readers of boardgames.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     }
+    ],
+    "RPGs, Minis & Card Games": [
+     {
+      "title": "RPGs, Minis & Card Games story 0 for boardgames",
+      "url": "https://news.example/boardgames/rpgs,/0",
+      "summary": "What happened in RPGs, Minis & Card Games (0), and why it matters to readers of boardgames.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in RPGs, Minis & Card Games {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/boardgames/rpgs,/1",
+      "summary": "What happened in RPGs, Minis & Card Games (1), and why it matters to readers of boardgames.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     }
+    ],
+    "Community & Culture": [
+     {
+      "title": "Community & Culture story 0 for boardgames",
+      "url": "https://news.example/boardgames/community/0",
+      "summary": "What happened in Community & Culture (0), and why it matters to readers of boardgames.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Community & Culture {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/boardgames/community/1",
+      "summary": "What happened in Community & Culture (1), and why it matters to readers of boardgames.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     },
+     {
+      "title": "Community & Culture story 2 for boardgames",
+      "url": "https://news.example/boardgames/community/2",
+      "summary": "",
+      "description": "Only a description for Community & Culture 2.",
+      "source": "rss",
+      "language": "en",
+      "hn_score": 0,
+      "used_fallback": true
+     }
+    ]
+   }
+  },
+  "printing3d": {
+   "selected_all": {
+    "New Printers & Hardware": [
+     {
+      "title": "New Printers & Hardware story 0 for printing3d",
+      "url": "https://news.example/printing3d/new/0",
+      "summary": "What happened in New Printers & Hardware (0), and why it matters to readers of printing3d.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in New Printers & Hardware {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/printing3d/new/1",
+      "summary": "What happened in New Printers & Hardware (1), and why it matters to readers of printing3d.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     }
+    ],
+    "Firmware & Software": [
+     {
+      "title": "Firmware & Software story 0 for printing3d",
+      "url": "https://news.example/printing3d/firmware/0",
+      "summary": "What happened in Firmware & Software (0), and why it matters to readers of printing3d.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Firmware & Software {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/printing3d/firmware/1",
+      "summary": "What happened in Firmware & Software (1), and why it matters to readers of printing3d.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     },
+     {
+      "title": "Firmware & Software story 2 for printing3d",
+      "url": "https://news.example/printing3d/firmware/2",
+      "summary": "",
+      "description": "Only a description for Firmware & Software 2.",
+      "source": "rss",
+      "language": "en",
+      "hn_score": 0,
+      "used_fallback": true
+     }
+    ],
+    "Materials & Filament": [],
+    "Projects & Prints": [],
+    "Industry & Business": [
+     {
+      "title": "Industry & Business story 0 for printing3d",
+      "url": "https://news.example/printing3d/industry/0",
+      "summary": "What happened in Industry & Business (0), and why it matters to readers of printing3d.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     }
+    ],
+    "Guides & Tips": [
+     {
+      "title": "Guides & Tips story 0 for printing3d",
+      "url": "https://news.example/printing3d/guides/0",
+      "summary": "What happened in Guides & Tips (0), and why it matters to readers of printing3d.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Guides & Tips {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/printing3d/guides/1",
+      "summary": "What happened in Guides & Tips (1), and why it matters to readers of printing3d.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     }
+    ],
+    "Community & Policy": [
+     {
+      "title": "Community & Policy story 0 for printing3d",
+      "url": "https://news.example/printing3d/community/0",
+      "summary": "What happened in Community & Policy (0), and why it matters to readers of printing3d.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Community & Policy {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/printing3d/community/1",
+      "summary": "What happened in Community & Policy (1), and why it matters to readers of printing3d.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     },
+     {
+      "title": "Community & Policy story 2 for printing3d",
+      "url": "https://news.example/printing3d/community/2",
+      "summary": "",
+      "description": "Only a description for Community & Policy 2.",
+      "source": "rss",
+      "language": "en",
+      "hn_score": 0,
+      "used_fallback": true
+     }
+    ]
+   },
+   "selected_en": {
+    "New Printers & Hardware": [
+     {
+      "title": "New Printers & Hardware story 0 for printing3d",
+      "url": "https://news.example/printing3d/new/0",
+      "summary": "What happened in New Printers & Hardware (0), and why it matters to readers of printing3d.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in New Printers & Hardware {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/printing3d/new/1",
+      "summary": "What happened in New Printers & Hardware (1), and why it matters to readers of printing3d.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     }
+    ],
+    "Firmware & Software": [
+     {
+      "title": "Firmware & Software story 0 for printing3d",
+      "url": "https://news.example/printing3d/firmware/0",
+      "summary": "What happened in Firmware & Software (0), and why it matters to readers of printing3d.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Firmware & Software {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/printing3d/firmware/1",
+      "summary": "What happened in Firmware & Software (1), and why it matters to readers of printing3d.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     },
+     {
+      "title": "Firmware & Software story 2 for printing3d",
+      "url": "https://news.example/printing3d/firmware/2",
+      "summary": "",
+      "description": "Only a description for Firmware & Software 2.",
+      "source": "rss",
+      "language": "en",
+      "hn_score": 0,
+      "used_fallback": true
+     }
+    ],
+    "Materials & Filament": [],
+    "Projects & Prints": [],
+    "Industry & Business": [
+     {
+      "title": "Industry & Business story 0 for printing3d",
+      "url": "https://news.example/printing3d/industry/0",
+      "summary": "What happened in Industry & Business (0), and why it matters to readers of printing3d.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     }
+    ],
+    "Guides & Tips": [
+     {
+      "title": "Guides & Tips story 0 for printing3d",
+      "url": "https://news.example/printing3d/guides/0",
+      "summary": "What happened in Guides & Tips (0), and why it matters to readers of printing3d.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Guides & Tips {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/printing3d/guides/1",
+      "summary": "What happened in Guides & Tips (1), and why it matters to readers of printing3d.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     }
+    ],
+    "Community & Policy": [
+     {
+      "title": "Community & Policy story 0 for printing3d",
+      "url": "https://news.example/printing3d/community/0",
+      "summary": "What happened in Community & Policy (0), and why it matters to readers of printing3d.",
+      "description": "",
+      "source": "hackernews",
+      "language": "en",
+      "hn_score": 412
+     },
+     {
+      "title": "Quotes \"&\" <b>tags</b> in Community & Policy {{UNSUBSCRIBE_URL}}",
+      "url": "https://news.example/printing3d/community/1",
+      "summary": "What happened in Community & Policy (1), and why it matters to readers of printing3d.",
+      "description": "",
+      "source": "newsapi",
+      "language": "en",
+      "hn_score": null
+     },
+     {
+      "title": "Community & Policy story 2 for printing3d",
+      "url": "https://news.example/printing3d/community/2",
+      "summary": "",
+      "description": "Only a description for Community & Policy 2.",
+      "source": "rss",
+      "language": "en",
+      "hn_score": 0,
+      "used_fallback": true
+     }
+    ]
+   }
+  }
+ }
+}

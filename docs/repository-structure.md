@@ -7,7 +7,10 @@
 │   ├── agent1b_fetch_news.py       # HN + NewsAPI fetch, language filter, categorize
 │   ├── agent2a_summarize_papers.py # PDF download + Claude paper reviews
 │   ├── agent2b_summarize_news.py   # Article fetch + Claude news summaries
-│   ├── agent3_compose.py           # Article selection, intro, HTML composition
+│   ├── agent3_compose.py           # Article selection, intro, HTML variants, saves the edition
+│   ├── render/                     # Block renderer: engine (render), from_editions, blocks, shell, palette, text
+│   ├── newsletter_def.py           # Newsletter definitions (ordered blocks): validator, from_topic
+│   ├── editions.py                 # Editions: build, save, latest / for_week lookups
 │   ├── agent4_send.py              # Per-subscriber personalization + SendGrid send
 │   ├── agent_healthcheck.py        # Standalone health check + alert (draft check Sunday, send check Monday)
 │   ├── agent_subscriptions.py      # Subscription FastAPI service (separate deployment)
@@ -54,9 +57,10 @@
 │   ├── bg.js                       # Shared background/decorative script
 │   ├── style.css / fonts.css       # Shared styling
 │   └── fonts/, images/             # Static assets
-├── tools/                          # Maintenance scripts (backfill_release_flag.py, bake_landing_excerpt.py)
+├── tools/                          # Maintenance scripts (backfill_release_flag.py, bake_landing_excerpt.py, render_sample.py)
 ├── evals/                          # Evaluation harnesses, frozen fixtures, labels, results/*.json (see evals/README.md)
 ├── tests/                          # pytest suite (stubbed Claude client + fetcher; no network or keys)
+│   └── fixtures/render/            # Email golden files (make_render_goldens.py) + edition fixtures
 │   ├── conftest.py / fakes*.py     # Path setup; scripted fake Anthropic client, fetcher and Firestore
 │   └── test_*.py                   # agents, graph, evals, drift, judge, click signal, injection defences
 ├── docs/

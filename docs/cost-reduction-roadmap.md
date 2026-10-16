@@ -27,7 +27,7 @@ Most of the money is **volume**, not model quality: ~490 one-article calls in ag
 
 - [x] Step 1: Freeze the baseline (cost + quality), no behavior change
 - [x] Step 2: Turn off the agent1b review loop
-- [ ] Step 3: Cut call volume (agent2b batching, agent1a pre-ranking, prompt caching)
+- [ ] Step 3: Cut call volume (agent2b shortlist and agent1a abstract-first are live; still open: agent1b language filter, prompt caching, batch API)
 - [ ] Step 4: Verify model prices and pick candidates (research, no code)
 - [ ] Step 5: Provider abstraction (one `llm` client seam, Claude stays the default)
 - [ ] Step 6: Per-stage model benchmark (cheap models vs Haiku baseline)
@@ -93,7 +93,30 @@ The review eval says it plainly: confidence does not predict errors (Spearman 0.
 
 **Deployed and switched on 2026-10-16** (owner approved): agent1a `abstract_first`, agent2b `shortlist`, agent3 with the carried HN rank, all from `main` at `f596a11`; existing env vars untouched. First release run on them is 2026-10-18.
 
-Remaining Step 3 work: compare the first real runs against the Step 1 baseline cost (LangSmith per-agent cost), then prompt caching and the batch API.
+**Sub-step 4: agent1b language filter (added 2026-10-16, owner).** The filter is necessary: it keeps articles in languages other than English and French out of the newsletter. The owner's rule is that it must keep doing that, and that its cost should still come down if it can without letting foreign-language articles through.
+- **What it costs today** (local run 2026-10-16, 547 articles, review off): the language filter made 62 calls (one per 25 articles) using about 220k input and 24k output tokens, roughly **$0.34**, against about $0.16 for the categorize step. So the language filter is about two thirds of agent1b's ~$0.50 and the biggest single line left after the two cuts above.
+- **Why it is expensive:** each call sends domain, title, an 80-word description and a 60-word excerpt per article, and asks the model to write a label for **every** article (`index` + `language` each), so output tokens (5x the price of input) are about a third of its cost, even though almost every article is plainly English.
+- **Ideas, lowest risk first:**
+  1. Change the answer format so the model lists only the exceptions (French and "other" articles) instead of labelling all of them. Output falls by roughly 90% and the input is untouched.
+  2. Decide the obvious cases in code before calling Claude (a local language detector or stopword counts on the title, description and excerpt), and send only the uncertain articles. HN stories are overwhelmingly English and the NewsAPI French queries are overwhelmingly French, so most articles would never reach the model.
+  3. Larger batches (25 -> 50) to cut the repeated instructions; a small gain, and a longer answer per call means a larger blast radius if one fails.
+- **Quality gate (the owner's rule):** on a frozen pool measure two numbers against today's filter: foreign-language articles that get through (must not rise) and English or French articles wrongly dropped (must not rise). Any article the cheap path and the current filter disagree on goes to the owner to settle. Needs a labelled pool: a fresh unfiltered fetch labelled by today's filter, with every disagreement and a sample of agreements checked by hand.
+- **Rollback:** a no-redeploy switch such as `AGENT1B_LANG_MODE=claude` (today's behavior stays the default and the baseline).
+
+**Measured on a production debug run (2026-10-16, run `2026-10-16T135631Z`, deployed code with both modes on, review off; LangSmith's estimate for this run's calls only):**
+
+| Agent | Baseline $ (mean of 4) | This run $ | Calls (base -> now) |
+|---|---|---|---|
+| agent1a | 0.467 | 0.238 | 35 -> 43 |
+| agent1b | 0.637 | 0.498 | 128 -> 77 |
+| agent2a | 0.014 | 0.011 | 1 -> 1 |
+| agent2b | 0.805 | 0.263 | 470 -> 93 |
+| agent3 | 0.132 | 0.041 | 21 -> 17 |
+| **Total** | **2.055** | **1.051** | **656 -> 231** |
+
+That is **49% less** (about $1.00 a week, roughly $52 a year). The run composed with no `*_error` field; agent1a ran 8 second-pass papers, agent2b shortlisted 80 of 547 articles. agent3 got cheaper on its own (123k -> 31k tokens) because it now reads a pool of ~80 summarized articles instead of ~470. One run, so the release run on 2026-10-18 is the confirmation. agent1b is now the largest line: its language filter is about $0.34 of the $0.50.
+
+Remaining Step 3 work: the language filter above, then prompt caching and the batch API, and a second measurement from the 2026-10-18 release run.
 
 Independent of model choice, and compounding with it:
 - **agent2b**: ~490 calls for ~15-25 shipped articles. Summarize only what agent3 can actually ship (the post-selection pool plus runners-up), or batch several articles per call. Needs an ordering check: agent2b currently runs in parallel with agent2a before agent3 selection, so this may mean summarizing only the top-N per category by HN points.

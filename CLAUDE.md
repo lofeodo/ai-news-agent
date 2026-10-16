@@ -60,6 +60,8 @@ Ask the owner only for things that are irreversible, outward-facing, or ambiguou
 
 Weekly AI newsletter pipeline. Six agents fetch ArXiv papers + news, score/summarize them with Claude, compose an HTML email, and send it via SendGrid. A separate subscription service manages subscriber preferences, and a standalone health-check agent detects and alerts on stalled or failed pipeline runs.
 
+**Topics (multi-topic engine, in progress).** The pipeline can write more than the AI newsletter: `topics/<id>.yaml` profiles (`ai`, `finance`, `gaming`, `boardgames`, `printing3d`) hold sources (HN, NewsAPI, RSS), categories, prompts (`prompts/generic/` for non-AI topics), name and look; `agents/topics.py` loads them. The orchestrator takes `POST /?topic=<id>` (or `python orchestrator.py --topic <id>` locally) and writes `topic` on the run doc (AI runs carry no `topic` field). **Non-AI topics are debug-only** (the orchestrator refuses `kind=release`) and every latest-run lookup skips them, so nothing but the AI newsletter is published, mailed or health-checked. Admins view topic drafts through the Debug run toggle's topic dropdown (`GET /auth/admin/issues?topic=`, `GET /auth/admin/topics`). The AI profile is pinned to the old constants by `tests/test_topics_ai_equivalence.py`. Format, how to add a topic and the rails are in `docs/configuration.md#topic-profiles` and `docs/architecture.md#topics`; the plan and follow-ups (signup, schedules, sending) are `docs/plans/multi-topic.md`.
+
 ## Documentation Layout
 
 The README is deliberately short and glanceable (a portfolio page: diagram, one table per topic, generated result tables). Depth lives in `docs/`: `architecture.md`, `design-decisions.md`, `monitoring.md`, `evaluation.md`, `configuration.md`, `development.md`, `repository-structure.md`. When changing behavior, update the matching doc, not the README, unless the one-line summary there is now wrong. Result tables (in `docs/`) and the README's result charts (`docs/assets/chart-*.svg`, from `evals/make_charts.py`) are regenerated together by `python -m evals.make_readme_table`, never typed by hand. The banner (dark and light variants, picked with `<picture>`) is built by `docs/assets/build_banner.py`; the two showcase PNGs in `docs/assets/` are screenshots of the live preview and an example health check report. The README does not mention roadmap Step 8 (dropped).
@@ -73,6 +75,11 @@ export NEWS_API_KEY=...
 python orchestrator.py
 ```
 Outputs to `data/` directory. No Firestore or Pub/Sub needed.
+
+**Run another topic locally** (writes `data/`, one at a time; on Windows add `PYTHONUTF8=1` when redirecting output):
+```bash
+python orchestrator.py --topic finance   # or gaming, boardgames, printing3d
+```
 
 **Run a single agent in isolation:**
 ```bash
@@ -288,6 +295,7 @@ All Claude calls use `claude-haiku-4-5-20251001` (configured in `config.py`).
 | `GOOGLE_OAUTH_CLIENT_ID` | Google OAuth 2.0 Web client ID for server-side Google Sign-In (not secret) |
 | `GOOGLE_OAUTH_CLIENT_SECRET` | Google OAuth 2.0 client secret (or use `USE_SECRET_MANAGER=true`, secret name `google-oauth-client-secret`) |
 | `ALERT_EMAIL` | Where `agent_healthcheck` sends a problem report; never used for subscriber-facing sends |
+| `TOPIC` | Local runs only: which `topics/<id>.yaml` profile the agents build (default `ai`; cloud agents read the topic from the run doc) |
 | `AGENT1B_MODE` | agent1b: `graph` (default, LangGraph) or `single_pass` (original code; no-redeploy rollback) |
 | `REVIEW_CONFIDENCE_THRESHOLD` / `REVIEW_MAX_ARTICLES` / `REVIEW_MAX_ITERATIONS` / `REVIEW_FETCH_TIMEOUT` | agent1b review loop (defaults `4` / `0` / `3` / `10`; `REVIEW_MAX_ARTICLES=0` = review off, the default) |
 | `LANGSMITH_TRACING` / `LANGSMITH_API_KEY` / `LANGSMITH_PROJECT` | agent1b opt-in tracing; both the flag and the key are required, otherwise a no-op. Production project: `latent-spacemail-prod` |

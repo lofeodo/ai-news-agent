@@ -660,7 +660,7 @@ def _full_page(title: str, body: str, status: int = 200,
     form = extra
     for n, (url, label) in enumerate(actions):
         style = ("btn-primary-action", "margin-top:18px;width:100%") if n == 0 else (
-            "btn-secondary-link", "width:100%;background:none;border:0;cursor:pointer;font-family:inherit")
+            "btn-secondary-link", "width:100%;background:none;border:0;cursor:pointer;font-family:inherit;color:var(--muted);text-transform:none;letter-spacing:0.04em;font-size:0.84rem;padding:8px 0;box-shadow:none")
         form += (f'<form method="post" action="{html_lib.escape(url, quote=True)}">'
                  f'<button type="submit" class="{style[0]}" style="{style[1]}">'
                  f'{html_lib.escape(label)}</button></form>')
@@ -1352,7 +1352,7 @@ def _unsubscribe_chooser(token: str, newsletter: str, current: list[str], note: 
     everything = html_lib.escape(f"{SERVICE_BASE_URL}/unsubscribe?{urlencode({'token': token, 'all': '1'})}",
                                  quote=True)
     footer = (f'<form method="post" action="{everything}"><button type="submit" class="btn-secondary-link" '
-              f'style="width:100%;background:none;border:0;cursor:pointer;font-family:inherit">'
+              f'style="width:100%;background:none;border:0;cursor:pointer;font-family:inherit;color:var(--muted);text-transform:none;letter-spacing:0.04em;font-size:0.84rem;padding:8px 0;box-shadow:none">'
               f'Unsubscribe from everything</button></form>'
               f'<p class="note" style="margin-top:6px;text-align:center">'
               f'<a href="{manage}">Manage all your newsletters instead</a></p>')

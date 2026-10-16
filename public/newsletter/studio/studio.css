@@ -421,6 +421,93 @@
   border-top: 1px solid var(--st-line-soft);
 }
 
+/* ── Canvas bar: switcher, unsaved mark, save ───────────────────────────── */
+
+.switch { position: relative; min-width: 0; flex: 1 1 auto; max-width: 320px; margin-right: auto; }
+.switch__label { position: absolute; left: 12px; top: 5px; font-size: 0.6rem; color: var(--st-dim); pointer-events: none; }
+.studio select.switch__select {
+  width: 100%;
+  min-height: 44px;
+  padding: 16px 30px 4px 11px;
+  background: #0b0b0b url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='14' height='14'%3E%3Cpath d='M6 9l6 6 6-6' fill='none' stroke='%238b8b8b' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 10px center;
+  border: 1px solid var(--st-line);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+  appearance: none;
+  -webkit-appearance: none;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.studio select.switch__select:focus-visible { border-color: var(--accent); }
+.switch__select option { background: #151515; color: var(--text); }
+.dirty { display: inline-flex; align-items: center; gap: 6px; font-size: 0.72rem; color: #e8c88a; white-space: nowrap; }
+.dirty[hidden] { display: none; }
+.dirty__dot { width: 6px; height: 6px; border-radius: 50%; background: #e0b062; }
+.save-btn { min-width: 84px; }
+.save-msg {
+  flex-basis: 100%;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--error);
+}
+.save-msg[hidden] { display: none; }
+.canvas__bar { flex-wrap: wrap; }
+.only-tablet { display: none; }
+
+/* Subscribe switch and delete, at the end of the canvas */
+.sub { margin-bottom: 22px; }
+.switch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+.switch-btn:disabled { cursor: default; opacity: .5; }
+.switch-btn__track {
+  position: relative;
+  width: 40px; height: 22px;
+  border-radius: 11px;
+  background: #2a2a2a;
+  transition: background .2s;
+  flex-shrink: 0;
+}
+.switch-btn__thumb {
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: #8b8b8b;
+  transition: transform .2s var(--ease), background .2s;
+}
+.switch-btn[aria-checked="true"] .switch-btn__track { background: var(--nl); }
+.switch-btn[aria-checked="true"] .switch-btn__thumb { transform: translateX(18px); background: var(--nl-ink); }
+.sub__sentence { font-size: 0.76rem; color: var(--muted); line-height: 1.55; margin-top: 4px; padding-left: 52px; }
+.canvas__foot[hidden] { display: none; }
+
+/* Confirm dialog */
+.dlg {
+  max-width: min(420px, calc(100vw - 32px));
+  margin: auto;
+  padding: 24px 22px 18px;
+  background: #151515;
+  color: var(--text);
+  border: 1px solid var(--st-line);
+  border-top: 3px solid var(--accent);
+  box-shadow: 0 30px 80px rgba(0,0,0,0.7);
+}
+.dlg::backdrop { background: rgba(0,0,0,0.6); }
+.dlg__title { font-family: var(--display); font-weight: 600; font-size: 1.4rem; line-height: 1.2; margin-bottom: 8px; overflow-wrap: anywhere; }
+.dlg__body { font-size: 0.82rem; color: var(--muted); line-height: 1.6; margin-bottom: 18px; }
+.dlg__actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+
 /* ── Colour ─────────────────────────────────────────────────────────────── */
 
 .colour { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; }
@@ -835,6 +922,7 @@ body.is-dragging-any, body.is-dragging-any * { cursor: grabbing !important; user
     transition: transform .3s var(--ease), visibility 0s;
   }
   .pv__close { display: inline-grid; }
+  .only-tablet { display: inline-flex; }
 }
 
 /* ── Phone: Build / Preview tabs; the library is a sheet ────────────────── */
@@ -845,6 +933,7 @@ body.is-dragging-any, body.is-dragging-any * { cursor: grabbing !important; user
   .canvas__bar { padding: 8px 8px 8px 16px; }
   .canvas__scroll { padding: 22px 16px 40px; }
   .add-btn { display: block; }
+  .only-tablet { display: none; }   /* the tab bar switches to the preview on phones */
 
   .lib {
     position: absolute;

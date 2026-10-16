@@ -16,6 +16,7 @@ import { h, mount, debounce } from './dom.js';
 import { initLibrary, renderLibrary } from './library.js';
 import { initCanvas, renderCanvas, focusBlock } from './canvas.js';
 import { initPreview, requestPreview, layoutPreview } from './preview.js';
+import { initManage, renderManage } from './manage.js';
 
 const params = new URLSearchParams(location.search);
 const FORCE_MOCK = params.get('mock') === '1';
@@ -372,6 +373,8 @@ async function main() {
   initLibrary(ctx);
   initCanvas(ctx);
   initPreview(ctx);
+  initManage(ctx);
+  ctx.onChange = renderManage;
 
   const who = await whoIsThis();
   ctx.mode = who.mode;

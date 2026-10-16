@@ -21,6 +21,7 @@ export function initCanvas(c) {
   ctx.flashBlock = flashBlock;
   ctx.errors = new Map();        // block key (or '' for the newsletter) -> [messages] from the last save
   ctx.renderCounts = renderCounts;
+  ctx.showNameError = showNameError;
 
   const name = $('nl-name');
   name.addEventListener('input', () => {

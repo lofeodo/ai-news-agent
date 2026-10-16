@@ -27,7 +27,7 @@ import sys
 import time
 from datetime import datetime, timezone, timedelta
 from typing import Annotated
-from urllib.parse import urlencode
+from urllib.parse import parse_qs, urlencode
 
 import anthropic
 import requests
@@ -40,12 +40,14 @@ from slowapi.util import get_remote_address
 
 logger = logging.getLogger(__name__)
 
-from auth_middleware import get_current_user, get_verified_user
+from auth_middleware import get_current_user, get_optional_user, get_verified_user
 import click_counts
 import ids
+import launch
 import mail_throttle
 import run_kind
 import sendgrid_webhook
+import subscriptions_model
 import topics
 from prompt_guard import GUARD_TOPIC_REFINE, neutralize_tags
 
@@ -117,7 +119,8 @@ OAUTH_EXCHANGE_CODES_COLLECTION = "oauth_exchange_codes"
 # and Google's redirect) — allowlist known frontend pages rather than trying
 # to validate arbitrary relative-URL syntax, which is an easy place to get an
 # open redirect wrong.
-ALLOWED_RETURN_PAGES = {"index.html", "preferences.html", "sections.html", "issues.html", "preview.html", "share.html"}
+ALLOWED_RETURN_PAGES = {"index.html", "preferences.html", "sections.html", "issues.html", "preview.html", "share.html",
+                        "newsletters.html", "newsletter.html"}
 DEFAULT_RETURN_PAGE  = "index.html"
 
 DEFAULT_SECTIONS = [
@@ -192,8 +195,9 @@ def _find_by_token(db, token: str, enforce_expiry: bool = False):
     """Return the subscriber doc snapshot matching this token, or None.
 
     Returns None if the token is missing or not found. An expiry date only
-    counts for pending (inactive) subscribers or when enforce_expiry is set:
-    the links in sent newsletters keep working for active subscribers.
+    counts for pending subscribers (subscribed to no newsletter) or when
+    enforce_expiry is set: the links in sent newsletters keep working for
+    anyone still subscribed to one.
     """
     if not token:
         return None
@@ -208,7 +212,7 @@ def _find_by_token(db, token: str, enforce_expiry: bool = False):
     doc  = docs[0]
     data = doc.to_dict()
     expires_at = data.get("token_expires_at")
-    if expires_at and (enforce_expiry or not data.get("active")):
+    if expires_at and (enforce_expiry or not subscriptions_model.subscribed_ids(data)):
         now = datetime.now(timezone.utc)
         if getattr(expires_at, "tzinfo", None) is None:
             expires_at = expires_at.replace(tzinfo=timezone.utc)
@@ -217,13 +221,51 @@ def _find_by_token(db, token: str, enforce_expiry: bool = False):
     return doc
 
 
-def _active_subscriber_count(db) -> int:
-    col = db.collection(SUBSCRIBERS_COLLECTION)
+def _count(query) -> int:
     try:
-        result = col.where("active", "==", True).count().get()
-        return result[0][0].value
+        return query.count().get()[0][0].value
     except Exception:
-        return sum(1 for _ in col.where("active", "==", True).stream())
+        return sum(1 for _ in query.stream())
+
+
+def _active_subscriber_count(db) -> int:
+    """People subscribed to at least one newsletter: MAX_SUBSCRIBERS counts people, not subscriptions.
+
+    AI subscribers (`active`) plus everyone else who gets some newsletter (`subscribed_any`, kept by
+    subscriptions_model). Two equality queries, so no composite index is needed.
+    """
+    col = db.collection(SUBSCRIBERS_COLLECTION)
+    return (_count(col.where("active", "==", True))
+            + _count(col.where("active", "==", False).where("subscribed_any", "==", True)))
+
+
+AI = subscriptions_model.AI
+
+
+def _newsletter_name(newsletter_id: str) -> str:
+    return topics.get_topic(newsletter_id).name if topics.is_valid_topic(newsletter_id) else NEWSLETTER_NAME
+
+
+def _newsletter_names(newsletter_ids) -> str:
+    """Names joined for a sentence: one name, "A and B", or "A, B and C"."""
+    names = [_newsletter_name(i) for i in newsletter_ids] or [NEWSLETTER_NAME]
+    return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
+
+
+def _check_newsletters(raw, admin: bool) -> list[str]:
+    """Validated newsletter ids from a request, in site order; 404 for an unknown or hidden one (same answer for
+    both, so the list of hidden topics is not probed). None or empty means the AI newsletter."""
+    wanted = [str(i).strip().lower() for i in (raw or [AI])]
+    visible = launch.visible_topic_ids(admin)
+    if any(i not in visible for i in wanted):
+        raise HTTPException(status_code=404, detail="unknown_newsletter")
+    return [i for i in visible if i in wanted]
+
+
+def _link_query(token: str, newsletter_id: str = AI) -> str:
+    """Query string for an emailed unsubscribe or preferences link. No `n` means the AI newsletter, so the AI
+    links (and every link already sent) are unchanged."""
+    return urlencode({"token": token} if newsletter_id == AI else {"token": token, "n": newsletter_id})
 
 
 def _claim_latest(db, ref) -> bool:
@@ -471,12 +513,27 @@ def _email_shell(
     )
 
 
-def _confirm_email_html(token: str) -> str:
+def _newsletter_list_html(newsletter_ids) -> str:
+    """The newsletters named in a confirmation mail: bold names with their taglines."""
+    items = []
+    for i in newsletter_ids:
+        t = topics.get_topic(i)
+        items.append(f'<span style="color:#c8b89a;font-weight:700;">{html_lib.escape(t.name)}</span>'
+                     f' ({html_lib.escape(t.tagline)})')
+    return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " and " + items[-1]
+
+
+def _confirm_email_html(token: str, newsletter_ids=None) -> str:
     link = f"{SERVICE_BASE_URL}/confirm?token={token}"
+    if not newsletter_ids or list(newsletter_ids) == [AI]:
+        what = (f'<span style="color:#c8b89a;font-weight:700;">Latent SpaceMail</span>, '
+                'a weekly AI research &amp; news briefing.')
+    else:
+        what = _newsletter_list_html(newsletter_ids) + "."
     body = (
         f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#9a9088;margin:0 0 16px 0;">'
         'Someone (hopefully you) asked to subscribe this address to '
-        f'<span style="color:#c8b89a;font-weight:700;">Latent SpaceMail</span>, a weekly AI research &amp; news briefing.'
+        f'{what}'
         '</p>'
         f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#9a9088;margin:0;">'
         'Tap <strong style="color:#c8b89a;">CONFIRM</strong> above or click the button below to start receiving your dispatch every Monday morning.'
@@ -493,12 +550,12 @@ def _confirm_email_html(token: str) -> str:
     )
 
 
-def _unsubscribe_email_html(token: str) -> str:
-    link = f"{SERVICE_BASE_URL}/unsubscribe?token={token}"
+def _unsubscribe_email_html(token: str, newsletter_id: str = AI) -> str:
+    link = f"{SERVICE_BASE_URL}/unsubscribe?{_link_query(token, newsletter_id)}"
     body = (
         f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#9a9088;margin:0 0 16px 0;">'
         'Someone (hopefully you) asked to unsubscribe this address from '
-        f'<span style="color:#c8b89a;font-weight:700;">Latent SpaceMail</span>.'
+        f'<span style="color:#c8b89a;font-weight:700;">{html_lib.escape(_newsletter_name(newsletter_id))}</span>.'
         '</p>'
         f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#9a9088;margin:0;">'
         'Tap <strong style="color:#c8b89a;">CONFIRM</strong> above or click the button below to complete your unsubscription. '
@@ -538,12 +595,37 @@ def _preferences_email_html(token: str) -> str:
     )
 
 
-def _already_subscribed_email_html(token: str) -> str:
+def _addition_email_html(token: str, newsletter_ids) -> str:
+    """Confirmation for adding newsletters to an address that already gets one: the form takes any address, so
+    an addition needs a click from the inbox like a new sign-up does."""
+    link = f"{SERVICE_BASE_URL}/confirm?token={token}"
+    body = (
+        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#9a9088;margin:0 0 16px 0;">'
+        'Someone (hopefully you) asked to add '
+        f'{_newsletter_list_html(newsletter_ids)} to the newsletters this address receives.'
+        '</p>'
+        f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#9a9088;margin:0;">'
+        'Tap <strong style="color:#c8b89a;">CONFIRM</strong> above or click the button below to start receiving it every Monday morning. '
+        'Your current subscriptions stay as they are.'
+        '</p>'
+    )
+    return _email_shell(
+        headline_big="CONFIRM",
+        headline_small="NEW NEWSLETTER",
+        body_html=body,
+        cta_text="CONFIRM SUBSCRIPTION",
+        cta_link=link,
+        footer_note="If this wasn't you, ignore this email — nothing is added and your subscriptions are unchanged.",
+        tx_code="ADD",
+    )
+
+
+def _already_subscribed_email_html(token: str, name: str = NEWSLETTER_NAME) -> str:
     link = f"{FRONTEND_BASE_URL}/preferences.html?token={token}"
     body = (
         f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#9a9088;margin:0 0 16px 0;">'
         'This address already has an active '
-        f'<span style="color:#c8b89a;font-weight:700;">Latent SpaceMail</span> subscription — no action needed.'
+        f'<span style="color:#c8b89a;font-weight:700;">{html_lib.escape(name)}</span> subscription — no action needed.'
         '</p>'
         f'<p style="font-family:{_MONO};font-size:12px;line-height:1.95;color:#9a9088;margin:0;">'
         "If you'd like to update your content preferences — French-language sources, Canadian coverage — tap the heading above or click the button below."
@@ -565,17 +647,23 @@ def _already_subscribed_email_html(token: str) -> str:
 # ---------------------------------------------------------------------------
 
 def _full_page(title: str, body: str, status: int = 200,
-               action: tuple[str, str] | None = None) -> HTMLResponse:
+               action: tuple[str, str] | list[tuple[str, str]] | None = None,
+               extra: str = "") -> HTMLResponse:
     """Full-fidelity page matching the website aesthetic — canvas, logo, card, fonts.
 
-    `action` is an optional (post_url, button_label): the page then carries a form whose
-    button POSTs there. Opening the page itself changes nothing."""
+    `action` is an optional (post_url, button_label), or a list of them: the page then carries a
+    form per action whose button POSTs there (the first is the main button, the others are shown
+    smaller). `extra` is ready-made HTML placed before those forms (already escaped by the caller).
+    Opening the page itself changes nothing."""
     base = FRONTEND_BASE_URL or ""
-    form = ""
-    if action:
-        form = (f'<form method="post" action="{html_lib.escape(action[0], quote=True)}">'
-                f'<button type="submit" class="btn-primary-action" style="margin-top:18px;width:100%">'
-                f'{html_lib.escape(action[1])}</button></form>')
+    actions = [action] if isinstance(action, tuple) else list(action or [])
+    form = extra
+    for n, (url, label) in enumerate(actions):
+        style = ("btn-primary-action", "margin-top:18px;width:100%") if n == 0 else (
+            "btn-secondary-link", "width:100%;background:none;border:0;cursor:pointer;font-family:inherit;color:var(--muted);text-transform:none;letter-spacing:0.04em;font-size:0.84rem;padding:8px 0;box-shadow:none;min-height:44px")
+        form += (f'<form method="post" action="{html_lib.escape(url, quote=True)}">'
+                 f'<button type="submit" class="{style[0]}" style="{style[1]}">'
+                 f'{html_lib.escape(label)}</button></form>')
     return HTMLResponse(status_code=status, content=f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -620,23 +708,41 @@ class Prefs(BaseModel):
     include_canada: bool = False
 
 
+NewsletterId = Annotated[str, Field(max_length=32)]
+
+
 class SubscribeRequest(BaseModel):
     email: Annotated[str, Field(max_length=254)]
     prefs: Prefs = Prefs()
     send_latest: bool = False
+    # Which newsletters to subscribe to; none given means the AI newsletter (the form before topics existed).
+    newsletters: Annotated[list[NewsletterId], Field(min_length=1, max_length=10)] | None = None
+    consent_text_version: Annotated[str, Field(max_length=40)] | None = None
 
 
 class EmailOnlyRequest(BaseModel):
     email: Annotated[str, Field(max_length=254)]
+    # /request-unsubscribe: which newsletter the page was about (unsubscribe.html?n=); none = AI if subscribed.
+    newsletter: NewsletterId | None = None
 
 
 class PreferencesUpdate(BaseModel):
     token: Annotated[str, Field(max_length=128)]
-    prefs: Prefs
+    prefs: Prefs | None = None
+    # The complete list of newsletters to get from now on (empty = none); omitted = leave them as they are.
+    newsletters: Annotated[list[NewsletterId], Field(max_length=10)] | None = None
+    consent_text_version: Annotated[str, Field(max_length=40)] | None = None
 
 
 class AuthPreferencesUpdate(BaseModel):
-    prefs: Prefs
+    prefs: Prefs | None = None
+    newsletters: Annotated[list[NewsletterId], Field(max_length=10)] | None = None
+    consent_text_version: Annotated[str, Field(max_length=40)] | None = None
+
+
+class AuthUnsubscribeRequest(BaseModel):
+    newsletter: NewsletterId = "ai"
+    all: bool = False
 
 
 class SectionRefineRequest(BaseModel):
@@ -796,23 +902,44 @@ async def sendgrid_events(request: Request):
 @router.post("/subscribe")
 @limiter.limit("5/minute")
 @steady_response_time
-def subscribe(request: Request, req: SubscribeRequest):
+def subscribe(request: Request, req: SubscribeRequest, user: dict | None = Depends(get_optional_user)):
     email = req.email.strip().lower()
     if not EMAIL_RE.match(email):
         # The one case where we don't pretend success: a malformed address
         # is a UX problem (typo), not an information leak.
         return JSONResponse(status_code=422, content={"error": "invalid email address"})
+    try:
+        wanted = _check_newsletters(req.newsletters, admin=bool(user) and _is_admin(user))
+    except HTTPException:
+        return JSONResponse(status_code=404, content={"error": "unknown_newsletter"})
+    consent = subscriptions_model.consent_version(req.consent_text_version)
 
     db  = _db()
     ref = db.collection(SUBSCRIBERS_COLLECTION).document(email)
     doc = ref.get()
+    current = subscriptions_model.subscribed_ids(doc.to_dict() if doc.exists else None)
 
-    if doc.exists and doc.to_dict().get("active"):
-        # Already active — tell them via email (NOT via the HTTP response,
-        # which stays identical to the new-subscriber case).
-        if mail_throttle.allow_mail(db, email):
-            _send_email(email, f"You're already subscribed to {NEWSLETTER_NAME}",
-                        _already_subscribed_email_html(doc.to_dict()["token"]))
+    if current:
+        # Already gets something — answer by email only (NOT via the HTTP response, which stays identical to the
+        # new-subscriber case). Newsletters it doesn't get yet need a confirmation click for the addition.
+        data = doc.to_dict()
+        adding = [i for i in wanted if i not in current]
+        if not mail_throttle.allow_mail(db, email):
+            return {"status": "ok"}
+        if not adding:
+            name = _newsletter_names(wanted)
+            _send_email(email, f"You're already subscribed to {name}",
+                        _already_subscribed_email_html(data["token"], name))
+            return {"status": "ok"}
+        ref.update({
+            "pending_newsletters":     adding,
+            "pending_consent_version": consent,
+            "pending_requested_at":    datetime.now(timezone.utc),
+            "send_latest":             req.send_latest,
+            "latest_sent":             False,
+        })
+        _send_email(email, f"Confirm your subscription to {_newsletter_names(adding)}",
+                    _addition_email_html(data["token"], adding))
         return {"status": "ok"}
 
     # Enforce subscriber cap before accepting a new subscription.
@@ -842,6 +969,10 @@ def subscribe(request: Request, req: SubscribeRequest):
             "include_french": req.prefs.include_french,
             "include_canada": req.prefs.include_canada,
         },
+        # Activated by /confirm, with the consent wording the form showed.
+        "pending_newsletters":     wanted,
+        "pending_consent_version": consent,
+        "pending_requested_at":    now,
     }
     # Only a doc that was never confirmed may expire; a former subscriber's doc is the record of consent,
     # so its confirmed_at is kept and it gets no expiry.
@@ -851,8 +982,8 @@ def subscribe(request: Request, req: SubscribeRequest):
         fields["expires_at"] = now + UNCONFIRMED_TTL
     ref.set(fields, merge=True)
 
-    _send_email(email, f"Confirm your subscription to {NEWSLETTER_NAME}",
-                _confirm_email_html(token))
+    _send_email(email, f"Confirm your subscription to {_newsletter_names(wanted)}",
+                _confirm_email_html(token, wanted))
     return {"status": "ok"}
 
 
@@ -910,22 +1041,73 @@ def newsletter_preview(request: Request):
 
 @router.get("/issues")
 @limiter.limit("30/minute")
-def archive_list(request: Request):
-    """Public: the flagged release issues, newest first. Debug runs and unflagged old runs never appear."""
-    return {"issues": run_kind.list_releases(_db(), FIRESTORE_COLLECTION)}
+def archive_list(
+    request: Request,
+    topic: Annotated[str, Query(max_length=32)] = "",
+    user: dict | None = Depends(get_optional_user),
+):
+    """Public: one newsletter's flagged release issues (AI unless `topic` names another), newest first. Debug runs
+    and unflagged old runs never appear; a hidden newsletter's archive is a 404 except for admins."""
+    newsletter = (topic or AI).strip().lower()
+    if not launch.is_visible(newsletter, bool(user) and _is_admin(user)):
+        return JSONResponse(status_code=404, content={"error": "not_found"})
+    return {"issues": run_kind.list_releases(_db(), FIRESTORE_COLLECTION, topic=newsletter)}
 
 
 @router.get("/issues/{run_id}")
 @limiter.limit("30/minute")
-def archive_issue(request: Request, run_id: str):
+def archive_issue(request: Request, run_id: str, user: dict | None = Depends(get_optional_user)):
     """Public: one archived issue as HTML, rendered and fenced exactly like /issues/latest. 404 for anything that is not
-    an explicitly flagged, composed release run, so a debug run cannot be fetched by guessing its id."""
+    an explicitly flagged, composed release run, so a debug run cannot be fetched by guessing its id, and for an
+    issue of a hidden newsletter (admins excepted)."""
     headers = {"Content-Security-Policy": PREVIEW_CSP}
     doc = _db().collection(FIRESTORE_COLLECTION).document(run_id).get() if ids.is_doc_id(run_id) else None
     data = doc.to_dict() if doc is not None and doc.exists else None
-    if not run_kind.is_archived_release(data):
+    newsletter = topics.topic_id_of(data)
+    if (not run_kind.is_archived_release(data, newsletter)
+            or not launch.is_visible(newsletter, bool(user) and _is_admin(user))):
         return HTMLResponse("<p>Issue not found.</p>", status_code=404, headers=headers)
     return HTMLResponse(content=_render_preview(data), status_code=200, headers=headers)
+
+
+_LATEST_ISSUES_CACHE: dict = {"at": 0.0, "value": None}
+
+
+def _latest_issue_ids(db) -> dict[str, str]:
+    """{topic: newest archived issue id}, cached like /spots so page views don't each scan pipeline_runs."""
+    now = time.monotonic()
+    if _LATEST_ISSUES_CACHE["value"] is None or now - _LATEST_ISSUES_CACHE["at"] > SPOTS_CACHE_SECONDS:
+        _LATEST_ISSUES_CACHE["value"] = run_kind.latest_archived_by_topic(db, FIRESTORE_COLLECTION)
+        _LATEST_ISSUES_CACHE["at"] = now
+    return _LATEST_ISSUES_CACHE["value"]
+
+
+def _newsletter_card(topic_id: str, latest: dict) -> dict:
+    t = topics.get_topic(topic_id)
+    return {
+        "id":           t.id,
+        "name":         t.name,
+        "tagline":      t.tagline,
+        "accent_color": t.accent_color,
+        "spotlight":    t.spotlight,
+        "sections":     [{"name": c.name, "icon": c.icon} for c in t.categories],
+        "latest_issue": latest.get(t.id),
+        "hidden":       not launch.is_public(t.id),
+    }
+
+
+@router.get("/newsletters")
+@limiter.limit("30/minute")
+def list_newsletters(request: Request, user: dict | None = Depends(get_optional_user)):
+    """Public: the ready-made newsletters this caller may see (hidden topics too for an admin, flagged `hidden`),
+    AI first, plus the consent wording every signup form shows next to the newsletter names."""
+    admin = bool(user) and _is_admin(user)
+    latest = _latest_issue_ids(_db())
+    return {
+        "newsletters":          [_newsletter_card(i, latest) for i in launch.visible_topic_ids(admin)],
+        "consent_text":         subscriptions_model.CONSENT_TEXT,
+        "consent_text_version": subscriptions_model.CONSENT_CURRENT,
+    }
 
 
 @router.get("/auth/admin/topics")
@@ -986,10 +1168,15 @@ def request_unsubscribe(request: Request, req: EmailOnlyRequest):
         return {"status": "ok"}
     db  = _db()
     doc = db.collection(SUBSCRIBERS_COLLECTION).document(email).get()
+    current = subscriptions_model.subscribed_ids(doc.to_dict() if doc.exists else None)
 
-    if doc.exists and doc.to_dict().get("active") and mail_throttle.allow_mail(db, email):
-        _send_email(email, f"Confirm unsubscription from {NEWSLETTER_NAME}",
-                    _unsubscribe_email_html(doc.to_dict()["token"]))
+    if current and mail_throttle.allow_mail(db, email):
+        # The link acts on the newsletter the page named if this address gets it, else on the AI one, else on
+        # the one it gets; the page behind the link offers "unsubscribe from everything" when there are others.
+        wanted = (req.newsletter or "").strip().lower()
+        newsletter = wanted if wanted in current else (AI if AI in current else current[0])
+        _send_email(email, f"Confirm unsubscription from {_newsletter_name(newsletter)}",
+                    _unsubscribe_email_html(doc.to_dict()["token"], newsletter))
     # Same response whether or not the subscriber exists.
     return {"status": "ok"}
 
@@ -1004,7 +1191,8 @@ def request_preferences(request: Request, req: EmailOnlyRequest):
     db  = _db()
     doc = db.collection(SUBSCRIBERS_COLLECTION).document(email).get()
 
-    if doc.exists and doc.to_dict().get("active") and mail_throttle.allow_mail(db, email):
+    if (doc.exists and subscriptions_model.subscribed_ids(doc.to_dict())
+            and mail_throttle.allow_mail(db, email)):
         _send_email(email, f"Manage your {NEWSLETTER_NAME} preferences",
                     _preferences_email_html(doc.to_dict()["token"]))
     return {"status": "ok"}
@@ -1041,50 +1229,77 @@ def confirm(
         return _INVALID_LINK_PAGE
 
     db  = _db()
-    doc = _find_by_token(db, token, enforce_expiry=True)
+    # A pending sign-up's link expires (48h); an address that already gets a newsletter holds a long-lived action
+    # token, and a pending addition on it has its own window (pending_requested_at), checked below.
+    doc = _find_by_token(db, token)
     if doc is None:
         return _INVALID_LINK_PAGE
 
-    data = doc.to_dict()
+    data    = doc.to_dict()
+    current = subscriptions_model.subscribed_ids(data)
+    raw     = data.get("pending_newsletters")
+    pending = [i for i in raw if isinstance(i, str) and topics.is_valid_topic(i)] if isinstance(raw, list) else []
+    if not current:
+        adding = pending or [AI]   # a sign-up made before newsletters existed has no list: the AI newsletter
+    else:
+        adding = [i for i in pending if i not in current] if _pending_is_fresh(data) else []
+
+    if not adding:
+        # A repeat click, a double click or a mail scanner's visit: already done, nothing more to do.
+        return _full_page("Subscription confirmed 🎉",
+                          f"You'll receive {html_lib.escape(_newsletter_names(current))} every Monday morning.")
 
     # Guard against the race condition where two people hold confirmation
     # links for the last open spot and both click at the same time.
-    if not data.get("active", False) and _active_subscriber_count(db) >= MAX_SUBSCRIBERS:
+    if not current and _active_subscriber_count(db) >= MAX_SUBSCRIBERS:
         return _full_page(
             "Newsletter is full",
             "All spots were claimed just before you confirmed. Check back later.",
             status=503,
         )
 
-    if data.get("active"):
-        # A repeat click, a double click or a mail scanner's visit: already done, nothing more to do.
-        return _full_page("Subscription confirmed 🎉",
-                          f"You'll receive {NEWSLETTER_NAME} every Monday morning.")
-
     # The link's token stays: the same inbox holds it, and a second visit must still find the subscriber.
     from google.cloud import firestore as _fs
-    doc.reference.update({
-        "active":            True,
-        "confirmed_at":      datetime.now(timezone.utc),   # CASL proof of consent
-        "token_expires_at":  datetime.now(timezone.utc) + ACTION_TOKEN_TTL,
-        "expires_at":        _fs.DELETE_FIELD,
-    })
-    print("[subscriptions]  confirmed subscriber", flush=True)
+    now     = datetime.now(timezone.utc)
+    consent = subscriptions_model.consent_version(data.get("pending_consent_version"))
+    merged  = dict(data)
+    for i in adding:
+        merged.update(subscriptions_model.add(merged, i, consent, now))
+    fields = {k: merged[k] for k in ("newsletters", "newsletter_meta", "active", "subscribed_any")}
+    fields.update({k: _fs.DELETE_FIELD for k in _PENDING_FIELDS if k in data})
+    if not current:
+        fields.update({
+            "confirmed_at":      now,   # CASL proof of consent
+            "token_expires_at":  now + ACTION_TOKEN_TTL,
+            "expires_at":        _fs.DELETE_FIELD,
+        })
+    doc.reference.update(fields)
+    print(f"[subscriptions]  confirmed subscriber ({len(adding)} newsletter(s))", flush=True)
 
-    # Send last week's newsletter if they asked for it, once: the flag is claimed before sending.
+    # Send last week's issue of each newsletter if they asked for it, once: the flag is claimed before sending.
     if data.get("send_latest") and _claim_latest(db, doc.reference):
         try:
-            html = _latest_newsletter_html(db, unsubscribe_token=data["token"], prefs=data.get("prefs") or {})
-            if html:
-                _send_email(data["email"], f"{NEWSLETTER_NAME} — last week's edition", html)
-            else:
+            if not _send_latest_editions(db, data["email"], data["token"], data.get("prefs") or {}, adding):
                 doc.reference.update({"latest_sent": False})
         except Exception:
             doc.reference.update({"latest_sent": False})
             raise
 
     return _full_page("Subscription confirmed 🎉",
-                 f"You'll receive {NEWSLETTER_NAME} every Monday morning.")
+                 f"You'll receive {html_lib.escape(_newsletter_names(adding))} every Monday morning.")
+
+
+_PENDING_FIELDS = ("pending_newsletters", "pending_consent_version", "pending_requested_at")
+
+
+def _pending_is_fresh(data: dict) -> bool:
+    """A pending addition counts for CONFIRM_TOKEN_TTL after it was requested, like a new sign-up's link."""
+    at = data.get("pending_requested_at")
+    if not at:
+        return False
+    if getattr(at, "tzinfo", None) is None:
+        at = at.replace(tzinfo=timezone.utc)
+    return datetime.now(timezone.utc) <= at + CONFIRM_TOKEN_TTL
 
 
 @router.get("/unsubscribe")
@@ -1092,25 +1307,89 @@ def confirm(
 def unsubscribe_page(
     request: Request,
     token: Annotated[str, Query(max_length=128)] = "",
+    n: Annotated[str, Query(max_length=32)] = "",
 ):
-    """Opening the link only shows a button; the unsubscribe happens on the POST below."""
-    if not token or not re.match(r'^[A-Za-z0-9_-]+$', token):
+    """Opening the link changes nothing; the unsubscribe happens on the POST below. `n` names the newsletter the
+    link came from; a link without it (every AI email, every email sent before topics) means the AI one.
+
+    Someone who gets one newsletter sees one button, as before. Someone who gets several sees a checklist of all
+    of them with the link's own newsletter ticked, plus "unsubscribe from everything" and a way to manage them."""
+    newsletter = _link_newsletter(n)
+    if not token or not re.match(r'^[A-Za-z0-9_-]+$', token) or newsletter is None:
         return _INVALID_LINK_PAGE
-    if _find_by_token(_db(), token) is None:
+    doc = _find_by_token(_db(), token)
+    if doc is None:
         return _INVALID_LINK_PAGE
+    return _unsubscribe_chooser(token, newsletter, subscriptions_model.subscribed_ids(doc.to_dict()))
+
+
+def _unsubscribe_chooser(token: str, newsletter: str, current: list[str], note: str = "") -> HTMLResponse:
+    name = _newsletter_name(newsletter)   # button labels are escaped by _full_page; page text is escaped here
+    one = (f"{SERVICE_BASE_URL}/unsubscribe?{_link_query(token, newsletter)}", "Unsubscribe")
+    if not [i for i in current if i != newsletter]:
+        return _full_page("Unsubscribe",
+                          f"Press the button to stop receiving {html_lib.escape(name)}. You can re-subscribe any time.",
+                          action=one)
+    rows = []
+    for i in current:
+        t = topics.get_topic(i)
+        checked = " checked" if i == newsletter else ""
+        rows.append(
+            f'<label class="check-row" style="--accent:{t.accent_color};text-transform:none;letter-spacing:normal;padding:11px 0;margin:0">'
+            f'<input type="checkbox" name="pick" value="{t.id}"{checked}>'
+            f'<span><span style="color:{t.accent_color}">{html_lib.escape(t.name)}</span>'
+            f'<span class="check-desc">{html_lib.escape(t.tagline)}</span></span></label>')
+    post = html_lib.escape(f"{SERVICE_BASE_URL}/unsubscribe?{urlencode({'token': token})}", quote=True)
+    manage = html_lib.escape(f"{FRONTEND_BASE_URL}/preferences.html?{_link_query(token, newsletter)}", quote=True)
+    error = f'<p class="msg visible error" style="margin:0 0 14px">{html_lib.escape(note)}</p>' if note else ""
+    chooser = (
+        f'<form method="post" action="{post}" style="margin-top:6px">{error}'
+        f'<input type="hidden" name="form" value="1">'
+        f'<div class="checkboxes" style="margin-bottom:6px">{"".join(rows)}</div>'
+        f'<button type="submit" class="btn-primary-action" style="margin-top:12px;width:100%;min-height:44px">'
+        f'Unsubscribe from selected</button></form>'
+    )
+    everything = html_lib.escape(f"{SERVICE_BASE_URL}/unsubscribe?{urlencode({'token': token, 'all': '1'})}",
+                                 quote=True)
+    footer = (f'<form method="post" action="{everything}"><button type="submit" class="btn-secondary-link" '
+              f'style="width:100%;background:none;border:0;cursor:pointer;font-family:inherit;color:var(--muted);text-transform:none;letter-spacing:0.04em;font-size:0.84rem;padding:8px 0;box-shadow:none;min-height:44px">'
+              f'Unsubscribe from everything</button></form>'
+              f'<p class="note" style="margin-top:6px;text-align:center">'
+              f'<a href="{manage}">Manage all your newsletters instead</a></p>')
     return _full_page("Unsubscribe",
-                      f"Press the button to stop receiving {NEWSLETTER_NAME}. You can re-subscribe any time.",
-                      action=(f"{SERVICE_BASE_URL}/unsubscribe?{urlencode({'token': token})}",
-                              "Unsubscribe"))
+                      f"You get {len(current)} newsletters from us. Tick the ones to stop, then press the button. "
+                      "You can re-subscribe any time.",
+                      extra=chooser + footer)
+
+
+def _link_newsletter(n: str) -> str | None:
+    """The newsletter an emailed link names: AI when absent, None when it is not a known newsletter. Hidden topics
+    count: their links reach admins before launch and must keep working after an un-launch."""
+    n = (n or AI).strip().lower()
+    return topics.get_topic(n).id if topics.is_valid_topic(n) else None
 
 
 @router.post("/unsubscribe")
 @limiter.limit("10/minute")
-def unsubscribe(
+async def unsubscribe(
     request: Request,
     token: Annotated[str, Query(max_length=128)] = "",
+    n: Annotated[str, Query(max_length=32)] = "",
+    everything: Annotated[str, Query(alias="all", max_length=1)] = "",
 ):
-    if not token or not re.match(r'^[A-Za-z0-9_-]+$', token):
+    """The button press. Either the checklist form (body `form=1&pick=<id>...`), or a query-only POST: no `n`
+    means the AI newsletter (every old email), `n=<id>` one newsletter, `all=1` everything."""
+    picks = None
+    if request.headers.get("content-type", "").startswith("application/x-www-form-urlencoded"):
+        form = parse_qs((await request.body())[:4096].decode("utf-8", "replace"))
+        if form.get("form") == ["1"]:
+            picks = [p.strip().lower() for p in form.get("pick", [])][:10]
+    return await run_in_threadpool(_unsubscribe, token, n, everything, picks)
+
+
+def _unsubscribe(token: str, n: str, everything: str, picks: list[str] | None):
+    newsletter = _link_newsletter(n)
+    if not token or not re.match(r'^[A-Za-z0-9_-]+$', token) or newsletter is None:
         return _INVALID_LINK_PAGE
 
     db  = _db()
@@ -1118,8 +1397,40 @@ def unsubscribe(
     if doc is None:
         return _INVALID_LINK_PAGE
 
-    doc.reference.update({"active": False})
-    print("[subscriptions]  unsubscribed subscriber", flush=True)
+    data = doc.to_dict()
+    current = subscriptions_model.subscribed_ids(data)
+    if picks is not None and everything != "1":
+        chosen = [i for i in current if i in picks]
+        if not chosen:
+            return _unsubscribe_chooser(token, newsletter, current, note="Tick at least one newsletter to stop.")
+        merged = dict(data)
+        for i in chosen:
+            merged.update(subscriptions_model.remove(merged, i))
+        doc.reference.update({k: merged[k] for k in ("newsletters", "newsletter_meta", "active", "subscribed_any")})
+        print(f"[subscriptions]  unsubscribed subscriber from {len(chosen)} newsletter(s)", flush=True)
+        kept = [i for i in current if i not in chosen]
+        if kept:
+            return _full_page("You've been unsubscribed",
+                              f"You won't receive {html_lib.escape(_newsletter_names(chosen))} anymore. "
+                              f"You still get {html_lib.escape(_newsletter_names(kept))}.")
+        return _full_page("You've been unsubscribed", "Sorry to see you go. You can re-subscribe any time.")
+
+    if everything == "1":
+        from google.cloud import firestore as _fs
+        fields = subscriptions_model.remove_all(data)
+        fields.update({k: _fs.DELETE_FIELD for k in _PENDING_FIELDS if k in data})
+        doc.reference.update(fields)
+        print("[subscriptions]  unsubscribed subscriber from everything", flush=True)
+        return _full_page("You've been unsubscribed",
+                          "You won't receive any of our newsletters anymore. You can re-subscribe any time.")
+
+    doc.reference.update(subscriptions_model.remove(data, newsletter))
+    print(f"[subscriptions]  unsubscribed subscriber from {newsletter}", flush=True)
+    others = [i for i in subscriptions_model.subscribed_ids(data) if i != newsletter]
+    if others:
+        return _full_page("You've been unsubscribed",
+                          f"You won't receive {html_lib.escape(_newsletter_name(newsletter))} anymore. "
+                          f"Your other newsletters ({html_lib.escape(_newsletter_names(others))}) are unchanged.")
     return _full_page("You've been unsubscribed",
                  "Sorry to see you go. You can re-subscribe any time.")
 
@@ -1139,7 +1450,7 @@ def get_preferences(
         return JSONResponse(status_code=404, content={"error": "not_found"})
 
     data = doc.to_dict()
-    return {"email": data["email"], "prefs": data.get("prefs") or {}}
+    return {"email": data["email"], "prefs": data.get("prefs") or {}, **_newsletter_choices(data, admin=False)}
 
 
 @router.post("/preferences")
@@ -1153,11 +1464,63 @@ def update_preferences(request: Request, req: PreferencesUpdate):
     if doc is None:
         return JSONResponse(status_code=404, content={"error": "not_found"})
 
-    doc.reference.update({"prefs": {
-        "include_french": req.prefs.include_french,
-        "include_canada": req.prefs.include_canada,
-    }})
+    try:
+        fields = _preference_fields(db, doc.to_dict(), req.prefs, req.newsletters, req.consent_text_version,
+                                    admin=False)
+    except HTTPException as e:
+        return JSONResponse(status_code=e.status_code, content={"error": e.detail})
+    if fields:
+        doc.reference.update(fields)
     return {"status": "ok"}
+
+
+def _newsletter_choices(data: dict | None, admin: bool) -> dict:
+    """What a preferences page shows: the newsletters this address gets, and every one it could get (the visible
+    ones plus any it already has, so an admin's pre-launch subscription still shows on the emailed link)."""
+    current = subscriptions_model.subscribed_ids(data)
+    ids = launch.ordered(set(launch.visible_topic_ids(admin)) | set(current))
+    return {
+        "newsletters": current,
+        "available": [{"id": t.id, "name": t.name, "tagline": t.tagline, "accent_color": t.accent_color,
+                       "hidden": not launch.is_public(t.id)} for t in map(topics.get_topic, ids)],
+        "consent_text":         subscriptions_model.CONSENT_TEXT,
+        "consent_text_version": subscriptions_model.CONSENT_CURRENT,
+    }
+
+
+def _preference_fields(db, data: dict, prefs: Prefs | None, newsletters, consent, admin: bool) -> dict:
+    """Fields to write for a preferences update. The token (or the signed-in account) proves the inbox, so both
+    removing and adding a newsletter are instant. Adding one the caller cannot see is a 404; the first newsletter
+    of someone who had none is a new person under the cap (503 when full)."""
+    fields = {}
+    if prefs is not None:
+        fields["prefs"] = {"include_french": prefs.include_french, "include_canada": prefs.include_canada}
+    if newsletters is None:
+        return fields
+    current = subscriptions_model.subscribed_ids(data)
+    wanted = list(dict.fromkeys(str(i).strip().lower() for i in newsletters))
+    allowed = set(launch.visible_topic_ids(admin)) | set(current)
+    if any(i not in allowed for i in wanted):
+        raise HTTPException(status_code=404, detail="unknown_newsletter")
+    adds = [i for i in wanted if i not in current]
+    if not current and adds and _active_subscriber_count(db) >= MAX_SUBSCRIBERS:
+        raise HTTPException(status_code=503, detail="service_unavailable")
+    merged, now = dict(data), datetime.now(timezone.utc)
+    version = subscriptions_model.consent_version(consent)
+    for i in current:
+        if i not in wanted:
+            merged.update(subscriptions_model.remove(merged, i, now))
+    for i in adds:
+        merged.update(subscriptions_model.add(merged, i, version, now))
+    if adds or len(wanted) != len(current):
+        fields.update({k: merged[k] for k in ("newsletters", "newsletter_meta", "active", "subscribed_any")})
+    if adds and not current and data.get("expires_at"):
+        # A never-confirmed doc: its emailed link proves the inbox just as the confirm button does, so it stops
+        # being a pending sign-up (otherwise the TTL rule on expires_at would delete a real subscriber).
+        from google.cloud import firestore as _fs
+        fields.update({"confirmed_at": now, "expires_at": _fs.DELETE_FIELD,
+                       "token_expires_at": now + ACTION_TOKEN_TTL})
+    return fields
 
 
 # ---------------------------------------------------------------------------
@@ -1177,9 +1540,21 @@ def _newsletter_variant_key(prefs: dict) -> str:
     return f"{fr}_{ca}"
 
 
-def _latest_newsletter_html(db, unsubscribe_token: str, prefs: dict | None = None):
-    # The newest issue that was actually mailed: never a debug run, and not a draft still waiting for Monday.
-    doc = run_kind.latest_run(db, FIRESTORE_COLLECTION, sent_only=True)
+def _send_latest_editions(db, email: str, token: str, prefs: dict, newsletter_ids) -> int:
+    """Mail the newest sent issue of each newsletter that has one; returns how many went out."""
+    sent = 0
+    for i in newsletter_ids:
+        html = _latest_newsletter_html(db, unsubscribe_token=token, prefs=prefs, topic=i)
+        if html:
+            _send_email(email, f"{_newsletter_name(i)} — last week's edition", html)
+            sent += 1
+    return sent
+
+
+def _latest_newsletter_html(db, unsubscribe_token: str, prefs: dict | None = None, topic: str = AI):
+    # The newest issue of this newsletter that was actually mailed: never a debug run, and not a draft still
+    # waiting for Monday. A newsletter with no sent issue yet sends nothing.
+    doc = run_kind.latest_run(db, FIRESTORE_COLLECTION, sent_only=True, topic=topic)
     if doc is None:
         print("[subscriptions]  no newsletter found to send", flush=True)
         return None
@@ -1197,8 +1572,8 @@ def _latest_newsletter_html(db, unsubscribe_token: str, prefs: dict | None = Non
     # FRONTEND_BASE_URL, which is unset until the frontend exists (Phase 11) —
     # until then the prefs link is malformed, but we still replace the
     # placeholder so the raw "{{PREFERENCES_URL}}" string never ships.
-    unsub_link = f"{SERVICE_BASE_URL}/unsubscribe?token={unsubscribe_token}"
-    prefs_link = f"{FRONTEND_BASE_URL}/preferences.html?token={unsubscribe_token}"
+    unsub_link = f"{SERVICE_BASE_URL}/unsubscribe?{_link_query(unsubscribe_token, topic)}"
+    prefs_link = f"{FRONTEND_BASE_URL}/preferences.html?{_link_query(unsubscribe_token, topic)}"
     html = html.replace("{{UNSUBSCRIBE_URL}}", unsub_link)
     html = html.replace("{{PREFERENCES_URL}}", prefs_link)
     return html
@@ -1248,7 +1623,8 @@ def auth_me(request: Request, user: dict = Depends(get_current_user)):
         "email":          email,
         "display_name":   user.get("name"),
         "email_verified": user.get("email_verified", False),
-        "subscribed":     bool(sub_data and sub_data.get("active")),
+        "subscribed":     bool(sub_data and sub_data.get("active")),   # the AI newsletter, as before
+        "newsletters":    subscriptions_model.subscribed_ids(sub_data),
         "prefs":          (sub_data.get("prefs") or {}) if sub_data else {},
         "tier":           tier,
         "is_admin":       _is_admin(user),
@@ -1263,11 +1639,18 @@ async def auth_subscribe(request: Request, user: dict = Depends(get_verified_use
         body = await request.json()
     except Exception:
         body = {}
-    send_latest = bool(body.get("send_latest", False)) if isinstance(body, dict) else False
-    return await run_in_threadpool(_subscribe_account, user, send_latest)
+    body = body if isinstance(body, dict) else {}
+    send_latest = bool(body.get("send_latest", False))
+    newsletter  = body.get("newsletter") or AI
+    if not isinstance(newsletter, str) or len(newsletter) > 32:
+        raise HTTPException(status_code=422, detail="invalid_newsletter")
+    consent = body.get("consent_text_version")
+    return await run_in_threadpool(_subscribe_account, user, send_latest, newsletter,
+                                   consent if isinstance(consent, str) else None)
 
 
-def _subscribe_account(user: dict, send_latest: bool) -> dict:
+def _subscribe_account(user: dict, send_latest: bool, newsletter: str = AI, consent: str | None = None) -> dict:
+    newsletter = _check_newsletters([newsletter], admin=_is_admin(user))[0]
     db    = _db()
     email = user["email"].lower()
     uid   = user["uid"]
@@ -1275,38 +1658,47 @@ def _subscribe_account(user: dict, send_latest: bool) -> dict:
 
     ref = db.collection(SUBSCRIBERS_COLLECTION).document(email)
     doc = ref.get()
+    data = doc.to_dict() if doc.exists else None
+    current = subscriptions_model.subscribed_ids(data)
 
-    if doc.exists and doc.to_dict().get("active"):
+    if newsletter in current:
         return {"status": "already_subscribed"}
 
-    if _active_subscriber_count(db) >= MAX_SUBSCRIBERS:
+    # The cap counts people: someone who already gets a newsletter is not a new one.
+    if not current and _active_subscriber_count(db) >= MAX_SUBSCRIBERS:
         raise HTTPException(status_code=503, detail="service_unavailable")
 
-    token_val = secrets.token_urlsafe(32)
+    fields = subscriptions_model.add(data, newsletter, subscriptions_model.consent_version(consent), now)
     if doc.exists:
         from google.cloud import firestore as _fs
-        ref.update({
-            "active":           True,
-            "confirmed_at":     now,
-            "expires_at":       _fs.DELETE_FIELD,
-            "token":            token_val,
-            "token_expires_at": now + ACTION_TOKEN_TTL,
+        fields.update({
             "uid":              uid,
             "send_latest":      send_latest,
             "latest_sent":      False,
+            **{k: _fs.DELETE_FIELD for k in _PENDING_FIELDS if k in data},
         })
+        if not current:
+            # Coming back (or confirming a pending sign-up through the account): a fresh link, as before. Someone
+            # still subscribed to another newsletter keeps theirs, so links in emails already sent keep working.
+            fields.update({
+                "confirmed_at":     now,
+                "expires_at":       _fs.DELETE_FIELD,
+                "token":            secrets.token_urlsafe(32),
+                "token_expires_at": now + ACTION_TOKEN_TTL,
+            })
+        ref.update(fields)
     else:
         ref.set({
             "email":            email,
             "subscribed_at":    now,
             "confirmed_at":     now,
-            "active":           True,
-            "token":            token_val,
+            "token":            secrets.token_urlsafe(32),
             "token_expires_at": now + ACTION_TOKEN_TTL,
             "send_latest":      send_latest,
             "latest_sent":      False,
             "uid":              uid,
             "prefs": {"include_french": True, "include_canada": True},
+            **fields,
         })
 
     if send_latest:
@@ -1315,9 +1707,10 @@ def _subscribe_account(user: dict, send_latest: bool) -> dict:
             db,
             unsubscribe_token=current_data["token"],
             prefs=current_data.get("prefs") or {},
+            topic=newsletter,
         )
         if html:
-            _send_email(email, f"{NEWSLETTER_NAME} — last week's edition", html)
+            _send_email(email, f"{_newsletter_name(newsletter)} — last week's edition", html)
             ref.update({"latest_sent": True})
 
     print(f"[subscriptions]  account-based subscribe: {email}", flush=True)
@@ -1326,13 +1719,18 @@ def _subscribe_account(user: dict, send_latest: bool) -> dict:
 
 @router.post("/auth/unsubscribe")
 @limiter.limit("10/minute")
-def auth_unsubscribe(request: Request, user: dict = Depends(get_verified_user)):
-    """Unsubscribe the authenticated user."""
+def auth_unsubscribe(request: Request, req: AuthUnsubscribeRequest | None = None,
+                     user: dict = Depends(get_verified_user)):
+    """Unsubscribe the authenticated user from one newsletter (the AI one when no body is sent) or from all."""
+    req   = req or AuthUnsubscribeRequest()
     db    = _db()
     email = user["email"].lower()
     ref   = db.collection(SUBSCRIBERS_COLLECTION).document(email)
-    if ref.get().exists:
-        ref.update({"active": False})
+    snap  = ref.get()
+    if snap.exists:
+        data = snap.to_dict()
+        newsletter = req.newsletter.strip().lower()
+        ref.update(subscriptions_model.remove_all(data) if req.all else subscriptions_model.remove(data, newsletter))
     print(f"[subscriptions]  account-based unsubscribe: {email}", flush=True)
     return {"status": "ok"}
 
@@ -1522,10 +1920,11 @@ def auth_get_preferences(request: Request, user: dict = Depends(get_verified_use
     email = user["email"].lower()
     tier  = _get_user_tier(user)
     doc   = db.collection(SUBSCRIBERS_COLLECTION).document(email).get()
-    if not doc.exists or not doc.to_dict().get("active"):
-        return {"subscribed": False, "prefs": {}, "tier": tier}
-    data = doc.to_dict()
-    return {"subscribed": True, "prefs": data.get("prefs") or {}, "tier": tier}
+    data  = doc.to_dict() if doc.exists else None
+    choices = _newsletter_choices(data, admin=_is_admin(user))
+    if not data or not data.get("active"):
+        return {"subscribed": False, "prefs": {}, "tier": tier, **choices}
+    return {"subscribed": True, "prefs": data.get("prefs") or {}, "tier": tier, **choices}
 
 
 @router.post("/auth/preferences")
@@ -1539,12 +1938,13 @@ def auth_update_preferences(
     db    = _db()
     email = user["email"].lower()
     ref   = db.collection(SUBSCRIBERS_COLLECTION).document(email)
-    if not ref.get().exists:
+    snap  = ref.get()
+    if not snap.exists:
         raise HTTPException(status_code=404, detail="not_subscribed")
-    ref.update({"prefs": {
-        "include_french": req.prefs.include_french,
-        "include_canada": req.prefs.include_canada,
-    }})
+    fields = _preference_fields(db, snap.to_dict(), req.prefs, req.newsletters, req.consent_text_version,
+                                admin=_is_admin(user))
+    if fields:
+        ref.update(fields)
     return {"status": "ok"}
 
 

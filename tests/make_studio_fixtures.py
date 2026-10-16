@@ -102,14 +102,16 @@ WIDGETS = [
 
 def build_catalog() -> dict:
     """The C6 `GET /catalog` answer as an admin would see it (hidden topics included, with public: false)."""
+    import launch
     import topics
 
     out = []
-    for tid in topics.list_topic_ids():
+    for tid in launch.ordered(topics.list_topic_ids()):   # the site's order: AI first, then by name
         t = topics.get_topic(tid)
         out.append({
             "id": t.id, "name": t.name, "tagline": t.tagline, "accent_color": t.accent_color,
-            # Only the AI newsletter is public until roadmap A's launch switches exist.
+            # As launched today (no PUBLIC_TOPICS): only the AI newsletter. Fixed here, not read from the
+            # environment, so the fixture is the same on every machine.
             "public": t.is_default,
             "sections": [{"name": c.name, "definition": c.definition, "icon": c.icon} for c in t.categories],
         })

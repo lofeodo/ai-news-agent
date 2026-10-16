@@ -139,7 +139,8 @@ def test_reactivation_stores_a_working_link(signed_in):
 def test_reactivation_email_carries_the_new_link(signed_in, monkeypatch):
     seen = {}
     monkeypatch.setattr(subs, "_latest_newsletter_html",
-                        lambda db, unsubscribe_token, prefs=None: seen.setdefault("token", unsubscribe_token) and "<p>x</p>")
+                        lambda db, unsubscribe_token, prefs=None, topic="ai":
+                        seen.setdefault("token", unsubscribe_token) and "<p>x</p>")
     monkeypatch.setattr(subs, "_send_email", lambda *a, **k: None)
     signed_in.store["a@example.com"] = _sub(token="old", active=False, expires=PAST)
     signed_in.client.post("/auth/subscribe", json={"send_latest": True})

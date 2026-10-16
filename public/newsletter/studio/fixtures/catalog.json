@@ -45,45 +45,45 @@
       ]
     },
     {
-      "id": "boardgames",
-      "name": "Tabletop Weekly",
-      "tagline": "Weekly Board Games & Tabletop Dispatch",
-      "accent_color": "#f2a65a",
+      "id": "printing3d",
+      "name": "Layer Lines",
+      "tagline": "Weekly 3D Printing Dispatch",
+      "accent_color": "#5ec8e5",
       "public": false,
       "sections": [
         {
-          "name": "New Releases",
-          "definition": "announcements and releases of board games, expansions, reprints and new editions, including release dates and what is coming from major publishers",
-          "icon": "🎲"
+          "name": "New Printers & Hardware",
+          "definition": "new desktop printers, upgrades and accessories from Bambu Lab, Prusa, Creality, Elegoo, Anycubic and others, plus hands-on hardware reviews",
+          "icon": "🖨️"
         },
         {
-          "name": "Crowdfunding",
-          "definition": "Kickstarter and Gamefound campaigns for board games and tabletop products, new launches, funded milestones and delivery news",
-          "icon": "🚀"
+          "name": "Firmware & Software",
+          "definition": "slicers, firmware and printer software updates, CAD and modeling tools, and model sites such as Printables, MakerWorld and Thingiverse",
+          "icon": "💾"
         },
         {
-          "name": "Reviews & Previews",
-          "definition": "reviews, previews, first impressions, strategy and how-to-play pieces, and well-argued best-of lists for specific games",
-          "icon": "📝"
+          "name": "Materials & Filament",
+          "definition": "filament and resin news, new materials, material comparisons and testing, and supply and pricing changes",
+          "icon": "🧵"
         },
         {
-          "name": "Industry & Publishers",
-          "definition": "publisher and designer news, acquisitions, tariffs and pricing, distribution, retail and game store news, awards and lawsuits",
+          "name": "Projects & Prints",
+          "definition": "impressive, useful or clever prints and projects, mods and upgrades, and creative uses of 3D printing",
+          "icon": "🧰"
+        },
+        {
+          "name": "Industry & Business",
+          "definition": "company news, funding, acquisitions, layoffs, lawsuits between printer makers, and the business of desktop and industrial 3D printing",
           "icon": "🏢"
         },
         {
-          "name": "Events & Conventions",
-          "definition": "Gen Con, Essen Spiel, Origins, PAX Unplugged and other conventions, game fairs, tournaments and the Spiel des Jahres and other awards",
-          "icon": "🎪"
+          "name": "Guides & Tips",
+          "definition": "how-to guides, troubleshooting, calibration and settings advice, maintenance and buying guides with real substance",
+          "icon": "📘"
         },
         {
-          "name": "RPGs, Minis & Card Games",
-          "definition": "tabletop role-playing games such as Dungeons & Dragons, miniatures games such as Warhammer, and collectible and living card games such as Magic The Gathering",
-          "icon": "⚔️"
-        },
-        {
-          "name": "Community & Culture",
-          "definition": "game design, digital adaptations and apps of board games, accessibility, collecting, the hobby community and its debates",
+          "name": "Community & Policy",
+          "definition": "laws and regulation about 3D printing, patents, safety concerns, open-source versus closed hardware debates, and community news",
           "icon": "🌐"
         }
       ]
@@ -133,6 +133,50 @@
       ]
     },
     {
+      "id": "boardgames",
+      "name": "Tabletop Weekly",
+      "tagline": "Weekly Board Games & Tabletop Dispatch",
+      "accent_color": "#f2a65a",
+      "public": false,
+      "sections": [
+        {
+          "name": "New Releases",
+          "definition": "announcements and releases of board games, expansions, reprints and new editions, including release dates and what is coming from major publishers",
+          "icon": "🎲"
+        },
+        {
+          "name": "Crowdfunding",
+          "definition": "Kickstarter and Gamefound campaigns for board games and tabletop products, new launches, funded milestones and delivery news",
+          "icon": "🚀"
+        },
+        {
+          "name": "Reviews & Previews",
+          "definition": "reviews, previews, first impressions, strategy and how-to-play pieces, and well-argued best-of lists for specific games",
+          "icon": "📝"
+        },
+        {
+          "name": "Industry & Publishers",
+          "definition": "publisher and designer news, acquisitions, tariffs and pricing, distribution, retail and game store news, awards and lawsuits",
+          "icon": "🏢"
+        },
+        {
+          "name": "Events & Conventions",
+          "definition": "Gen Con, Essen Spiel, Origins, PAX Unplugged and other conventions, game fairs, tournaments and the Spiel des Jahres and other awards",
+          "icon": "🎪"
+        },
+        {
+          "name": "RPGs, Minis & Card Games",
+          "definition": "tabletop role-playing games such as Dungeons & Dragons, miniatures games such as Warhammer, and collectible and living card games such as Magic The Gathering",
+          "icon": "⚔️"
+        },
+        {
+          "name": "Community & Culture",
+          "definition": "game design, digital adaptations and apps of board games, accessibility, collecting, the hobby community and its debates",
+          "icon": "🌐"
+        }
+      ]
+    },
+    {
       "id": "gaming",
       "name": "Video Games Weekly",
       "tagline": "Weekly Video Games Dispatch",
@@ -172,50 +216,6 @@
         {
           "name": "Community & Culture",
           "definition": "modding, game preservation, accessibility, player controversies, game design discussion, and the people and communities around games",
-          "icon": "🌐"
-        }
-      ]
-    },
-    {
-      "id": "printing3d",
-      "name": "Layer Lines",
-      "tagline": "Weekly 3D Printing Dispatch",
-      "accent_color": "#5ec8e5",
-      "public": false,
-      "sections": [
-        {
-          "name": "New Printers & Hardware",
-          "definition": "new desktop printers, upgrades and accessories from Bambu Lab, Prusa, Creality, Elegoo, Anycubic and others, plus hands-on hardware reviews",
-          "icon": "🖨️"
-        },
-        {
-          "name": "Firmware & Software",
-          "definition": "slicers, firmware and printer software updates, CAD and modeling tools, and model sites such as Printables, MakerWorld and Thingiverse",
-          "icon": "💾"
-        },
-        {
-          "name": "Materials & Filament",
-          "definition": "filament and resin news, new materials, material comparisons and testing, and supply and pricing changes",
-          "icon": "🧵"
-        },
-        {
-          "name": "Projects & Prints",
-          "definition": "impressive, useful or clever prints and projects, mods and upgrades, and creative uses of 3D printing",
-          "icon": "🧰"
-        },
-        {
-          "name": "Industry & Business",
-          "definition": "company news, funding, acquisitions, layoffs, lawsuits between printer makers, and the business of desktop and industrial 3D printing",
-          "icon": "🏢"
-        },
-        {
-          "name": "Guides & Tips",
-          "definition": "how-to guides, troubleshooting, calibration and settings advice, maintenance and buying guides with real substance",
-          "icon": "📘"
-        },
-        {
-          "name": "Community & Policy",
-          "definition": "laws and regulation about 3D printing, patents, safety concerns, open-source versus closed hardware debates, and community news",
           "icon": "🌐"
         }
       ]

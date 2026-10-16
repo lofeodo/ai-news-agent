@@ -70,18 +70,48 @@ Each `pipeline_runs` doc has `run_kind`: `release` or `debug` (no field = releas
 
 ## 2b-2. Other topics (finance, gaming, board games, 3D printing)
 
-Besides the AI newsletter the pipeline can write `finance`, `gaming`, `boardgames` and `printing3d` (profiles in `topics/`). They are **debug runs only** for now: nothing is scheduled, nothing is mailed, and they never appear on the public site, in the archive or in the health check.
+Besides the AI newsletter the pipeline writes `finance`, `gaming`, `boardgames` and `printing3d` (profiles in `topics/`). Each one runs weekly only if its two Scheduler jobs exist, and strangers can see and subscribe to it only once its id is in `PUBLIC_TOPICS` on agent-subscriptions (the launch switch, `agents/launch.py`). Until then it is **hidden**: absent from the site, signup and archive (404), while admins (`ADMIN_EMAILS`) see it with a "Hidden" badge and can subscribe to it, which is how the owner gets the pre-launch issues.
 
-- Start one: call the orchestrator with `?topic=<id>` and no `kind`: `curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" "<orchestrator-url>/?topic=gaming"`. `kind=release` with a topic other than `ai` is refused with a 400. An unknown topic is a 400 too.
-- View it: sign in as an admin, open the Issues page, click **Debug run** and pick the topic in the dropdown (`/issues.html?debug=1&topic=gaming` opens it directly). A topic that has never run says so.
+- Debug run: call the orchestrator with `?topic=<id>` and no `kind`: `curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" "<orchestrator-url>/?topic=gaming"`. `?topic=<id>&kind=release` is the weekly release run. An unknown topic is a 400.
+- View it: sign in as an admin, open the Issues page, click **Debug run** and pick the topic in the dropdown (`/issues.html?debug=1&topic=gaming` opens it directly). A topic that has never run says so. A release issue is also on `/newsletter.html?id=<id>` (admins only while hidden).
+- Send it: agent4 takes `?topic=<id>` (`POST <agent4-url>/?topic=finance`); no topic is the AI send, exactly as before. agent4-test (`TEST_SEND_TO`) does the same for one address.
 - Locally: `python orchestrator.py --topic gaming` (writes to `data/`, so run one topic at a time). On Windows set `PYTHONUTF8=1` when redirecting the output to a file, or the first non-ASCII character in a log line stops the run.
 - A topic run costs Claude calls (roughly the language filter, one categorize pass and the summaries, so a few tenths of a dollar with `AGENT2B_MODE=shortlist`); the NewsAPI free plan allows 100 requests a day and a topic uses 5 to 7.
-- Turning a topic on weekly is not a config change yet: it needs a Scheduler job, lifting the release block, subscriber topic preferences and a send path. See the follow-ups in `docs/plans/multi-topic.md`.
+- Subscribers: the subscriber doc's `newsletters` list says which newsletters an address gets (`active` stays the AI flag). Each newsletter is its own email; every footer link carries `&n=<id>` (none = AI). `venv\Scripts\python tools/backfill_newsletters_field.py` (dry run, counts only) then `--apply` writes the list onto old docs once; nothing depends on it.
+
+### Topic launch checklist (one topic at a time)
+
+1. **Before the first week:** check the SendGrid plan's daily and monthly quota covers one more email per subscriber of the topic.
+2. **Subscribe yourself** while it is hidden: sign in as an admin, open `/newsletters.html`, switch the topic on.
+3. **Create its two Scheduler jobs**, copying region, service account and auth from the existing jobs (`gcloud scheduler jobs describe create-newsletter --location <region>` and the same for the agent4 send job). Times keep the AI run at noon and every send before 7:00 AM:
+
+   | Topic | Sunday draft | Monday send |
+   |---|---|---|
+   | finance | 10:00 | 6:40 |
+   | gaming | 10:30 | 6:45 |
+   | boardgames | 11:00 | 6:50 |
+   | printing3d | 11:30 | 6:55 |
+
+   ```powershell
+   gcloud scheduler jobs create http create-newsletter-finance --location <region> --time-zone "America/Toronto" `
+     --schedule "0 10 * * 0" --http-method POST --uri "<orchestrator-url>/?topic=finance&kind=release" `
+     --oidc-service-account-email <same service account as create-newsletter>
+   gcloud scheduler jobs create http send-newsletter-finance --location <region> --time-zone "America/Toronto" `
+     --schedule "40 6 * * 1" --http-method POST --uri "<agent4-url>/?topic=finance" `
+     --oidc-service-account-email <same service account as the agent4 send job>
+   ```
+   A 10:00 Sunday draft is 20h40m old at 6:40 Monday, inside agent4's 24h limit. The 1:15 PM draft check and the 7:10 AM send check cover every topic that had a release run in the last 15 days (see [monitoring](monitoring.md)).
+4. **Read the first Sunday draft** (admin view, step "View it" above) and check the draft health check email lists the topic as clear.
+5. **Check you received the Monday issue**, and that the send check lists the topic as clear.
+6. **Launch:** `gcloud run services update agent-subscriptions --update-env-vars PUBLIC_TOPICS=finance` (comma-separated, keep the topics already launched; `ai` is always public). No redeploy of code.
+
+Un-launch: remove the id from `PUBLIC_TOPICS` (subscribers keep getting it while the jobs run). Stop a topic: pause its two Scheduler jobs; the health check stops expecting it 15 days after its last release run.
 
 ## 2c. Newsletter archive
 
 `GET /issues` lists, and `GET /issues/{run_id}` serves (`/issues/latest` is the newest), composed runs whose `run_kind` is **explicitly**
-`release`; the Issues page (`issues.html`) shows them as a date switcher. Runs with no `run_kind` are
+`release`; the Issues page (`issues.html`) shows them as a date switcher. `GET /issues?topic=<id>` and `issues.html?n=<id>`
+are another newsletter's archive (404 while it is hidden, except for admins). Runs with no `run_kind` are
 *not* archived, even though `/issues/latest` and agent4 treat them as release. Old Monday-morning issues were flagged
 once with `venv\Scripts\python tools/backfill_release_flag.py` (dry run), then `--apply`; re-running is a no-op.
 To add or hide an issue, set or remove `run_kind` on its `pipeline_runs` doc. Deploy agent-subscriptions, then hosting.

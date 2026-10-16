@@ -24,7 +24,8 @@ Credentials (API keys and similar) are supplied to the services at runtime and a
 | `FRONTEND_BASE_URL` | agent3, agent4, agent_subscriptions | Public URL of the Firebase Hosting frontend — must be `https://newsletter.lofeodo.com` on every service that sets it; a mismatch here silently breaks the `{{PREFERENCES_URL}}` link in every sent newsletter |
 | `ALLOWED_ORIGINS` | main.py (subscriptions) | Comma-separated CORS origins; required in production |
 | `MAILING_ADDRESS` | agent3 | Physical address in email footer (CASL compliance) |
-| `MAX_SUBSCRIBERS` | agent_subscriptions | Subscriber cap (default `40000`) |
+| `MAX_SUBSCRIBERS` | agent_subscriptions | Subscriber cap (default `40000`); counts people, not subscriptions (`active` plus `subscribed_any`) |
+| `PUBLIC_TOPICS` | agent_subscriptions | The launch switch: comma-separated topic ids anyone may see and subscribe to (`ai` is always public; unknown ids are ignored and logged). Unset = only AI. Other topics stay hidden, visible to `ADMIN_EMAILS` only. Read per request, so `--update-env-vars` launches a topic without new code (see the topic launch checklist in `runbook.md`) |
 | `RESPONSE_FLOOR_SECONDS` / `SENDGRID_TIMEOUT_SECONDS` | agent_subscriptions | Minimum response time of the mail routes, and the timeout of outgoing mail calls (defaults `2.0` / `8`) |
 | `MAIL_COOLDOWN_SECONDS` / `MAIL_MAX_PER_ADDRESS_DAILY` | agent_subscriptions | Pacing of confirmation and link emails per address (defaults `60` / `5`) |
 | `MAIL_DAILY_CEILING` | agent_subscriptions | Daily ceiling on those emails (default `1000`); set a very high number to switch it off |

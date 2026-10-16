@@ -4,6 +4,10 @@ How the pipeline is watched. The health check email is where all of these signal
 
 The health check itself (draft check Sunday 1:15 PM, send check Monday 7:10 AM) is described under [Health check](architecture.md#stage-by-stage) in the architecture doc; failure recording, the watchdog and crash-isolated retries are in [design-decisions.md](design-decisions.md).
 
+## Every newsletter in one email
+
+The health check sends one email for all newsletters. Its top part is the AI newsletter's report, unchanged. Below it, an **Other newsletters** section lists every other topic that had a release run in the last 15 days: for each, its latest release run gets the same checks as the AI one (stale run, `*_error` fields, missing stages, composition against the topic's own variants with the spotlight required only for `spotlight: papers`, and the send summary on the send check). A topic whose weekly job stopped shows "no release run this week"; one that has not run for 15 days is no longer expected. The subject says "all clear" only when every newsletter is clear. Drift, usage, judge and click sections stay AI-only. A bug in the per-topic part is reported in that section without hiding the AI report.
+
 ## Drift monitoring
 
 Each week agent 1b stores a small summary of its output on the run document (confidence histogram, per-category counts, share routed to review). The health check compares the current week with the pooled previous four weeks (at least three needed, otherwise it says "insufficient history"): a Kolmogorov–Smirnov test on the confidence distribution, a chi-square test on the category mix, and a two-proportion test on the review rate. A shift is flagged only if it is both statistically significant (p < 0.01) and large enough to matter (KS D ≥ 0.15, share shift ≥ 10 points, review-rate shift ≥ 10 points), so tiny but significant differences do not alert. The logic is in `agents/drift.py`; it is pure and unit tested.

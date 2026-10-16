@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Newsletters — Latent SpaceMail</title>
+  <meta name="description" content="Free weekly newsletters on AI, markets, video games, board games and 3D printing, every Monday.">
+  <link rel="icon" type="image/svg+xml" href="/images/logo-mark.svg">
+  <link rel="icon" type="image/png" href="/images/logo-email.png">
+  <link rel="preload" href="/fonts/cormorant-garamond-600.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="topbar.css">
+  <link rel="stylesheet" href="newsletters.css">
+</head>
+<body>
+  <canvas id="bg-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;will-change:transform;"></canvas>
+
+  <header class="topbar">
+    <a href="/" class="topbar__logo" aria-label="Latent SpaceMail home">
+      <img src="/images/logo-mark.svg" alt="" height="26" width="26" fetchpriority="high">
+    </a>
+    <nav class="topbar__nav" aria-label="Main">
+      <a href="/newsletters.html" class="topbar__nav-link" data-href="/newsletters.html">Newsletters</a>
+      <a href="/issues.html" class="topbar__nav-link" data-href="/issues.html">Issues<span class="topbar__live"><span class="topbar__live-dot"></span>Live</span></a>
+      <a href="/sections.html" class="topbar__nav-link" data-href="/sections.html" id="topbar-sections">Customize</a>
+      <a href="/preferences.html" class="topbar__nav-link" data-href="/preferences.html">Preferences</a>
+    </nav>
+    <div class="topbar__right">
+      <div class="topbar__auth" id="topbar-auth" style="display:none">
+        <span class="topbar__auth-dot"></span>
+        <span class="topbar__auth-email" id="topbar-email"></span>
+        <span class="topbar__auth-tier" id="topbar-tier" style="display:none">◆ Premium</span>
+        <button type="button" class="topbar__signout" id="topbar-signout">Sign out</button>
+      </div>
+      <a href="/login.html" class="topbar__signin" id="topbar-signin">Sign in →</a>
+      <a href="https://github.com/lofeodo/ai-news-agent" target="_blank" rel="noopener" class="topbar__github" aria-label="View source on GitHub">
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+        <span class="topbar__github-label">GitHub</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="nl-page">
+    <div class="nl-head">
+      <h1>Newsletters</h1>
+      <p>Free, every Monday morning. Each one is a short read on its own subject, written by the same pipeline as Latent SpaceMail. Pick as many as you like: each arrives as its own email.</p>
+    </div>
+
+    <p class="nl-status" id="status">Loading the newsletters…</p>
+    <ul class="nl-list" id="list" aria-label="Newsletters"></ul>
+
+    <!-- Signed out: one email form for every newsletter picked above. -->
+    <form class="nl-signup" id="signup" novalidate hidden>
+      <h2>Subscribe by email</h2>
+      <p class="nl-signup__picked" id="picked" aria-live="polite">Pick at least one newsletter above.</p>
+      <div class="nl-signup__row">
+        <label for="email" class="sr-only">Email address</label>
+        <input type="email" id="email" name="email" autocomplete="email" required placeholder="you@example.com">
+        <button type="submit" id="submit-btn" disabled>Subscribe</button>
+      </div>
+      <label class="check-row">
+        <input type="checkbox" id="send-latest" checked>
+        <span>Send me each one's latest issue right away</span>
+      </label>
+      <p class="nl-consent" id="consent"></p>
+      <div class="msg" id="msg" role="status" aria-live="polite"></div>
+    </form>
+
+    <!-- Signed in: the toggles above save as you go. -->
+    <p class="nl-signed-in" id="signed-in-note" hidden></p>
+  </main>
+
+  <script src="bg.js"></script>
+  <script type="module" src="nav.js"></script>
+  <script type="module">
+    import { esc, signedInUser, loadCatalog, loadMe, setSubscribed, subscribeByEmail, emailFormMessage, sectionsHtml }
+      from './newsletters.js';
+
+    const list = document.getElementById('list');
+    const status = document.getElementById('status');
+    const form = document.getElementById('signup');
+    const picked = document.getElementById('picked');
+    const submitBtn = document.getElementById('submit-btn');
+    const msg = document.getElementById('msg');
+    const signedInNote = document.getElementById('signed-in-note');
+
+    let catalog = null;
+    let user = null;
+    const preselect = new Set((new URLSearchParams(location.search).get('n') || '').split(',').filter(Boolean));
+
+    function card(n, control) {
+      const hidden = n.hidden ? '<span class="nl-hidden" title="Not launched yet: only admins see it">Hidden</span>' : '';
+      const latest = n.latest_issue
+        ? `<a href="/newsletter.html?id=${encodeURIComponent(n.id)}#latest">Read the latest issue</a>`
+        : '<span class="nl__tagline">First issue coming soon</span>';
+      return `<li class="nl" style="--nl:${esc(n.accent_color)}" data-id="${esc(n.id)}">
+        <div>
+          <h2 class="nl__name"><a href="/newsletter.html?id=${encodeURIComponent(n.id)}">${esc(n.name)}</a>${hidden}</h2>
+          <p class="nl__tagline">${esc(n.tagline)}</p>
+          ${sectionsHtml(n)}
+          <p class="nl__links">${latest}</p>
+        </div>
+        ${control(n)}
+      </li>`;
+    }
+
+    function pickControl(n) {
+      const on = preselect.has(n.id) ? ' checked' : '';
+      return `<label class="nl-pick"><input type="checkbox" value="${esc(n.id)}"${on}
+        aria-label="Subscribe to ${esc(n.name)}"> <span>Add to my picks</span></label>`;
+    }
+
+    function toggleControl(subscribed) {
+      return (n) => `<label class="nl-pick"><input type="checkbox" value="${esc(n.id)}"${subscribed.has(n.id) ? ' checked' : ''}
+        aria-label="Subscribed to ${esc(n.name)}"> <span>${subscribed.has(n.id) ? 'Subscribed' : 'Subscribe'}</span></label>`;
+    }
+
+    function chosen() {
+      return [...list.querySelectorAll('input[type=checkbox]:checked')].map((i) => i.value);
+    }
+
+    function nameOf(id) { return catalog.newsletters.find((n) => n.id === id)?.name || id; }
+
+    function refreshPicks() {
+      list.querySelectorAll('.nl').forEach((li) => {
+        li.classList.toggle('is-picked', li.querySelector('input').checked);
+      });
+      if (user) return;
+      const ids = chosen();
+      submitBtn.disabled = ids.length === 0;
+      submitBtn.textContent = ids.length > 1 ? `Subscribe to ${ids.length}` : 'Subscribe';
+      picked.textContent = ids.length
+        ? `You picked ${ids.map(nameOf).join(', ')}.`
+        : 'Pick at least one newsletter above.';
+    }
+
+    function renderSignedOut() {
+      list.innerHTML = catalog.newsletters.map((n) => card(n, pickControl)).join('');
+      document.getElementById('consent').textContent = catalog.consent_text;
+      form.hidden = false;
+      list.addEventListener('change', refreshPicks);
+      refreshPicks();
+    }
+
+    function renderSignedIn(me) {
+      const subscribed = new Set(me.newsletters || []);
+      list.innerHTML = catalog.newsletters.map((n) => card(n, toggleControl(subscribed))).join('');
+      signedInNote.textContent = `Signed in as ${user.email}. Changes save as you switch them; each newsletter arrives as its own email on Monday.`;
+      signedInNote.hidden = false;
+      refreshPicks();
+      list.addEventListener('change', async (e) => {
+        const box = e.target;
+        const label = box.closest('.nl-pick');
+        const text = label.querySelector('span');
+        label.setAttribute('aria-busy', 'true');
+        box.disabled = true;
+        try {
+          await setSubscribed(box.value, box.checked, catalog.consent_text_version);
+          text.textContent = box.checked ? 'Subscribed' : 'Subscribe';
+        } catch (err) {
+          box.checked = !box.checked;
+          text.textContent = err.status === 503 ? 'List is full' : 'Not saved, try again';
+        } finally {
+          label.removeAttribute('aria-busy');
+          box.disabled = false;
+          refreshPicks();
+        }
+      });
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const ids = chosen();
+      if (!email || !ids.length) return;
+      submitBtn.disabled = true;
+      msg.className = 'msg';
+      try {
+        const res = await subscribeByEmail(email, ids, catalog.consent_text_version,
+          document.getElementById('send-latest').checked);
+        const [text, kind] = emailFormMessage(res.status);
+        msg.textContent = text;
+        msg.className = `msg visible ${kind}`;
+        if (res.ok) form.querySelector('#email').value = '';
+      } catch {
+        msg.textContent = 'Network problem. Try again.';
+        msg.className = 'msg visible error';
+      } finally {
+        submitBtn.disabled = chosen().length === 0;
+      }
+    });
+
+    (async () => {
+      try {
+        user = await signedInUser();
+        catalog = await loadCatalog(user);
+        status.hidden = true;
+        if (user) renderSignedIn(await loadMe());
+        else renderSignedOut();
+      } catch (e) {
+        console.error('[newsletters]', e);
+        status.textContent = "The newsletters couldn't be loaded. Reload the page to try again.";
+        status.classList.add('error');
+      }
+    })();
+  </script>
+</body>
+</html>

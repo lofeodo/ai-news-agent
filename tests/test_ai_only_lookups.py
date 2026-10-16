@@ -86,11 +86,32 @@ def test_latest_run_for_a_topic_with_no_runs_is_none():
     assert run_kind.latest_run(_mixed(), COLLECTION, release_only=False, topic="gaming") is None
 
 
-def test_other_topics_have_no_release_lookups():
-    with pytest.raises(ValueError):
-        run_kind.latest_run(_mixed(), COLLECTION, topic="finance")
-    with pytest.raises(ValueError):
-        run_kind.latest_run(_mixed(), COLLECTION, release_only=False, sent_only=True, topic="finance")
+def test_a_topic_release_lookup_returns_that_topics_release():
+    db = _db({"ai-run": _run("2026-10-18T12:00:00Z", sent=True),
+              "fin-rel": _run("2026-10-18T10:00:00Z", topic="finance", sent=True),
+              "fin-draft": _run("2026-10-25T10:00:00Z", topic="finance"),
+              "fin-dbg": _run("2026-10-26T10:00:00Z", topic="finance", kind="debug")})
+    assert run_kind.latest_run(db, COLLECTION, topic="finance").id == "fin-draft"
+    assert run_kind.latest_run(db, COLLECTION, sent_only=True, topic="finance").id == "fin-rel"
+    assert run_kind.latest_run(db, COLLECTION, release_only=False, topic="finance").id == "fin-dbg"
+    assert run_kind.latest_run(db, COLLECTION, topic="gaming") is None
+
+
+def test_a_newer_topic_release_never_wins_an_ai_lookup():
+    db = _db({"ai-run": _run("2026-10-18T12:00:00Z", sent=True),
+              "fin": _run("2026-10-19T06:40:00Z", topic="finance", sent=True)})
+    for kw in ({}, {"sent_only": True}, {"release_only": False}):
+        assert run_kind.latest_run(db, COLLECTION, **kw).id == "ai-run"
+    assert run_kind.pick_release_id([("fin", {"topic": "finance"}), ("ai", {})]) == "ai"
+    assert run_kind.pick_release_id([("fin", {"topic": "finance"}), ("ai", {})], topic="finance") == "fin"
+
+
+def test_five_weekly_topics_for_months_do_not_push_the_ai_run_out():
+    runs = {"ai-run": _run("2026-06-01T12:00:00Z", sent=True)}
+    for week in range(30):
+        for t in ("finance", "gaming", "boardgames", "printing3d"):
+            runs[f"{t}-{week}"] = _run(f"2026-07-{week % 28 + 1:02d}T{week % 24:02d}:00:00Z", topic=t)
+    assert run_kind.latest_run(_db(runs), COLLECTION).id == "ai-run"
 
 
 # --- archive ------------------------------------------------------------------------------------

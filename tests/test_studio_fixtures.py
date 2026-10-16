@@ -59,9 +59,10 @@ def test_catalog_is_what_the_generator_builds(catalog):
 
 
 def test_catalog_topics_match_the_profiles(catalog):
+    import launch
     import topics
 
-    assert [t["id"] for t in catalog["topics"]] == topics.list_topic_ids()
+    assert [t["id"] for t in catalog["topics"]] == launch.ordered(topics.list_topic_ids())
     for t in catalog["topics"]:
         profile = topics.get_topic(t["id"])
         assert (t["name"], t["tagline"], t["accent_color"]) == (profile.name, profile.tagline, profile.accent_color)

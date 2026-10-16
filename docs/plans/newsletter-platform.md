@@ -141,7 +141,8 @@ Rules (validator `agents/newsletter_def.py`, owned by roadmap B): at most 12 blo
 custom sections, 4 widgets; `max_items` 1 to 5; one `intro` at most, always first if present; `share` at most once;
 colour `#rrggbb`; name 1 to 60 characters with no angle brackets; unknown block types or fields are rejected.
 `topic` + `section` must name a section of a known topic; the widget must be in the widget catalog and allowed for
-the newsletter (personal widgets need premium). A widget block's `topic` says whose edition supplies the data; it is
+the newsletter (personal widgets need premium; a widget with `commercial_use: False` is rejected in every custom
+newsletter, because custom newsletters are the paid product). A widget block's `topic` says whose edition supplies the data; it is
 omitted for personal widgets. Section blocks from different topics may share a name; the renderer
 shows the topic name as a small label when a newsletter mixes topics.
 
@@ -160,6 +161,8 @@ class Widget:
     topics: tuple         # topic ids it belongs to, or ("*",) for any
     scope: str            # "edition" (same for every reader, produced once per topic run) or "personal"
     premium: bool         # personal widgets are always premium
+    commercial_use: bool  # False when the data source's terms forbid commercial use (BoardGameGeek):
+                          # such a widget may appear only in free ready-made newsletters, never in a custom one
     config_fields: tuple  # [{"name", "type": "tickers"|"choice"|"int"|"bool", "label", "options"?, "max"?, "default"}]
     def produce(self, ctx, config) -> dict      # network allowed, bounded time, JSON-serializable, <= 20 KB
     def render(self, data, config, look) -> str  # email-safe HTML fragment, no network, never raises on odd data
@@ -180,7 +183,7 @@ Produced weekly per unique custom section query (roadmap F), `custom_pools/{quer
 
 | Route | Who | Body / result |
 |---|---|---|
-| `GET /catalog` | public | `{"topics": [{"id","name","tagline","accent_color","public","sections": [{"name","definition","icon"}]}], "widgets": [{"id","name","description","topics","scope","premium","config_fields"}]}` (only public topics, plus hidden ones for admins) |
+| `GET /catalog` | public | `{"topics": [{"id","name","tagline","accent_color","public","sections": [{"name","definition","icon"}]}], "widgets": [{"id","name","description","topics","scope","premium","config_fields"}]}` (only public topics, plus hidden ones for admins; widgets with `commercial_use: False` are never listed) |
 | `GET /auth/newsletters` | signed in | `{"newsletters": [{"id","definition","subscribed","updated_at"}], "limit": 3}` |
 | `POST /auth/newsletters` | premium | `{"id"?, "definition"}` → `{"id","definition"}` (create or update; 400 with `{"errors": [...]}` on an invalid definition) |
 | `DELETE /auth/newsletters/{id}` | owner | `{"deleted": true}` |

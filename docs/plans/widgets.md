@@ -39,6 +39,10 @@ a send; AI readers see no change. Planner's assumptions (the worker may refine t
 - **Honest data:** every widget shows its source and "as of" time in a small attribution line; finance widgets add
   "For information only, not financial advice"; a widget never shows stale data as current (data older than its
   `max_age` is dropped).
+- **Non-commercial sources stay out of premium.** A widget whose source forbids commercial use is marked
+  `commercial_use: False`. The registry leaves it out of `catalog()` for the studio, and the definition validator
+  rejects it in custom newsletters. It may be placed only by a free ready-made newsletter's profile. BoardGameGeek is
+  the first such source (owner decision, 2026-10-16).
 - **Licences first:** a data source is used only after its terms are checked for use in an emailed newsletter that may
   later be part of a paid service (commercial use, attribution, caching, rate limits). Sources needing an API key or
   an account are built and tested but **ship disabled**; the deploy request asks the owner to register and store the
@@ -62,7 +66,7 @@ a send; AI readers see no change. Planner's assumptions (the worker may refine t
 | gaming | `most_played` Most played on Steam | edition | Steam Web API charts (`ISteamChartsService`) | Could not confirm the method from public docs while planning: step 1 decides |
 | gaming | `deals` Best deals | edition | CheapShark API | Check attribution requirement |
 | gaming | `out_this_week` Out this week | edition | IGDB (Twitch app credentials) or RAWG (key, attribution link) | Needs an owner-registered key: ships disabled |
-| boardgames | `bgg_hot` The BGG hot list | edition | BoardGameGeek XML API2 `/hot` | **Since July 2025 BGG requires a registered application and a Bearer token; registration is free for non-commercial use.** Needs an owner registration, and BGG's commercial terms must be asked about before premium is paid. Ships disabled. |
+| boardgames | `bgg_hot` The BGG hot list | edition | BoardGameGeek XML API2 `/hot` | **Since July 2025 BGG requires a registered application and a Bearer token; registration is free for non-commercial use.** `commercial_use: False`: **owner decision (2026-10-16): never in premium**, so it can never be added to a custom newsletter and the studio never lists it. At most it appears in the free Tabletop Weekly, and only after the owner registers a non-commercial app and is satisfied that the free newsletter counts as non-commercial. Ships disabled. |
 | boardgames | `crowdfunding_watch` On Kickstarter & Gamefound | derived | the edition's Crowdfunding section | No platform API; one Haiku call extracts name, platform, status and link from that week's picks, only what the articles say |
 | printing3d | `release_tracker` New versions | edition | GitHub Releases API: PrusaSlicer, OrcaSlicer, Bambu Studio, Cura, Klipper, Marlin, Prusa-Firmware-Buddy, Creality Print | Unauthenticated limit is 60/hour per IP (8 calls per run is fine; optional token later); "new this week" badge |
 | printing3d | `model_of_week` Model of the week | edition | Thingiverse API (app token) | Printables has no public API: not used. Ships disabled |
@@ -94,8 +98,9 @@ a recorded response in `tests/fixtures/widgets/`.
    (`register`, `get`, `catalog(topic=None)`, `for_topic`), `config.py` (validate `config_fields`: tickers
    `^[A-Z0-9.\-]{1,12}$` max 10, choice, int with bounds, bool; `config_hash`), `runner.py`
    (`produce_edition_widgets(ctx, entries)` with timeouts, size caps and budget; returns data + per-widget status:
-   ok / failed / skipped_no_key / timed_out). *Test:* `tests/test_widgets_framework.py` (timeout, oversized data,
-   exception, missing key, budget exhaustion, config validation).
+   ok / failed / skipped_no_key / timed_out). `catalog(for_custom=True)` drops widgets with
+   `commercial_use: False`. *Test:* `tests/test_widgets_framework.py` (timeout, oversized data, exception, missing
+   key, budget exhaustion, config validation, a non-commercial widget absent from the custom catalog).
 
 3. **Storage.** `agents/widgets/store.py`: edition data at `pipeline_runs/{run_id}/widgets/{widget_id}`
    (`{data, produced_at, status}`), `widgets_summary` (statuses only) on the run doc, local `data/widgets/*.json`;
@@ -138,7 +143,8 @@ a recorded response in `tests/fixtures/widgets/`.
     schema, injection guard, one call each, usage logged. *Test:* fake Claude client; injection fixture (an article
     telling the model to output a link) renders as plain text.
 
-14. **Keyed providers, shipped disabled.** `bgg_hot`, `out_this_week`, `model_of_week` (each only if step 1 kept it),
+14. **Keyed providers, shipped disabled.** `bgg_hot` (with `commercial_use: False`), `out_this_week`,
+    `model_of_week` (each only if step 1 kept it),
     reading their key from env/Secret Manager names documented in `docs/widgets.md`; absent key = skipped. Personal
     `stock_watchlist` only if the index-data decision allows it; otherwise the framework's personal path is proven by
     a test-only personal widget. One commit each. *Test:* fixtures; no-key path.
@@ -179,7 +185,7 @@ Yes: step 17 (admin gallery) and step 18 (local drafts with widgets) at desktop,
 
 **agent3** (produces and places widgets; AI output unchanged), **healthcheck** (Widgets section),
 **agent-subscriptions** (admin gallery), **hosting** (gallery page). Owner actions, each optional and independent:
-register keys for FRED, BoardGameGeek (ask BGG about commercial terms before premium is paid), IGDB or RAWG,
+register keys for FRED, BoardGameGeek (non-commercial; the widget is never offered in premium), IGDB or RAWG,
 Thingiverse, and store each in Secret Manager mounted on agent3 (and later agent4 for personal widgets); decide on a
 licensed stock-index source; set a Firestore TTL on `widget_cache.expires_at`. Timing: any day Monday after 7:10 AM
 to Thursday; the first Sunday draft after deploy is the first issue with widgets, so read the draft check and the

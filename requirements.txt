@@ -3,7 +3,7 @@ anthropic==1.13.0
 anyio==4.14.2
 arxiv==4.0.0
 beautifulsoup4==4.14.3
-certifi==2026.5.20
+certifi==2026.10.18
 cffi==2.0.0
 charset-normalizer==3.4.7
 click==8.4.1

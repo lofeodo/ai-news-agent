@@ -7,6 +7,7 @@
   <link rel="icon" type="image/svg+xml" href="/images/logo-mark.svg">
   <link rel="icon" type="image/png" href="/images/logo-email.png">
   <link rel="preload" href="/__/firebase/init.json" as="fetch" crossorigin>
+  <link rel="preload" href="/fonts/bebas-neue-400.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="fonts.css">
   <link rel="stylesheet" href="topbar.css">
   <style>
@@ -59,6 +60,62 @@
     /* Admin-only strip shown in the issue bar's place while the debug run is on: pick which newsletter topic. */
     .issuebar__select--topic { flex: 0 1 320px; }
     @media (max-width: 480px) { .issuebar__tag { display: none; } .issuebar__select { flex: 1 1 auto; } }
+
+    /* Loader over the frame while an issue loads (a cold start of the issue service can take ~10-20 s). */
+    .issue-loader {
+      position: fixed; top: 92px; left: 0; right: 0; bottom: 0; z-index: 4;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+      padding: 0 16px; text-align: center;
+      background:
+        radial-gradient(ellipse 60% 45% at 50% 46%, rgba(200,184,154,0.07), transparent 70%),
+        #060606;
+      transition: opacity .35s ease;
+    }
+    .issue-loader[hidden] { display: none; }
+    .issue-loader.is-leaving { opacity: 0; pointer-events: none; }
+    /* A quick switch between warm issues should not flash the loader. */
+    .issue-loader--soft { animation: loader-in .3s ease .18s both; }
+    @keyframes loader-in { from { opacity: 0; } to { opacity: 1; } }
+
+    .issue-loader__mark { position: relative; width: 128px; height: 128px; }
+    .issue-loader__mark svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+    .issue-loader__mark .orbit-far {
+      fill: none; stroke: rgba(200,184,154,0.14); stroke-width: .6; stroke-dasharray: 1.2 3.4;
+      transform-box: view-box; transform-origin: 45px 25px; animation: loader-spin 24s linear infinite;
+    }
+    .issue-loader__mark .glyph { fill: #c8b89a; animation: loader-breathe 2.6s ease-in-out infinite; }
+    .issue-loader__mark .ring-dim { fill: none; stroke: rgba(200,184,154,0.16); stroke-width: 3; }
+    .issue-loader__mark .sweep {
+      transform-box: view-box; transform-origin: 45px 25px; animation: loader-spin 1.6s linear infinite;
+    }
+    .issue-loader__mark .trail { fill: none; stroke: #c8b89a; stroke-width: 3; stroke-linecap: round; }
+    .issue-loader__mark .sat { fill: #fff6e6; filter: drop-shadow(0 0 3px rgba(255,214,150,0.95)) drop-shadow(0 0 8px rgba(200,184,154,0.7)); }
+
+    .issue-loader__label {
+      font-family: var(--label); font-size: 20px; letter-spacing: .24em; color: var(--accent); text-transform: uppercase;
+      padding-left: .24em;   /* balance the trailing letter-spacing so the text centres */
+    }
+    .issue-loader__line {
+      position: relative; width: 140px; height: 1px; overflow: hidden; background: rgba(200,184,154,0.16);
+    }
+    .issue-loader__line::after {
+      content: ''; position: absolute; top: 0; bottom: 0; width: 40%; left: -40%;
+      background: linear-gradient(90deg, transparent, #c8b89a, transparent);
+      animation: loader-scan 1.6s ease-in-out infinite;
+    }
+    .issue-loader__note {
+      max-width: 34ch; min-height: 3.2em; font-size: 12px; line-height: 1.6; color: var(--muted);
+      opacity: 0; transition: opacity .6s ease;
+    }
+    .issue-loader__note.is-shown { opacity: 1; }
+
+    @keyframes loader-spin { to { transform: rotate(360deg); } }
+    @keyframes loader-breathe { 0%, 100% { opacity: .55; } 50% { opacity: .95; } }
+    @keyframes loader-scan { to { left: 100%; } }
+    @media (prefers-reduced-motion: reduce) {
+      .issue-loader__mark .sweep, .issue-loader__mark .orbit-far, .issue-loader__line::after { animation: none; }
+      .issue-loader__line::after { left: 30%; }
+    }
 
   </style>
 </head>
@@ -114,7 +171,75 @@
     title="Latent SpaceMail issue"
     sandbox="allow-popups allow-popups-to-escape-sandbox"
   ></iframe>
+
+  <div class="issue-loader" id="issue-loader" role="status" aria-live="polite">
+    <div class="issue-loader__mark" aria-hidden="true">
+      <svg viewBox="-8 -8 86 86">
+        <circle class="orbit-far" cx="45" cy="25" r="31"/>
+        <path class="glyph" d="M0 0H20V50H70V70H0Z"/>
+        <circle class="ring-dim" cx="45" cy="25" r="20"/>
+        <!-- A satellite circling the logo's ring with a fading trail (circumference 2πr ≈ 125.66). -->
+        <g class="sweep">
+          <circle class="trail" cx="45" cy="25" r="20" stroke-dasharray="48 77.66" stroke-dashoffset="48" opacity=".22"/>
+          <circle class="trail" cx="45" cy="25" r="20" stroke-dasharray="28 97.66" stroke-dashoffset="28" opacity=".5"/>
+          <circle class="trail" cx="45" cy="25" r="20" stroke-dasharray="12 113.66" stroke-dashoffset="12" opacity="1"/>
+          <circle class="sat" cx="65" cy="25" r="3.2"/>
+        </g>
+      </svg>
+    </div>
+    <p class="issue-loader__label" id="issue-loader-label">Fetching the issue</p>
+    <div class="issue-loader__line" aria-hidden="true"></div>
+    <p class="issue-loader__note" id="issue-loader-note"></p>
+  </div>
+
   <script>
+    // Loader over the frame: shown until the frame finishes loading. Defined before the frame can fire `load`.
+    window.LSMLoader = (function () {
+      var el = document.getElementById('issue-loader');
+      var label = document.getElementById('issue-loader-label');
+      var note = document.getElementById('issue-loader-note');
+      var frame = document.getElementById('issue-frame');
+      var timers = [], leaveTimer = null, waiting = false;
+      var SLOW = 'The issue server was asleep. Waking it up takes a few seconds.';
+      var SLOWER = 'Still waking up. Almost there.';
+
+      function setNote(text) {
+        note.classList.toggle('is-shown', !!text);
+        if (text) note.textContent = text;
+      }
+      function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+
+      // soft: fade in after a short delay, so a fast (warm) load never flashes the loader.
+      function show(text, soft) {
+        label.textContent = text || 'Fetching the issue';
+        if (waiting && !el.hidden && !el.classList.contains('is-leaving')) return;   // already up: keep its timers
+        clearTimers();
+        clearTimeout(leaveTimer);
+        waiting = true;
+        setNote('');
+        el.classList.remove('is-leaving');
+        el.classList.toggle('issue-loader--soft', !!soft);
+        el.hidden = false;
+        timers.push(setTimeout(function () { setNote(SLOW); }, 2500));
+        timers.push(setTimeout(function () { setNote(SLOWER); }, 15000));
+      }
+      function hide() {
+        if (!waiting) return;
+        waiting = false;
+        clearTimers();
+        el.classList.add('is-leaving');
+        leaveTimer = setTimeout(function () { el.hidden = true; el.classList.remove('is-leaving'); }, 360);
+      }
+
+      // about:blank is only a placeholder while another newsletter's list loads; keep waiting.
+      frame.addEventListener('load', function () {
+        if (frame.getAttribute('src') === 'about:blank' && !frame.hasAttribute('srcdoc')) return;
+        hide();
+      });
+      show();   // the page opens with the loader up while the first issue loads
+      return { show: show, hide: hide };
+    })();
+
     // ?n=<newsletter> shows that newsletter's archive; the frame starts on the AI issue, so blank it until the list loads.
     (function () {
       var n = (new URLSearchParams(location.search).get('n') || 'ai').toLowerCase();
@@ -170,7 +295,12 @@
       tag.textContent = i === 0 ? 'Latest issue' : `${i} issue${i === 1 ? '' : 's'} ago`;
       // The newest AI issue goes through /issues/latest so the page works even when the list does not.
       publicSrc = i === 0 && latestSrc ? latestSrc : `${API}/issues/${encodeURIComponent(issues[i].run_id)}`;
-      if (!debugOn) { frame.removeAttribute('srcdoc'); frame.src = publicSrc; }
+      // Skip re-setting the frame to what it is already loading: that would restart a slow cold-start load.
+      if (!debugOn && (frame.hasAttribute('srcdoc') || frame.getAttribute('src') !== publicSrc)) {
+        LSMLoader.show('Fetching the issue', true);
+        frame.removeAttribute('srcdoc');
+        frame.src = publicSrc;
+      }
       if (push) {
         const u = new URL(location.href);
         if (i === 0) u.searchParams.delete('issue'); else u.searchParams.set('issue', issues[i].run_id);
@@ -235,6 +365,7 @@
 
     async function showDebug() {
       toggle.disabled = true;
+      LSMLoader.show('Loading the debug run', true);
       try {
         const q = topicId && topicId !== 'ai' ? `&topic=${encodeURIComponent(topicId)}` : '';
         const res = await authFetch(`${API}/auth/admin/issues?run=latest${q}`);
@@ -257,6 +388,7 @@
       } catch (e) {
         console.error('[issues] debug run failed:', e);
         toggle.textContent = 'No run found';
+        LSMLoader.hide();   // the frame still shows what it showed before
       } finally {
         toggle.disabled = false;
       }
@@ -286,6 +418,7 @@
     }
 
     function showPublic() {
+      LSMLoader.show('Fetching the issue', true);
       frame.removeAttribute('srcdoc');
       frame.src = publicSrc;
       if (navLink) navLink.removeAttribute('title');

@@ -36,7 +36,7 @@ newspaper3k==0.2.8
 nltk==3.10.3
 oauthlib==4.0.0
 packaging==26.0
-pillow==12.3.0
+pillow==13.0.0
 proto-plus==1.28.0
 protobuf==7.35.0
 pyasn1==0.6.4

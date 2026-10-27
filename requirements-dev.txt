@@ -6,3 +6,5 @@ Pygments==2.21.0
 scikit-learn==1.9.1
 threadpoolctl==3.7.0
 narwhals==2.26.0
+fonttools==4.67.0
+brotli==1.2.1

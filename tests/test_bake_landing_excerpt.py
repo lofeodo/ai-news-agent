@@ -110,3 +110,9 @@ def test_main_success_writes_index(tmp_path):
     issue.write_text(_issue(), encoding="utf-8")
     assert bake_mod.main(["--source", str(issue), "--index", str(index)]) == 0
     assert "The Teacher Is a Direction" in index.read_text(encoding="utf-8")
+
+
+def test_render_ends_with_a_button_to_the_full_issue():
+    out = bake_mod.render_excerpt(bake_mod.parse_issue(_issue()))
+    assert '<a class="issue__open" href="/issues.html">Read the full issue' in out
+    assert out.index("issue__open") < out.index("</figure>")

@@ -14,10 +14,11 @@ def _read(name):
         return f.read()
 
 
-def test_every_page_links_to_the_newsletters_hub():
+def test_no_page_has_a_newsletters_tab():
+    # Removed from the top bar: with only AI public it was a one-item list. The page itself stays.
     for page in PAGES_WITH_TOPBAR:
         html = _read(f"{page}.html")
-        assert 'href="/newsletters.html" class="topbar__nav-link"' in html, page
+        assert 'href="/newsletters.html" class="topbar__nav-link"' not in html, page
 
 
 def test_return_page_allowlists_agree():

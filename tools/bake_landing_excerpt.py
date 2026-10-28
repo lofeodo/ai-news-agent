@@ -132,8 +132,9 @@ def render_excerpt(data: dict) -> str:
 {story_html}
             </div>
           </div>
+          <div class="issue__foot"><a class="issue__open" href="/issues.html">Read the full issue <span aria-hidden="true">→</span></a></div>
         </figure>
-        <p class="issue-caption"><span>From the issue of {e(data['date'])}.</span><a href="/issues.html">Read the latest issue →</a></p>"""
+        <p class="issue-caption">From the issue of {e(data['date'])}. Free to read, no sign-up needed.</p>"""
 
 
 def bake(index_html: str, data: dict) -> str:

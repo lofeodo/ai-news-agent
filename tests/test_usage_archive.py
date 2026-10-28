@@ -1,11 +1,15 @@
 from types import SimpleNamespace as NS
 
+import pytest
+
 import usage_archive
 from fakes_firestore import FakeDb
 
 
-def _run(agent, run_id, inp, out, cost):
-    return NS(tags=[f"agent:{agent}", f"run:{run_id}"], prompt_tokens=inp, completion_tokens=out, total_cost=cost)
+def _run(agent, run_id, inp, out, cost, model=None):
+    extra = {"metadata": {"ls_model_name": model}} if model else {}
+    return NS(tags=[f"agent:{agent}", f"run:{run_id}"], prompt_tokens=inp, completion_tokens=out, total_cost=cost,
+              extra=extra)
 
 
 class FakeLS:
@@ -24,10 +28,20 @@ def test_fetch_aggregates_per_agent_and_total():
     ls = FakeLS([_run("agent1a", "r1", 100, 10, 0.001), _run("agent1a", "r1", 200, 20, 0.002),
                  _run("agent3", "r1", 50, 5, None), _run("agent3", "other", 999, 99, 9.0)])
     u = usage_archive.fetch_run_usage(ls, "r1")
-    assert u["agents"]["agent1a"] == {"input": 300, "output": 30, "calls": 2, "cost": 0.003, "calls_without_cost": 0}
+    assert u["agents"]["agent1a"] == {"input": 300, "output": 30, "calls": 2, "cost": 0.003, "calls_without_cost": 0,
+                                      "calls_priced_locally": 0}
     assert u["agents"]["agent3"]["calls_without_cost"] == 1
     assert u["total"]["input"] == 350 and u["total"]["calls"] == 3
     assert ls.calls[0]["run_type"] == "llm"
+
+
+def test_unpriced_call_with_known_model_is_priced_from_the_list():
+    # LangSmith has no price for DeepSeek: 1M in + 1M out at the registered off-peak rate ($0.15 + $0.60).
+    ls = FakeLS([_run("agent1b", "r1", 1_000_000, 1_000_000, None, model="deepseek-flash"),
+                 _run("agent1b", "r1", 10, 1, None, model="some-model-nobody-priced")])
+    a = usage_archive.fetch_run_usage(ls, "r1")["agents"]["agent1b"]
+    assert a["cost"] == pytest.approx(0.75)
+    assert a["calls_priced_locally"] == 1 and a["calls_without_cost"] == 1
 
 
 def test_no_traced_calls_returns_none_and_writes_nothing():

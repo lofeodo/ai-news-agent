@@ -221,8 +221,9 @@ def pipeline_cost_svg(doc):
     bx0, bx1 = 28, 852
     x0, x1 = 230, 640
     peak = max(c for *_, c, _ in steps)
-    parts = [f'<text x="28" y="40" font-size="20" font-weight="600" class="s">Claude cost of one weekly issue</text>',
-             f'<text x="28" y="62" font-size="13" class="m">Mean of {n} archived runs, LangSmith price estimate, Claude calls only</text>',
+    runs = "1 archived run" if n == 1 else f"Mean of {n} archived runs"
+    parts = [f'<text x="28" y="40" font-size="20" font-weight="600" class="s">Model cost of one weekly issue</text>',
+             f'<text x="28" y="62" font-size="13" class="m">{runs}, list-price estimate, model calls only</text>',
              f'<text x="{W - 28}" y="40" font-size="26" font-weight="700" text-anchor="end">${total:.2f}</text>',
              f'<text x="{W - 28}" y="62" font-size="13" text-anchor="end" class="m">about ${total * 52 / 12:.0f} a month</text>']
     cx = bx0
@@ -241,7 +242,7 @@ def pipeline_cost_svg(doc):
         w = max((x1 - x0) * cost / peak, 2)
         parts.append(f'<rect x="{x0}" y="{y + 5}" width="{w:.1f}" height="18" rx="4" fill="{color}"/>'
                      f'<text x="{x0 + w + 10:.1f}" y="{y + 19}" font-size="14" font-weight="700">${cost:.2f} <tspan class="m" font-weight="400">{cost / total:.0%}</tspan></text>'
-                     f'<text x="{bx1}" y="{y + 19}" font-size="13" text-anchor="end" class="m">{calls:,.0f} Claude calls</text>')
+                     f'<text x="{bx1}" y="{y + 19}" font-size="13" text-anchor="end" class="m">{calls:,.0f} model calls</text>')
     parts.append(f'<text x="28" y="{H - 14}" font-size="12" class="m">Hosting, SendGrid and the proxy are not included.</text>')
     desc = "; ".join(f"{label} ${cost:.2f}" for label, _, _, cost, _ in steps)
     return _svg(W, H, "\n".join(parts), "Pipeline cost per step", f"Total ${total:.2f} per issue. {desc}")

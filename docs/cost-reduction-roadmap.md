@@ -31,10 +31,10 @@ Most of the money is **volume**, not model quality: ~490 one-article calls in ag
 - [x] Step 4: Verify model prices and pick candidates (DeepSeek V4.1 Flash verified; GLM and Kimi not tested, no API keys yet)
 - [x] Step 5: Provider abstraction (`agents/llm.py`, Claude stays the default)
 - [x] Step 6: Per-stage model benchmark (language filter and categorize pass; summaries held for injection; papers fail)
-- [ ] Step 7: Adopt the winners per stage behind per-stage env switches (code done; needs the owner's deploy and secret)
-- [ ] Step 8: Final re-benchmark against the Step 1 baseline (needs production runs after the deploy)
+- [x] Step 7: Adopt the winners per stage behind per-stage env switches (agent1b on DeepSeek since 2026-10-28, `agent1b-00046-ddh`)
+- [x] Step 8: Final re-benchmark against the Step 1 baseline ($2.06 -> $0.55, one production debug run; the release runs confirm)
 
-**Status (2026-10-16):** weekly cost $2.06 -> $1.05 (-49%, one production debug run); the 2026-10-18 release run is the confirmation. The language filter work is deployed (exceptions mode). Steps 4-6 are done on branch `feat/cost-model-benchmark`: DeepSeek V4.1 Flash passes for the language filter and categorize and projects the run to about $0.60 a week; adopting it needs the owner's deploy (Step 7).
+**Status (2026-10-28): the roadmap is complete.** Weekly cost **$2.06 -> $0.55 (-73%)**, measured on a production debug run with everything on: review off, agent1a abstract-first, agent2b shortlist, language filter in exceptions mode, and agent1b's two Claude stages moved to DeepSeek V4.1 Flash (the 2026-10-16 debug run on the same code minus DeepSeek cost $1.05). Still open, none of it blocking: news summaries on DeepSeek (held for the title-echo injection result), GLM / Kimi / Qwen Flash as further candidates (no keys yet), and confirming the figure on the next two Sunday release runs (the first is 2026-11-01).
 
 Call-volume cuts (Step 3) go before the model work, per the owner (2026-10-15): they are risk-free and shrink what the model benchmark has to cover. The model steps (4-6) then run against the already-reduced volume.
 
@@ -172,13 +172,27 @@ Same frozen inputs as Step 1, production functions, `MODEL_<STAGE>` set per arm.
 
 Language-filter prompts are not in the injection cases: the filter's only output is a language label, so the worst case is one foreign article getting through, which the 0.07% rate bounds.
 
-### Step 7: Adopt winners (code ready; the switch needs the owner's deploy)
-Adoption is two environment variables on agent1b, `MODEL_LANG_FILTER=deepseek-flash` and `MODEL_CATEGORIZE=deepseek-flash`, plus a `DEEPSEEK_API_KEY` secret mounted like the existing ones. Agents never deploy and do not touch secrets, so this is a deploy request (below in the PR). **Projected effect** from the measured token counts: agent1b about $0.41 (Haiku, exceptions mode) -> about $0.04; the whole run from about $0.97 to about **$0.60 a week** (-71% against the $2.055 baseline, about $76 a year). agent1a, agent2a, agent2b and agent3 stay on Haiku. Rollback: remove the two variables (or set them to the Haiku id); DeepSeek errors already fall back to Haiku per call.
+### Step 7: Adopt winners (deployed 2026-10-28)
+agent1b runs on revision **`agent1b-00046-ddh`** (image `agent1b:deepseek-be609d1`) with `MODEL_LANG_FILTER=deepseek-flash`, `MODEL_CATEGORIZE=deepseek-flash` and the `DEEPSEEK_API_KEY` secret (`deepseek-api-key`, readable by agent1b's service account); every other variable is unchanged. The image was built from the then-live commit `f596a11` plus the language-filter commit plus an agent1b-only copy of the seam (branch `deploy/agent1b-deepseek`, `be609d1`), not from `main`, because `main` also holds the undeployed multi-topic engine (#143) and the editions renderer (#151). The owner ran the secret and service commands by hand (agent deploys are permission-blocked). agent1a, agent2a, agent2b and agent3 stay on Haiku. **Rollback with no redeploy:** `gcloud run services update agent1b --update-env-vars MODEL_LANG_FILTER=,MODEL_CATEGORIZE=`; a DeepSeek error already falls back to Haiku per call.
+- **First run on it (debug, 2026-10-28, run `2026-10-28T134338Z`):** 1,551 articles after the prefilter, the language filter dropped 123 (every batch in exceptions mode), categorize selected 517 (the Haiku runs selected about 500-550), no `[llm] ... fell back to Claude` line, no `*_error`, no `agent1b_warning`, composed in about 5 minutes end to end.
 - **News summaries stay on Haiku until the title echo is fixed.** A fix to try is a code check that rejects a summary starting with text that appears in the title but not in the article body, or a stronger guard for the DeepSeek arm, then re-run `python -m evals.run_injection_eval --model deepseek --agents summarize_2b` (about $0.01) and the summaries eval. Worth about $0.23 a week.
-- **Reporting follow-up:** the healthcheck's list-price estimate (`agents/drift.py`) prices every token at the Haiku rate, so it will overstate cost once DeepSeek tokens are in the mix, and LangSmith may show no cost for the DeepSeek model. Read DeepSeek's own usage page for the first week.
+- **Reporting:** LangSmith has no price for `deepseek-flash`, so `agents/usage_archive.py` now prices such calls from `agents/pricing.py` by the recorded model name (`calls_priced_locally` on the usage record) and `python -m evals.fetch_pipeline_cost --run <id>` measures an unarchived run straight from LangSmith. The healthcheck service must be redeployed from `main` to pick up the archiver change, otherwise the Sunday release run's DeepSeek calls are archived with no cost (and `fetch_pipeline_cost` skips that run); `agents/drift.py`'s separate "list-price estimate" line still prices every token at the Haiku rate (overstates agent1b by about 10x; cosmetic).
 
-### Step 8: Final re-benchmark (open)
-Needs production runs on the new configuration, so it waits for the deploy: compare at least 2 fresh runs' cost per agent (LangSmith plus DeepSeek's usage page) with `baseline_cost_2026-10-15.json`, check the category counts and language drops on the first run, and regenerate the result tables with `python -m evals.make_readme_table`.
+### Step 8: Final re-benchmark (done 2026-10-28, one run; release runs to confirm)
+`evals/results/pipeline_cost.json` (git on this branch), from `python -m evals.fetch_pipeline_cost --run 2026-10-28T134338Z`, LangSmith token counts, Claude at LangSmith's price and DeepSeek at the off-peak list price:
+
+| Agent | Baseline $ (Step 1, mean of 4) | 2026-10-16 $ (Step 3 live) | 2026-10-28 $ (all steps) | Calls now | What changed |
+|---|---|---|---|---|---|
+| agent1a | 0.467 | 0.238 | **0.202** | 36 | abstract-first (8 of 28 papers read in full) |
+| agent1b | 0.637 | 0.498 | **0.050** | 78 | review off, exceptions mode, both stages on DeepSeek |
+| agent2a | 0.014 | 0.011 | **0.010** | 1 | unchanged |
+| agent2b | 0.805 | 0.263 | **0.248** | 84 | shortlist (71 of 517 summarized) |
+| agent3 | 0.132 | 0.041 | **0.040** | 17 | smaller pool to choose from |
+| **Total** | **2.055** | **1.051** | **0.550** | 216 | **-73%** (about $78 a year) |
+
+- The README's cost section and `docs/assets/chart-cost.svg` were regenerated from this file (`python -m evals.make_readme_table`); the chart says "1 archived run" until the release runs are added.
+- Quality on this run was checked from the run doc and logs only (counts, no errors); the per-stage quality evidence is Step 6's benchmark on frozen inputs. The owner should eyeball the 2026-11-01 issue (the first release run on DeepSeek) and the Monday health check, and after two release runs re-run `python -m evals.fetch_pipeline_cost --run <id> <id>` to replace the single-run figure.
+- DeepSeek's own usage page is the invoice-side check of the $0.05; it was not read for this run.
 
 ## Risks to watch
 

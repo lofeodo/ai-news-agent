@@ -51,6 +51,15 @@ def test_injection_chart_lists_only_scopes_that_ever_succeeded():
     _parses(svg)
     assert "ssrf steer" in svg and "quiet" not in svg
     assert "5/10" in svg and "0/10" in svg
+    # The attack-type rows are a second cut of the same trials: the chart says so, and only for groups it shows.
+    assert "By attack type" in svg and "same trials" in svg and "By agent" not in svg
+
+
+def test_injection_chart_heads_agent_and_attack_groups_in_order():
+    before = _inj(5)
+    before["metrics"]["attack_success__agent__review"] = _m(0.5, 10, 0.0, 0.76, k=5)
+    svg = c.injection_svg(before, _inj(0))
+    assert svg.index("By agent") < svg.index("agent: review") < svg.index("By attack type") < svg.index("ssrf steer")
 
 
 def test_kappa_chart_shows_value_interval_and_bar():

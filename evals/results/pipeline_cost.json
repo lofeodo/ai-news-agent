@@ -1,113 +1,113 @@
 {
   "schema_version": 1,
   "name": "pipeline_cost",
-  "created_at": "2026-10-09T13:59:24.755197+00:00",
-  "git_sha": "3a4d2e1",
-  "model": "claude-haiku-4-5",
+  "created_at": "2026-10-28T13:48:54.317173+00:00",
+  "git_sha": "c80e061",
+  "model": "claude-haiku-4-5-20251001 + deepseek-flash",
   "cost_usd": 0.0,
-  "notes": "Mean over 2 archived runs (min and max in place of an interval). LangSmith's price estimate for Claude calls only; hosting, SendGrid and the proxy are not included.",
+  "notes": "This 1 run read from LangSmith (2026-10-28T134338Z) (min and max in place of an interval). List-price estimate for model calls only (LangSmith's for Claude, agents/pricing.py for DeepSeek); hosting, SendGrid and the proxy are not included. Production debug run on agent1b-00046-ddh: language filter and categorize on deepseek-flash (off-peak), agent1a abstract_first, agent2b shortlist, review off.",
   "metrics": {
     "cost_usd__agent1a": {
-      "value": 0.46913449999999995,
-      "n": 2,
-      "ci_low": 0.4674729999999999,
-      "ci_high": 0.470796
+      "value": 0.20198300000000002,
+      "n": 1,
+      "ci_low": 0.20198300000000002,
+      "ci_high": 0.20198300000000002
     },
     "calls__agent1a": {
-      "value": 35.0,
-      "n": 2,
-      "ci_low": 35,
-      "ci_high": 35
+      "value": 36.0,
+      "n": 1,
+      "ci_low": 36,
+      "ci_high": 36
     },
     "tokens__agent1a": {
-      "value": 422554.5,
-      "n": 2,
-      "ci_low": 421149,
-      "ci_high": 423960
+      "value": 155543.0,
+      "n": 1,
+      "ci_low": 155543,
+      "ci_high": 155543
     },
     "cost_usd__agent1b": {
-      "value": 0.6465884999999999,
-      "n": 2,
-      "ci_low": 0.6320410000000001,
-      "ci_high": 0.6611359999999997
+      "value": 0.05043089999999999,
+      "n": 1,
+      "ci_low": 0.05043089999999999,
+      "ci_high": 0.05043089999999999
     },
     "calls__agent1b": {
-      "value": 129.5,
-      "n": 2,
-      "ci_low": 127,
-      "ci_high": 132
+      "value": 78.0,
+      "n": 1,
+      "ci_low": 78,
+      "ci_high": 78
     },
     "tokens__agent1b": {
-      "value": 478772.5,
-      "n": 2,
-      "ci_low": 467445,
-      "ci_high": 490100
+      "value": 293621.0,
+      "n": 1,
+      "ci_low": 293621,
+      "ci_high": 293621
     },
     "cost_usd__agent2a": {
-      "value": 0.015615,
-      "n": 2,
-      "ci_low": 0.010333,
-      "ci_high": 0.020897
+      "value": 0.010073,
+      "n": 1,
+      "ci_low": 0.010073,
+      "ci_high": 0.010073
     },
     "calls__agent2a": {
-      "value": 1.5,
-      "n": 2,
+      "value": 1.0,
+      "n": 1,
       "ci_low": 1,
-      "ci_high": 2
+      "ci_high": 1
     },
     "tokens__agent2a": {
-      "value": 15125.0,
-      "n": 2,
-      "ci_low": 9941,
-      "ci_high": 20309
+      "value": 9817.0,
+      "n": 1,
+      "ci_low": 9817,
+      "ci_high": 9817
     },
     "cost_usd__agent2b": {
-      "value": 0.8354074999999999,
-      "n": 2,
-      "ci_low": 0.8151740000000002,
-      "ci_high": 0.8556409999999997
+      "value": 0.247511,
+      "n": 1,
+      "ci_low": 0.247511,
+      "ci_high": 0.247511
     },
     "calls__agent2b": {
-      "value": 489.5,
-      "n": 2,
-      "ci_low": 471,
-      "ci_high": 508
+      "value": 84.0,
+      "n": 1,
+      "ci_low": 84,
+      "ci_high": 84
     },
     "tokens__agent2b": {
-      "value": 669359.5,
-      "n": 2,
-      "ci_low": 653974,
-      "ci_high": 684745
+      "value": 221067.0,
+      "n": 1,
+      "ci_low": 221067,
+      "ci_high": 221067
     },
     "cost_usd__agent3": {
-      "value": 0.11661149999999998,
-      "n": 2,
-      "ci_low": 0.11350099999999999,
-      "ci_high": 0.11972199999999998
+      "value": 0.040383,
+      "n": 1,
+      "ci_low": 0.040383,
+      "ci_high": 0.040383
     },
     "calls__agent3": {
-      "value": 14.5,
-      "n": 2,
-      "ci_low": 14,
-      "ci_high": 15
+      "value": 17.0,
+      "n": 1,
+      "ci_low": 17,
+      "ci_high": 17
     },
     "tokens__agent3": {
-      "value": 115165.5,
-      "n": 2,
-      "ci_low": 111957,
-      "ci_high": 118374
+      "value": 29699.0,
+      "n": 1,
+      "ci_low": 29699,
+      "ci_high": 29699
     },
     "cost_usd__total": {
-      "value": 2.0833569999999995,
-      "n": 2,
-      "ci_low": 2.052409,
-      "ci_high": 2.114304999999999
+      "value": 0.5503809000000001,
+      "n": 1,
+      "ci_low": 0.5503809000000001,
+      "ci_high": 0.5503809000000001
     },
     "calls__total": {
-      "value": 670.0,
-      "n": 2,
-      "ci_low": 650,
-      "ci_high": 690
+      "value": 216.0,
+      "n": 1,
+      "ci_low": 216,
+      "ci_high": 216
     }
   }
 }

@@ -11,6 +11,7 @@ from pathlib import Path
 from xml.sax.saxutils import escape
 
 from evals import results
+from evals.stats import wilson_interval
 
 ASSETS = Path(__file__).resolve().parent.parent / "docs" / "assets"
 
@@ -83,14 +84,46 @@ def review_accuracy_svg(doc):
 # ---------------------------------------------------------------- prompt injection
 _GROUP_HEADERS = {"agent": "By agent attacked",
                   "attack": "By attack type (the same trials cut a second way; each group adds up to the total)"}
+# Scopes with no success before the fixes are pooled into one "every other ..." row per group (with_rest_rows).
+
+
+def _pooled(metrics, prefix, scopes):
+    """One rate over several scopes' trials (k and n summed, Wilson interval), or None if none of them is present."""
+    rows = [metrics.get(f"{prefix}__{s}") for s in scopes]
+    rows = [r for r in rows if r]
+    if not rows:
+        return None
+    k, n = sum(r["k"] for r in rows), sum(r["n"] for r in rows)
+    lo, hi = wilson_interval(k, n)
+    return {"value": k / n if n else 0.0, "n": n, "k": k, "ci_low": lo, "ci_high": hi}
+
+
+def with_rest_rows(before, after):
+    """Add an `<group>__rest` scope per group that pools every scope with no success before the fixes, so each
+    group's rows visibly add up to the overall trial count. Returns (before_metrics, after_metrics) copies."""
+    b, a = dict(before), dict(after)
+    for group in _GROUP_HEADERS:
+        quiet = sorted(key.split("__", 1)[1] for key, d in before.items()
+                       if key.startswith(f"attack_success__{group}__") and d["k"] == 0)
+        if not quiet:
+            continue
+        for metrics in (b, a):
+            for prefix in ("attack_success", "control_success"):
+                pooled = _pooled(metrics, prefix, quiet)
+                if pooled:
+                    metrics[f"{prefix}__{group}__rest"] = pooled
+    return b, a
 
 
 def _injection_scopes(before):
-    """Overall, then every agent scope, then every attack scope where an attack succeeded before the fixes (the rest
-    are all zero). The two groups are two breakdowns of the same trials, so the chart heads each group separately."""
+    """Overall, then every agent scope, then every attack scope where an attack succeeded before the fixes, each group
+    ending with its pooled `rest` row (see with_rest_rows). The two groups are two breakdowns of the same trials, so the
+    chart heads each group separately."""
     hits = [key.split("__", 1)[1] for key, d in before.items()
-            if key.startswith("attack_success__") and key != "attack_success__overall" and d["k"] > 0]
-    return ["overall"] + sorted(s for s in hits if s.startswith("agent__")) + sorted(s for s in hits if s.startswith("attack__"))
+            if key.startswith("attack_success__") and key != "attack_success__overall" and (d["k"] > 0 or key.endswith("__rest"))]
+    order = lambda s: (s.endswith("__rest"), s)  # noqa: E731 — the rest row closes its group
+    return (["overall"] + sorted((s for s in hits if s.startswith("agent__")), key=order)
+            + sorted((s for s in hits if s.startswith("attack__")), key=order))
 
 
 def _injection_rows(scopes):
@@ -106,11 +139,17 @@ def _injection_rows(scopes):
 
 
 def _scope_label(scope):
-    return "All attacks" if scope == "overall" else scope.replace("agent__", "agent: ").replace("attack__", "attack: ").replace("_", " ")
+    if scope == "overall":
+        return "All attacks"
+    if scope == "agent__rest":
+        return "every other agent"
+    if scope == "attack__rest":
+        return "every other attack type"
+    return scope.replace("agent__", "agent: ").replace("attack__", "attack: ").replace("_", " ")
 
 
 def injection_svg(baseline, after):
-    b, a = baseline["metrics"], after["metrics"]
+    b, a = with_rest_rows(baseline["metrics"], after["metrics"])
     scopes = _injection_scopes(b)
     rows = _injection_rows(scopes)
     row_h, header_h = 66, 26

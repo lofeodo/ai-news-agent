@@ -53,6 +53,19 @@ def test_injection_chart_lists_only_scopes_that_ever_succeeded():
     assert "5/10" in svg and "0/10" in svg
     # The attack-type rows are a second cut of the same trials: the chart says so, and only for groups it shows.
     assert "By attack type" in svg and "same trials" in svg and "By agent" not in svg
+    # The all-zero "quiet" attack is pooled into one closing row, so the group's trials add up to the total.
+    assert "every other attack type" in svg and "0/10" in svg
+
+
+def test_rest_rows_pool_every_zero_scope_so_each_group_sums_to_the_total():
+    before = _inj(5)
+    before["metrics"]["attack_success__attack__calm"] = _m(0, 15, 0.0, 0.2, k=0)
+    b, a = c.with_rest_rows(before["metrics"], _inj(0)["metrics"])
+    rest = b["attack_success__attack__rest"]
+    assert (rest["k"], rest["n"]) == (0, 25) and rest["ci_low"] == 0.0 and 0 < rest["ci_high"] < 0.2
+    assert "attack_success__agent__rest" not in b  # no agent rows at all: no agent group, no rest row
+    scopes = c._injection_scopes(b)
+    assert scopes == ["overall", "attack__ssrf_steer", "attack__rest"]
 
 
 def test_injection_chart_heads_agent_and_attack_groups_in_order():

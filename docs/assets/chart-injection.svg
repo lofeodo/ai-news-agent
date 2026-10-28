@@ -1,17 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 528" width="880" height="528" role="img" aria-label="Prompt-injection attack success. Overall 10/115 attacks succeeded before the fixes and 0/115 after.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 660" width="880" height="660" role="img" aria-label="Prompt-injection attack success. Overall 10/115 attacks succeeded before the fixes and 0/115 after.">
 <title>Prompt-injection attack success</title><desc>Overall 10/115 attacks succeeded before the fixes and 0/115 after.</desc>
 <style>text{font-family:system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;fill:#e8e8e8} .m{fill:#8b8b8b} .s{fill:#c8b89a}</style>
-<rect x="0.5" y="0.5" width="879" height="527" rx="14" fill="#161616" stroke="#2a2a2a"/>
+<rect x="0.5" y="0.5" width="879" height="659" rx="14" fill="#161616" stroke="#2a2a2a"/>
 <text x="28" y="40" font-size="20" font-weight="600" class="s">Attack success rate</text>
 <text x="28" y="62" font-size="13" class="m">Share of trials where the attack achieved its goal, with Wilson 95% intervals</text>
 <rect x="28" y="78" width="12" height="12" rx="3" fill="#e5484d"/><text x="46" y="89" font-size="12">Before fixes</text>
 <rect x="178" y="78" width="12" height="12" rx="3" fill="#3fb950"/><text x="196" y="89" font-size="12">After fixes</text>
 <rect x="328" y="78" width="12" height="12" rx="3" fill="#8b8b8b"/><text x="346" y="89" font-size="12">Control (no injection)</text>
-<line x1="250.0" x2="250.0" y1="108" y2="490" stroke="#2a2a2a"/><text x="250.0" y="508" font-size="12" text-anchor="middle" class="m">0%</text>
-<line x1="395.0" x2="395.0" y1="108" y2="490" stroke="#2a2a2a"/><text x="395.0" y="508" font-size="12" text-anchor="middle" class="m">20%</text>
-<line x1="540.0" x2="540.0" y1="108" y2="490" stroke="#2a2a2a"/><text x="540.0" y="508" font-size="12" text-anchor="middle" class="m">40%</text>
-<line x1="685.0" x2="685.0" y1="108" y2="490" stroke="#2a2a2a"/><text x="685.0" y="508" font-size="12" text-anchor="middle" class="m">60%</text>
-<line x1="830.0" x2="830.0" y1="108" y2="490" stroke="#2a2a2a"/><text x="830.0" y="508" font-size="12" text-anchor="middle" class="m">80%</text>
+<line x1="250.0" x2="250.0" y1="108" y2="622" stroke="#2a2a2a"/><text x="250.0" y="640" font-size="12" text-anchor="middle" class="m">0%</text>
+<line x1="395.0" x2="395.0" y1="108" y2="622" stroke="#2a2a2a"/><text x="395.0" y="640" font-size="12" text-anchor="middle" class="m">20%</text>
+<line x1="540.0" x2="540.0" y1="108" y2="622" stroke="#2a2a2a"/><text x="540.0" y="640" font-size="12" text-anchor="middle" class="m">40%</text>
+<line x1="685.0" x2="685.0" y1="108" y2="622" stroke="#2a2a2a"/><text x="685.0" y="640" font-size="12" text-anchor="middle" class="m">60%</text>
+<line x1="830.0" x2="830.0" y1="108" y2="622" stroke="#2a2a2a"/><text x="830.0" y="640" font-size="12" text-anchor="middle" class="m">80%</text>
 <text x="236" y="145.0" font-size="14" text-anchor="end">All attacks</text>
 <rect x="250" y="117" width="63.0" height="11" rx="3" fill="#e5484d"/>
 <g stroke="#e8e8e8" stroke-width="1.5"><line x1="284.7" x2="360.7" y1="122.5" y2="122.5"/><line x1="360.7" x2="360.7" y1="118" y2="127"/></g>
@@ -43,25 +43,45 @@
 <rect x="250" y="307" width="2.0" height="11" rx="3" fill="#8b8b8b"/>
 <g stroke="#e8e8e8" stroke-width="1.5"><line x1="250.0" x2="346.6" y1="312.5" y2="312.5"/><line x1="346.6" x2="346.6" y1="308" y2="317"/></g>
 <text x="354.6" y="317" font-size="11" class="m">0/25</text>
-<text x="28" y="349" font-size="12" font-weight="600" class="m">By attack type (the same trials cut a second way; each group adds up to the total)</text>
-<text x="236" y="395.0" font-size="14" text-anchor="end">attack: ssrf steer</text>
-<rect x="250" y="367" width="362.5" height="11" rx="3" fill="#e5484d"/>
-<g stroke="#e8e8e8" stroke-width="1.5"><line x1="421.5" x2="803.5" y1="372.5" y2="372.5"/><line x1="803.5" x2="803.5" y1="368" y2="377"/></g>
-<text x="811.5" y="377" font-size="11" class="m">5/10</text>
-<rect x="250" y="383" width="2.0" height="11" rx="3" fill="#3fb950"/>
-<g stroke="#e8e8e8" stroke-width="1.5"><line x1="250.0" x2="451.2" y1="388.5" y2="388.5"/><line x1="451.2" x2="451.2" y1="384" y2="393"/></g>
-<text x="459.2" y="393" font-size="11" class="m">0/10</text>
-<rect x="250" y="399" width="2.0" height="11" rx="3" fill="#8b8b8b"/>
-<g stroke="#e8e8e8" stroke-width="1.5"><line x1="250.0" x2="451.2" y1="404.5" y2="404.5"/><line x1="451.2" x2="451.2" y1="400" y2="409"/></g>
-<text x="459.2" y="409" font-size="11" class="m">0/10</text>
-<text x="236" y="461.0" font-size="14" text-anchor="end">attack: tag breakout</text>
-<rect x="250" y="433" width="241.7" height="11" rx="3" fill="#e5484d"/>
-<g stroke="#e8e8e8" stroke-width="1.5"><line x1="360.0" x2="672.6" y1="438.5" y2="438.5"/><line x1="672.6" x2="672.6" y1="434" y2="443"/></g>
-<text x="680.6" y="443" font-size="11" class="m">5/15</text>
+<text x="236" y="369.0" font-size="14" text-anchor="end">every other agent</text>
+<rect x="250" y="341" width="2.0" height="11" rx="3" fill="#e5484d"/>
+<g stroke="#e8e8e8" stroke-width="1.5"><line x1="250.0" x2="287.7" y1="346.5" y2="346.5"/><line x1="287.7" x2="287.7" y1="342" y2="351"/></g>
+<text x="295.7" y="351" font-size="11" class="m">0/70</text>
+<rect x="250" y="357" width="2.0" height="11" rx="3" fill="#3fb950"/>
+<g stroke="#e8e8e8" stroke-width="1.5"><line x1="250.0" x2="287.7" y1="362.5" y2="362.5"/><line x1="287.7" x2="287.7" y1="358" y2="367"/></g>
+<text x="295.7" y="367" font-size="11" class="m">0/70</text>
+<rect x="250" y="373" width="2.0" height="11" rx="3" fill="#8b8b8b"/>
+<g stroke="#e8e8e8" stroke-width="1.5"><line x1="250.0" x2="287.7" y1="378.5" y2="378.5"/><line x1="287.7" x2="287.7" y1="374" y2="383"/></g>
+<text x="295.7" y="383" font-size="11" class="m">0/70</text>
+<text x="28" y="415" font-size="12" font-weight="600" class="m">By attack type (the same trials cut a second way; each group adds up to the total)</text>
+<text x="236" y="461.0" font-size="14" text-anchor="end">attack: ssrf steer</text>
+<rect x="250" y="433" width="362.5" height="11" rx="3" fill="#e5484d"/>
+<g stroke="#e8e8e8" stroke-width="1.5"><line x1="421.5" x2="803.5" y1="438.5" y2="438.5"/><line x1="803.5" x2="803.5" y1="434" y2="443"/></g>
+<text x="811.5" y="443" font-size="11" class="m">5/10</text>
 <rect x="250" y="449" width="2.0" height="11" rx="3" fill="#3fb950"/>
-<g stroke="#e8e8e8" stroke-width="1.5"><line x1="250.0" x2="397.8" y1="454.5" y2="454.5"/><line x1="397.8" x2="397.8" y1="450" y2="459"/></g>
-<text x="405.8" y="459" font-size="11" class="m">0/15</text>
+<g stroke="#e8e8e8" stroke-width="1.5"><line x1="250.0" x2="451.2" y1="454.5" y2="454.5"/><line x1="451.2" x2="451.2" y1="450" y2="459"/></g>
+<text x="459.2" y="459" font-size="11" class="m">0/10</text>
 <rect x="250" y="465" width="2.0" height="11" rx="3" fill="#8b8b8b"/>
-<g stroke="#e8e8e8" stroke-width="1.5"><line x1="250.0" x2="397.8" y1="470.5" y2="470.5"/><line x1="397.8" x2="397.8" y1="466" y2="475"/></g>
-<text x="405.8" y="475" font-size="11" class="m">0/15</text>
+<g stroke="#e8e8e8" stroke-width="1.5"><line x1="250.0" x2="451.2" y1="470.5" y2="470.5"/><line x1="451.2" x2="451.2" y1="466" y2="475"/></g>
+<text x="459.2" y="475" font-size="11" class="m">0/10</text>
+<text x="236" y="527.0" font-size="14" text-anchor="end">attack: tag breakout</text>
+<rect x="250" y="499" width="241.7" height="11" rx="3" fill="#e5484d"/>
+<g stroke="#e8e8e8" stroke-width="1.5"><line x1="360.0" x2="672.6" y1="504.5" y2="504.5"/><line x1="672.6" x2="672.6" y1="500" y2="509"/></g>
+<text x="680.6" y="509" font-size="11" class="m">5/15</text>
+<rect x="250" y="515" width="2.0" height="11" rx="3" fill="#3fb950"/>
+<g stroke="#e8e8e8" stroke-width="1.5"><line x1="250.0" x2="397.8" y1="520.5" y2="520.5"/><line x1="397.8" x2="397.8" y1="516" y2="525"/></g>
+<text x="405.8" y="525" font-size="11" class="m">0/15</text>
+<rect x="250" y="531" width="2.0" height="11" rx="3" fill="#8b8b8b"/>
+<g stroke="#e8e8e8" stroke-width="1.5"><line x1="250.0" x2="397.8" y1="536.5" y2="536.5"/><line x1="397.8" x2="397.8" y1="532" y2="541"/></g>
+<text x="405.8" y="541" font-size="11" class="m">0/15</text>
+<text x="236" y="593.0" font-size="14" text-anchor="end">every other attack type</text>
+<rect x="250" y="565" width="2.0" height="11" rx="3" fill="#e5484d"/>
+<g stroke="#e8e8e8" stroke-width="1.5"><line x1="250.0" x2="279.7" y1="570.5" y2="570.5"/><line x1="279.7" x2="279.7" y1="566" y2="575"/></g>
+<text x="287.7" y="575" font-size="11" class="m">0/90</text>
+<rect x="250" y="581" width="2.0" height="11" rx="3" fill="#3fb950"/>
+<g stroke="#e8e8e8" stroke-width="1.5"><line x1="250.0" x2="279.7" y1="586.5" y2="586.5"/><line x1="279.7" x2="279.7" y1="582" y2="591"/></g>
+<text x="287.7" y="591" font-size="11" class="m">0/90</text>
+<rect x="250" y="597" width="2.0" height="11" rx="3" fill="#8b8b8b"/>
+<g stroke="#e8e8e8" stroke-width="1.5"><line x1="250.0" x2="279.7" y1="602.5" y2="602.5"/><line x1="279.7" x2="279.7" y1="598" y2="607"/></g>
+<text x="287.7" y="607" font-size="11" class="m">0/90</text>
 </svg>

@@ -101,7 +101,9 @@ def render_injection(baseline, after):
     lines = [f"Generated from `evals/results/{baseline['name']}.json` (git `{baseline['git_sha']}`, "
              f"cost ${baseline['cost_usd']}) and `evals/results/{after['name']}.json` (git `{after['git_sha']}`, "
              f"cost ${after['cost_usd']}). Cells are attacks that achieved their goal out of trials, with Wilson 95% "
-             "intervals; the control column is the same inputs without the injection, after the fixes.", "",
+             "intervals; the control column is the same inputs without the injection, after the fixes. The `agent:` rows "
+             "and the `attack:` rows are two breakdowns of the same trials (each group adds up to the overall row), so "
+             "do not sum across both.", "",
              "| Scope | Before fixes | After fixes | Control (after) |", "|---|---|---|---|"]
     scopes = (["overall"]
               + sorted(k.split("__", 1)[1] for k in a if k.startswith("attack_success__agent__"))

@@ -81,13 +81,28 @@ def review_accuracy_svg(doc):
 
 
 # ---------------------------------------------------------------- prompt injection
+_GROUP_HEADERS = {"agent": "By agent attacked",
+                  "attack": "By attack type (the same trials cut a second way; each group adds up to the total)"}
+
+
 def _injection_scopes(before):
-    """Overall plus every agent/attack scope where an attack succeeded before the fixes (the rest are all zero)."""
-    scopes = ["overall"]
-    for key, d in before.items():
-        if key.startswith("attack_success__") and key != "attack_success__overall" and d["k"] > 0:
-            scopes.append(key.split("__", 1)[1])
-    return scopes
+    """Overall, then every agent scope, then every attack scope where an attack succeeded before the fixes (the rest
+    are all zero). The two groups are two breakdowns of the same trials, so the chart heads each group separately."""
+    hits = [key.split("__", 1)[1] for key, d in before.items()
+            if key.startswith("attack_success__") and key != "attack_success__overall" and d["k"] > 0]
+    return ["overall"] + sorted(s for s in hits if s.startswith("agent__")) + sorted(s for s in hits if s.startswith("attack__"))
+
+
+def _injection_rows(scopes):
+    """('header', text) and ('scope', name) rows in drawing order."""
+    rows, seen = [], set()
+    for scope in scopes:
+        group = scope.split("__", 1)[0]
+        if group in _GROUP_HEADERS and group not in seen:
+            seen.add(group)
+            rows.append(("header", _GROUP_HEADERS[group]))
+        rows.append(("scope", scope))
+    return rows
 
 
 def _scope_label(scope):
@@ -97,8 +112,10 @@ def _scope_label(scope):
 def injection_svg(baseline, after):
     b, a = baseline["metrics"], after["metrics"]
     scopes = _injection_scopes(b)
-    row_h = 66
-    W, H = 880, 146 + row_h * len(scopes)
+    rows = _injection_rows(scopes)
+    row_h, header_h = 66, 26
+    body_h = sum(row_h if kind == "scope" else header_h for kind, _ in rows)
+    W, H = 880, 146 + body_h
     x0, x1 = 250, 830                      # 0..axis_max maps onto this range
     highs = [d["ci_high"] for src in (b, a) for k, d in src.items() if k.endswith(tuple(scopes)) and "ci_high" in d]
     axis_max = min(1.0, max(0.2, math.ceil(max(highs) / 0.2) * 0.2))
@@ -112,10 +129,15 @@ def injection_svg(baseline, after):
                      f'<text x="{lx + 18}" y="89" font-size="12">{label}</text>')
     top = 108
     for v in ticks:
-        parts.append(f'<line x1="{xs(v):.1f}" x2="{xs(v):.1f}" y1="{top}" y2="{top + row_h * len(scopes)}" stroke="{GRID}"/>'
-                     f'<text x="{xs(v):.1f}" y="{top + row_h * len(scopes) + 18}" font-size="12" text-anchor="middle" class="m">{_pct(v)}</text>')
-    for r, scope in enumerate(scopes):
-        y = top + r * row_h
+        parts.append(f'<line x1="{xs(v):.1f}" x2="{xs(v):.1f}" y1="{top}" y2="{top + body_h}" stroke="{GRID}"/>'
+                     f'<text x="{xs(v):.1f}" y="{top + body_h + 18}" font-size="12" text-anchor="middle" class="m">{_pct(v)}</text>')
+    y = top
+    for kind, item in rows:
+        if kind == "header":
+            parts.append(f'<text x="28" y="{y + 17}" font-size="12" font-weight="600" class="m">{escape(item)}</text>')
+            y += header_h
+            continue
+        scope = item
         parts.append(f'<text x="{x0 - 14}" y="{y + row_h / 2 + 4:.1f}" font-size="14" text-anchor="end">{escape(_scope_label(scope))}</text>')
         series = ((b.get(f"attack_success__{scope}"), BEFORE), (a.get(f"attack_success__{scope}"), AFTER),
                   (a.get(f"control_success__{scope}"), CONTROL))
@@ -129,6 +151,7 @@ def injection_svg(baseline, after):
                          f'y1="{by + 5.5}" y2="{by + 5.5}"/><line x1="{xs(d["ci_high"]):.1f}" x2="{xs(d["ci_high"]):.1f}" '
                          f'y1="{by + 1}" y2="{by + 10}"/></g>')
             parts.append(f'<text x="{xs(d["ci_high"]) + 8:.1f}" y="{by + 10}" font-size="11" class="m">{d["k"]}/{d["n"]}</text>')
+        y += row_h
     ov_b, ov_a = b["attack_success__overall"], a["attack_success__overall"]
     desc = f"Overall {ov_b['k']}/{ov_b['n']} attacks succeeded before the fixes and {ov_a['k']}/{ov_a['n']} after."
     return _svg(W, H, "\n".join(parts), "Prompt-injection attack success", desc)

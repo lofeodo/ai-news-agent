@@ -101,11 +101,10 @@ h1 .hl { color: var(--accent); }
   margin-bottom: 18px;
 }
 
-/* Open-source badge: sits right under the promise, above the form. */
+/* Badges (open source, then the latest issue): sit right under the promise, above the form. */
+.pills { display: flex; flex-direction: column; gap: 10px; max-width: 34rem; margin-bottom: 26px; }
 .os-pill {
   display: flex; align-items: center; gap: 10px;
-  max-width: 34rem;
-  margin-bottom: 26px;
   padding: 9px 12px;
   background: rgba(200,184,154,0.07);
   border: 1px solid rgba(200,184,154,0.4);
@@ -121,33 +120,6 @@ h1 .hl { color: var(--accent); }
 .os-pill:hover { border-color: var(--accent); background: rgba(200,184,154,0.12); }
 .os-pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-/* "Read the latest issue": the low-commitment action, loud enough to see at a glance but
-   outlined (amber) so it never reads as the same thing as the solid Subscribe button. */
-.read-cta {
-  display: flex; align-items: center; gap: 14px;
-  max-width: 34rem;
-  margin-bottom: 18px;
-  padding: 14px 18px;
-  background: linear-gradient(90deg, rgba(217,164,65,0.2), rgba(217,164,65,0.06));
-  border: 2px solid var(--amber);
-  color: var(--text);
-  text-decoration: none;
-  box-shadow: 0 0 26px rgba(217,164,65,0.18);
-  transition: background 0.15s, box-shadow 0.2s, transform 0.15s;
-}
-.read-cta__icon { flex-shrink: 0; fill: none; stroke: var(--amber); stroke-width: 1.8; stroke-linejoin: round; }
-.read-cta__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.read-cta__text b {
-  font-family: var(--label); font-weight: 400;
-  font-size: 1.45rem; line-height: 1.05; letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--amber);
-}
-.read-cta__text span { font-size: 0.78rem; line-height: 1.45; color: var(--soft); }
-.read-cta__arrow { font-size: 1.4rem; color: var(--amber); transition: transform 0.15s; }
-.read-cta:hover { background: linear-gradient(90deg, rgba(217,164,65,0.3), rgba(217,164,65,0.1)); box-shadow: 0 0 34px rgba(217,164,65,0.32); }
-.read-cta:hover .read-cta__arrow { transform: translateX(4px); }
-.read-cta:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
-@media (prefers-reduced-motion: reduce) { .read-cta__arrow { transition: none; } }
 
 /* ── Signup ───────────────────────────────────────────────────────────────── */
 .signup { max-width: 34rem; }
@@ -429,9 +401,8 @@ h1 .hl { color: var(--accent); }
   h1 { font-size: clamp(1.8rem, 3vw, 2.35rem); margin-bottom: 14px; }
   .eyebrow { margin-bottom: 14px; }
   .lede { margin-bottom: 14px; line-height: 1.6; }
-  .os-pill { margin-bottom: 16px; padding: 7px 12px; }
-  .read-cta { margin-bottom: 14px; padding: 10px 16px; }
-  .read-cta__text span { display: none; }
+  .pills { margin-bottom: 16px; gap: 8px; }
+  .os-pill { padding: 7px 12px; }
   .signup__or { margin: 14px 0 12px; }
   .signup__trust { margin-top: 14px; }
   .paper p { -webkit-line-clamp: 2; }
@@ -445,8 +416,8 @@ h1 .hl { color: var(--accent); }
   .hero { padding-top: 70px; padding-bottom: 16px; }
   h1 { font-size: 1.75rem; margin-bottom: 10px; }
   .lede { font-size: 0.92rem; margin-bottom: 10px; }
-  .os-pill { margin-bottom: 12px; padding: 5px 10px; font-size: 0.74rem; }
-  .read-cta { margin-bottom: 12px; padding: 8px 14px; }
+  .pills { margin-bottom: 12px; gap: 6px; }
+  .os-pill { padding: 5px 10px; font-size: 0.74rem; }
   .signup input[type="email"], .btn { padding-top: 11px; padding-bottom: 11px; }
   .signup__trust { margin-top: 10px; }
   .issue { max-height: max(380px, calc(100svh - 70px - 16px - 40px)); }
@@ -514,7 +485,7 @@ h2 {
 /* ── Responsive ───────────────────────────────────────────────────────────── */
 @media (max-width: 960px) {
   .hero { grid-template-columns: minmax(0, 1fr); gap: 48px; padding-top: 88px; padding-bottom: 64px; }
-  .signup, .lede, .member { max-width: none; }
+  .signup, .lede, .member, .pills { max-width: none; }
   .issue-wrap { max-width: 600px; }
   .pillars { grid-template-columns: minmax(0, 1fr); }
   .opensource { flex-direction: column; align-items: stretch; gap: 20px; padding: 24px 22px; }

@@ -121,6 +121,34 @@ h1 .hl { color: var(--accent); }
 .os-pill:hover { border-color: var(--accent); background: rgba(200,184,154,0.12); }
 .os-pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+/* "Read the latest issue": the low-commitment action, loud enough to see at a glance but
+   outlined (amber) so it never reads as the same thing as the solid Subscribe button. */
+.read-cta {
+  display: flex; align-items: center; gap: 14px;
+  max-width: 34rem;
+  margin-bottom: 18px;
+  padding: 14px 18px;
+  background: linear-gradient(90deg, rgba(217,164,65,0.2), rgba(217,164,65,0.06));
+  border: 2px solid var(--amber);
+  color: var(--text);
+  text-decoration: none;
+  box-shadow: 0 0 26px rgba(217,164,65,0.18);
+  transition: background 0.15s, box-shadow 0.2s, transform 0.15s;
+}
+.read-cta__icon { flex-shrink: 0; fill: none; stroke: var(--amber); stroke-width: 1.8; stroke-linejoin: round; }
+.read-cta__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.read-cta__text b {
+  font-family: var(--label); font-weight: 400;
+  font-size: 1.45rem; line-height: 1.05; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--amber);
+}
+.read-cta__text span { font-size: 0.78rem; line-height: 1.45; color: var(--soft); }
+.read-cta__arrow { font-size: 1.4rem; color: var(--amber); transition: transform 0.15s; }
+.read-cta:hover { background: linear-gradient(90deg, rgba(217,164,65,0.3), rgba(217,164,65,0.1)); box-shadow: 0 0 34px rgba(217,164,65,0.32); }
+.read-cta:hover .read-cta__arrow { transform: translateX(4px); }
+.read-cta:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .read-cta__arrow { transition: none; } }
+
 /* ── Signup ───────────────────────────────────────────────────────────────── */
 .signup { max-width: 34rem; }
 
@@ -287,11 +315,32 @@ h1 .hl { color: var(--accent); }
 .issue-wrap { min-width: 0; }
 .issue {
   position: relative;
+  display: flex; flex-direction: column;
   border: 1px solid #333;
   background: #0b0b0b;
   box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(200,184,154,0.05), 0 0 50px rgba(200,184,154,0.07);
   overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.2s;
 }
+.issue:hover { border-color: rgba(217,164,65,0.6); box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 0 60px rgba(217,164,65,0.16); }
+
+/* Foot of the card: always visible (the body above it is what gets cropped on desktop). */
+.issue__foot { flex-shrink: 0; background: #f5f2eb; padding: 12px 22px 18px; }
+.issue__open {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  background: #121212;
+  border-left: 4px solid var(--amber);
+  color: var(--amber);
+  font-family: var(--label);
+  font-size: 1.2rem; letter-spacing: 0.16em; text-transform: uppercase;
+  text-decoration: none;
+  padding: 13px 18px;
+  transition: background 0.15s;
+}
+/* Stretched link: a click anywhere on the excerpt opens the issue. */
+.issue__open::after { content: ''; position: absolute; inset: 0; }
+.issue:hover .issue__open { background: #000; }
+.issue__open:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
 .issue__bar {
   display: flex; align-items: center; gap: 7px;
   padding: 10px 14px;
@@ -304,7 +353,7 @@ h1 .hl { color: var(--accent); }
 .issue__bar i { width: 9px; height: 9px; border-radius: 50%; background: #3a3a3a; }
 .issue__bar span { margin-left: 8px; }
 
-.issue__body { background: #f5f2eb; color: #1b1b1b; padding: 16px 22px 0; }
+.issue__body { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; background: #f5f2eb; color: #1b1b1b; padding: 16px 22px 0; }
 
 .paper {
   background: #121212;
@@ -368,7 +417,7 @@ h1 .hl { color: var(--accent); }
     max-height: max(440px, calc(100vh - 84px - 36px - 40px));
     max-height: max(440px, calc(100svh - 84px - 36px - 40px));
   }
-  .issue::after {
+  .issue__body::after {
     content: '';
     position: absolute; left: 0; right: 0; bottom: 0; height: 30px;
     background: linear-gradient(to bottom, rgba(245,242,235,0), #f5f2eb 88%);
@@ -381,6 +430,8 @@ h1 .hl { color: var(--accent); }
   .eyebrow { margin-bottom: 14px; }
   .lede { margin-bottom: 14px; line-height: 1.6; }
   .os-pill { margin-bottom: 16px; padding: 7px 12px; }
+  .read-cta { margin-bottom: 14px; padding: 10px 16px; }
+  .read-cta__text span { display: none; }
   .signup__or { margin: 14px 0 12px; }
   .signup__trust { margin-top: 14px; }
   .paper p { -webkit-line-clamp: 2; }
@@ -395,18 +446,16 @@ h1 .hl { color: var(--accent); }
   h1 { font-size: 1.75rem; margin-bottom: 10px; }
   .lede { font-size: 0.92rem; margin-bottom: 10px; }
   .os-pill { margin-bottom: 12px; padding: 5px 10px; font-size: 0.74rem; }
+  .read-cta { margin-bottom: 12px; padding: 8px 14px; }
   .signup input[type="email"], .btn { padding-top: 11px; padding-bottom: 11px; }
   .signup__trust { margin-top: 10px; }
   .issue { max-height: max(380px, calc(100svh - 70px - 16px - 40px)); }
 }
 
 .issue-caption {
-  display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
   margin-top: 12px;
   font-size: 0.74rem; color: var(--muted);
 }
-.issue-caption a { color: var(--accent); text-decoration: none; }
-.issue-caption a:hover { text-decoration: underline; }
 
 /* ── Why it's different ───────────────────────────────────────────────────── */
 .why { padding: 72px 0 80px; border-top: 1px solid var(--border); }

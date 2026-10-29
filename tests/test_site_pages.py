@@ -25,3 +25,13 @@ def test_welcome_page_never_depends_on_storage_for_the_subscription():
     src = _read("welcome.html")
     m = re.search(r"function takeOptions\(\) \{(.*?)\n    \}", src, re.DOTALL)
     assert m and "catch { return null; }" in m.group(1)
+
+
+def test_homepage_google_button_subscribes_through_the_welcome_page():
+    src = _read("index.html")
+    assert "return_to=welcome.html" in src
+    assert "return_to=index.html" not in src
+    assert "Subscribe with Google" in src and "Continue with Google" not in src
+    assert 'class="signup__consent"' in src
+    # The same storage key on both ends.
+    assert "lsm_subscribe_opts" in src and "lsm_subscribe_opts" in _read("welcome.html")

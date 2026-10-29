@@ -63,3 +63,10 @@ def test_preferences_page_shows_one_newsletter_as_a_subscription_not_a_list():
     src = _read("preferences.html")
     assert "single = data.available.length === 1" in src
     assert "'Your subscription'" in src and "pref-nl--single" in src
+
+
+def test_preferences_first_subscription_falls_back_to_the_subscribe_route():
+    """POST /auth/preferences is 404 for an address with no subscriber record (seen live 2026-10-29)."""
+    src = _read("preferences.html")
+    i = src.index("res.status === 404 && box.checked")
+    assert "/auth/subscribe" in src[i:i + 400]

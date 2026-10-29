@@ -309,10 +309,26 @@
       nlMsg.className = 'msg';
       try {
         const body = { newsletters: chosenNewsletters(), consent_text_version: consentVersion };
-        const res = authMode
+        let res = authMode
           ? await authFetch(`${API}/auth/preferences`, { method: 'POST', body: JSON.stringify(body) })
           : await fetch(`${API}/preferences`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
                                                 body: JSON.stringify({ token, ...body }) });
+        // An account whose address has never subscribed has no subscriber record yet, and the preferences
+        // route answers 404 for it. A first subscription goes through the subscribe route, which creates the
+        // record (same as welcome.html), then the saved options are read back.
+        if (authMode && res.status === 404 && box.checked) {
+          res = await authFetch(`${API}/auth/subscribe`, {
+            method: 'POST',
+            body: JSON.stringify({ newsletter: box.value, consent_text_version: consentVersion }),
+          });
+          if (res.ok) {
+            try {
+              const fresh = await (await authFetch(`${API}/auth/preferences`)).json();
+              document.getElementById('include_french').checked = !!(fresh.prefs && fresh.prefs.include_french);
+              document.getElementById('include_canada').checked = !!(fresh.prefs && fresh.prefs.include_canada);
+            } catch {}
+          }
+        }
         if (!res.ok) throw Object.assign(new Error(res.status), { status: res.status });
         nlMsg.textContent = box.checked ? `Subscribed to ${name}. It arrives on Monday.` : `Unsubscribed from ${name}.`;
         nlMsg.className = 'msg visible success';

@@ -38,6 +38,7 @@
         <span class="topbar__auth-dot"></span>
         <span class="topbar__auth-email" id="topbar-email"></span>
         <span class="topbar__auth-tier" id="topbar-tier" style="display:none">◆ Premium</span>
+        <a class="topbar__sub" id="topbar-sub" href="/preferences.html" style="display:none"></a>
         <button type="button" class="topbar__signout" id="topbar-signout">Sign out</button>
       </div>
       <a href="/login.html" class="topbar__signin" id="topbar-signin">Sign in →</a>
@@ -131,7 +132,9 @@
 
         <!-- Shown instead of the signup when already authenticated -->
         <div class="member" id="signed-in-ctas">
-          <a href="/issues.html" class="btn">Read the latest issue →</a>
+          <!-- Subscription state first (from nav.js's lsm:me event), then the one action that matters for it. -->
+          <p class="member__status" id="member-status" aria-live="polite"></p>
+          <a href="/issues.html" class="btn" id="member-primary">Read the latest issue →</a>
           <a href="preferences.html" class="member__link">Preferences →</a>
           <a href="sections.html" class="member__link">Customize →</a>
         </div>
@@ -251,6 +254,31 @@
     // Firebase is source of truth; corrects cache if stale
     onAuthStateChanged(auth, (user) => {
       if (user && user.emailVerified) showSignedIn(); else showSignedOut();
+    });
+
+    // Subscription state for the signed-in block. nav.js announces it (cache first, then /auth/me); until it
+    // is known the block just says who is signed in. Not subscribed: the primary button becomes Subscribe.
+    const memberStatus  = document.getElementById('member-status');
+    const memberPrimary = document.getElementById('member-primary');
+    window.addEventListener('lsm:me', (e) => {
+      const me = e.detail || {};
+      if (me.subscribed === true) {
+        memberStatus.innerHTML = '<span class="member__tick">✓</span> Subscribed as <strong></strong>';
+        memberStatus.querySelector('strong').textContent = me.email || '';
+        memberStatus.className = 'member__status is-on';
+        memberPrimary.textContent = 'Read the latest issue →';
+        memberPrimary.href = '/issues.html';
+      } else if (me.subscribed === false) {
+        memberStatus.innerHTML = 'Signed in as <strong></strong>, not subscribed yet.';
+        memberStatus.querySelector('strong').textContent = me.email || '';
+        memberStatus.className = 'member__status is-off';
+        memberPrimary.textContent = 'Subscribe →';
+        memberPrimary.href = '/welcome.html';
+      } else {
+        memberStatus.innerHTML = 'Signed in as <strong></strong>';
+        memberStatus.querySelector('strong').textContent = me.email || '';
+        memberStatus.className = 'member__status';
+      }
     });
 
     async function loadSpots() {

@@ -35,3 +35,18 @@ def test_homepage_google_button_subscribes_through_the_welcome_page():
     assert 'class="signup__consent"' in src
     # The same storage key on both ends.
     assert "lsm_subscribe_opts" in src and "lsm_subscribe_opts" in _read("welcome.html")
+
+
+def test_every_page_with_an_account_area_shows_subscription_state():
+    pages = [p for p in SITE.glob("*.html") if 'id="topbar-auth"' in p.read_text(encoding="utf-8")]
+    assert len(pages) >= 10
+    for p in pages:
+        assert 'id="topbar-sub"' in p.read_text(encoding="utf-8"), p.name
+    nav = _read("nav.js")
+    assert "topbar-sub" in nav and "/welcome.html" in nav and "lsm:me" in nav
+
+
+def test_homepage_signed_in_block_reacts_to_subscription_state():
+    src = _read("index.html")
+    assert 'id="member-status"' in src and 'id="member-primary"' in src
+    assert "lsm:me" in src and "/welcome.html" in src

@@ -280,6 +280,13 @@ h1 .hl { color: var(--accent); }
 .is-signed-in .signup-only { display: none !important; }
 .is-signed-in .member { display: block; }
 .member .btn { display: block; margin-bottom: 12px; }
+.member__status {
+  font-size: 0.86rem; color: var(--muted); line-height: 1.6; margin-bottom: 14px;
+  overflow-wrap: anywhere;
+}
+.member__status strong { color: var(--text); font-weight: normal; }
+.member__status.is-on .member__tick { color: var(--success); margin-right: 4px; }
+.member__status.is-off { color: var(--accent); }
 .member__link {
   display: block; text-align: center;
   color: var(--muted); text-decoration: none; font-size: 0.84rem;

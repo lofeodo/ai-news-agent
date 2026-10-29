@@ -90,6 +90,22 @@
   line-height: 1.6;
 }
 
+/* Subscription state, from /auth/me: a quiet "Subscribed" tick, or a "Subscribe" pill that leads to welcome.html. */
+.topbar__sub {
+  display: inline-block;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 3px 7px 2px;
+  line-height: 1.6;
+  white-space: nowrap;
+  transition: opacity 0.15s, box-shadow 0.2s;
+}
+.topbar__sub.is-on  { color: #7ec8a0; border: 1px solid rgba(126,200,160,0.35); }
+.topbar__sub.is-off { color: #0f0f0f; background: #c8b89a; }
+.topbar__sub.is-off:hover { opacity: 0.88; box-shadow: 0 0 12px rgba(200,184,154,0.3); }
+
 .topbar__signout {
   background: none;
   border: none;
@@ -160,6 +176,7 @@
   .topbar__nav-link { display: none !important; }
   .topbar__nav-link.active { display: block !important; }
   .topbar__auth-email { max-width: 90px; }
+  .topbar__sub.is-on { display: none !important; }  /* the tick is informational; the Subscribe pill stays */
   .topbar__github-label { display: none; }
   .topbar__github { padding: 6px; }
   .topbar__right { gap: 8px; }

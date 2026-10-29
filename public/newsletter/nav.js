@@ -22,16 +22,35 @@ const authEl     = document.getElementById('topbar-auth');
 const signinEl   = document.getElementById('topbar-signin');
 const emailEl    = document.getElementById('topbar-email');
 const tierEl     = document.getElementById('topbar-tier');
+const subEl      = document.getElementById('topbar-sub');
 const signoutBtn = document.getElementById('topbar-signout');
 
 const returnPage = currentReturnPage();
 if (signinEl && returnPage) signinEl.href = `/login.html?returnUrl=${returnPage}`;
 
-function showSignedIn(email, tier) {
+function showSignedIn(email, tier, subscribed) {
   if (signinEl) signinEl.style.display = 'none';
   if (authEl)   authEl.style.display   = 'flex';
   if (emailEl)  emailEl.textContent    = email;
   if (tierEl)   tierEl.style.display   = tier === 'premium' ? 'inline-block' : 'none';
+  showSubscription(subscribed);
+}
+
+// Subscription state of the AI newsletter (undefined = not known yet, e.g. before the first /auth/me).
+// Subscribed: a quiet tick that opens preferences. Not subscribed: a "Subscribe" pill to welcome.html, which
+// subscribes the signed-in account in one click (signing in alone never subscribes).
+function showSubscription(subscribed) {
+  if (!subEl) return;
+  if (subscribed === undefined || subscribed === null) { subEl.style.display = 'none'; return; }
+  subEl.className     = `topbar__sub ${subscribed ? 'is-on' : 'is-off'}`;
+  subEl.textContent   = subscribed ? '✓ Subscribed' : 'Subscribe';
+  subEl.href          = subscribed ? '/preferences.html' : '/welcome.html';
+  subEl.style.display = 'inline-block';
+}
+
+// Pages that render account state themselves (the homepage's signed-in block) listen for this.
+function announce(state) {
+  window.dispatchEvent(new CustomEvent('lsm:me', { detail: state }));
 }
 
 // Admins get an extra link to the issues page in debug mode (/issues.html?debug=1).
@@ -57,7 +76,11 @@ function showSignedOut() {
 // Restore last-known auth state instantly from cache (no Firebase wait)
 let cached = null;
 try { cached = JSON.parse(localStorage.getItem(CACHE_KEY)); } catch {}
-if (cached?.email) { showSignedIn(cached.email, cached.tier || 'free'); showAdminLink(!!cached.isAdmin); }
+if (cached?.email) {
+  showSignedIn(cached.email, cached.tier || 'free', cached.subscribed);
+  showAdminLink(!!cached.isAdmin);
+  announce({ ...cached, fromCache: true });
+}
 
 // Then confirm/update with Firebase (source of truth)
 onAuthStateChanged(auth, async (user) => {
@@ -68,8 +91,8 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
 
-  // Show immediately with known email (tier may update below)
-  showSignedIn(user.email, cached?.tier || 'free');
+  // Show immediately with known email (tier and subscription may update below)
+  showSignedIn(user.email, cached?.tier || 'free', cached?.subscribed);
 
   try {
     const res = await authFetch(`${API}/auth/me`);
@@ -77,13 +100,27 @@ onAuthStateChanged(auth, async (user) => {
     const me   = await res.json();
     const tier = me.tier || 'free';
     const isAdmin = !!me.is_admin;
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ email: user.email, tier, isAdmin }));
-    cached = { email: user.email, tier, isAdmin };
-    showSignedIn(user.email, tier);
+    const subscribed = !!me.subscribed;
+    cached = { email: user.email, tier, isAdmin, subscribed };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cached));
+    showSignedIn(user.email, tier, subscribed);
     showAdminLink(isAdmin);
+    announce({ ...cached, fromCache: false });
   } catch (e) {
     console.error('[nav] /auth/me failed:', e);
   }
+});
+
+// welcome.html (and the preferences page) tell the bar when the subscription changed, so the pill and the
+// cache do not wait for the next /auth/me.
+window.addEventListener('lsm:subscription', (e) => {
+  const subscribed = !!(e.detail && e.detail.subscribed);
+  if (cached?.email) {
+    cached = { ...cached, subscribed };
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(cached)); } catch {}
+  }
+  showSubscription(subscribed);
+  if (cached?.email) announce({ ...cached, fromCache: false });
 });
 
 if (signoutBtn) {

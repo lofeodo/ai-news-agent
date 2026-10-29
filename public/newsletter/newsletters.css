@@ -14,11 +14,11 @@ body { align-items: stretch; }
 
 .nl-head { margin-bottom: 32px; }
 .nl-head h1 {
-  font-family: var(--display);
+  font-family: var(--font);
   font-weight: 600;
-  font-size: clamp(2.2rem, 7vw, 3.2rem);
-  line-height: 1.05;
-  letter-spacing: 0;
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  line-height: 1.15;
+  letter-spacing: 0.02em;
   color: var(--text);
   margin-bottom: 14px;
 }
@@ -51,10 +51,11 @@ body { align-items: stretch; }
 }
 
 .nl__name {
-  font-family: var(--display);
+  font-family: var(--font);
   font-weight: 600;
-  font-size: 1.75rem;
-  line-height: 1.1;
+  font-size: 1.15rem;
+  line-height: 1.3;
+  letter-spacing: 0.03em;
   color: var(--nl);
 }
 .nl__name a { color: inherit; text-decoration: none; }
@@ -137,9 +138,10 @@ body { align-items: stretch; }
   border-left: 4px solid var(--nl, var(--accent));   /* a newsletter's own page sets --nl; the hub keeps amber */
 }
 .nl-signup h2 {
-  font-family: var(--display);
+  font-family: var(--font);
   font-weight: 600;
-  font-size: 1.4rem;
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
   color: var(--text);
   margin-bottom: 6px;
 }
@@ -162,10 +164,11 @@ body { align-items: stretch; }
   margin-bottom: 30px;
 }
 .nl-hero h1 {
-  font-family: var(--display);
+  font-family: var(--font);
   font-weight: 600;
-  font-size: clamp(2.4rem, 9vw, 4rem);
-  line-height: 1;
+  font-size: clamp(1.6rem, 6vw, 2.4rem);
+  line-height: 1.15;
+  letter-spacing: 0.02em;
   color: var(--nl);
   margin-bottom: 12px;
 }
@@ -173,9 +176,10 @@ body { align-items: stretch; }
 .nl-hero .nl-sections { margin-top: 18px; font-size: 0.82rem; }
 
 .nl-block-title {
-  font-family: var(--display);
+  font-family: var(--font);
   font-weight: 600;
-  font-size: 1.4rem;
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
   color: var(--text);
   margin: 34px 0 12px;
 }

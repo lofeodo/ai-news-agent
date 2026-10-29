@@ -38,7 +38,7 @@ FACES = _font_faces()
 
 
 def test_fonts_css_lists_fonts():
-    assert len(FACES) >= 7
+    assert len(FACES) >= 3
 
 
 @pytest.mark.parametrize("family,weight,style,path", FACES, ids=[f[3].name for f in FACES])
@@ -56,3 +56,16 @@ def test_font_file_matches_its_font_face(family, weight, style, path):
     assert names.get(1, "").startswith(family) or names.get(16, "") == family
     assert font["OS/2"].usWeightClass == weight
     assert bool(font["head"].macStyle & 2) == (style == "italic")
+
+
+# The site is monospace plus Bebas Neue labels (docs/style-guide.md). A serif display face
+# (Cormorant Garamond, EB Garamond) was defined for months without ever loading, and once it
+# did it looked out of place everywhere it was used. Keep it out.
+SERIF_RE = re.compile(r"Cormorant|EB Garamond|Garamond|Georgia|Times New Roman|var\(--display\)|var\(--body-serif\)")
+
+
+@pytest.mark.parametrize("path", sorted(SITE.glob("*.css")) + sorted(SITE.glob("*.html")), ids=lambda p: p.name)
+def test_site_never_uses_a_serif_display_font(path):
+    src = path.read_text(encoding="utf-8")
+    hits = sorted({m.group(0) for m in SERIF_RE.finditer(src)})
+    assert not hits, f"{path.name} uses {hits}"

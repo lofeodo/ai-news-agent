@@ -4,6 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Browser Testing
 
+**Before any UI change, read `docs/style-guide.md`** (fonts, colours, type scale, components, copy rules, and the
+checks that enforce them). Monospace everywhere, Bebas Neue for labels only, one amber accent, no serif. A heading
+that "looks funny" is almost always a stray font family; `tests/test_site_fonts.py` fails if a serif comes back.
+
 After any UI change, test on all three environments:
 
 1. **Desktop** — use `playwright`
@@ -68,7 +72,7 @@ Weekly AI newsletter pipeline. Six agents fetch ArXiv papers + news, score/summa
 
 ## Documentation Layout
 
-The README is deliberately short and glanceable (a portfolio page: diagram, one table per topic, generated result tables). Depth lives in `docs/`: `architecture.md`, `design-decisions.md`, `monitoring.md`, `evaluation.md`, `configuration.md`, `development.md`, `repository-structure.md`. When changing behavior, update the matching doc, not the README, unless the one-line summary there is now wrong. Result tables (in `docs/`) and the README's result charts (`docs/assets/chart-*.svg`, from `evals/make_charts.py`) are regenerated together by `python -m evals.make_readme_table`, never typed by hand. The banner (dark and light variants, picked with `<picture>`) is built by `docs/assets/build_banner.py`; the two showcase PNGs in `docs/assets/` are screenshots of the live preview and an example health check report. The README does not mention roadmap Step 8 (dropped).
+The README is deliberately short and glanceable (a portfolio page: diagram, one table per topic, generated result tables). Depth lives in `docs/`: `architecture.md`, `design-decisions.md`, `monitoring.md`, `evaluation.md`, `configuration.md`, `development.md`, `repository-structure.md`, `style-guide.md` (the look of the site, email and report). When changing behavior, update the matching doc, not the README, unless the one-line summary there is now wrong. Result tables (in `docs/`) and the README's result charts (`docs/assets/chart-*.svg`, from `evals/make_charts.py`) are regenerated together by `python -m evals.make_readme_table`, never typed by hand. The banner (dark and light variants, picked with `<picture>`) is built by `docs/assets/build_banner.py`; the two showcase PNGs in `docs/assets/` are screenshots of the live preview and an example health check report. The README does not mention roadmap Step 8 (dropped).
 
 ## Running the Pipeline
 

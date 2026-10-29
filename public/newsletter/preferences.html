@@ -98,6 +98,14 @@
       <div class="msg" id="subscribe-msg" style="margin-top:14px;"></div>
     </div>
 
+    <!-- Account signed in but getting nothing: say so first, with the one action that fixes it.
+         (The button flips the AI switch below, so the save path is the same as the switches.) -->
+    <div class="prefs-card" id="not-subscribed-card" style="display:none">
+      <p class="prefs-card__headline">You're not subscribed yet.</p>
+      <p class="note" style="margin-bottom:16px">Signing in doesn't subscribe you. Latent SpaceMail is one email every Monday: a standout paper and the week's best AI stories. Unsubscribe any time.</p>
+      <button type="button" class="btn-primary-action" id="card-subscribe-btn">Subscribe</button>
+    </div>
+
     <!-- Which newsletters this address gets (both flows); each switch saves at once. -->
     <div class="prefs-section" id="newsletters-section" style="display:none">
       <div class="prefs-section__header">Your newsletters</div>
@@ -223,7 +231,18 @@
       const aiOptions = document.getElementById('ai-options');
       if (aiOptions) aiOptions.hidden = !ids.includes('ai');   // AI's options only matter while it is on
       subscriptionSection.style.display = ids.length ? 'block' : 'none';
+      notSubCard.style.display = authMode && !ids.length ? 'block' : 'none';
     }
+
+    // The card's button is the AI switch, pressed for them.
+    const notSubCard = document.getElementById('not-subscribed-card');
+    document.getElementById('card-subscribe-btn').addEventListener('click', () => {
+      const ai = nlRows.querySelector('input[role=switch][value="ai"]');
+      if (!ai || ai.checked) return;
+      ai.checked = true;
+      ai.dispatchEvent(new Event('change', { bubbles: true }));
+      nlSection.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    });
 
     function renderNewsletters(data) {
       consentVersion = data.consent_text_version;
@@ -278,6 +297,9 @@
         if (!res.ok) throw Object.assign(new Error(res.status), { status: res.status });
         nlMsg.textContent = box.checked ? `Subscribed to ${name}. It arrives on Monday.` : `Unsubscribed from ${name}.`;
         nlMsg.className = 'msg visible success';
+        if (authMode) {
+          window.dispatchEvent(new CustomEvent('lsm:subscription', { detail: { subscribed: chosenNewsletters().includes('ai') } }));
+        }
       } catch (err) {
         box.checked = !box.checked;
         nlMsg.textContent = err.status === 503 ? 'Subscriber limit reached. No spots are open right now.'

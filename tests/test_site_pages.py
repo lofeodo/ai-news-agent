@@ -50,3 +50,10 @@ def test_homepage_signed_in_block_reacts_to_subscription_state():
     src = _read("index.html")
     assert 'id="member-status"' in src and 'id="member-primary"' in src
     assert "lsm:me" in src and "/welcome.html" in src
+
+
+def test_preferences_page_puts_subscribe_first_when_not_subscribed():
+    src = _read("preferences.html")
+    assert 'id="not-subscribed-card"' in src and 'id="card-subscribe-btn"' in src
+    assert src.index('id="not-subscribed-card"') < src.index('id="newsletters-section"')
+    assert "lsm:subscription" in src

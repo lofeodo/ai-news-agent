@@ -966,6 +966,21 @@ input[type="password"]:focus {
 }
 
 /* ── Preferences page sections ───────────────────────────────────────────── */
+/* Not-subscribed card at the top of the preferences page (account flow) */
+.prefs-card {
+  margin: 4px 0 26px;
+  padding: 18px 18px 18px;
+  background: rgba(200,184,154,0.04);
+  border: 1px solid rgba(200,184,154,0.18);
+  border-left: 3px solid var(--accent);
+}
+.prefs-card__headline {
+  font-size: 1rem;
+  color: var(--text);
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
 .prefs-section {
   margin-top: 28px;
   padding-top: 22px;

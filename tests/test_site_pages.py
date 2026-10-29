@@ -57,3 +57,9 @@ def test_preferences_page_puts_subscribe_first_when_not_subscribed():
     assert 'id="not-subscribed-card"' in src and 'id="card-subscribe-btn"' in src
     assert src.index('id="not-subscribed-card"') < src.index('id="newsletters-section"')
     assert "lsm:subscription" in src
+
+
+def test_preferences_page_shows_one_newsletter_as_a_subscription_not_a_list():
+    src = _read("preferences.html")
+    assert "single = data.available.length === 1" in src
+    assert "'Your subscription'" in src and "pref-nl--single" in src

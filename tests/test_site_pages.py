@@ -70,3 +70,9 @@ def test_preferences_first_subscription_falls_back_to_the_subscribe_route():
     src = _read("preferences.html")
     i = src.index("res.status === 404 && box.checked")
     assert "/auth/subscribe" in src[i:i + 400]
+
+
+def test_preferences_tells_the_top_bar_on_every_subscription_change():
+    src = _read("preferences.html")
+    assert src.count("announceSubscription();") >= 2          # the switch and "Unsubscribe"
+    assert "lsm:subscription" in src and "lsm_nav_auth" in src  # token flow matches the bar's account

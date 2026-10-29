@@ -214,6 +214,19 @@
     const nlHeader  = document.getElementById('nl-header');
     const unsubNote = document.getElementById('unsub-note');
     let single = false;   // one newsletter on offer (see renderNewsletters)
+    let pageEmail = null; // token flow: the address the emailed link belongs to
+
+    // Tell the top bar (nav.js) the AI subscription changed, so its pill updates without a reload. In the
+    // token flow only when the link's address is the signed-in account shown in the bar.
+    function announceSubscription() {
+      const subscribed = chosenNewsletters().includes('ai');
+      if (!authMode) {
+        let navEmail = null;
+        try { navEmail = (JSON.parse(localStorage.getItem('lsm_nav_auth')) || {}).email || null; } catch {}
+        if (!pageEmail || !navEmail || navEmail.toLowerCase() !== pageEmail.toLowerCase()) return;
+      }
+      window.dispatchEvent(new CustomEvent('lsm:subscription', { detail: { subscribed } }));
+    }
     const focusId   = (new URLSearchParams(location.search).get('n') || '').toLowerCase();
     let consentVersion = null;
     const esc = (t) => String(t ?? '').replace(/[&<>"']/g,
@@ -332,9 +345,7 @@
         if (!res.ok) throw Object.assign(new Error(res.status), { status: res.status });
         nlMsg.textContent = box.checked ? `Subscribed to ${name}. It arrives on Monday.` : `Unsubscribed from ${name}.`;
         nlMsg.className = 'msg visible success';
-        if (authMode) {
-          window.dispatchEvent(new CustomEvent('lsm:subscription', { detail: { subscribed: chosenNewsletters().includes('ai') } }));
-        }
+        announceSubscription();
       } catch (err) {
         box.checked = !box.checked;
         nlMsg.textContent = err.status === 503 ? 'Subscriber limit reached. No spots are open right now.'
@@ -444,6 +455,7 @@
         loadingMsg.style.display = 'none';
         if (!res.ok) { showInvalid(); return; }
         const data = await res.json();
+        pageEmail = data.email || null;
         if (data.available) {
           const nlEmail = document.getElementById('nl-email');
           nlEmail.textContent   = data.email || '';
@@ -505,6 +517,7 @@
                                                 body: JSON.stringify({ token, newsletters: [] }) });
         if (res.ok) {
           nlRows.querySelectorAll('input[role=switch]').forEach((i) => { i.checked = false; });
+          announceSubscription();
           nlMsg.textContent  = 'You\'ve been unsubscribed from every newsletter.';
           nlMsg.className    = 'msg visible success';
           unsubBtn.disabled  = false;

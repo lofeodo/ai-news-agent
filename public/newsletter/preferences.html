@@ -6,7 +6,6 @@
   <title>Latent SpaceMail — Preferences</title>
   <link rel="icon" type="image/svg+xml" href="/images/logo-mark.svg">
   <link rel="icon" type="image/png" href="/images/logo-email.png">
-  <link rel="preload" href="/fonts/cormorant-garamond-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="fonts.css">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="topbar.css">
@@ -23,7 +22,7 @@
     .pref-nl.is-off { border-left-color: var(--border); }
     .pref-nl.is-focus { border-color: var(--nl); background: rgba(255,255,255,0.02); }
     .pref-nl__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-    .pref-nl__name { font-family: var(--display); font-weight: 600; font-size: 1.2rem; line-height: 1.15; color: var(--nl); }
+    .pref-nl__name { font-family: var(--font); font-size: 1rem; letter-spacing: 0.04em; line-height: 1.3; color: var(--nl); }
     .pref-nl.is-off .pref-nl__name { color: var(--muted); }
     .pref-nl__tag { font-size: 0.76rem; color: var(--muted); margin-top: 3px; }
     .pref-nl__meta { margin-top: 8px; font-size: 0.76rem; color: var(--muted); }
@@ -34,7 +33,12 @@
     .pref-nl__options .checkboxes { margin-bottom: 14px; }
     .pref-nl__options .check-row { text-transform: none; letter-spacing: normal; }
     .pref-nl__options button[type="submit"] { padding: 10px; font-size: 0.85rem; }
-    .pref-nl .toggle-switch { margin: -6px -6px 0 0; padding: 13px 6px 13px 14px; cursor: pointer; }  /* 44px tap target */  </style>
+    .pref-nl .toggle-switch { margin: -6px -6px 0 0; padding: 13px 6px 13px 14px; cursor: pointer; }  /* 44px tap target */
+    /* One newsletter on offer (the usual case): a plain row, not a card in a list */
+    .pref-nl--single { border: none; border-left: none; padding: 4px 0 0; margin-bottom: 4px; }
+    .pref-nl--single .pref-nl__name { color: var(--text); }
+    .pref-nl--single.is-off .pref-nl__name { color: var(--muted); }
+  </style>
 </head>
 <body>
   <canvas id="bg-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;will-change:transform;"></canvas>
@@ -108,7 +112,7 @@
 
     <!-- Which newsletters this address gets (both flows); each switch saves at once. -->
     <div class="prefs-section" id="newsletters-section" style="display:none">
-      <div class="prefs-section__header">Your newsletters</div>
+      <div class="prefs-section__header" id="nl-header">Your newsletters</div>
       <div class="email-display" id="nl-email" style="display:none"></div>
       <p class="note" id="nl-summary" style="margin-bottom:12px"></p>
       <div id="nl-rows" style="margin-bottom:12px"></div>
@@ -139,7 +143,7 @@
     <!-- Subscription management (both flows when the newsletter list is shown; account flow otherwise) -->
     <div class="prefs-section prefs-section--danger" id="subscription-section" style="display:none">
       <div class="prefs-section__header">Subscription</div>
-      <p class="note" style="margin-bottom:14px">Want to stop receiving every newsletter?</p>
+      <p class="note" style="margin-bottom:14px" id="unsub-note">Want to stop receiving every newsletter?</p>
       <button type="button" id="unsub-btn" style="background:transparent;border:1px solid var(--error);color:var(--error);width:100%;font-family:var(--font);font-size:0.82rem;letter-spacing:0.1em;text-transform:uppercase;padding:10px;cursor:pointer;transition:background 0.15s;">Unsubscribe from everything</button>
       <div class="msg" id="unsub-msg"></div>
     </div>
@@ -207,6 +211,9 @@
     const nlRows    = document.getElementById('nl-rows');
     const nlMsg     = document.getElementById('nl-msg');
     const nlSummary = document.getElementById('nl-summary');
+    const nlHeader  = document.getElementById('nl-header');
+    const unsubNote = document.getElementById('unsub-note');
+    let single = false;   // one newsletter on offer (see renderNewsletters)
     const focusId   = (new URLSearchParams(location.search).get('n') || '').toLowerCase();
     let consentVersion = null;
     const esc = (t) => String(t ?? '').replace(/[&<>"']/g,
@@ -225,9 +232,15 @@
         b.classList.toggle('is-off', !b.querySelector('input[role=switch]').checked);
       });
       const ids = chosenNewsletters();
-      nlSummary.textContent = ids.length
-        ? `You get ${ids.length === 1 ? '1 newsletter' : `${ids.length} newsletters`}, each as its own email on Monday morning.`
-        : "You don't get any newsletter right now. Switch one on to subscribe.";
+      if (single) {
+        nlSummary.textContent = ids.length ? "You're subscribed. The next issue arrives Monday morning."
+          : (authMode ? '' : 'Not subscribed. Switch it on to subscribe.');   // signed in: the card above says it
+      } else {
+        nlSummary.textContent = ids.length
+          ? `You get ${ids.length === 1 ? '1 newsletter' : `${ids.length} newsletters`}, each as its own email on Monday morning.`
+          : "You don't get any newsletter right now. Switch one on to subscribe.";
+      }
+      nlSummary.style.display = nlSummary.textContent ? 'block' : 'none';
       const aiOptions = document.getElementById('ai-options');
       if (aiOptions) aiOptions.hidden = !ids.includes('ai');   // AI's options only matter while it is on
       subscriptionSection.style.display = ids.length ? 'block' : 'none';
@@ -249,8 +262,14 @@
       loadingMsg.style.display = 'none';
       invalidMsg.style.display = 'none';
       const on = new Set(data.newsletters || []);
+      // One newsletter on offer is the normal case for now: present it as "your subscription", not as a list
+      // that looks like it is waiting for more entries. Admins who can see hidden topics still get the list.
+      single = data.available.length === 1;
+      nlHeader.textContent = single ? 'Your subscription' : 'Your newsletters';
+      unsubNote.textContent = single ? 'Want to stop receiving the newsletter?' : 'Want to stop receiving every newsletter?';
+      unsubBtn.textContent  = single ? 'Unsubscribe' : 'Unsubscribe from everything';
       nlRows.innerHTML = data.available.map((n) => `
-        <div class="pref-nl" style="--nl:${esc(n.accent_color)}" id="pref-${esc(n.id)}">
+        <div class="pref-nl${single ? ' pref-nl--single' : ''}" style="--nl:${esc(n.accent_color)}" id="pref-${esc(n.id)}">
           <div class="pref-nl__head">
             <div>
               <div class="pref-nl__name">${esc(n.name)}${n.hidden ? '<span class="pref-nl__hidden">Hidden</span>' : ''}</div>
@@ -261,7 +280,7 @@
               <span class="toggle-track"><span class="toggle-thumb"></span></span>
             </label>
           </div>
-          <p class="pref-nl__meta"><a href="/newsletter.html?id=${encodeURIComponent(n.id)}">About it and its latest issue</a></p>
+          ${single ? '' : `<p class="pref-nl__meta"><a href="/newsletter.html?id=${encodeURIComponent(n.id)}">About it and its latest issue</a></p>`}
           ${n.id === 'ai' ? '<div class="pref-nl__options" id="ai-options"></div>' : ''}
         </div>`).join('');
       const aiOptions = document.getElementById('ai-options');

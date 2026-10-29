@@ -106,10 +106,10 @@
 .pv  { border-left: 1px solid var(--st-line); background: #0b0b0b; }
 
 .col-title {
-  font-family: var(--display);
+  font-family: var(--font);
   font-weight: 600;
-  font-size: 1.28rem;
-  letter-spacing: 0.005em;
+  font-size: 1.1rem;
+  letter-spacing: 0.03em;
   color: var(--text);
   line-height: 1.2;
 }
@@ -198,7 +198,7 @@
 }
 
 .lib-heading {
-  font-family: var(--display);
+  font-family: var(--font);
   font-weight: 600;
   font-size: 1.02rem;
   color: #d8d0c2;
@@ -318,7 +318,7 @@
 .lib-custom__result { margin: 12px 20px 0; padding: 12px 0 2px; border-top: 1px solid var(--st-line-soft); }
 .lib-custom__result .lib-help { padding: 0 0 4px; }
 .lib-custom__result .lib-custom__actions { padding: 10px 0 0; }
-.lib-custom__suggestion { font-family: var(--display); font-size: 1.1rem; color: var(--text); line-height: 1.35; }
+.lib-custom__suggestion { font-family: var(--font); font-size: 1.1rem; color: var(--text); line-height: 1.35; }
 .lib-custom__error { font-size: 0.76rem; color: var(--error); padding: 10px 20px 0; }
 .lib-empty { font-size: 0.78rem; color: var(--muted); padding: 18px 20px; line-height: 1.6; }
 .linkish {
@@ -369,7 +369,7 @@
   border: 0;
   outline: none;
   padding: 2px 0 6px;
-  font-family: var(--display);
+  font-family: var(--font);
   font-weight: 600;
   font-size: clamp(2rem, 3.2vw, 2.9rem);
   line-height: 1.05;
@@ -506,7 +506,7 @@
   box-shadow: 0 30px 80px rgba(0,0,0,0.7);
 }
 .dlg::backdrop { background: rgba(0,0,0,0.6); }
-.dlg__title { font-family: var(--display); font-weight: 600; font-size: 1.4rem; line-height: 1.2; margin-bottom: 8px; overflow-wrap: anywhere; }
+.dlg__title { font-family: var(--font); font-weight: 600; font-size: 1.15rem; line-height: 1.2; margin-bottom: 8px; overflow-wrap: anywhere; }
 .dlg__body { font-size: 0.82rem; color: var(--muted); line-height: 1.6; margin-bottom: 18px; }
 .dlg__actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
 
@@ -603,7 +603,7 @@
   letter-spacing: -0.02em;
 }
 .block__name {
-  font-family: var(--display);
+  font-family: var(--font);
   font-weight: 600;
   font-size: 1.18rem;
   line-height: 1.2;
@@ -688,7 +688,7 @@ body.is-dragging-any, body.is-dragging-any * { cursor: grabbing !important; user
 /* ── Empty state: start from a ready-made newsletter ────────────────────── */
 
 .empty h3 {
-  font-family: var(--display);
+  font-family: var(--font);
   font-weight: 600;
   font-size: 1.5rem;
   color: var(--text);
@@ -715,7 +715,7 @@ body.is-dragging-any, body.is-dragging-any * { cursor: grabbing !important; user
 }
 .starter:hover { background: rgba(255,255,255,0.025); }
 .starter__dot { width: 10px; height: 10px; border-radius: 50%; background: var(--dot); box-shadow: 0 0 10px var(--dot); }
-.starter__name { font-family: var(--display); font-size: 1.15rem; font-weight: 600; display: block; line-height: 1.2; }
+.starter__name { font-family: var(--font); font-size: 1.15rem; font-weight: 600; display: block; line-height: 1.2; }
 .starter__meta { font-size: 0.74rem; color: var(--st-dim); display: block; margin-top: 2px; }
 .starter__go { font-size: 0.76rem; color: var(--muted); white-space: nowrap; }
 .starter:hover .starter__go { color: var(--accent); }
@@ -847,7 +847,7 @@ body.is-dragging-any, body.is-dragging-any * { cursor: grabbing !important; user
   box-shadow: 0 30px 80px rgba(0,0,0,0.6);
 }
 .gate__title {
-  font-family: var(--display);
+  font-family: var(--font);
   font-weight: 600;
   font-size: 1.75rem;
   line-height: 1.12;

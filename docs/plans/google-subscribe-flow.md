@@ -27,7 +27,8 @@ Agreed with the owner in chat (2026-10-29):
   The click is the express consent; `welcome.html` posts the same `consent_text_version` the email form uses
   (`GET /newsletters` returns the wording and version), so the subscription record matches an email signup.
 - **Welcome page states:** subscribing (spinner) → subscribed ("You're subscribed as *email*. Next issue Monday
-  morning." plus "Last week's issue is on its way" when sent, or a "Send me last week's issue" button when not) →
+  morning." plus "Last week's issue is on its way" when sent; the primary button is "Read the latest issue", since the
+  account route cannot send last week's issue after the fact) →
   already subscribed (same card, "You were already subscribed") → failed (error line and a full-width Subscribe
   button that retries) → signed out (a "Subscribe with Google" button that starts sign-in with
   `return_to=welcome.html`). The page is linked from every "Subscribe" affordance for signed-in readers.

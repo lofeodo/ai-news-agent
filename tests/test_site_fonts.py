@@ -64,7 +64,7 @@ def test_font_file_matches_its_font_face(family, weight, style, path):
 SERIF_RE = re.compile(r"Cormorant|EB Garamond|Garamond|Georgia|Times New Roman|var\(--display\)|var\(--body-serif\)")
 
 
-@pytest.mark.parametrize("path", sorted(SITE.glob("*.css")) + sorted(SITE.glob("*.html")), ids=lambda p: p.name)
+@pytest.mark.parametrize("path", sorted(SITE.rglob("*.css")) + sorted(SITE.rglob("*.html")), ids=lambda p: str(p.relative_to(SITE)))
 def test_site_never_uses_a_serif_display_font(path):
     src = path.read_text(encoding="utf-8")
     hits = sorted({m.group(0) for m in SERIF_RE.finditer(src)})

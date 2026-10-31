@@ -39,7 +39,7 @@ packaging==26.0
 pillow==12.3.0
 proto-plus==1.28.0
 protobuf==7.35.0
-pyasn1==0.6.4
+pyasn1==0.6.5
 pyasn1_modules==0.4.2
 pycparser==3.0
 pydantic==2.13.4

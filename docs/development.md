@@ -57,6 +57,16 @@ Mock mode uses made-up stories and keeps saved newsletters in the browser's `loc
 profile or the renderer, run `python tests/make_studio_fixtures.py` to redraw the mock's fixtures (the test suite
 fails until you do).
 
+### Search engines
+
+The site is served on both `newsletter.lofeodo.com` and `latentspacemail.web.app`; only the first should show up in
+search. `public/newsletter/robots.txt` points crawlers at `sitemap.xml` (the home, issues and newsletters pages),
+those pages carry a `<link rel="canonical">` on the custom domain, and the home page has `WebSite` structured data
+naming "Latent SpaceMail". Account and utility pages (sign-in, preferences, unsubscribe, welcome, studio, widgets,
+share) are `noindex`. A new public page goes into the sitemap and gets a canonical; a new account page gets
+`noindex`. `tests/test_site_seo.py` checks all of this. Being listed also needs the domain verified and the sitemap
+submitted once in Google Search Console and Bing Webmaster Tools (Brave uses its own crawler plus Bing signals).
+
 ## Deployment
 
 **Build and push to Artifact Registry:**

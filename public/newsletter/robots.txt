@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://newsletter.lofeodo.com/sitemap.xml

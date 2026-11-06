@@ -45,11 +45,11 @@ Ask the owner only for things that are irreversible, outward-facing, or ambiguou
 | Scope growth | Log it as a follow-up in the PR; continue. Stop only if it changes the roadmap's goal. |
 | Test/CI failure | Fix it. After 3 failed attempts, stop and report. |
 | Prod, secrets, IAM, Firestore data, subscriber-facing sends | Do not touch. Report what is needed. |
-| **Deploys** | **Agents never deploy.** Ask the owner using the deploy request format below. |
+| **Deploys** | **Deploy only when the owner explicitly says so** in the current conversation; one go-ahead does not cover the next deploy. Without it, ask using the deploy request format below. With it, run the deploy yourself, verify it, and report. |
 
 **Talking to the owner.** They are juggling several agents and forget what each one is doing. Every question, deploy request and final report starts with a plain-language recap: *what this work is, in one or two sentences, and why it matters*, before any detail. No file names, flags or jargon in the recap. Then give a recommendation, not a menu.
 
-**Deploy request format** (use when work is merged and something needs deploying):
+**Deploy request format** (use when work is merged and something needs deploying, to ask for the go-ahead):
 1. **What we're doing** — one or two plain sentences, no jargon.
 2. **What changes for readers/subscribers/the pipeline** if deployed.
 3. **Why deploy now (or why wait)** — your recommendation, including timing relative to the Sunday 12:00 PM pipeline and Monday 7:00 AM send. Avoid deploying in the hours before those.

@@ -33,7 +33,7 @@ joblib==1.5.3
 lxml==6.1.1
 lxml_html_clean==0.4.5
 newspaper3k==0.2.8
-nltk==3.10.3
+nltk==3.10.4
 oauthlib==4.0.0
 packaging==26.0
 pillow==12.3.0

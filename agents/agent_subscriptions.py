@@ -810,7 +810,7 @@ SPOTS_CACHE_SECONDS = 60
 @router.get("/spots")
 @limiter.limit("60/minute")
 def get_spots(request: Request):
-    """Public subscriber count for the home page. Counts only; cached so page views don't each query Firestore."""
+    """Public subscriber count (no page shows it since 2026-11-16). Counts only; cached so calls don't each query Firestore."""
     now = time.monotonic()
     if _SPOTS_CACHE["value"] is None or now - _SPOTS_CACHE["at"] > SPOTS_CACHE_SECONDS:
         _SPOTS_CACHE["value"] = {"active": _active_subscriber_count(_db()), "max": MAX_SUBSCRIBERS}

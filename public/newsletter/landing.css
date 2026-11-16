@@ -260,15 +260,6 @@ h1 .hl { color: var(--accent); }
   color: var(--soft);
 }
 .signup__trust li::before { content: '✓'; color: var(--accent); margin-right: 7px; }
-.spots {
-  margin-top: 6px;
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #6c665e;
-}
-.spots:empty { display: none; }
-.spots.spots-full { color: var(--error); }
 
 .msg { margin-top: 16px; font-size: 0.88rem; line-height: 1.6; display: none; }
 .msg.visible { display: block; }

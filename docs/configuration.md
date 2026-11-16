@@ -29,7 +29,7 @@ Credentials (API keys and similar) are supplied to the services at runtime and a
 | `RESPONSE_FLOOR_SECONDS` / `SENDGRID_TIMEOUT_SECONDS` | agent_subscriptions | Minimum response time of the mail routes, and the timeout of outgoing mail calls (defaults `2.0` / `8`) |
 | `MAIL_COOLDOWN_SECONDS` / `MAIL_MAX_PER_ADDRESS_DAILY` | agent_subscriptions | Pacing of confirmation and link emails per address (defaults `60` / `5`) |
 | `MAIL_DAILY_CEILING` | agent_subscriptions | Daily ceiling on those emails (default `1000`); set a very high number to switch it off |
-| `ADMIN_TOKEN` | agent_subscriptions | Token for `GET /stats` (send as `Authorization: Bearer`); the route is off while unset. The home page uses the public `GET /spots` instead |
+| `ADMIN_TOKEN` | agent_subscriptions | Token for `GET /stats` (send as `Authorization: Bearer`); the route is off while unset. The public `GET /spots` returns the same counts (no page shows them since 2026-11-16) |
 | `ALERT_EMAIL` | agent_healthcheck | Where the draft and send health checks email their reports; never used for subscriber-facing sends |
 | `GOOGLE_OAUTH_CLIENT_ID` | agent_subscriptions | Google OAuth 2.0 Web client ID for server-side Google Sign-In (not secret) |
 | `BGG_API_TOKEN` / `RAWG_API_KEY` | agent3 | Keys for the `bgg_hot` and `out_this_week` widgets, mounted from Secret Manager. Unset (the default) = the widget is skipped; see [widgets](widgets.md#keys) |

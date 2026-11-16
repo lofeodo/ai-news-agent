@@ -53,7 +53,7 @@ def test_stats_needs_the_token(api, monkeypatch):
     assert ok_header.json() == {"active": 7, "max": subs.MAX_SUBSCRIBERS}
 
 
-def test_home_page_reads_the_public_count():
+def test_home_page_shows_no_subscriber_count():
     from pathlib import Path
     html = (Path(__file__).resolve().parent.parent / "public" / "newsletter" / "index.html").read_text(encoding="utf-8")
-    assert "/spots" in html and "/stats" not in html
+    assert "/spots" not in html and "/stats" not in html

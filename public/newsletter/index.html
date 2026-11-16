@@ -139,7 +139,6 @@
             <li>Just one email a week</li>
             <li>No spam, no unexpected extras</li>
           </ul>
-          <p id="spots-remaining" class="spots"></p>
         </div>
 
         <!-- Shown instead of the signup when already authenticated -->
@@ -293,23 +292,6 @@
       }
     });
 
-    async function loadSpots() {
-      try {
-        const res = await fetch(`${API_BASE}/spots`);
-        if (!res.ok) return;
-        const { active, max } = await res.json();
-        const el = document.getElementById('spots-remaining');
-        if (!el) return;
-        el.textContent = `${active} / ${max} spots taken`;
-        if (active >= max) {
-          el.classList.add('spots-full');
-          btn.disabled = true;
-          document.getElementById('email').disabled = true;
-        }
-      } catch (e) {}
-    }
-    loadSpots();
-
     const form = document.getElementById('subscribe-form');
     const btn  = document.getElementById('submit-btn');
     const msg  = document.getElementById('msg');
@@ -348,7 +330,6 @@
         if (res.status === 503) {
           showMsg('Subscriber limit reached — no spots available.', 'error');
           resetBtn();
-          loadSpots();
         } else if (res.status === 422) {
           showMsg("That doesn't look like a valid email address.", 'error');
           resetBtn();
